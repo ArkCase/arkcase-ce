@@ -1,0 +1,60 @@
+- name: check for virtualbox guest additons
+  stat: path=/usr/share/virtualbox/VBoxGuestAdditions.iso
+  register: virtualbox_guest_additions
+
+- name: update all packages
+  become: yes
+  yum:
+    name: '*'
+    state: latest
+
+# reboot check taken from https://www.jeffgeerling.com/blog/2018/reboot-and-wait-reboot-complete-ansible-playbook
+- name: Check for reboot
+  shell: if [ $(rpm -q kernel|tail -n 1) != kernel-$(uname -r) ]; then echo 'reboot'; else echo 'no'; fi
+  ignore_errors: true
+  register: reboot_hint
+
+- name: rebuild guest additions
+  block: 
+    - name: mount guest addtions
+      become: yes
+      shell: mount -t iso9660 -o loop /usr/share/virtualbox/VBoxGuestAdditions.iso /mnt
+    - name: build guest addtions
+      become: yes
+      shell: ./VBoxLinuxAdditions.run
+      args:
+        chdir: /mnt
+      register: build_cmd
+      failed_when: build_cmd.rc != 0 and build_cmd.rc != 2
+  when: virtualbox_guest_additions.stat.exists == True and reboot_hint.stdout.find("reboot") != -1
+
+- name: rebooting
+  shell: "sleep 5 && reboot"
+  async: 1
+  poll: 0
+  become: yes
+  ignore_errors: true
+  register: rebooting
+  when: reboot_hint.stdout.find("reboot") != -1
+
+- name: Wait for rebooted box to come back
+  wait_for_connection:
+    connect_timeout: 20
+    sleep: 5
+    delay: 5
+    timeout: 300
+  when: rebooting is changed
+      
+- name: install required packages
+  become: yes
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - java-1.8.0-openjdk
+    - java-1.8.0-openjdk-devel
+    - policycoreutils-python
+    - zip
+    - unzip
+    - git
+    - net-tools
