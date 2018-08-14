@@ -58,3 +58,14 @@
     - unzip
     - git
     - net-tools
+    - epel-release
+
+# need to run another yum, AFTER installing epel-release, to get epel packages
+- name: install epel packages
+  become: yes
+  yum:
+    name: "{{ epel_packages }}"
+  vars:
+    epel_packages:
+    - python-pip
+    

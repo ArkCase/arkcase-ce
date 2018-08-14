@@ -1,0 +1,55 @@
+---
+
+- name: install pyOpenSSL
+  become: yes
+  pip:
+    name: pyOpenSSL
+
+- name: create pki folder structure
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/ssl/private
+    - /etc/ssl/csr
+    - /etc/ssl/crt
+
+# Generate an OpenSSL private key with the default values (4096 bits, RSA)
+- name: generate private key
+  become: yes
+  openssl_privatekey:
+    path: /etc/ssl/private/acm-arkcase.pem
+
+- name: root csr
+  become: yes
+  openssl_csr:
+    path: /etc/ssl/csr/acm-arkcase.root.csr
+    privatekey_path: /etc/ssl/private/acm-arkcase.pem
+    locality_name: Vienna
+    state_or_province_name: VA
+    country_name: US
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: ArkCase Root Certification Authority L0
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+      - cRLSign
+      - keyCertSign
+    extended_key_usage:
+      - serverAuth
+      - clientAuth
+
+- name: Sign root CSR
+  become: yes
+  openssl_certificate:
+    path: /etc/ssl/crt/acm-arkcase.root.crt
+    privatekey_path: /etc/ssl/private/acm-arkcase.pem
+    csr_path: /etc/ssl/csr/acm-arkcase.root.csr
+    provider: selfsigned
+
+
+
+    
