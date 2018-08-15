@@ -16,16 +16,18 @@
     - /etc/ssl/crt
 
 # Generate an OpenSSL private key with the default values (4096 bits, RSA)
-- name: generate private key
+- name: generate root private key
   become: yes
   openssl_privatekey:
-    path: /etc/ssl/private/acm-arkcase.pem
+    path: /etc/ssl/private/acm-arkcase-root.pem
 
 - name: root csr
   become: yes
   openssl_csr:
     path: /etc/ssl/csr/acm-arkcase.root.csr
-    privatekey_path: /etc/ssl/private/acm-arkcase.pem
+    privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
+    basic_constraints: "CA:true"
+    basic_constraints_critical: true
     locality_name: Vienna
     state_or_province_name: VA
     country_name: US
@@ -35,21 +37,82 @@
     common_name: ArkCase Root Certification Authority L0
     key_usage:
       - digitalSignature
-      - keyEncipherment
       - cRLSign
       - keyCertSign
-    extended_key_usage:
-      - serverAuth
-      - clientAuth
+    key_usage_critical: true
 
 - name: Sign root CSR
   become: yes
   openssl_certificate:
     path: /etc/ssl/crt/acm-arkcase.root.crt
-    privatekey_path: /etc/ssl/private/acm-arkcase.pem
+    privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
     csr_path: /etc/ssl/csr/acm-arkcase.root.csr
     provider: selfsigned
 
+- name: generate intermediate private key
+  become: yes
+  openssl_privatekey:
+    path: /etc/ssl/private/acm-arkcase-intermediate.pem
 
+- name: intermediate csr
+  become: yes
+  openssl_csr:
+    path: /etc/ssl/csr/acm-arkcase.intermediate.csr
+    privatekey_path: /etc/ssl/private/acm-arkcase-intermediate.pem
+    basic_constraints: "CA:true, pathlen:0"
+    locality_name: Vienna
+    state_or_province_name: VA
+    country_name: US
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: ArkCase Intermediate Certification Authority L1
+    key_usage:
+      - cRLSign
+      - digitalSignature
+      - keyCertSign
+    key_usage_critical: true
 
-    
+- name: Sign intermediate CSR
+  become: yes
+  openssl_certificate:
+    path: /etc/ssl/crt/acm-arkcase.intermediate.crt
+    privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
+    csr_path: /etc/ssl/csr/acm-arkcase.intermediate.csr
+    provider: selfsigned
+    extended_key_usage: v3_ca_int
+
+- name: generate server private key
+  become: yes
+  openssl_privatekey:
+    path: /etc/ssl/private/acm-arkcase.pem
+
+- name: server csr
+  become: yes
+  openssl_csr:
+    path: /etc/ssl/csr/acm-arkcase.csr
+    privatekey_path: /etc/ssl/private/acm-arkcase.pem
+    basic_constraints: "CA:false"
+    locality_name: Vienna
+    state_or_province_name: VA
+    country_name: US
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: acm-arkcase
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    key_usage_critical: true
+    extended_key_usage:
+      - serverAuth
+
+- name: Sign server CSR
+  become: yes
+  openssl_certificate:
+    path: /etc/ssl/crt/acm-arkcase.crt
+    privatekey_path: /etc/ssl/private/acm-arkcase-intermediate.pem
+    csr_path: /etc/ssl/csr/acm-arkcase.csr
+    provider: selfsigned
+    extended_key_usage: server_cert
+
