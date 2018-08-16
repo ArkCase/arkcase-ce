@@ -1,0 +1,28 @@
+- name: activemq user
+  become: yes
+  user:
+    name: activemq
+    shell: /bin/false
+    state: present
+
+- name: ActiveMQ folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: activemq
+    owner: activemq
+  with_items:
+    - /opt/data/activemq
+    - /opt/log/activemq
+    - /opt/app/activemq
+    - /opt/app/activemq/install
+  register: activemq_folder_structure
+
+- name: download ActiveMQ distribution (http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version}}-bin.tar.gz&action=download)
+  become: yes
+  become_user: activemq
+  get_url:
+    dest: /opt/app/activemq/install/
+    url: "http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version}}-bin.tar.gz&action=download"
+      

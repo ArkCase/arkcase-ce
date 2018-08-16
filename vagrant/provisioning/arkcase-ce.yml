@@ -5,5 +5,7 @@
     - common
     - pki
     - mariadb
+    - activemq
+    
     
     
