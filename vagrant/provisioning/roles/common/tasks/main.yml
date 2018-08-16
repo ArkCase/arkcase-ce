@@ -69,3 +69,13 @@
     epel_packages:
     - python-pip
     
+- name: folder structure for app, data and logs
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt
+    - /opt/app
+    - /opt/data
+    - /opt/log

@@ -1,0 +1,88 @@
+---
+    
+- name: install MariaDB packages
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - mariadb
+    - mariadb-server
+
+- name: MariaDB folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: mysql
+    owner: mysql
+  with_items:
+    - /opt/data/mariadb
+    - /opt/log/mariadb
+  register: mariadb_folder_structure
+
+- name: set SE context on MariaDB folders
+  become: yes
+  command: semanage fcontext -a -t {{ item.context }} -s system_u {{ item.path }}
+  with_items:
+    - { context: "mysqld_db_t", path:  "/opt/data/mariadb(/.*)?" }
+    - { context: "mysqld_log_t", path: "/opt/log/mariadb(/.*)?" }
+  when: mariadb_folder_structure is changed
+    
+- name: restorecon MariaDB folders
+  become: yes
+  command: restorecon -RFv {{ item }}
+  with_items:
+    - /opt/data/mariadb
+    - /opt/log/mariadb
+  when: mariadb_folder_structure is changed
+
+- name: enable tls 1.2
+  become: yes
+  lineinfile:
+    path: /etc/my.cnf.d/server.cnf
+    state: present
+    insertafter: "\\[server\\]"
+    line: "{{ item }}"
+  with_items:
+    - "ssl_cipher=TLSv1.2"
+    - "ssl_cert=/etc/ssl/crt/acm-arkcase.crt"
+    - "ssl_key=/etc/ssl/private/acm-arkcase.rsa.pem"
+    - "ssl_capath=/etc/ssl/ca"
+
+- name: set data folder
+  become: yes
+  lineinfile:
+    path: /etc/my.cnf
+    regexp: '^datadir='
+    line: 'datadir=/opt/data/mariadb'
+
+- name: set log folder
+  become: yes
+  lineinfile:
+    path: /etc/my.cnf
+    regexp: '^log-error='
+    line: 'log-error=/opt/log/mariadb/mariadb.log'
+
+- name: set socket path
+  become: yes
+  lineinfile:
+    path: /etc/my.cnf
+    regexp: '^socket='
+    line: 'socket=/opt/data/mariadb/mysql.sock'
+
+- name: enable MariaDB to start on boot
+  become: yes
+  systemd:
+    name: mariadb
+    enabled: yes
+    masked: no
+
+- name: start MariaDB
+  become: yes
+  systemd:
+    name: mariadb
+    state: started
+    
+    
+    
