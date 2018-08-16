@@ -14,6 +14,7 @@
     - /etc/ssl/private
     - /etc/ssl/csr
     - /etc/ssl/crt
+    - /etc/ssl/ca
 
 # Generate an OpenSSL private key with the default values (4096 bits, RSA)
 - name: generate root private key
@@ -40,14 +41,16 @@
       - cRLSign
       - keyCertSign
     key_usage_critical: true
+  register: root_csr
 
 - name: Sign root CSR
   become: yes
   openssl_certificate:
-    path: /etc/ssl/crt/acm-arkcase.root.crt
+    path: /etc/ssl/ca/acm-arkcase.root.crt
     privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
     csr_path: /etc/ssl/csr/acm-arkcase.root.csr
     provider: selfsigned
+  when: root_csr is changed
 
 - name: generate intermediate private key
   become: yes
@@ -72,15 +75,17 @@
       - digitalSignature
       - keyCertSign
     key_usage_critical: true
+  register: intermediate_csr
 
 - name: Sign intermediate CSR
   become: yes
   openssl_certificate:
-    path: /etc/ssl/crt/acm-arkcase.intermediate.crt
+    path: /etc/ssl/ca/acm-arkcase.intermediate.crt
     privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
     csr_path: /etc/ssl/csr/acm-arkcase.intermediate.csr
     provider: selfsigned
     extended_key_usage: v3_ca_int
+  when: intermediate_csr is changed
 
 - name: generate server private key
   become: yes
@@ -106,6 +111,7 @@
     key_usage_critical: true
     extended_key_usage:
       - serverAuth
+  register: server_csr
 
 - name: Sign server CSR
   become: yes
@@ -115,4 +121,12 @@
     csr_path: /etc/ssl/csr/acm-arkcase.csr
     provider: selfsigned
     extended_key_usage: server_cert
+  when: server_csr is changed
+  
 
+- name: write server private key in RSA format, for MySQL et. al.
+  become: yes
+  command: openssl rsa -in /etc/ssl/private/acm-arkcase.pem -out /etc/ssl/private/acm-arkcase.rsa.pem
+  when: server_csr is changed
+  
+  

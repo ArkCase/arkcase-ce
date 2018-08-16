@@ -4,4 +4,6 @@
     - virtualbox
     - common
     - pki
+    - mariadb
+    
     
