@@ -71,6 +71,12 @@
     regexp: '^socket='
     line: 'socket=/opt/data/mariadb/mysql.sock'
 
+- name: mariadb logrotate
+  become: yes
+  copy:
+    src: logrotate.d/mariadb
+    dest: /etc/logrotate.d/mariadb
+
 - name: enable MariaDB to start on boot
   become: yes
   systemd:
