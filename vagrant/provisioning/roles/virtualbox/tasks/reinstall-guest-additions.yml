@@ -1,0 +1,13 @@
+- name: rebuild guest additions
+  block: 
+    - name: mount guest addtions
+      become: yes
+      shell: mount -t iso9660 -o loop /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso /mnt
+    - name: build guest addtions
+      become: yes
+      shell: ./VBoxLinuxAdditions.run
+      args:
+        chdir: /mnt
+      register: build_cmd
+      failed_when: build_cmd.rc != 0 and build_cmd.rc != 2
+      

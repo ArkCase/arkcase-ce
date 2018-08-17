@@ -1,13 +1,5 @@
-- name: make /usr/share/virtualbox
-  become: yes
-  file:
-    path: /usr/share/virtualbox
-    state: directory
+- include: get-guest-additions.yml
 
-- name: download guest additions (https://download.virtualbox.org/virtualbox/{{ virtualbox_version}}/VBoxGuestAdditions_{{ virtualbox_version}}.iso)
-  become: yes
-  get_url:
-    dest: /usr/share/virtualbox/VBoxGuestAdditions.iso
-    url: https://download.virtualbox.org/virtualbox/{{ virtualbox_version}}/VBoxGuestAdditions_{{ virtualbox_version}}.iso
-
-    
+- name: rebuild guest additions if necessary
+  import_tasks: "{{ role_path }}/tasks/reinstall-guest-additions.yml"
+  when: guest_additions_downloaded is changed
