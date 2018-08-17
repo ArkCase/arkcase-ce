@@ -70,3 +70,4 @@
     - /opt/app
     - /opt/data
     - /opt/log
+    - /opt/common

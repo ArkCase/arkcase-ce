@@ -24,5 +24,44 @@
   become_user: activemq
   get_url:
     dest: /opt/app/activemq/install/
-    url: "http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version}}-bin.tar.gz&action=download"
+    url: "http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz&action=download"
       
+- name: unarchive ActiveMQ distribution
+  become: yes
+  become_user: activemq
+  unarchive:
+    remote_src: yes
+    src: /opt/app/activemq/install/apache-activemq-{{ activemq_version }}-bin.tar.gz
+    dest: /opt/app/activemq
+    extra_opts:
+      - --strip-components=1
+    creates: /opt/app/activemq/LICENSE
+  register: activemq_unarchived
+
+- name: update startup script
+  become: yes
+  become_user: activemq
+  lineinfile:
+    path: /opt/app/activemq/bin/linux-x86-64/activemq
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: "^ACTIVEMQ_HOME=", line: "ACTIVEMQ_HOME=/opt/app/activemq" }
+    - { regexp: "^#RUN_AS_USER=$", line: "RUN_AS_USER=activemq" }
+  when: activemq_unarchived is changed
+    
+- name: update wrapper.conf
+  become: yes
+  become_user: activemq
+  lineinfile:
+    path: /opt/app/activemq/bin/linux-x86-64/wrapper.conf
+    insertafter: "{{ item.after }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { after: "^wrapper\\.java\\.additional\\.12.*", line: "wrapper.java.additional.13=-Dcom.sun.management.jmxremote.port=1616" }
+    - { after: "^wrapper\\.java\\.additional\\.13.*", line: "wrapper.java.additional.14=-Dcom.sun.management.jmxremote.authenticate=false" }
+    - { after: "^wrapper\\.java\\.additional\\.14.*", line: "wrapper.java.additional.15=-Dcom.sun.management.jmxremote.ssl=false" }
+    - { after: "^wrapper\\.java\\.additional\\.15.*", line: "wrapper.java.additional.16=-Xdebug -Xnoagent -Djava.compiler=NONE" }
+    - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
+  when: activemq_unarchived is changed
+  

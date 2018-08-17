@@ -9,6 +9,12 @@
     - mariadb
     - mariadb-server
 
+- name: download MariaDB JDBC Driver (https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar)
+  become: yes
+  get_url:
+    dest: /opt/common/
+    url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+
 - name: MariaDB folders
   become: yes
   file:
