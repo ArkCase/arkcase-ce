@@ -17,75 +17,33 @@
     - /etc/ssl/ca
 
 # Generate an OpenSSL private key with the default values (4096 bits, RSA)
-- name: generate root private key
+- name: generate ca private key
   become: yes
   openssl_privatekey:
-    path: /etc/ssl/private/acm-arkcase-root.pem
+    path: /etc/ssl/private/arkcase-ca.pem
 
-- name: root csr
+- name: generate ca certificate
   become: yes
   openssl_csr:
-    path: /etc/ssl/csr/acm-arkcase.root.csr
-    privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
-    basic_constraints: "CA:true"
-    basic_constraints_critical: true
-    locality_name: Vienna
-    state_or_province_name: VA
+    path: /etc/ssl/csr/arkcase-ca.csr
+    privatekey_path: /etc/ssl/private/arkcase-ca.pem
     country_name: US
+    state_or_province_name: Virginia
+    locality_name: Vienna
     organization_name: ArkCase
     organizational_unit_name: Product Development
-    email_address: info@arkcase.com
     common_name: ArkCase Root Certification Authority L0
-    key_usage:
-      - digitalSignature
-      - cRLSign
-      - keyCertSign
-    key_usage_critical: true
-  register: root_csr
-
-- name: Sign root CSR
-  become: yes
-  openssl_certificate:
-    path: /etc/ssl/ca/acm-arkcase.root.crt
-    privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
-    csr_path: /etc/ssl/csr/acm-arkcase.root.csr
-    provider: selfsigned
-  when: root_csr is changed
-
-- name: generate intermediate private key
-  become: yes
-  openssl_privatekey:
-    path: /etc/ssl/private/acm-arkcase-intermediate.pem
-
-- name: intermediate csr
-  become: yes
-  openssl_csr:
-    path: /etc/ssl/csr/acm-arkcase.intermediate.csr
-    privatekey_path: /etc/ssl/private/acm-arkcase-intermediate.pem
-    basic_constraints: "CA:true, pathlen:0"
-    locality_name: Vienna
-    state_or_province_name: VA
-    country_name: US
-    organization_name: ArkCase
-    organizational_unit_name: Product Development
     email_address: info@arkcase.com
-    common_name: ArkCase Intermediate Certification Authority L1
-    key_usage:
-      - cRLSign
-      - digitalSignature
-      - keyCertSign
-    key_usage_critical: true
-  register: intermediate_csr
+  register: ca_csr
 
-- name: Sign intermediate CSR
+- name: Sign ca certificate
   become: yes
   openssl_certificate:
-    path: /etc/ssl/ca/acm-arkcase.intermediate.crt
-    privatekey_path: /etc/ssl/private/acm-arkcase-root.pem
-    csr_path: /etc/ssl/csr/acm-arkcase.intermediate.csr
+    path: /etc/ssl/ca/arkcase-ca.crt
+    privatekey_path: /etc/ssl/private/arkcase-ca.pem
+    csr_path: /etc/ssl/csr/arkcase-ca.csr
     provider: selfsigned
-    extended_key_usage: v3_ca_int
-  when: intermediate_csr is changed
+  when: ca_csr is changed
 
 - name: generate server private key
   become: yes
@@ -97,36 +55,71 @@
   openssl_csr:
     path: /etc/ssl/csr/acm-arkcase.csr
     privatekey_path: /etc/ssl/private/acm-arkcase.pem
-    basic_constraints: "CA:false"
-    locality_name: Vienna
-    state_or_province_name: VA
     country_name: US
+    state_or_province_name: VA
+    locality_name: Vienna
     organization_name: ArkCase
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
     common_name: acm-arkcase
-    key_usage:
-      - digitalSignature
-      - keyEncipherment
-    key_usage_critical: true
-    extended_key_usage:
-      - serverAuth
   register: server_csr
 
 - name: Sign server CSR
   become: yes
   openssl_certificate:
     path: /etc/ssl/crt/acm-arkcase.crt
-    privatekey_path: /etc/ssl/private/acm-arkcase-intermediate.pem
+    privatekey_path: /etc/ssl/private/arkcase-ca.pem
     csr_path: /etc/ssl/csr/acm-arkcase.csr
     provider: selfsigned
-    extended_key_usage: server_cert
   when: server_csr is changed
   
-
 - name: write server private key in RSA format, for MySQL et. al.
   become: yes
   command: openssl rsa -in /etc/ssl/private/acm-arkcase.pem -out /etc/ssl/private/acm-arkcase.rsa.pem
   when: server_csr is changed
+
+- name: sign the server certificate
+  become: yes
+  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase.csr -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 01 -out /etc/ssl/ca/acm-arkcase.cert.pem
+  when: server_csr is changed
+
+
+- name: client private key
+  become: yes
+  openssl_privatekey:
+    path: /etc/ssl/private/acm-arkcase-client.pem
+
+- name: client csr
+  become: yes
+  openssl_csr:
+    path: /etc/ssl/csr/acm-arkcase-client.csr
+    privatekey_path: /etc/ssl/private/acm-arkcase-client.pem
+    country_name: US
+    state_or_province_name: VA
+    locality_name: Vienna
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: acm-arkcase-client
+  register: client_csr
+    
+- name: Sign client CSR
+  become: yes
+  openssl_certificate:
+    path: /etc/ssl/crt/acm-arkcase-client.crt
+    privatekey_path: /etc/ssl/private/arkcase-ca.pem
+    csr_path: /etc/ssl/csr/acm-arkcase-client.csr
+    provider: selfsigned
+  when: client_csr is changed
+    
+- name: write client private key in RSA format, for MySQL et. al.
+  become: yes
+  command: openssl rsa -in /etc/ssl/private/acm-arkcase-client.pem -out /etc/ssl/private/acm-arkcase-client.rsa.pem
+  when: client_csr is changed
+
+- name: sign the client certificate
+  become: yes
+  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase-client.csr -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 02 -out /etc/ssl/ca/acm-arkcase-client.cert.pem
+  when: client_csr is changed
   
   

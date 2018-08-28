@@ -64,4 +64,51 @@
     - { after: "^wrapper\\.java\\.additional\\.15.*", line: "wrapper.java.additional.16=-Xdebug -Xnoagent -Djava.compiler=NONE" }
     - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
   when: activemq_unarchived is changed
+
+- name: create ActiveMQ MySQL user
+  become: yes
+  mysql_user:
+    login_unix_socket: /opt/data/mariadb/mysql.sock
+    host: "%"
+    name: activemq
+    password: "@rKc@3S!"
+    priv: '*.*:REQUIRESSL'
+    state: present
+    
+
+- name: jdbc support
+  block:
+    - name: read activemq.xml
+      shell: cat /opt/app/activemq/conf/activemq.xml
+      register: activemq_xml
+    - name: add jdbc data source, if not already added
+      become: yes
+      become_user: activemq
+      blockinfile:
+        path: /opt/app/activemq/conf/activemq.xml
+        insertbefore: "</beans>"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+        block: |
+              <bean id="mysql-ds" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+                  <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+                  <property name="url" value="jdbc:mysql://acm-arkcase:3306/activemq?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;trustServerCertificate=false&amp;useSSL=true&amp;serverSslCert=/etc/ssl/ca/arkcase-ca.crt"/>
+                  <property name="username" value="activemq"/>
+                  <property name="password" value="@rKc@3S!"/>
+                  <property name="initialSize" value="5"/>
+                  <property name="maxTotal" value="20"/>
+                  <property name="maxIdle" value="5"/>
+                  <property name="validationQuery" value="select 1"/>
+                  <property name="testWhileIdle" value="true"/>
+                  <property name="timeBetweenEvictionRunsMillis" value="3000"/>
+              </bean>
+      when: activemq_xml.stdout.find('bean id="mysql_ds"') == -1
+    - name: set persistence adapter, if not already set
+      become: yes
+      become_user: activemq
+      lineinfile:
+        path: /opt/app/activemq/conf/activemq.xml
+        regexp: '^.*kahaDB directory.*$'
+        line: '<jdbcPersistenceAdapter dataDirectory="activemq-data" dataSource="#mysql-ds" lockKeepAlivePeriod="5000" createTablesOnStartup="true"/>'
+      when: activemq_xml.stdout.find('jdbcPersistenceAdapter') == -1
+
   
