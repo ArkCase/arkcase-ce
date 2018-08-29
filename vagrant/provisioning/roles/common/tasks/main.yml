@@ -1,4 +1,4 @@
-- name: check for virtualbox guest additons
+- name: check for virtualbox guest additions
   stat: path=/usr/share/virtualbox/VBoxGuestAdditions.iso
   register: virtualbox_guest_additions
 

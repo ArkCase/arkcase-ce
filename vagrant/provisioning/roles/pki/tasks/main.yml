@@ -121,5 +121,15 @@
   become: yes
   command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase-client.csr -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 02 -out /etc/ssl/ca/acm-arkcase-client.cert.pem
   when: client_csr is changed
+
+- name: add client cert to Java keystore
+  become: yes
+  java_cert:
+    cert_alias: arkcase_client
+    cert_path: /etc/ssl/ca/acm-arkcase-client.cert.pem
+    keystore_path: /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts
+    keystore_pass: changeit
+    state: present
+    
   
   

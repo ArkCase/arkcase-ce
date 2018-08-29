@@ -1,3 +1,7 @@
+- name: include default vars
+  include_vars:
+    file: ../../default/vars/main.yml
+
 - name: activemq user
   become: yes
   user:
@@ -49,7 +53,29 @@
     - { regexp: "^ACTIVEMQ_HOME=", line: "ACTIVEMQ_HOME=/opt/app/activemq" }
     - { regexp: "^#RUN_AS_USER=$", line: "RUN_AS_USER=activemq" }
   when: activemq_unarchived is changed
-    
+
+- name: set data folder and wrapper log location
+  become: yes
+  become_user: activemq
+  replace:
+    path: /opt/app/activemq/bin/linux-x86-64/wrapper.conf
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.line }}"
+  with_items:
+    - { regexp: "^wrapper\\.java\\.additional\\.11=\\-Dactivemq.data=%ACTIVEMQ_DATA%", line: "wrapper.java.additional.11=-Dactivemq.data=/opt/data/activemq" }
+    - { regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log", line: "wrapper.logfile=/opt/log/activemq/wrapper.log" }
+
+- name: set activemq.log location
+  become: yes
+  become_user: activemq
+  replace:
+    path: /opt/app/activemq/conf/log4j.properties
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regexp: "^log4j\\.appender\\.logfile\\.file=\\$\\{activemq\\.data\\}\\/activemq\\.log", replace: "log4j.appender.logfile.file=/opt/log/activemq/activemq.log" }
+    - { regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log", replace: "log4j.appender.audit.file=/opt/log/activemq/audit.log" }
+
 - name: update wrapper.conf
   become: yes
   become_user: activemq
@@ -65,6 +91,14 @@
     - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
   when: activemq_unarchived is changed
 
+- name: create ActiveMQ MariaDB database
+  become: yes
+  mysql_db:
+    login_unix_socket: /opt/data/mariadb/mysql.sock
+    name: activemq
+    encoding: utf8
+    state: present
+
 - name: create ActiveMQ MySQL user
   become: yes
   mysql_user:
@@ -72,10 +106,9 @@
     host: "%"
     name: activemq
     password: "@rKc@3S!"
-    priv: '*.*:REQUIRESSL'
-    state: present
+    priv: '*.*:REQUIRESSL/activemq.*:ALL'
+    state: present 
     
-
 - name: jdbc support
   block:
     - name: read activemq.xml
@@ -90,8 +123,8 @@
         marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
         block: |
               <bean id="mysql-ds" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
-                  <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
-                  <property name="url" value="jdbc:mysql://acm-arkcase:3306/activemq?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;trustServerCertificate=false&amp;useSSL=true&amp;serverSslCert=/etc/ssl/ca/arkcase-ca.crt"/>
+                  <property name="driverClassName" value="org.mariadb.jdbc.Driver"/>
+                  <property name="url" value="jdbc:mysql://acm-arkcase:3306/activemq?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;enabledSslProtocolSuites=TLSv1.2&amp;trustServerCertificate=false&amp;useSSL=true&amp;serverSslCert=/etc/ssl/ca/arkcase-ca.crt"/>
                   <property name="username" value="activemq"/>
                   <property name="password" value="@rKc@3S!"/>
                   <property name="initialSize" value="5"/>
@@ -110,5 +143,123 @@
         regexp: '^.*kahaDB directory.*$'
         line: '<jdbcPersistenceAdapter dataDirectory="activemq-data" dataSource="#mysql-ds" lockKeepAlivePeriod="5000" createTablesOnStartup="true"/>'
       when: activemq_xml.stdout.find('jdbcPersistenceAdapter') == -1
+    - name: link jdbc driver
+      become: yes
+      become_user: activemq
+      file:
+        src: /opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+        dest: /opt/app/activemq/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+        state: link
+
+- name: ActiveMQ keystore and trust store
+  block:
+    - name: see if the ActiveMQ keystore was already generated
+      become: yes
+      become_user: activemq
+      command: keytool -v -list -keystore /opt/app/activemq/conf/broker.ts -keypass password
+      register: key_out
+      changed_when: false
+    - name: write ActiveMQ key store and trust store
+      block:
+        - name: backup keystore 
+          become: yes
+          become_user: activemq
+          command: mv /opt/app/activemq/conf/{{ item }} /opt/app/activemq/conf/{{ item }}.original
+          with_items:
+            - broker.ks
+            - broker.ts
+        - name: generate pcks12 key file from the ArkCase client private key
+          become: yes
+          become_user: activemq
+          command:
+          args:
+            argv:
+              - openssl
+              - pkcs12
+              - -export
+              - -in
+              - /etc/ssl/ca/acm-arkcase-client.cert.pem
+              - -inkey
+              - /etc/ssl/private/acm-arkcase-client.rsa.pem
+              - -out
+              - /opt/app/activemq/conf/activemq.p12
+              - -name
+              - broker
+              - -chain
+              - -CAfile
+              - /etc/ssl/ca/arkcase-ca.crt
+              - -passout
+              - 'pass:password'
+        - name: configure ActiveMQ to use the new pkcs12 key file as its broker key file
+          become: yes
+          become_user: activemq
+          command:
+          args:
+            argv:
+              - keytool
+              - -importkeystore
+              - -deststorepass
+              - password
+              - -destkeypass
+              - password
+              - -destkeystore
+              - /opt/app/activemq/conf/broker.ks
+              - -deststoretype
+              - pkcs12
+              - -srckeystore
+              - /opt/app/activemq/conf/activemq.p12
+              - -srcstoretype
+              - pkcs12
+              - -srcstorepass
+              - password
+              - -alias
+              - broker
+        - name: add ArkCase client cert to ActiveMQ truststore
+          become: yes
+          become_user: activemq
+          java_cert:
+            cert_alias: arkcase_client
+            cert_path: /etc/ssl/ca/acm-arkcase-client.cert.pem
+            keystore_path: /opt/app/activemq/conf/broker.ts
+            keystore_pass: password
+            keystore_create: yes
+            state: present
+      when: "'arkcase_client' not in key_out.stdout"
+
+- name: first time start, to create the tables
+  block:
+    - name: check whether the ActiveMQ tables were already created
+      command: mysql -uroot --socket=/opt/data/mariadb/mysql.sock activemq -Ns -e "show tables;"
+      register: show_tables
+      changed_when: false
+    - name: start ActiveMQ, to create the tables
+      become: yes
+      become_user: activemq
+      command: /opt/app/activemq/bin/linux-x86-64/activemq start
+      when: show_tables.stdout == ""
+      register: activemq_first_start
+    - name: wait for startup to finish
+      wait_for:
+        port: 61616
+        delay: 10
+        timeout: 60
+      when: activemq_first_start is changed
+    - name: stop ActiveMQ
+      become: yes
+      become_user: activemq
+      command: /opt/app/activemq/bin/linux-x86-64/activemq stop
+      when: activemq_first_start is changed
+
+- name: remove create-tables-on-startup option
+  become: yes
+  become_user: activemq
+  replace:
+    path: /opt/app/activemq/conf/activemq.xml
+    regexp: 'createTablesOnStartup="true"'
+    replace: 'createTablesOnStartup="false"'
+    
+      
+      
+  
 
   
