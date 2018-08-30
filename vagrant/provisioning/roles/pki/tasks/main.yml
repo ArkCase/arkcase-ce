@@ -80,7 +80,7 @@
 
 - name: sign the server certificate
   become: yes
-  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase.csr -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 01 -out /etc/ssl/ca/acm-arkcase.cert.pem
+  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase.csr -days 3650 -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 01 -out /etc/ssl/ca/acm-arkcase.cert.pem
   when: server_csr is changed
 
 
@@ -117,9 +117,9 @@
   command: openssl rsa -in /etc/ssl/private/acm-arkcase-client.pem -out /etc/ssl/private/acm-arkcase-client.rsa.pem
   when: client_csr is changed
 
-- name: sign the client certificate
+- name: sign the client certificate - valid for 10 years from now
   become: yes
-  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase-client.csr -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 02 -out /etc/ssl/ca/acm-arkcase-client.cert.pem
+  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase-client.csr -days 3650 -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 02 -out /etc/ssl/ca/acm-arkcase-client.cert.pem
   when: client_csr is changed
 
 - name: add client cert to Java keystore

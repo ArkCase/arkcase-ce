@@ -13,6 +13,7 @@
   shell: if [ $(rpm -q kernel|tail -n 1) != kernel-$(uname -r) ]; then echo 'reboot'; else echo 'no'; fi
   ignore_errors: true
   register: reboot_hint
+  changed_when: false
 
 
 - name: rebuild guest additions if necessary
@@ -71,3 +72,5 @@
     - /opt/data
     - /opt/log
     - /opt/common
+
+

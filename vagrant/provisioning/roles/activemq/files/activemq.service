@@ -1,0 +1,19 @@
+[Unit]
+Description=ActiveMQ service
+After=mariadb.target
+BindsTo=mariadb.target
+
+[Service]
+Type=forking
+ExecStart=/opt/app/activemq/bin/linux-x86-64/activemq start
+ExecStop=/opt/app/activemq/bin/linux-x86-64/activemq stop
+User=activemq
+Group=activemq
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=activemq
+
+[Install]
+WantedBy=multi-user.target
