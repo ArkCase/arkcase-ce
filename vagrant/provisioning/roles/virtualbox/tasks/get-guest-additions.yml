@@ -4,11 +4,13 @@
     path: /usr/share/virtualbox
     state: directory
 
-- name: download guest additions (https://download.virtualbox.org/virtualbox/{{ virtualbox_version }}/VBoxGuestAdditions_{{ virtualbox_version }}.iso)
-  become: yes
-  get_url:
-    dest: /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso
-    url: https://download.virtualbox.org/virtualbox/{{ virtualbox_version }}/VBoxGuestAdditions_{{ virtualbox_version }}.iso
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  with_items:
+    - name: VirtualBox Guest Additions
+      dest: /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso
+      owner: root
+      url: https://download.virtualbox.org/virtualbox/{{ virtualbox_version }}/VBoxGuestAdditions_{{ virtualbox_version }}.iso
   register: guest_additions_downloaded
 
     

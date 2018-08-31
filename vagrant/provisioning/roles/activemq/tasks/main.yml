@@ -23,39 +23,18 @@
     - /opt/app/activemq/install
   register: activemq_folder_structure
 
-- name: enable logrotate to manage ActiveMQ logs
-  block:
-    - name: check if var_log_t already on ActiveMQ log folder
-      command: ls -lZd /opt/log/activemq
-      register: activemq_logrotate_enabled
-      changed_when: false
-    - block:
-        - name: set var_log_t on activemq log folder, if needed
-          become: yes
-          command: semanage fcontext -a -t {{ item.context }} -s system_u {{ item.path }}
-          with_items:
-            - { context: "var_log_t", path:  "/opt/log/activemq(/.*)?" }
-        - name: restorecon ActiveMQ log folders
-          become: yes
-          command: restorecon -RFv {{ item }}
-          with_items:
-            - /opt/log/activemq
-      when: "'var_log_t' not in activemq_logrotate_enabled.stdout"
+- name: enable logrotate for alfresco log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  with_items:
+    - activemq
 
-- name: download ActiveMQ distribution (http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version}}-bin.tar.gz&action=download)
-  block:
-    - name: Check if ActiveMQ already downloaded
-      stat:
-        path: /opt/app/activemq/install/apache-activemq-{{ activemq_version }}-bin.tar.gz
-      register: activemq_download
-    - name: download ActiveMQ if needed
-      become: yes
-      become_user: activemq
-      get_url:
-        dest: /opt/app/activemq/install/
-        url: "http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz&action=download"
-      when: activemq_download.stat.exists == False 
-      
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  with_items:
+    - name: "ActiveMQ"
+      dest: "/opt/app/activemq/install/apache-activemq-{{ activemq_version }}-bin.tar.gz"
+      owner: "activemq"
+      url: "http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz&action=download"
+
 - name: unarchive ActiveMQ distribution
   become: yes
   become_user: activemq
@@ -359,5 +338,6 @@
 - name: start ActiveMQ
   become: yes
   systemd:
+    daemon_reload: true
     name: activemq
     state: started

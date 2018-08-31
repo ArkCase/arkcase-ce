@@ -1,0 +1,26 @@
+- name: alfresco user
+  become: yes
+  user:
+    name: alfresco
+    shell: /bin/false
+    state: present
+
+- name: alfresco folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: alfresco
+    owner: alfresco
+  with_items:
+    - /opt/data/alfresco
+    - /opt/log/alfresco
+    - /opt/app/alfresco
+    - /opt/app/alfresco/install
+  register: alfresco_folder_structure
+
+- name: enable logrotate for alfresco log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  with_items:
+    - alfresco
+

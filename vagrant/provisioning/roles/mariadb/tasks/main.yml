@@ -15,11 +15,12 @@
     - MySQL-python
   register: mariadb_install
 
-- name: download MariaDB JDBC Driver (https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar)
-  become: yes
-  get_url:
-    dest: /opt/common/
-    url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  with_items:
+    - name: "MariaDB JDBC Driver"
+      dest: "/opt/common/"
+      owner: "root"
+      url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 
 - name: MariaDB folders
   become: yes
