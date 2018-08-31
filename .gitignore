@@ -1,0 +1,9 @@
+# emacs backup files
+*~
+
+# ansible retry files
+*.retry
+
+# vagrant
+*.box
+.vagrant

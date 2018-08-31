@@ -1,5 +1,9 @@
 ---
-    
+
+- name: include default vars
+  include_vars:
+    file: ../../default/vars/main.yml
+
 - name: install MariaDB packages
   become: yes
   package:
@@ -8,6 +12,14 @@
   with_items:
     - mariadb
     - mariadb-server
+    - MySQL-python
+  register: mariadb_install
+
+- name: download MariaDB JDBC Driver (https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar)
+  become: yes
+  get_url:
+    dest: /opt/common/
+    url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 
 - name: MariaDB folders
   become: yes
@@ -39,16 +51,40 @@
 
 - name: enable tls 1.2
   become: yes
-  lineinfile:
-    path: /etc/my.cnf.d/server.cnf
-    state: present
-    insertafter: "\\[server\\]"
-    line: "{{ item }}"
-  with_items:
-    - "ssl_cipher=TLSv1.2"
-    - "ssl_cert=/etc/ssl/crt/acm-arkcase.crt"
-    - "ssl_key=/etc/ssl/private/acm-arkcase.rsa.pem"
-    - "ssl_capath=/etc/ssl/ca"
+  block:
+    - name: read server.cnf
+      shell: cat /etc/my.cnf.d/server.cnf
+      register: server_cnf_contents
+      changed_when: false
+    - name: update server.cnf if needed
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+        state: present
+        insertafter: "\\[mysqld\\]"
+        line: "{{ item }}"
+      with_items:
+        - "ssl-cipher=TLSv1.2"
+        - "ssl-cert=/etc/ssl/ca/acm-arkcase.cert.pem"
+        - "ssl-key=/etc/ssl/private/acm-arkcase.rsa.pem"
+        - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
+      when: server_cnf_contents.stdout.find('ssl-cipher=TLSv1.2') == -1
+      register: server_cnf
+    - name: read client.cnf
+      shell: cat /etc/my.cnf.d/client.cnf
+      register: client_cnf_contents
+      changed_when: false
+    - name: update client.cnf if needed
+      lineinfile:
+        path: /etc/my.cnf.d/client.cnf
+        state: present
+        line: "{{ item }}"
+      with_items:
+        - "[mysql]"
+        - "ssl-cert=/etc/ssl/ca/acm-arkcase-client.cert.pem"
+        - "ssl-key=/etc/ssl/private/acm-arkcase-client.rsa.pem"
+        - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
+      when: client_cnf_contents.stdout.find('ssl-cert') == -1
+      register: client_cnf
 
 - name: set data folder
   become: yes
@@ -88,7 +124,8 @@
   become: yes
   systemd:
     name: mariadb
-    state: started
+    state: restarted
+  when: server_cnf is changed or client_cnf is changed or mariadb_install is changed
     
     
     

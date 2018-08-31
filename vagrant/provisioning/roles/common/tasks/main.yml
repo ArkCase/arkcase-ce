@@ -1,4 +1,4 @@
-- name: check for virtualbox guest additons
+- name: check for virtualbox guest additions
   stat: path=/usr/share/virtualbox/VBoxGuestAdditions.iso
   register: virtualbox_guest_additions
 
@@ -13,19 +13,11 @@
   shell: if [ $(rpm -q kernel|tail -n 1) != kernel-$(uname -r) ]; then echo 'reboot'; else echo 'no'; fi
   ignore_errors: true
   register: reboot_hint
+  changed_when: false
 
-- name: rebuild guest additions
-  block: 
-    - name: mount guest addtions
-      become: yes
-      shell: mount -t iso9660 -o loop /usr/share/virtualbox/VBoxGuestAdditions.iso /mnt
-    - name: build guest addtions
-      become: yes
-      shell: ./VBoxLinuxAdditions.run
-      args:
-        chdir: /mnt
-      register: build_cmd
-      failed_when: build_cmd.rc != 0 and build_cmd.rc != 2
+
+- name: rebuild guest additions if necessary
+  import_tasks: "{{ role_path }}/../virtualbox/tasks/reinstall-guest-additions.yml"
   when: virtualbox_guest_additions.stat.exists == True and reboot_hint.stdout.find("reboot") != -1
 
 - name: rebooting
@@ -79,3 +71,6 @@
     - /opt/app
     - /opt/data
     - /opt/log
+    - /opt/common
+
+
