@@ -4,6 +4,7 @@
     - virtualbox
     - common
     - pki
+    - apacheds
     - mariadb
     - alfresco
     - activemq

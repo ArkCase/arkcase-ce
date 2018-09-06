@@ -1,0 +1,284 @@
+- include_tasks: apacheds_user_and_folders.yml
+- include_tasks: apacheds_downloads.yml
+
+- name: install LDAP support packages
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - python-ldap
+    - openldap-clients
+  
+- name: unarchive ApacheDS distribution
+  become: yes
+  become_user: apacheds
+  unarchive:
+    remote_src: yes
+    src: /opt/app/install/apacheds/apacheds-{{ apacheds_version }}.tar.gz
+    dest: /opt/app/apacheds
+    extra_opts:
+      - --strip-components=1
+    creates: /opt/app/apacheds/LICENSE
+  register: apacheds_unarchived
+
+- name: set ApacheDS log and instance locations
+  block:
+    - name: change log path variable in apacheds.sh
+      become: yes
+      become_user: apacheds
+      replace:
+        path: /opt/app/apacheds/bin/apacheds.sh
+        regexp: "ADS_INSTANCE\\/log"
+        replace: "ADS_INSTANCE_LOG"
+    - name: set ADS_INSTANCE_LOG location and ADS_INSTANCE location
+      become: yes
+      become_user: apacheds
+      copy:
+        src: setenv.sh
+        dest: /opt/app/apacheds/bin/setenv.sh
+        owner: apacheds
+        group: apacheds
+        mode: u+x
+    - name: check location of default instance folder
+      stat: path=/opt/app/apacheds/instances/default
+      register: default_instance_path
+    - name: move instance folder to correct location
+      become: yes
+      become_user: apacheds
+      command: mv /opt/app/apacheds/instances/default /opt/data/apacheds
+      when: default_instance_path.stat.exists
+
+- name: ApacheDS systemd unit file
+  become: yes
+  copy:
+    src: apacheds.service
+    dest: /etc/systemd/system/apacheds.service
+    
+- name: enable ApacheDS to start on boot
+  become: yes
+  systemd:
+    name: apacheds
+    enabled: yes
+    masked: no
+
+- name: start ApacheDS
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: apacheds
+    state: started
+  register: apacheds_started
+
+- name: wait for startup to finish
+  wait_for:
+    port: 10389
+    delay: 5
+    timeout: 60
+  # note, doesn't seem to be a reliable way to tell whether above
+  # step actually started ApacheDS, or if it was running already.
+
+# the only way I know to get the value for userPassword, is to use
+# Apache Directory Studio to set the desired password on some
+# existing system, and get the encoded value from the
+# Apache Directory Studio log.
+- name: set admin password
+  block:
+    - name: write password change ldif
+      become: yes
+      become_user: apacheds
+      copy:
+        content: |
+          dn: uid=admin,ou=system
+          changetype: modify
+          replace: userPassword
+          userPassword:: e1NTSEF9bHY3d09Jbk1MVmlIYWl0SkV1K2g3bU9tNndSckt5eUd4dGpSanc9PQ=
+           =
+        dest: /opt/app/install/apacheds/password.ldif
+    - name: execute password change ldif
+      command: ldapmodify -h localhost -p 10389 -D uid=admin,ou=system -w secret -f /opt/app/install/apacheds/password.ldif
+      register: password_changed_cmd
+      # "invalid credentials" means we already changed the password, since 'secret' is definitely the default value
+      failed_when: password_changed_cmd.rc != 0 and "Invalid credentials" not in password_changed_cmd.stderr
+      changed_when: password_changed_cmd.rc == 0
+
+- name: enable nis
+  become: yes
+  ldap_attr:
+    server_uri: ldap://localhost:10389
+    bind_dn: uid=admin,ou=system
+    bind_pw: "@rKc@3S!"
+    dn: cn=nis,ou=schema
+    name: m-disabled
+    values: FALSE
+    state: exact
+
+- name: add sortableGroupOfNames
+  become: yes
+  ldap_entry:
+    server_uri: ldap://localhost:10389
+    bind_dn: uid=admin,ou=system
+    bind_pw: "@rKc@3S!"
+    dn: m-oid=2.5.6.25, ou=objectclasses, cn=nis, ou=schema
+    objectClass:
+      - metaObjectClass
+      - metaTop
+      - top
+    attributes:
+      m-oid: 2.5.6.25
+      m-name: sortableGroupofnames
+      m-description: Sortable group of names
+      m-supObjectClass: top
+      m-typeObjectClass: AUXILIARY
+      m-must: gidNumber
+    state: present
+
+- name: userAccountControl support
+  become: yes
+  ldap_entry:
+    server_uri: ldap://localhost:10389
+    bind_dn: uid=admin,ou=system
+    bind_pw: "@rKc@3S!"
+    dn: m-oid=1.3.6.1.4.1.4203.666.100.123, ou=attributetypes, cn=nis, ou=schema
+    objectClass:
+      - metaAttributeType
+      - metaTop
+      - top
+    attributes:
+      m-oid: 1.3.6.1.4.1.4203.666.100.123
+      m-name: userAccountControl
+      m-description: User Account Control
+      m-syntax: 1.3.6.1.4.1.1466.115.121.1.15
+      m-length: 40
+
+- name: userAccountControl schema
+  become: yes
+  ldap_entry:
+    server_uri: ldap://localhost:10389
+    bind_dn: uid=admin,ou=system
+    bind_pw: "@rKc@3S!"
+    dn: m-oid=2.5.6.24, ou=objectclasses, cn=nis, ou=schema
+    objectClass:
+      - metaObjectClass
+      - metaTop
+      - top
+    attributes:
+      m-oid: 2.5.6.24
+      m-name: uacPerson
+      m-description: User Account Control Person
+      m-supObjectClass: top
+      m-typeObjectClass: AUXILIARY
+      m-must: userAccountControl
+
+- name: build arkcase.com partition string
+  block:
+    - name: arkcase.com partition context string
+      set_fact:
+        part_ldif: |
+          dn: dc=arkcase,dc=com
+          objectclass: domain
+          objectclass: top
+          dc: arkcase
+    - name: encode arkcase.com partition context
+      set_fact:
+        part_ldif_encoded: "{{ part_ldif | b64encode }}"
+
+# because we have to write a base64 encoded value (which Ansible LDAP
+# module doesn't support) we have to write and execute an LDIF file.
+- name: add arkcase.com partition
+  block:
+    - name: see if partition already added
+      command: ldapsearch -h localhost -p 10389 -D uid=admin,ou=system -w "@rKc@3S!" ads-partitionId=arkcase
+      register: partition_already_added
+      changed_when: false
+    - name: write arkcase.com partition LDIF file
+      become: yes
+      become_user: apacheds
+      copy:
+        content: |
+          dn: ads-partitionId=arkcase,ou=partitions,ads-directoryServiceId=default,ou=config
+          ads-contextEntry:: {{ part_ldif_encoded }}
+          objectClass: top
+          objectClass: ads-partition
+          objectClass: ads-base
+          objectClass: ads-jdbmPartition
+          ads-enabled: TRUE
+          ads-partitionSuffix: dc=arkcase,dc=com
+          ads-partitionId: arkcase
+          ads-partitionCacheSize: 100
+          ads-partitionSyncOnWrite: TRUE
+        dest: /opt/app/install/apacheds/partition.ldif
+      when: "'numEntries: 1' not in partition_already_added.stdout"
+    - name: execute arkcase.com partition LDIF
+      command: ldapadd -h localhost -p 10389 -D uid=admin,ou=system -w "@rKc@3S!" -f /opt/app/install/apacheds/partition.ldif
+      when: "'numEntries: 1' not in partition_already_added.stdout"
+      register: partition_added
+        
+
+
+- name: add arkcase.com indexes OU
+  become: yes
+  ldap_entry:
+    server_uri: ldap://localhost:10389
+    bind_dn: uid=admin,ou=system
+    bind_pw: "@rKc@3S!"
+    dn: ou=indexes,ads-partitionId=arkcase,ou=partitions,ads-directoryServiceId=default,ou=config
+    objectClass:
+      - top
+      - organizationalUnit
+    attributes:
+      ou: indexes
+    state: present
+  when: partition_added is changed
+
+- name: add indexes
+  become: yes
+  ldap_entry:
+    server_uri: ldap://localhost:10389
+    bind_dn: uid=admin,ou=system
+    bind_pw: "@rKc@3S!"
+    dn: ads-indexAttributeId={{ item }},ou=indexes,ads-partitionId=arkcase,ou=partitions,ads-directoryServiceId=default,ou=config
+    objectClass:
+      - ads-index
+      - ads-jdbmIndex
+      - ads-base
+      - top
+    attributes:
+      ads-indexHasReverse: FALSE
+      ads-indexAttributeId: "{{ item }}"
+      ads-enabled: TRUE
+    state: present
+  with_items:
+    - apacheAlias
+    - apacheOneAlias
+    - apacheOneLevel
+    - apachePresence
+    - apacheRdn
+    - apacheSubAlias
+    - apacheSubLevel
+    - dc
+    - entryCSN
+    - entryUUID
+    - krb5PrincipalName
+    - objectClass
+    - ou
+    - uid
+  when: partition_added is changed
+    
+- name: restart ApacheDS if needed
+  become: yes
+  systemd:
+    name: apacheds
+    state: restarted
+  register: apacheds_restarted
+  when: partition_added is changed
+
+- name: wait for startup to finish
+  wait_for:
+    port: 10389
+    delay: 10
+    timeout: 60
+  when: apacheds_restarted is changed
+    
+
+    

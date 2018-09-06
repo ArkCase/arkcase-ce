@@ -23,7 +23,7 @@
     - /opt/app/activemq/install
   register: activemq_folder_structure
 
-- name: enable logrotate for alfresco log folder if necessary
+- name: enable logrotate for activemq log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
   with_items:
     - activemq

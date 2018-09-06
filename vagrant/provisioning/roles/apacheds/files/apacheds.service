@@ -1,0 +1,17 @@
+[Unit]
+Description=Apache Directory Server
+
+[Service]
+Type=forking
+ExecStart=/opt/app/apacheds/bin/apacheds.sh default start
+ExecStop=/opt/app/apacheds/bin/apacheds.sh default stop
+User=apacheds
+Group=apacheds
+Restart=always
+RestartSec=30
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=apacheds
+
+[Install]
+WantedBy=multi-user.target

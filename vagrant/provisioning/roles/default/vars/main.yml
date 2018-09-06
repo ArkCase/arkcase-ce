@@ -7,3 +7,5 @@ tomcat_version: 9.0.11
 alfresco_release_name: 201806-GA
 alfresco_content_services_version: 6.0.7-ga
 alfresco_records_management_version: 2.7.b
+
+apacheds_version: 2.0.0.AM25

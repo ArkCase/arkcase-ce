@@ -71,6 +71,7 @@
     - /opt/app
     - /opt/data
     - /opt/log
+    - /opt/install
     - /opt/common
 
 
