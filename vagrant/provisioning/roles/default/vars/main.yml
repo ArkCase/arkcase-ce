@@ -9,3 +9,11 @@ alfresco_content_services_version: 6.0.7-ga
 alfresco_records_management_version: 2.7.b
 
 apacheds_version: 2.0.0.AM25
+
+samba_version: 4.9.1
+samba_domain: "ARKCASE-CE"
+# samba_realm becomes the directory contact e.g. dc=arkcase-ce,dc=local
+samba_realm: "arkcase-ce.local"
+samba_host_ip: "192.168.56.15"
+samba_admin_password: "@rKc@3e"
+samba_server_role: dc

@@ -1,0 +1,151 @@
+- name: include default vars
+  include_vars:
+    file: ../../default/vars/main.yml
+
+- name: Samba folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/install/samba
+    - /opt/install/samba/samba-{{ samba_version }}
+    - /opt/data/samba
+    - /opt/log/samba
+    - /opt/app/samba
+    - /opt/app/samba/lib
+  register: samba_folder_structure
+
+- name: enable logrotate for samba log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  with_items:
+    - samba
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  with_items:
+    - name: "Samba"
+      dest: "/opt/install/samba/samba-{{ samba_version }}.tar.gz"
+      owner: "root"
+      url: "https://download.samba.org/pub/samba/stable/samba-{{ samba_version }}.tar.gz"
+
+- name: unarchive Samba distribution
+  become: yes
+  unarchive:
+    remote_src: yes
+    src: /opt/install/samba/samba-{{ samba_version }}.tar.gz
+    dest: /opt/install/samba/samba-{{ samba_version }}
+    creates: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}/README
+  register: samba_unarchived
+
+- name: Samba required packages
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: installed
+  with_items:
+    - lmdb
+    - lmdb-devel
+    - jansson-devel
+    - gpgme-devel
+    - libarchive-devel
+    - python-devel
+    - gnutls-devel
+    - libacl-devel
+    - openldap-devel
+    - pam-devel
+
+- name: configure Samba
+  become: yes
+  command: ./configure --enable-debug --enable-selftest --with-ads --with-systemd --with-winbind --enable-gnutls --prefix=/opt/app/samba --datarootdir=/opt/data/samba --with-logdir=/opt/log/samba --localstatedir=/opt/data/samba  --libdir=/opt/app/samba/lib
+  args:
+    chdir: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}
+  when: samba_unarchived is changed
+  register: samba_configured
+
+- name: build Samba, this will take a while
+  become: yes
+  command: make
+  args:
+    chdir: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}
+  when: samba_configured is changed
+  register: samba_build
+
+- name: install Samba
+  become: yes
+  command: make install
+  args:
+    chdir: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}
+  register: samba_install
+  when: samba_build is changed
+
+- name: provision arkcase-ce.local domain
+  become: yes
+  command: /opt/app/samba/bin/samba-tool domain provision --use-rfc2307 --domain={{ samba_domain }} --realm={{ samba_realm }} --dns-backend=SAMBA_INTERNAL --server-role={{ samba_server_role }} --host-ip={{ samba_host_ip }} --adminpass={{ samba_admin_password }}
+  register: samba_provisioned
+  when: samba_install is changed
+
+- name: copy Samba Kerberos config to system config
+  become: yes
+  command: cp /opt/app/samba/private/krb5.conf /etc/krb5.conf
+  when: samba_provisioned is changed
+
+# samba requires mode 0600 on the TLS cert and key files, so we have to
+# copy them to the Samba folder
+- name: copy TLS cert and key files
+  become: yes
+  copy:
+    remote_src: yes
+    src: "{{ item }}"
+    dest: /opt/app/samba/private/tls/
+    mode: 0600
+  with_items:
+    - /etc/ssl/private/acm-arkcase-client.rsa.pem
+    - /etc/ssl/ca/acm-arkcase-client.cert.pem
+
+- name: set TLS propertes
+  become: yes
+  blockinfile:
+    path: /opt/app/samba/etc/smb.conf
+    insertafter: "\\[global\\]"
+    block: |
+      tls enabled = yes
+      tls certfile = /opt/app/samba/private/tls/acm-arkcase-client.cert.pem
+      tls keyfile = /opt/app/samba/private/tls/acm-arkcase-client.rsa.pem
+      tls cafile = 
+  
+- name: copy Samba systemd unit file
+  become: yes
+  copy:
+    src: samba.service
+    dest: /etc/systemd/system/samba.service
+  register: samba_systemd
+
+- name: enable Samba to start on boot
+  become: yes
+  systemd:
+    name: samba
+    enabled: yes
+    masked: no
+
+- name: start Samba
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: samba
+    state: started
+
+- name: open Samba TLS port in firewall
+  become: yes
+  firewalld:
+    zone: public
+    port: 636/tcp
+    permanent: yes
+    state: enabled
+  register: samba_firewall
+
+- name: reload firewall if necessary
+  become: yes
+  command: firewall-cmd --reload
+  when: samba_firewall is changed
+
+

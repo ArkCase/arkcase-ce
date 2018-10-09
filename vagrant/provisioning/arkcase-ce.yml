@@ -4,8 +4,8 @@
     - virtualbox
     - common
     - pki
-    - apacheds
-    - mariadb
-    - alfresco
-    - activemq
+    - samba
+#    - mariadb
+#    - alfresco
+#    - activemq
     
