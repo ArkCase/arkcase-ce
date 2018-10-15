@@ -5,7 +5,7 @@
     - common
     - pki
     - samba
-#    - mariadb
+    - mariadb
 #    - alfresco
-#    - activemq
+    - activemq
     

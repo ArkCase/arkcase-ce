@@ -40,29 +40,28 @@
 - name: Samba required packages
   become: yes
   yum:
-    name: "{{ item }}"
     state: installed
-  with_items:
-    - lmdb
-    - lmdb-devel
-    - jansson-devel
-    - gpgme-devel
-    - libarchive-devel
-    - python-devel
-    - gnutls-devel
-    - libacl-devel
-    - openldap-devel
-    - pam-devel
+    name: 
+      - lmdb
+      - lmdb-devel
+      - jansson-devel
+      - gpgme-devel
+      - libarchive-devel
+      - python-devel
+      - gnutls-devel
+      - libacl-devel
+      - openldap-devel
+      - pam-devel
 
-- name: configure Samba
+- name: configure Samba, this will take 5 - 10 minutes
   become: yes
   command: ./configure --enable-debug --enable-selftest --with-ads --with-systemd --with-winbind --enable-gnutls --prefix=/opt/app/samba --datarootdir=/opt/data/samba --with-logdir=/opt/log/samba --localstatedir=/opt/data/samba  --libdir=/opt/app/samba/lib
   args:
     chdir: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}
-  when: samba_unarchived is changed
+    creates: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}/.lock-wscript
   register: samba_configured
 
-- name: build Samba, this will take a while
+- name: build Samba, this will take 10 - 20 minutes
   become: yes
   command: make
   args:
@@ -81,8 +80,9 @@
 - name: provision arkcase-ce.local domain
   become: yes
   command: /opt/app/samba/bin/samba-tool domain provision --use-rfc2307 --domain={{ samba_domain }} --realm={{ samba_realm }} --dns-backend=SAMBA_INTERNAL --server-role={{ samba_server_role }} --host-ip={{ samba_host_ip }} --adminpass={{ samba_admin_password }}
+  args:
+    creates: /opt/app/samba/etc/smb.conf
   register: samba_provisioned
-  when: samba_install is changed
 
 - name: copy Samba Kerberos config to system config
   become: yes

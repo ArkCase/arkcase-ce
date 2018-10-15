@@ -6,19 +6,18 @@
 
 - name: install MariaDB packages
   become: yes
-  package:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - mariadb
-    - mariadb-server
-    - MySQL-python
+  yum:
+    state: installed
+    name: 
+      - mariadb
+      - mariadb-server
+      - MySQL-python
   register: mariadb_install
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   with_items:
     - name: "MariaDB JDBC Driver"
-      dest: "/opt/common/"
+      dest: "/opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
       owner: "root"
       url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 

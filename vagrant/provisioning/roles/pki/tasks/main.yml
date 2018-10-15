@@ -1,4 +1,7 @@
----
+- name: get default vars
+  include_vars: ../../default/vars/main.yml
+
+#    name: "{{ arkcase_host_name }}"
 
 - name: install pyOpenSSL
   become: yes
@@ -49,6 +52,12 @@
   become: yes
   openssl_privatekey:
     path: /etc/ssl/private/acm-arkcase.pem
+  register: server_private_key
+
+- name: write server private key in RSA format, for MySQL et. al.
+  become: yes
+  command: openssl rsa -in /etc/ssl/private/acm-arkcase.pem -out /etc/ssl/private/acm-arkcase.rsa.pem
+  when: server_private_key is changed
 
 - name: server csr
   become: yes
@@ -61,7 +70,7 @@
     organization_name: ArkCase
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
-    common_name: acm-arkcase
+    common_name: "{{ arkcase_host_name }}"
   register: server_csr
 
 - name: Sign server CSR
@@ -73,11 +82,6 @@
     provider: selfsigned
   when: server_csr is changed
   
-- name: write server private key in RSA format, for MySQL et. al.
-  become: yes
-  command: openssl rsa -in /etc/ssl/private/acm-arkcase.pem -out /etc/ssl/private/acm-arkcase.rsa.pem
-  when: server_csr is changed
-
 - name: sign the server certificate
   become: yes
   command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase.csr -days 3650 -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 01 -out /etc/ssl/ca/acm-arkcase.cert.pem
@@ -88,7 +92,13 @@
   become: yes
   openssl_privatekey:
     path: /etc/ssl/private/acm-arkcase-client.pem
+  register: client_private_key
 
+- name: write client private key in RSA format, for MySQL et. al.
+  become: yes
+  command: openssl rsa -in /etc/ssl/private/acm-arkcase-client.pem -out /etc/ssl/private/acm-arkcase-client.rsa.pem
+  when: client_private_key is changed
+    
 - name: client csr
   become: yes
   openssl_csr:
@@ -100,9 +110,9 @@
     organization_name: ArkCase
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
-    common_name: acm-arkcase-client
+    common_name: "{{ arkcase_host_name }}"
   register: client_csr
-    
+
 - name: Sign client CSR
   become: yes
   openssl_certificate:
@@ -110,13 +120,9 @@
     privatekey_path: /etc/ssl/private/arkcase-ca.pem
     csr_path: /etc/ssl/csr/acm-arkcase-client.csr
     provider: selfsigned
-  when: client_csr is changed
-    
-- name: write client private key in RSA format, for MySQL et. al.
-  become: yes
-  command: openssl rsa -in /etc/ssl/private/acm-arkcase-client.pem -out /etc/ssl/private/acm-arkcase-client.rsa.pem
-  when: client_csr is changed
+  when: server_csr is changed
 
+    
 - name: sign the client certificate - valid for 10 years from now
   become: yes
   command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase-client.csr -days 3650 -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 02 -out /etc/ssl/ca/acm-arkcase-client.cert.pem
