@@ -37,21 +37,23 @@
     creates: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}/README
   register: samba_unarchived
 
-- name: Samba required packages
+- name: Samba and LDAP required packages
   become: yes
   yum:
     state: installed
     name: 
       - lmdb
       - lmdb-devel
-      - jansson-devel
       - gpgme-devel
+      - jansson-devel
       - libarchive-devel
       - python-devel
       - gnutls-devel
       - libacl-devel
       - openldap-devel
+      - openldap-clients
       - pam-devel
+      - python-ldap
 
 - name: configure Samba, this will take 5 - 10 minutes
   become: yes
@@ -148,4 +150,133 @@
   command: firewall-cmd --reload
   when: samba_firewall is changed
 
+- name: add arkcase organizational units
+  ldap_entry:
+    server_uri: ldaps://{{ arkcase_host_name }}:636
+    validate_certs: no
+    bind_dn: CN=Administrator,CN=Users,{{ ldap_base }}
+    bind_pw: "{{ samba_admin_password }}"
+    dn: "{{ item.ou }}"
+    objectClass:
+      - organizationalUnit
+      - top
+    attributes:
+      description: "{{ item.description }}"
+  with_items:
+    - { ou: "OU=ArkCase,{{ ldap_base }}", description: "Container for ArkCase users and groups" }
+    - { ou: "OU=Groups,OU=ArkCase,{{ ldap_base }}", description: "Container for ArkCase groups" }
+    - { ou: "OU=Users,OU=ArkCase,{{ ldap_base }}", description: "Container for ArkCase users" }
 
+- name: add arkcase groups
+  ldap_entry:
+    server_uri: ldaps://{{ arkcase_host_name }}:636
+    validate_certs: no
+    bind_dn: CN=Administrator,CN=Users,{{ ldap_base }}
+    bind_pw: "{{ samba_admin_password }}"
+    dn: "{{ item.dn }}"
+    objectClass:
+      - group
+      - top
+    attributes:
+      description: "{{ item.description }}"
+      samAccountName: "{{ item.name }}"
+      cn: "{{ item.name }}"
+  with_items:
+    - dn: CN=ARKCASE_EXTERNAL,OU=Groups,OU=ArkCase,{{ ldap_base }}
+      description: External users
+      name: ARKCASE_EXTERNAL
+    - dn: CN=ARKCASE_CONSUMER,OU=Groups,OU=ArkCase,{{ ldap_base }}
+      description: Consumers (read-only) users
+      name: ARKCASE_CONSUMER
+    - dn: CN=ARKCASE_CONTRIBUTOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
+      description: Contributors (editors)
+      name: ARKCASE_CONTRIBUTOR
+    - dn: CN=ARKCASE_ADMINISTRATOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
+      description: System administrators
+      name: ARKCASE_ADMINISTRATOR
+    - dn: CN=ARKCASE_SUPERVISOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
+      description: Supervisors (approvers)
+      name: ARKCASE_SUPERVISOR
+    - dn: CN=ARKCASE_ENTITY_ADMINISTRATOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
+      description: Entity administrators (maintain person and org records)
+      name: ARKCASE_ENTITY_ADMINISTRATOR
+      
+- name: add arkcase admin user
+  ldap_entry:
+    server_uri: ldaps://{{ arkcase_host_name }}:636
+    validate_certs: no
+    bind_dn: CN=Administrator,CN=Users,{{ ldap_base }}
+    bind_pw: "{{ samba_admin_password }}"
+    dn: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
+    objectClass:
+      - organizationalPerson
+      - person
+      - user
+      - top
+    attributes:
+      # note, Samba doesn't let you set memberOf directory, you
+      # have to create the user, then add them to the group.
+      description: ArkCase admin user
+      samAccountName: arkcase-administrator
+      name: ArkCase Administrator
+      givenName: ArkCase
+      sn: Administrator
+      cn: arkcase-administrator
+  register: admin_user 
+
+- name: set arkcase admin password
+  block:
+    - name: base64 encode password
+      shell: echo -n '"{{ arkcase_admin_password }}"' | iconv -f utf8 -t utf16le | base64 -w 0
+      # IgBAAHIASwBjAEAAMwBlACIACgA=
+      register: base64_password
+      changed_when: false
+    - name: copy change password ldif file
+      become: yes
+      copy:
+        content: |
+          dn: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
+          changetype: modify
+          replace: unicodePwd
+          unicodePwd:: {{ base64_password.stdout }}
+        dest: /opt/install/samba/password_change.ldif
+    - name: execute password change
+      shell: LDAPTLS_REQCERT=never ldapmodify -H ldaps://{{ arkcase_host_name }} -D CN=Administrator,CN=Users,{{ ldap_base }} -w {{ samba_admin_password }} -x -f /opt/install/samba/password_change.ldif
+  when: admin_user is changed
+
+- name: enable arkcase admin accoiunt
+  block:
+    - name: copy enable user ldif file
+      become: yes
+      copy:
+        content: |
+          dn: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
+          changetype: modify
+          replace: userAccountControl
+          userAccountControl: 512
+        dest: /opt/install/samba/activate_admin.ldif
+    - name: execute password change
+      shell: LDAPTLS_REQCERT=never ldapmodify -H ldaps://{{ arkcase_host_name }} -D CN=Administrator,CN=Users,{{ ldap_base }} -w {{ samba_admin_password }} -x -f /opt/install/samba/activate_admin.ldif
+  when: admin_user is changed
+      
+- name: add arkcase admin account to admin group
+  block:
+    - name: copy add-admin-to-group ldif file
+      become: yes
+      copy:
+        content: |
+          dn: CN=ARKCASE_ADMINISTRATOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
+          changetype: modify
+          add: member
+          member: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
+        dest: /opt/install/samba/add_admin_to_group.ldif
+    - name: execute add user to group
+      shell: LDAPTLS_REQCERT=never ldapmodify -H ldaps://{{ arkcase_host_name }} -D CN=Administrator,CN=Users,{{ ldap_base }} -w {{ samba_admin_password }} -x -f /opt/install/samba/add_admin_to_group.ldif
+  when: admin_user is changed
+      
+
+          
+
+      
+      
+      

@@ -19,3 +19,7 @@ samba_realm: "arkcase-ce.local"
 samba_host_ip: "192.168.56.15"
 samba_admin_password: "@rKc@3e"
 samba_server_role: dc
+
+ldap_base: "DC=arkcase-ce,DC=local"
+
+arkcase_admin_password: "@rKc@3e"
