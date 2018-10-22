@@ -14,9 +14,10 @@
     owner: alfresco
   with_items:
     - /opt/data/alfresco
+    - /opt/data/alfresco/alf_data
     - /opt/log/alfresco
     - /opt/app/alfresco
-    - /opt/app/alfresco/install
+    - /opt/install/alfresco
   register: alfresco_folder_structure
 
 - name: enable logrotate for alfresco log folder if necessary

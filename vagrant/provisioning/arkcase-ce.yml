@@ -6,6 +6,6 @@
     - pki
     - samba
     - mariadb
-#    - alfresco
+    - alfresco
     - activemq
     

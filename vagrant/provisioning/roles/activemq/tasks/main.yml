@@ -96,23 +96,10 @@
     - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
   when: activemq_unarchived is changed
 
-- name: create ActiveMQ MariaDB database
-  become: yes
-  mysql_db:
-    login_unix_socket: /opt/data/mariadb/mysql.sock
-    name: activemq
-    encoding: utf8
-    state: present
-
-- name: create ActiveMQ MySQL user
-  become: yes
-  mysql_user:
-    login_unix_socket: /opt/data/mariadb/mysql.sock
-    host: "%"
-    name: activemq
-    password: "@rKc@3S!"
-    priv: '*.*:REQUIRESSL/activemq.*:ALL'
-    state: present 
+- name: create activemq database schema
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
+  with_items:
+    - activemq
     
 - name: jdbc support
   block:
@@ -157,15 +144,19 @@
         dest: /opt/app/activemq/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
         state: link
 
+
+# truststore: /opt/app/activemq/conf/broker.ts
+# keystore: /opt/app/activemq/conf/broker.ts
+
 - name: ActiveMQ keystore and trust store
   block:
-    - name: see if the ActiveMQ keystore was already generated
+    - name: see if ArkCase keys already applied to ActiveMQ keystore
       become: yes
       become_user: activemq
       command: keytool -v -list -keystore /opt/app/activemq/conf/broker.ts -storepass password
       register: key_out
       changed_when: false
-    - name: write ActiveMQ key store and trust store
+    - name: apply ArkCase keys to ActiveMQ
       block:
         - name: backup keystore 
           become: yes
@@ -174,63 +165,18 @@
           with_items:
             - broker.ks
             - broker.ts
-        - name: generate pcks12 key file from the ArkCase client private key
+        - name: copy arkcase trust store and key store to ActiveMQ
           become: yes
-          become_user: activemq
-          command:
-          args:
-            argv:
-              - openssl
-              - pkcs12
-              - -export
-              - -in
-              - /etc/ssl/ca/acm-arkcase-client.cert.pem
-              - -inkey
-              - /etc/ssl/private/acm-arkcase-client.rsa.pem
-              - -out
-              - /opt/app/activemq/conf/activemq.p12
-              - -name
-              - broker
-              - -chain
-              - -CAfile
-              - /etc/ssl/ca/arkcase-ca.crt
-              - -passout
-              - 'pass:password'
-        - name: configure ActiveMQ to use the new pkcs12 key file as its broker key file
-          become: yes
-          become_user: activemq
-          command:
-          args:
-            argv:
-              - keytool
-              - -importkeystore
-              - -deststorepass
-              - password
-              - -destkeypass
-              - password
-              - -destkeystore
-              - /opt/app/activemq/conf/broker.ks
-              - -deststoretype
-              - pkcs12
-              - -srckeystore
-              - /opt/app/activemq/conf/activemq.p12
-              - -srcstoretype
-              - pkcs12
-              - -srcstorepass
-              - password
-              - -alias
-              - broker
-        - name: add ArkCase client cert to ActiveMQ truststore
-          become: yes
-          become_user: activemq
-          java_cert:
-            cert_alias: arkcase_client
-            cert_path: /etc/ssl/ca/acm-arkcase-client.cert.pem
-            keystore_path: /opt/app/activemq/conf/broker.ts
-            keystore_pass: password
-            keystore_create: yes
-            state: present
-      when: "'arkcase_client' not in key_out.stdout"
+          copy:
+            remote_src: yes
+            src: /opt/common/{{ item.from }}
+            dest: /opt/app/activemq/conf/{{ item.to }}
+          with_items:
+            - from: arkcase.ts
+              to: broker.ts
+            - from: arkcase.ks
+              to: broker.ks
+      when: "'arkcase' not in key_out.stdout"
 
 - name: sslContext in activemq.xml
   become: yes

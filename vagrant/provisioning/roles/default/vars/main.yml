@@ -1,16 +1,15 @@
 arkcase_host_name: arkcase-ce.local
 
 mariadb_jdbc_version: 2.2.6
+default_database_password: "@rKc@3S!"
 
 # tomcat_major_version needed to build download URL
 tomcat_major_version: 9
-tomcat_version: 9.0.11
+tomcat_version: 9.0.12
 
 alfresco_release_name: 201806-GA
 alfresco_content_services_version: 6.0.7-ga
 alfresco_records_management_version: 2.7.b
-
-apacheds_version: 2.0.0.AM25
 
 samba_version: 4.9.1
 samba_domain: "DC.ARKCASE-CE"

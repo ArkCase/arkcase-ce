@@ -1,3 +1,245 @@
 - include_tasks: alfresco_user_and_folders.yml
 - include_tasks: alfresco_downloads.yml
+
+- include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
+  with_items:
+    - service: alfresco
+      user: alfresco
+      tomcat_home: /opt/app/alfresco
+      tls_port: 7070
+  register: tomcat_unarchived
   
+- name: remove all files under /webapp, if needed
+  become: yes
+  become_user: alfresco
+  shell: rm -rf /opt/app/alfresco/webapps/*
+  when: tomcat_unarchived is changed
+
+- name: Tomcat shared and modules folders
+  become: yes
+  become_user: alfresco
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /opt/app/alfresco/shared
+    - /opt/app/alfresco/shared/classes
+    - /opt/app/alfresco/shared/lib
+    - /opt/app/alfresco/modules
+    - /opt/app/alfresco/modules/platform
+    - /opt/app/alfresco/modules/share
+
+- name: configure Tomcat shared loader
+  become: yes
+  become_user: alfresco
+  replace:
+    path: /opt/app/alfresco/conf/catalina.properties
+    regexp: '^shared.loader=$'
+    replace: 'shared.loader=${catalina.base}/shared/classes'
+
+- name: link JDBC driver
+  become: yes
+  become_user: alfresco
+  file:
+    src: /opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+    dest: /opt/app/alfresco/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+    state: link
+
+- name: unzip content services
+  become: yes
+  become_user: alfresco
+  unarchive:
+    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip
+    remote_src: true
+    dest: /opt/install/alfresco
+    creates: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/README.txt
+
+
+- name: copy alfresco war files
+  become: yes
+  become_user: alfresco
+  copy:
+    remote_src: yes
+    force: no
+    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/webapps/{{ item }}
+    dest: /opt/app/alfresco/webapps/{{ item }}
+  register: war_file_copy
+  with_items:
+    - alfresco.war
+    - ROOT.war
+    - share.war
+
+- name: copy alfresco.xml and share.xml conf files
+  block:
+    - name: ensure conf/Catalina/localhost exists
+      become: yes
+      become_user: alfresco
+      file:
+        path: /opt/app/alfresco/conf/Catalina/localhost
+        state: directory
+    - name: see if alfresco.xml already exists
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/app/alfresco/conf/Catalina/localhost/alfresco.xml
+      register: alfresco_xml
+    - name: copy alfresco.xml and share.xml if needed
+      become: yes
+      become_user: alfresco
+      copy:
+        remote_src: yes
+        src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/conf/Catalina/localhost/{{item}}
+        dest: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
+      with_items:
+        - alfresco.xml
+        - share.xml
+      when: alfresco_xml.stat.exists == False
+    - name: fix defective paths in alfresco.xml and share.xml
+      become: yes
+      become_user: alfresco
+      replace:
+        path: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
+        regexp: "\\.\\.\\/"
+        replace: ""
+      with_items:
+        - alfresco.xml
+        - share.xml
+      
+- name: copy shared resources
+  block:
+    - name: see if shared resources already copied
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml
+      register: share_config_custom_xml
+    - name: copy shared resources if needed
+      become: yes
+      become_user: alfresco
+      shell: cp -a /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/shared/classes/* /opt/app/alfresco/shared/classes/
+      when: share_config_custom_xml.stat.exists == False
+
+- name: create alfresco database schema
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
+  with_items:
+    - alfresco
+    
+
+- name: copy alfresco-mmt.jar
+  become: yes
+  become_user: alfresco
+  copy:
+    remote_src: true
+    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/bin/alfresco-mmt.jar
+    dest: /opt/app/alfresco/bin/alfresco-mmt.jar
+    
+- name: apply share services amp
+  block:
+    - name: list existing amps in alfresco.war
+      become: yes
+      become_user: alfresco
+      command: java -jar /opt/app/alfresco/bin/alfresco-mmt.jar list /opt/app/alfresco/webapps/alfresco.war
+      register: installed_amps
+      changed_when: false
+    - name: apply share amp if needed
+      become: yes
+      become_user: alfresco
+      command: java -jar /opt/app/alfresco/bin/alfresco-mmt.jar install /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp /opt/app/alfresco/webapps/alfresco.war
+      when: '"Alfresco Share Services AMP" not in installed_amps.stdout'
+      
+- name: copy alfreco-global-properties sample file
+  become: yes
+  become_user: alfresco
+  copy:
+    remote_src: yes
+    force: no
+    src: /opt/app/alfresco/shared/classes/alfresco-global.properties.sample
+    dest: /opt/app/alfresco/shared/classes/alfresco-global.properties
+
+- name: populate alfresco-global.properties
+  become: yes
+  become_user: alfresco
+  blockinfile:
+    path: /opt/app/alfresco/shared/classes/alfresco-global.properties
+    insertbefore: BOF
+    block: |
+      dir.root=/opt/data/alfresco/alf_data
+      db.name=alfresco
+      db.username=alfresco
+      db.password={{ default_database_password }}
+      db.driver=org.mariadb.jdbc.Driver
+      db.url=jdbc:mysql://arkcase-ce.local:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=true&serverSslCert=/etc/ssl/ca/arkcase-ca.crt
+      db.schema.update=true
+      db.pool.max=50
+      db.pool.validate.query=SELECT 1
+      alfresco.context=alfresco
+      alfresco.host=arkcase-ce.local
+      alfresco.port=7070
+      alfresco.protocol=https
+      share.context=share
+      share.host=arkcase-ce.local
+      share.port=7070
+      share.protocol=https
+      # audit app support
+      audit.enabled=true
+      jodconverter.enabled=false
+      ooo.enabled=false
+      external.authentication.proxyUserName=admin
+      external.authentication.enabled=true
+      external.authentication.defaultAdministratorUserNames=admin
+      external.authentication.proxyHeader=X-Alfresco-Remote-User
+      synchronization.synchronizeChangesOnly=false
+      synchronization.syncWhenMissingPeopleLogIn=true
+      synchronization.syncOnStartup=true
+      ldap.authentication.active=true
+      ldap.authentication.allowGuestLogin=false
+      ldap.authentication.java.naming.factory.initial=com.sun.jndi.ldap.LdapCtxFactory
+      ldap.authentication.java.naming.security.authentication=simple
+      ldap.synchronization.java.naming.security.authentication=simple
+      ldap.authentication.escapeCommasInBind=false
+      ldap.authentication.escapeCommasInUid=false
+      ldap.authentication.defaultAdministratorUserNames=
+      ldap.authentication.authenticateFTP=false
+      ldap.synchronization.active=true
+      ldap.synchronization.queryBatchSize=0
+      ldap.synchronization.attributeBatchSize=0
+      ldap.synchronization.modifyTimestampAttributeName=whenChanged
+      ldap.synchronization.userFirstNameAttributeName=givenName
+      ldap.synchronization.userLastNameAttributeName=sn
+      ldap.synchronization.userEmailAttributeName=mail
+      ldap.synchronization.userOrganizationalIdAttributeName=o
+      ldap.synchronization.defaultHomeFolderProvider=largeHomeFolderProvider
+      ldap.synchronization.groupIdAttributeName=cn
+      ldap.synchronization.groupDisplayNameAttributeName=displayName
+      ldap.synchronization.groupMemberAttributeName=member
+      ldap.synchronization.enableProgressEstimation=true
+      ldap.authentication.java.naming.read.timeout=0
+      #################################################################
+      # For Active Directory / Samba
+      authentication.chain=external1:external,ldap1:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+      ldap.synchronization.groupQuery=objectClass\=group
+      ldap.synchronization.groupDifferentialQuery=(&(objectclass\=group)(!(whenChanged<\={0})))
+      ldap.synchronization.personQuery=objectClass\=user
+      ldap.synchronization.personDifferentialQuery=(&(objectClass\=user)(!(whenChanged<\={0})))
+      ldap.synchronization.timestampFormat=yyyyMMddHHmmss'.0Z'
+      ldap.synchronization.groupType=group
+      ldap.synchronization.personType=user
+      ldap.synchronization.userIdAttributeName=samAccountName
+      #### local Samba (arkcase-ce.local)
+      ldap.authentication.java.naming.provider.url=ldaps://arkcase-ce.local:636
+      ldap.synchronization.java.naming.security.principal=CN=Administrator,CN=Users,{{ ldap_base }}
+      ldap.synchronization.java.naming.security.credentials={{ samba_admin_password }}
+      ldap.synchronization.groupSearchBase=OU=Groups,OU=ArkCase,{{ ldap_base }}
+      ldap.synchronization.userSearchBase=OU=Users,OU=ArkCase,{{ ldap_base}}
+      ldap.authentication.userNameFormat=%s@arkcase-ce.local
+      # from John Shinnick
+      system.usages.enabled=false
+      cifs.enabled=false
+      sync.mode=OFF
+      syncService.mode=OFF
+      activities.feed.notifier.enabled=false
+      sync.pullJob.enabled=false
+      sync.pushJob.enabled=false
+      alfresco.cluster.enabled=false
+
+
