@@ -132,20 +132,31 @@
     remote_src: true
     src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/bin/alfresco-mmt.jar
     dest: /opt/app/alfresco/bin/alfresco-mmt.jar
+
+- name: unzip RMA zip file if needed
+  become: yes
+  become_user: alfresco
+  unarchive:
+    src: /opt/install/alfresco/alfresco-rm-community-{{ alfresco_records_management_version }}.zip
+    remote_src: yes
+    dest: /opt/install/alfresco
+    creates: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
+
     
-- name: apply share services amp
-  block:
-    - name: list existing amps in alfresco.war
-      become: yes
-      become_user: alfresco
-      command: java -jar /opt/app/alfresco/bin/alfresco-mmt.jar list /opt/app/alfresco/webapps/alfresco.war
-      register: installed_amps
-      changed_when: false
-    - name: apply share amp if needed
-      become: yes
-      become_user: alfresco
-      command: java -jar /opt/app/alfresco/bin/alfresco-mmt.jar install /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp /opt/app/alfresco/webapps/alfresco.war
-      when: '"Alfresco Share Services AMP" not in installed_amps.stdout'
+- name: apply alfresco modules
+  include_tasks: "{{ role_path }}/tasks/apply-amp.yml"
+  loop:
+    - title: Alfresco Share Services AMP
+      amp_path: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp
+      target_war: alfresco.war
+    - title: Records Management
+      amp_path: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
+      target_war: alfresco.war
+    - title: Record Management
+      amp_path: /opt/install/alfresco/alfresco-rm-community-share-{{ alfresco_records_management_version }}.amp
+      target_war: share.war
+  loop_control:
+    loop_var: amp
       
 - name: copy alfreco-global-properties sample file
   become: yes

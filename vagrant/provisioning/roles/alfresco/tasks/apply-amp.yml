@@ -1,0 +1,17 @@
+- name: apply {{ amp.title }} amp
+  block:
+    - name: capture amp title
+      set_fact:
+        amp_title: "{{ amp.title }}"
+    - name: list existing amps in {{ amp.target_war }}
+      become: yes
+      become_user: alfresco
+      command: java -jar /opt/app/alfresco/bin/alfresco-mmt.jar list /opt/app/alfresco/webapps/{{ amp.target_war }}
+      register: installed_amps
+      changed_when: false
+    - name: apply {{ amp.title }}  amp if needed
+      become: yes
+      become_user: alfresco
+      command: java -jar /opt/app/alfresco/bin/alfresco-mmt.jar install {{ amp.amp_path }} /opt/app/alfresco/webapps/{{ amp.target_war }}
+      when: 'amp_title not in installed_amps.stdout'
+

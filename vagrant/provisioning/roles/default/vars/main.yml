@@ -9,7 +9,7 @@ tomcat_version: 9.0.12
 
 alfresco_release_name: 201806-GA
 alfresco_content_services_version: 6.0.7-ga
-alfresco_records_management_version: 2.7.b
+alfresco_records_management_version: 3.0.a
 
 samba_version: 4.9.1
 samba_domain: "DC.ARKCASE-CE"
