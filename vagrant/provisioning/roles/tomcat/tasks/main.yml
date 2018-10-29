@@ -1,4 +1,4 @@
-- name: Install Tomcat for {{ item.service }}
+- name: Install Tomcat for {{ tc.service }}
   block:
     - name: install prerequisites to build native library
       become: yes
@@ -14,58 +14,58 @@
           dest: /opt/common/apache-tomcat-{{ tomcat_version }}.tar.gz
           owner: root
           url: https://www-us.apache.org/dist/tomcat/tomcat-{{ tomcat_major_version }}/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz
-    - name: unarchive {{ item.service }} Tomcat
+    - name: unarchive {{ tc.service }} Tomcat
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       unarchive:
         src: /opt/common/apache-tomcat-{{ tomcat_version }}.tar.gz
         remote_src: yes
-        dest: "{{ item.tomcat_home }}"
+        dest: "{{ tc.tomcat_home }}"
         extra_opts:
           - --strip-components=1
-        creates: "{{ item.tomcat_home }}/README.md"
+        creates: "{{ tc.tomcat_home }}/README.md"
     - name: create folder for native library build
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       file:
-        path: "{{ item.tomcat_home }}/bin/native"
+        path: "{{ tc.tomcat_home }}/bin/native"
         state: directory
     - name: unarchive Tomcat native library
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       unarchive:
-        src: "{{ item.tomcat_home }}/bin/tomcat-native.tar.gz"
+        src: "{{ tc.tomcat_home }}/bin/tomcat-native.tar.gz"
         remote_src: yes
-        dest: "{{ item.tomcat_home }}/bin/native"
+        dest: "{{ tc.tomcat_home }}/bin/native"
         extra_opts:
           - --strip-components=1
-        creates: "{{ item.tomcat_home }}/bin/native/README.txt"
+        creates: "{{ tc.tomcat_home }}/bin/native/README.txt"
     - name: build Tomcat native library
       become: yes
-      become_user: "{{ item.user }}"
-      shell: ./configure --with-apr=/usr/bin/apr-1-config --with-java-home=/usr/lib/jvm/java --with-ssl=yes --prefix={{ item.tomcat_home }}
+      become_user: "{{ tc.user }}"
+      shell: ./configure --with-apr=/usr/bin/apr-1-config --with-java-home=/usr/lib/jvm/java --with-ssl=yes --prefix={{ tc.tomcat_home }}
       args:
-        chdir: "{{ item.tomcat_home }}/bin/native/native"
-        creates: "{{ item.tomcat_home }}/bin/native/native/config.log"
+        chdir: "{{ tc.tomcat_home }}/bin/native/native"
+        creates: "{{ tc.tomcat_home }}/bin/native/native/config.log"
     - name: make
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       command: make
       args:
-        chdir: "{{ item.tomcat_home }}/bin/native/native"
-        creates: "{{ item.tomcat_home }}/bin/native/native/.libs/libtcnative-1.so"
+        chdir: "{{ tc.tomcat_home }}/bin/native/native"
+        creates: "{{ tc.tomcat_home }}/bin/native/native/.libs/libtcnative-1.so"
     - name: make install
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       command: make install
       args:
-        chdir: "{{ item.tomcat_home }}/bin/native/native"
-        creates: "{{ item.tomcat_home }}/lib/libtcnative-1.so"
+        chdir: "{{ tc.tomcat_home }}/bin/native/native"
+        creates: "{{ tc.tomcat_home }}/lib/libtcnative-1.so"
     - name: add native lib folder to LD_LIB_PATH
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       copy:
-        dest: "{{ item.tomcat_home }}/bin/setenv.sh"
+        dest: "{{ tc.tomcat_home }}/bin/setenv.sh"
         mode: u+x
         force: no
         content: |
@@ -74,38 +74,38 @@
           export LD_LIBRARY_PATH
     - name: configure Tomcat to use native connector
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       replace:
-        path: "{{ item.tomcat_home }}/conf/server.xml"
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
         backup: yes
         regexp: '(^.*)AprLifecycleListener" SSLEngine(.*$)'
         replace: '\1AprLifecycleListener" useAprConnector="true" SSLEngine\2'
 #    - name: copy TLS files to Tomcat conf folder
 #      become: yes
-#      become_user: "{{ item.user }}"
+#      become_user: "{{ tc.user }}"
 #      copy:
 #        src: "{{ tls.src }}"
 #        dest: "{{ tls.dest }}"
 #        mode: 0600
 #      loop:
 #        - src: /etc/ssl/ca/acm-arkcase-client.cert.pem
-#          dest: "{{ item.tomcat_home }}/conf/acm-arkcase-client.cert.pem"
+#          dest: "{{ tc.tomcat_home }}/conf/acm-arkcase-client.cert.pem"
 #        - src: /etc/ssl/private/acm-arkcase-client.rsa.pem
-#          dest: "{{ item.tomcat_home }}/conf/acm-arkcase-client.rsa.pem"
+#          dest: "{{ tc.tomcat_home }}/conf/acm-arkcase-client.rsa.pem"
 #        - src: /etc/ssl/ca/arkcase-ca.crt
-#          dest: "{{ item.tomcat_home }}/conf/arkcase-ca.crt"
+#          dest: "{{ tc.tomcat_home }}/conf/arkcase-ca.crt"
 #      loop_control:
 #        loop_var: tls
     - name: set TLS options in server.xml
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       blockinfile:
-        path: "{{ item.tomcat_home }}/conf/server.xml"
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
         insertbefore: '^.*</Service>.*$'
         marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - TLS CONFIG -->"
         block: |
-          <!-- {{ item.service}} Connector -->
-          <Connector port="{{ item.tls_port }}"
+          <!-- {{ tc.service}} Connector -->
+          <Connector port="{{ tc.tls_port }}"
             maxThreads="150" SSLEnabled="true" secure="true" scheme="https"
             maxHttpHeaderSize="32768"
             connectionTimeout="40000"
@@ -121,15 +121,26 @@
           </Connector>
     - name: set JAVA_OPTS
       become: yes
-      become_user: "{{ item.user }}"
+      become_user: "{{ tc.user }}"
       blockinfile:
-        path: "{{ item.tomcat_home }}/bin/setenv.sh"
+        path: "{{ tc.tomcat_home }}/bin/setenv.sh"
         create: yes
         mode: u+x
         insertbefore: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
         block: |
           export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=/opt/common/arkcase.ks -Djavax.net.ssl.trustStore=/opt/common/arkcase.ts"
+    - name: set other environment variables
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/bin/setenv.sh"
+        create: yes
+        mode: u+x
+        insertbefore: EOF
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - ENV VARS"
+        block: |
+          export CATALINA_OUT="{{ tc.catalina_out }}"
         
 
         

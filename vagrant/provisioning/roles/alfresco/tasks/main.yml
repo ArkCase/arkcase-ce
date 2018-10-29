@@ -2,11 +2,14 @@
 - include_tasks: alfresco_downloads.yml
 
 - include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
-  with_items:
+  loop:
     - service: alfresco
       user: alfresco
       tomcat_home: /opt/app/alfresco
       tls_port: 7070
+      catalina_out: /opt/log/alfresco/catalina.out
+  loop_control:
+    loop_var: tc
   register: tomcat_unarchived
   
 - name: remove all files under /webapp, if needed
