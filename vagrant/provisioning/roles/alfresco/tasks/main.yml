@@ -257,3 +257,37 @@
       alfresco.cluster.enabled=false
 
 
+- name: configure alfresco.log location
+  block:
+    - name: see if log4j.properties already exists
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/app/alfresco/shared/classes/log4j.properties
+      register: log4j_exists
+    - name: unzip default log4j.properties
+      become: yes
+      become_user: alfresco
+      command: unzip -d /opt/app/alfresco/shared/classes/alfresco/extension -j /opt/app/alfresco/webapps/alfresco.war WEB-INF/classes/log4j.properties
+      when: log4j_exists.stat.exists == False
+      register: log4j_unzipped
+    - name: configure alfresco.log location
+      become: yes
+      become_user: alfresco
+      replace:
+        path: /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties
+        regexp: "log4j.appender.File.File=alfresco.log"
+        replace: "log4j.appender.File.File=/opt/log/alfresco/alfresco.log"
+      when: log4j_unzipped
+    - name: rename log4j.properties
+      become: yes
+      become_user: alfresco
+      command: mv /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties /opt/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties
+      when: log4j_unzipped
+    - name: remove default log4j.properties
+      become: yes
+      become_user: alfresco
+      command: zip -d /opt/app/alfresco/webapps/alfresco.war WEB-INF/classes/log4j.properties
+      when: log4j_unzipped
+      
+      

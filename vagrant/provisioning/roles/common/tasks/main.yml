@@ -1,13 +1,10 @@
-- name: get default vars
-  include_vars: ../../default/vars/main.yml
-
 - name: set hostname
   become: yes
   hostname:
     name: "{{ arkcase_host_name }}"
 
 - name: check for virtualbox guest additions
-  stat: path=/usr/share/virtualbox/VBoxGuestAdditions.iso
+  stat: path=/usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso
   register: virtualbox_guest_additions
 
 - name: update all packages
@@ -22,7 +19,6 @@
   ignore_errors: true
   register: reboot_hint
   changed_when: false
-
 
 - name: rebuild guest additions if necessary
   import_tasks: "{{ role_path }}/../virtualbox/tasks/reinstall-guest-additions.yml"

@@ -1,7 +1,3 @@
-- name: include default vars
-  include_vars:
-    file: ../../default/vars/main.yml
-
 - name: activemq user
   become: yes
   user:
@@ -33,7 +29,7 @@
     - name: "ActiveMQ"
       dest: "/opt/app/activemq/install/apache-activemq-{{ activemq_version }}-bin.tar.gz"
       owner: "activemq"
-      url: "http://www.apache.org/dyn/closer.cgi?filename=/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz&action=download"
+      url: "https://archive.apache.org/dist/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz"
 
 - name: unarchive ActiveMQ distribution
   become: yes

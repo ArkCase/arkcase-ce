@@ -1,6 +1,3 @@
-- name: get default vars
-  include_vars: ../../default/vars/main.yml
-
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   with_items:
     - name: Alfresco Content Services CE
