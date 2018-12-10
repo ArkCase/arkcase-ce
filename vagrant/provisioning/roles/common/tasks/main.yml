@@ -75,5 +75,6 @@
     - /opt/log
     - /opt/install
     - /opt/common
+    - /opt/tmp
 
 

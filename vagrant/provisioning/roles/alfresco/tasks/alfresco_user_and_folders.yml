@@ -18,6 +18,7 @@
     - /opt/log/alfresco
     - /opt/app/alfresco
     - /opt/install/alfresco
+    - /opt/tmp/alfresco
   register: alfresco_folder_structure
 
 - name: enable logrotate for alfresco log folder if necessary

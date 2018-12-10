@@ -8,6 +8,8 @@
       tomcat_home: /opt/app/alfresco
       tls_port: 7070
       catalina_out: /opt/log/alfresco/catalina.out
+      catalina_temp: /opt/tmp/alfresco
+      log_folder: /opt/log/alfresco
   loop_control:
     loop_var: tc
   register: tomcat_unarchived
@@ -144,7 +146,6 @@
     remote_src: yes
     dest: /opt/install/alfresco
     creates: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
-
     
 - name: apply alfresco modules
   include_tasks: "{{ role_path }}/tasks/apply-amp.yml"
@@ -152,10 +153,10 @@
     - title: Alfresco Share Services AMP
       amp_path: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp
       target_war: alfresco.war
-    - title: Records Management
+    - title: Governance Services
       amp_path: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
       target_war: alfresco.war
-    - title: Record Management
+    - title: AGS Share
       amp_path: /opt/install/alfresco/alfresco-rm-community-share-{{ alfresco_records_management_version }}.amp
       target_war: share.war
   loop_control:
@@ -259,11 +260,11 @@
 
 - name: configure alfresco.log location
   block:
-    - name: see if log4j.properties already exists
+    - name: see if ce-log4j.properties already exists
       become: yes
       become_user: alfresco
       stat:
-        path: /opt/app/alfresco/shared/classes/log4j.properties
+        path: /opt/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties
       register: log4j_exists
     - name: unzip default log4j.properties
       become: yes
@@ -278,16 +279,47 @@
         path: /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties
         regexp: "log4j.appender.File.File=alfresco.log"
         replace: "log4j.appender.File.File=/opt/log/alfresco/alfresco.log"
-      when: log4j_unzipped
+      when: log4j_unzipped is changed
     - name: rename log4j.properties
       become: yes
       become_user: alfresco
       command: mv /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties /opt/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties
-      when: log4j_unzipped
+      when: log4j_unzipped is changed
     - name: remove default log4j.properties
       become: yes
       become_user: alfresco
       command: zip -d /opt/app/alfresco/webapps/alfresco.war WEB-INF/classes/log4j.properties
-      when: log4j_unzipped
+      when: log4j_unzipped is changed
+      
+- name: configure share.log location
+  block:
+    - name: see if temp share log4j.properties already exists
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/tmp/alfresco/WEB-INF/classes/log4j.properties
+      register: share_log4j_exists
+    - name: unzip share default log4j.properties
+      become: yes
+      become_user: alfresco
+      command: unzip -d /opt/tmp/alfresco /opt/app/alfresco/webapps/share.war WEB-INF/classes/log4j.properties
+      when: share_log4j_exists.stat.exists == False
+      register: share_log4j_unzipped
+    - name: configure share.log location
+      become: yes
+      become_user: alfresco
+      replace:
+        path: /opt/tmp/alfresco/WEB-INF/classes/log4j.properties
+        regexp: "log4j.appender.File.File=share.log"
+        replace: "log4j.appender.File.File=/opt/log/alfresco/share.log"
+      when: share_log4j_unzipped is changed
+      register: share_log4j_updated
+    - name: update share.war with new share location
+      become: yes
+      become_user: alfresco
+      command: zip -r /opt/app/alfresco/webapps/share.war WEB-INF
+      args:
+        chdir: /opt/tmp/alfresco
+      when: share_log4j_updated is changed
       
       

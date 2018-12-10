@@ -13,5 +13,5 @@
       become: yes
       become_user: alfresco
       command: java -jar /opt/app/alfresco/bin/alfresco-mmt.jar install {{ amp.amp_path }} /opt/app/alfresco/webapps/{{ amp.target_war }}
-      when: 'amp_title not in installed_amps.stdout'
+      when: 'amp.title not in installed_amps.stdout'
 

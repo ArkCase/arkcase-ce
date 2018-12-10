@@ -80,22 +80,22 @@
         backup: yes
         regexp: '(^.*)AprLifecycleListener" SSLEngine(.*$)'
         replace: '\1AprLifecycleListener" useAprConnector="true" SSLEngine\2'
-#    - name: copy TLS files to Tomcat conf folder
-#      become: yes
-#      become_user: "{{ tc.user }}"
-#      copy:
-#        src: "{{ tls.src }}"
-#        dest: "{{ tls.dest }}"
-#        mode: 0600
-#      loop:
-#        - src: /etc/ssl/ca/acm-arkcase-client.cert.pem
-#          dest: "{{ tc.tomcat_home }}/conf/acm-arkcase-client.cert.pem"
-#        - src: /etc/ssl/private/acm-arkcase-client.rsa.pem
-#          dest: "{{ tc.tomcat_home }}/conf/acm-arkcase-client.rsa.pem"
-#        - src: /etc/ssl/ca/arkcase-ca.crt
-#          dest: "{{ tc.tomcat_home }}/conf/arkcase-ca.crt"
-#      loop_control:
-#        loop_var: tls
+    - name: configure access log file location
+      become: yes
+      become_user: "{{ tc.user }}"
+      replace:
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        backup: yes
+        regexp: 'directory="logs"'
+        replace: 'directory="{{ tc.log_folder }}"'
+    - name: configure other Tomcat log file locations
+      become: yes
+      become_user: "{{ tc.user }}"
+      replace:
+        path: "{{ tc.tomcat_home }}/conf/logging.properties"
+        backup: yes
+        regexp: '\$\{catalina\.base\}\/logs'
+        replace: "{{ tc.log_folder }}"
     - name: set TLS options in server.xml
       become: yes
       become_user: "{{ tc.user }}"
@@ -141,6 +141,9 @@
         marker: "# {mark} ANSIBLE MANAGED BLOCK - ENV VARS"
         block: |
           export CATALINA_OUT="{{ tc.catalina_out }}"
+          export CATALINA_PID="{{ tc.catalina_temp }}/catalina.pid"
+          export CATALINA_TMPDIR="{{ tc.catalina_temp }}"
+          
         
 
         
