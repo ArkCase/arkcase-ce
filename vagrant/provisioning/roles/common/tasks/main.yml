@@ -77,4 +77,9 @@
     - /opt/common
     - /opt/tmp
 
+- name: add arkcase-ce.local to hosts file
+  lineinfile:
+    path: /etc/hosts
+    line: "192.168.56.15 arkcase-ce.local"
+    
 

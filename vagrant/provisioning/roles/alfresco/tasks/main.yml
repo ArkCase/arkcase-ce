@@ -323,3 +323,122 @@
       when: share_log4j_updated is changed
       
       
+- name: Alfresco systemd unit file
+  become: yes
+  copy:
+    src: "{{ role_path }}/files/alfresco.service"
+    dest: /etc/systemd/system/alfresco.service
+    
+- name: alfresco logrotate
+  become: yes
+  copy:
+    src: "{{ role_path }}/files/alfresco"
+    dest: /etc/logrotate.d/alfresco
+
+- name: enable Alfresco to start on boot
+  become: yes
+  systemd:
+    name: alfresco
+    enabled: yes
+    masked: no
+
+- name: start Alfresco
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: alfresco
+    state: started
+
+- name: wait for Alfresco startup to finish
+  wait_for:
+    port: 7070
+    delay: 3
+    timeout: 180
+
+- name: remove the cookie.txt file if it exists
+  file:
+    path: cookie.txt
+    state: absent
+  changed_when: false
+    
+- name: login to Share
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://arkcase-ce.local:7070/share/page/dologin"
+  changed_when: false
+
+- name: check if login succeeded
+  command: cat cookie.txt
+  register: cookie_out
+  failed_when: '"alfLogin" not in cookie_out.stdout'
+  changed_when: false
+
+- name: get the CSRFToken
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://arkcase-ce.local:7070/share/service/modules/authenticated?a=user"
+  changed_when: false
+
+- name: check if we got the CSRFToken
+  command: cat cookie.txt
+  register: csrf_cookie_out
+  failed_when: '"Alfresco-CSRFToken" not in csrf_cookie_out.stdout'
+  changed_when: false
+
+- name: parse the CSRFToken
+  shell: egrep ^arkcase-ce.local cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
+  register: csrftoken_parsed
+  changed_when: false
+
+- name: decode csrftoken
+  set_fact:
+    csrftoken: "{{ csrftoken_parsed.stdout|urldecode }}"
+
+# Because we have to call a /share web script, we need the cookie jar and the CSRF token.
+# When we call an /alfresco web script we only need basic auth.
+- name: create acm share site
+  command: curl -k -sS --user admin:admin -H 'Content-Type{{ ":" }} application/json' -H 'Accept{{ ":" }} */*' -H 'Alfresco-CSRFToken{{ ":" }} {{ csrftoken }}' --cookie cookie.txt --cookie-jar cookie.txt -X POST 'https://arkcase-ce.local{{ ":" }}7070/share/service/modules/create-site' --data '{ "title"{{ ":" }} "acm","shortName"{{ ":" }} "acm","description"{{ ":" }} "ACM Collaboration Site","sitePreset"{{ ":" }} "site-dashboard","type"{{ ":" }} "{http{{ ":" }}//www.alfresco.org/model/site/1.0}site","visibility"{{ ":" }} "PUBLIC","compliance"{{ ":" }} "{http{{ ":" }}//www.alfresco.org/model/recordsmanagement/1.0}rmsite"}' --compressed
+  register: acm_site_out
+  failed_when: '"Success" not in acm_site_out.stdout and "error.duplicateShortName" not in acm_site_out.stdout'
+  changed_when: '"Success" in acm_site_out.stdout'
+
+- name: list the document library, so we can then add some folders
+  uri:
+    url: https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+  register: doclib_out
+  failed_when: '"nodeRef" not in doclib_out.content'
+
+- name: see what folders already exist
+  uri:
+    url: "https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+  register: existing_folders_out
+
+- name: ensure the right folders are in the document library
+  uri:
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/site/folder/acm/documentlibrary"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      name: "{{ item }}"
+      title: "{{ item }}"
+  register: folder_create_out
+  failed_when: '"site" not in folder_create_out.content'
+  with_items:
+    - "Case Files"
+    - "Complaints"
+    - "Document Repositories"
+    - "Expenses"
+    - "People"
+    - "Tasks"
+    - "Timesheets"
+    - "User Profile"
+  when: 'item not in existing_folders_out.content'
+
