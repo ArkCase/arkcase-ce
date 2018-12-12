@@ -390,13 +390,16 @@
   set_fact:
     csrftoken: "{{ csrftoken_parsed.stdout|urldecode }}"
 
-# Because we have to call a /share web script, we need the cookie jar and the CSRF token.
-# When we call an /alfresco web script we only need basic auth.
 - name: create acm share site
-  command: curl -k -sS --user admin:admin -H 'Content-Type{{ ":" }} application/json' -H 'Accept{{ ":" }} */*' -H 'Alfresco-CSRFToken{{ ":" }} {{ csrftoken }}' --cookie cookie.txt --cookie-jar cookie.txt -X POST 'https://arkcase-ce.local{{ ":" }}7070/share/service/modules/create-site' --data '{ "title"{{ ":" }} "acm","shortName"{{ ":" }} "acm","description"{{ ":" }} "ACM Collaboration Site","sitePreset"{{ ":" }} "site-dashboard","type"{{ ":" }} "{http{{ ":" }}//www.alfresco.org/model/site/1.0}site","visibility"{{ ":" }} "PUBLIC","compliance"{{ ":" }} "{http{{ ":" }}//www.alfresco.org/model/recordsmanagement/1.0}rmsite"}' --compressed
-  register: acm_site_out
-  failed_when: '"Success" not in acm_site_out.stdout and "error.duplicateShortName" not in acm_site_out.stdout'
-  changed_when: '"Success" in acm_site_out.stdout'
+  include_tasks: create-site.yml
+  vars:
+    s_title: "acm"
+    s_name: "acm"
+    s_description: "ArkCase Collaboration Site"
+    s_preset: "site-dashboard"
+    s_type: "{http://www.alfresco.org/model/site/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/recordsmanagement/1.0}rmsite"
+    s_csrftoken: "{{ csrftoken }}"
 
 - name: list the document library, so we can then add some folders
   uri:
@@ -442,3 +445,81 @@
     - "User Profile"
   when: 'item not in existing_folders_out.content'
 
+- name: create records management share site
+  include_tasks: create-site.yml
+  vars:
+    s_title: "Records Management"
+    s_name: "rm"
+    s_description: "Records Management Site"
+    s_preset: "rm-site-dashboard"
+    s_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/dod5015/1.0}site"
+    s_csrftoken: "{{ csrftoken }}"
+
+- name: fetch the RM container
+  uri:
+    url: https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/containers/rm
+    validate_certs: false
+    user: admin
+    password: admin
+  register: rm_container_out
+
+# the join filter is just to lift the only array member into a string...
+# there will be only 1 node with name documentLibrary, so this JSON filter
+# will always return a single-element array.
+- name: find the container node ref
+  set_fact:
+    container_noderef: "{{ rm_container_out.json | json_query(noderef_query) | join(',') }}"
+  vars:
+    noderef_query: "containers[?name=='documentLibrary'].nodeRef"
+
+- name: create the top-level category
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ container_noderef }}"
+    c_name: "ACM"
+
+- name: get the RM site containers, so we can find the ACM noderef
+  uri:
+    url: "https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
+    user: admin
+    password: admin
+    validate_certs: no
+  register: rm_existing_folders_out
+
+- name: find the ACM folder noderef
+  set_fact:
+    acm_category_noderef: "{{ rm_existing_folders_out.json | json_query(rm_noderef_query) | join(',') }}"
+  vars:
+    rm_noderef_query: "items[?name=='ACM'].nodeRef"
+
+- name: create Case Files category
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ acm_category_noderef }}"
+    c_name: "Case Files"
+
+- name: create Complaints category
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ acm_category_noderef }}"
+    c_name: "Complaints"
+
+- name: create Document Repositories category
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ acm_category_noderef }}"
+    c_name: "Document Repositories"
+
+- name: create Requests category
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ acm_category_noderef }}"
+    c_name: "Requests"
+
+- name: create Tasks category
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ acm_category_noderef }}"
+    c_name: "Tasks"
+    
