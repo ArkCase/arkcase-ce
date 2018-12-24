@@ -24,13 +24,27 @@
     
     samba_version: 4.9.1
     samba_domain: "DC.ARKCASE-CE"
-    # samba_realm becomes the directory contact e.g. dc=arkcase-ce,dc=local
+    # samba_realm becomes the directory context e.g. dc=arkcase-ce,dc=local
     samba_realm: "arkcase-ce.local"
     samba_host_ip: "192.168.56.15"
     samba_admin_password: "@rKc@3e"
     samba_server_role: dc
 
     ldap_base: "DC=arkcase-ce,DC=local"
+
+    ldap_groups:
+      - description: External users
+        name: ARKCASE_EXTERNAL
+      - description: Consumers (read-only) users
+        name: ARKCASE_CONSUMER
+      - description: Contributors (editors)
+        name: ARKCASE_CONTRIBUTOR
+      - description: System administrators
+        name: ARKCASE_ADMINISTRATOR
+      - description: Supervisors (approvers)
+        name: ARKCASE_SUPERVISOR
+      - description: Entity administrators (maintain person and org records)
+        name: ARKCASE_ENTITY_ADMINISTRATOR
 
     arkcase_admin_password: "@rKc@3e"
 

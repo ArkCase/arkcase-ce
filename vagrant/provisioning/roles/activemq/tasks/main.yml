@@ -12,7 +12,7 @@
     state: directory
     group: activemq
     owner: activemq
-  with_items:
+  loop:
     - /opt/data/activemq
     - /opt/log/activemq
     - /opt/app/activemq
@@ -21,11 +21,11 @@
 
 - name: enable logrotate for activemq log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
-  with_items:
+  loop:
     - activemq
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  with_items:
+  loop:
     - name: "ActiveMQ"
       dest: "/opt/app/activemq/install/apache-activemq-{{ activemq_version }}-bin.tar.gz"
       owner: "activemq"
@@ -50,7 +50,7 @@
     path: /opt/app/activemq/bin/linux-x86-64/activemq
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
-  with_items:
+  loop:
     - { regexp: "^ACTIVEMQ_HOME=", line: "ACTIVEMQ_HOME=/opt/app/activemq" }
     - { regexp: "^#RUN_AS_USER=$", line: "RUN_AS_USER=activemq" }
   when: activemq_unarchived is changed
@@ -62,7 +62,7 @@
     path: /opt/app/activemq/bin/linux-x86-64/wrapper.conf
     regexp: "{{ item.regexp }}"
     replace: "{{ item.line }}"
-  with_items:
+  loop:
     - { regexp: "^wrapper\\.java\\.additional\\.11=\\-Dactivemq.data=%ACTIVEMQ_DATA%", line: "wrapper.java.additional.11=-Dactivemq.data=/opt/data/activemq" }
     - { regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log", line: "wrapper.logfile=/opt/log/activemq/wrapper.log" }
 
@@ -73,7 +73,7 @@
     path: /opt/app/activemq/conf/log4j.properties
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
-  with_items:
+  loop:
     - { regexp: "^log4j\\.appender\\.logfile\\.file=\\$\\{activemq\\.data\\}\\/activemq\\.log", replace: "log4j.appender.logfile.file=/opt/log/activemq/activemq.log" }
     - { regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log", replace: "log4j.appender.audit.file=/opt/log/activemq/audit.log" }
 
@@ -84,7 +84,7 @@
     path: /opt/app/activemq/bin/linux-x86-64/wrapper.conf
     insertafter: "{{ item.after }}"
     line: "{{ item.line }}"
-  with_items:
+  loop:
     - { after: "^wrapper\\.java\\.additional\\.12.*", line: "wrapper.java.additional.13=-Dcom.sun.management.jmxremote.port=1616" }
     - { after: "^wrapper\\.java\\.additional\\.13.*", line: "wrapper.java.additional.14=-Dcom.sun.management.jmxremote.authenticate=false" }
     - { after: "^wrapper\\.java\\.additional\\.14.*", line: "wrapper.java.additional.15=-Dcom.sun.management.jmxremote.ssl=false" }
@@ -94,7 +94,7 @@
 
 - name: create activemq database schema
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
-  with_items:
+  loop:
     - activemq
     
 - name: jdbc support
@@ -158,7 +158,7 @@
           become: yes
           become_user: activemq
           command: mv /opt/app/activemq/conf/{{ item }} /opt/app/activemq/conf/{{ item }}.original
-          with_items:
+          loop:
             - broker.ks
             - broker.ts
         - name: copy arkcase trust store and key store to ActiveMQ
@@ -167,7 +167,7 @@
             remote_src: yes
             src: /opt/common/{{ item.from }}
             dest: /opt/app/activemq/conf/{{ item.to }}
-          with_items:
+          loop:
             - from: arkcase.ts
               to: broker.ts
             - from: arkcase.ks
@@ -218,7 +218,7 @@
     path: /opt/app/activemq/conf/activemq.xml
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
-  with_items:
+  loop:
     - { regexp: 'createTablesOnStartup="true"', replace: 'createTablesOnStartup="false"' }
     - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
     - { regexp: 'uri="tcp', replace: 'uri="ssl' }

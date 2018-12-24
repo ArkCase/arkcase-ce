@@ -12,7 +12,7 @@
     state: directory
     group: alfresco
     owner: alfresco
-  with_items:
+  loop:
     - /opt/data/alfresco
     - /opt/data/alfresco/alf_data
     - /opt/log/alfresco
@@ -23,6 +23,6 @@
 
 - name: enable logrotate for alfresco log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
-  with_items:
+  loop:
     - alfresco
 

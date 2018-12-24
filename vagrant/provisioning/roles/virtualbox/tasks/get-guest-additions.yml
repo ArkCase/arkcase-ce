@@ -6,7 +6,7 @@
 
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  with_items:
+  loop:
     - name: VirtualBox_Guest_Additions
       dest: /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso
       owner: root

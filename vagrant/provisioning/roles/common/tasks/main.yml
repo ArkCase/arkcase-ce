@@ -68,7 +68,7 @@
   file:
     path: "{{ item }}"
     state: directory
-  with_items:
+  loop:
     - /opt
     - /opt/app
     - /opt/data

@@ -26,7 +26,7 @@
   file:
     path: "{{ item }}"
     state: directory
-  with_items:
+  loop:
     - /opt/app/alfresco/shared
     - /opt/app/alfresco/shared/classes
     - /opt/app/alfresco/shared/lib
@@ -69,7 +69,7 @@
     src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/webapps/{{ item }}
     dest: /opt/app/alfresco/webapps/{{ item }}
   register: war_file_copy
-  with_items:
+  loop:
     - alfresco.war
     - ROOT.war
     - share.war
@@ -95,7 +95,7 @@
         remote_src: yes
         src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/conf/Catalina/localhost/{{item}}
         dest: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
-      with_items:
+      loop:
         - alfresco.xml
         - share.xml
       when: alfresco_xml.stat.exists == False
@@ -106,7 +106,7 @@
         path: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
         regexp: "\\.\\.\\/"
         replace: ""
-      with_items:
+      loop:
         - alfresco.xml
         - share.xml
       
@@ -126,7 +126,7 @@
 
 - name: create alfresco database schema
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
-  with_items:
+  loop:
     - alfresco
     
 
@@ -434,7 +434,7 @@
       title: "{{ item }}"
   register: folder_create_out
   failed_when: '"site" not in folder_create_out.content'
-  with_items:
+  loop:
     - "Case Files"
     - "Complaints"
     - "Document Repositories"

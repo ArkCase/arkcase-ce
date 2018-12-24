@@ -3,7 +3,7 @@
   file:
     path: "{{ item }}"
     state: directory
-  with_items:
+  loop:
     - /opt/install/samba
     - /opt/install/samba/samba-{{ samba_version }}
     - /opt/data/samba
@@ -14,11 +14,11 @@
 
 - name: enable logrotate for samba log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
-  with_items:
+  loop:
     - samba
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  with_items:
+  loop:
     - name: "Samba"
       dest: "/opt/install/samba/samba-{{ samba_version }}.tar.gz"
       owner: "root"
@@ -96,7 +96,7 @@
     src: "{{ item }}"
     dest: /opt/app/samba/private/tls/
     mode: 0600
-  with_items:
+  loop:
     - /etc/ssl/private/acm-arkcase-client.rsa.pem
     - /etc/ssl/ca/acm-arkcase-client.cert.pem
 
@@ -158,7 +158,7 @@
       - top
     attributes:
       description: "{{ item.description }}"
-  with_items:
+  loop:
     - { ou: "OU=ArkCase,{{ ldap_base }}", description: "Container for ArkCase users and groups" }
     - { ou: "OU=Groups,OU=ArkCase,{{ ldap_base }}", description: "Container for ArkCase groups" }
     - { ou: "OU=Users,OU=ArkCase,{{ ldap_base }}", description: "Container for ArkCase users" }
@@ -169,7 +169,7 @@
     validate_certs: no
     bind_dn: CN=Administrator,CN=Users,{{ ldap_base }}
     bind_pw: "{{ samba_admin_password }}"
-    dn: "{{ item.dn }}"
+    dn: "CN={{ item.name }},OU=Groups,OU=ArkCase,{{ ldap_base }}"
     objectClass:
       - group
       - top
@@ -177,26 +177,8 @@
       description: "{{ item.description }}"
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
-  with_items:
-    - dn: CN=ARKCASE_EXTERNAL,OU=Groups,OU=ArkCase,{{ ldap_base }}
-      description: External users
-      name: ARKCASE_EXTERNAL
-    - dn: CN=ARKCASE_CONSUMER,OU=Groups,OU=ArkCase,{{ ldap_base }}
-      description: Consumers (read-only) users
-      name: ARKCASE_CONSUMER
-    - dn: CN=ARKCASE_CONTRIBUTOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
-      description: Contributors (editors)
-      name: ARKCASE_CONTRIBUTOR
-    - dn: CN=ARKCASE_ADMINISTRATOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
-      description: System administrators
-      name: ARKCASE_ADMINISTRATOR
-    - dn: CN=ARKCASE_SUPERVISOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
-      description: Supervisors (approvers)
-      name: ARKCASE_SUPERVISOR
-    - dn: CN=ARKCASE_ENTITY_ADMINISTRATOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
-      description: Entity administrators (maintain person and org records)
-      name: ARKCASE_ENTITY_ADMINISTRATOR
-      
+  loop: "{{ ldap_groups|flatten }}"
+     
 - name: add arkcase admin user
   ldap_entry:
     server_uri: ldaps://{{ arkcase_host_name }}:636
