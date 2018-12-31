@@ -1,7 +1,7 @@
 [Unit]
 Description=ActiveMQ service
-After=mariadb.target
-BindsTo=mariadb.target
+After=mariadb.service
+BindsTo=mariadb.service
 
 [Service]
 Type=forking

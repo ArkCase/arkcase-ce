@@ -4,11 +4,34 @@
     path: /usr/share/virtualbox
     state: directory
 
-- name: download guest additions (https://download.virtualbox.org/virtualbox/{{ virtualbox_version }}/VBoxGuestAdditions_{{ virtualbox_version }}.iso)
-  become: yes
-  get_url:
-    dest: /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso
-    url: https://download.virtualbox.org/virtualbox/{{ virtualbox_version }}/VBoxGuestAdditions_{{ virtualbox_version }}.iso
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: VirtualBox_Guest_Additions
+      dest: /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso
+      owner: root
+      url: https://download.virtualbox.org/virtualbox/{{ virtualbox_version }}/VBoxGuestAdditions_{{ virtualbox_version }}.iso
   register: guest_additions_downloaded
 
-    
+- name: rebuild guest additions
+  block:
+    - name: see what is already mounted
+      shell: mount
+      register: mounted
+      changed_when: false
+    - name: mount guest addtions
+      become: yes
+      shell: mount -t iso9660 -o loop /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso /mnt
+      args:
+        warn: False
+      when: mounted.stdout.find('VBoxGuestAdditions') == -1
+    - name: build guest addtions
+      become: yes
+      shell: ./VBoxLinuxAdditions.run
+      args:
+        chdir: /mnt
+      register: build_cmd
+      # return code of 2 means the guest additions were built OK, but you have to reboot; which we will do next.
+      # So return code 2 is not a failure and it should not stop our plays.
+      failed_when: build_cmd.rc != 0 and build_cmd.rc != 2
+  when: VirtualBox_Guest_Additions_downloaded is defined and VirtualBox_Guest_Additions_downloaded is changed

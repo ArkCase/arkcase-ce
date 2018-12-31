@@ -1,25 +1,19 @@
----
-
-- name: include default vars
-  include_vars:
-    file: ../../default/vars/main.yml
-
 - name: install MariaDB packages
   become: yes
-  package:
-    name: "{{ item }}"
-    state: present
-  with_items:
-    - mariadb
-    - mariadb-server
-    - MySQL-python
+  yum:
+    state: installed
+    name: 
+      - mariadb
+      - mariadb-server
+      - MySQL-python
   register: mariadb_install
 
-- name: download MariaDB JDBC Driver (https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar)
-  become: yes
-  get_url:
-    dest: /opt/common/
-    url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "MariaDB JDBC Driver"
+      dest: "/opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+      owner: "root"
+      url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 
 - name: MariaDB folders
   become: yes
@@ -28,7 +22,7 @@
     state: directory
     group: mysql
     owner: mysql
-  with_items:
+  loop:
     - /opt/data/mariadb
     - /opt/log/mariadb
   register: mariadb_folder_structure
@@ -36,7 +30,7 @@
 - name: set SE context on MariaDB folders
   become: yes
   command: semanage fcontext -a -t {{ item.context }} -s system_u {{ item.path }}
-  with_items:
+  loop:
     - { context: "mysqld_db_t", path:  "/opt/data/mariadb(/.*)?" }
     - { context: "mysqld_log_t", path: "/opt/log/mariadb(/.*)?" }
   when: mariadb_folder_structure is changed
@@ -44,7 +38,7 @@
 - name: restorecon MariaDB folders
   become: yes
   command: restorecon -RFv {{ item }}
-  with_items:
+  loop:
     - /opt/data/mariadb
     - /opt/log/mariadb
   when: mariadb_folder_structure is changed
@@ -62,7 +56,7 @@
         state: present
         insertafter: "\\[mysqld\\]"
         line: "{{ item }}"
-      with_items:
+      loop:
         - "ssl-cipher=TLSv1.2"
         - "ssl-cert=/etc/ssl/ca/acm-arkcase.cert.pem"
         - "ssl-key=/etc/ssl/private/acm-arkcase.rsa.pem"
@@ -78,7 +72,7 @@
         path: /etc/my.cnf.d/client.cnf
         state: present
         line: "{{ item }}"
-      with_items:
+      loop:
         - "[mysql]"
         - "ssl-cert=/etc/ssl/ca/acm-arkcase-client.cert.pem"
         - "ssl-key=/etc/ssl/private/acm-arkcase-client.rsa.pem"

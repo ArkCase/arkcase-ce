@@ -11,7 +11,7 @@ This image will be a plain CentOS minimal install, with a few changes so it will
 2. Run `box-builder/scripts/build-vm.sh`.  The VM must have at least 8G RAM, at least 128G disk space, and at least 2 CPUs.  Example: ` ./build-vm.sh -n "ArkCase CE" -i /path/to/CentOS-7-x86_64-Minimal-1804.iso -m 8192 -s 131072 -c 2`
 
 3. So far I didn't find a way to automate the CentOS installation.  Start the new VM through the VirtualBox UI and install CentOS in the normal way.
-    * Make sure the host name is `acm-arkcase`
+    * Make sure the host name is `arkcase-ce.local`
     * Make sure both network interfaces are enabled (configured to start automatically)
     * For the disk space partitioning, make sure /opt has its own partition, with a sizable amount of space.  Based on a 128G disk, something like this: 
         1. /opt: 64 GiB

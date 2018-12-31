@@ -1,5 +1,2 @@
 - include: get-guest-additions.yml
 
-- name: rebuild guest additions if necessary
-  import_tasks: "{{ role_path }}/tasks/reinstall-guest-additions.yml"
-  when: guest_additions_downloaded is changed

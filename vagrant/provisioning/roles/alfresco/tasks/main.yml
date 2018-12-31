@@ -1,0 +1,541 @@
+- include_tasks: alfresco_user_and_folders.yml
+- include_tasks: alfresco_downloads.yml
+
+- include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
+  loop:
+    - service: alfresco
+      user: alfresco
+      tomcat_home: /opt/app/alfresco
+      tls_port: 7070
+      catalina_out: /opt/log/alfresco/catalina.out
+      catalina_temp: /opt/tmp/alfresco
+      log_folder: /opt/log/alfresco
+  loop_control:
+    loop_var: tc
+  register: tomcat_unarchived
+  
+- name: remove all files under /webapp, if needed
+  become: yes
+  become_user: alfresco
+  shell: rm -rf /opt/app/alfresco/webapps/*
+  when: tomcat_unarchived is changed
+
+- name: Tomcat shared and modules folders
+  become: yes
+  become_user: alfresco
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/app/alfresco/shared
+    - /opt/app/alfresco/shared/classes
+    - /opt/app/alfresco/shared/lib
+    - /opt/app/alfresco/modules
+    - /opt/app/alfresco/modules/platform
+    - /opt/app/alfresco/modules/share
+
+- name: configure Tomcat shared loader
+  become: yes
+  become_user: alfresco
+  replace:
+    path: /opt/app/alfresco/conf/catalina.properties
+    regexp: '^shared.loader=$'
+    replace: 'shared.loader=${catalina.base}/shared/classes'
+
+- name: link JDBC driver
+  become: yes
+  become_user: alfresco
+  file:
+    src: /opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+    dest: /opt/app/alfresco/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+    state: link
+
+- name: unzip content services
+  become: yes
+  become_user: alfresco
+  unarchive:
+    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip
+    remote_src: true
+    dest: /opt/install/alfresco
+    creates: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/README.txt
+
+
+- name: copy alfresco war files
+  become: yes
+  become_user: alfresco
+  copy:
+    remote_src: yes
+    force: no
+    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/webapps/{{ item }}
+    dest: /opt/app/alfresco/webapps/{{ item }}
+  register: war_file_copy
+  loop:
+    - alfresco.war
+    - ROOT.war
+    - share.war
+
+- name: copy alfresco.xml and share.xml conf files
+  block:
+    - name: ensure conf/Catalina/localhost exists
+      become: yes
+      become_user: alfresco
+      file:
+        path: /opt/app/alfresco/conf/Catalina/localhost
+        state: directory
+    - name: see if alfresco.xml already exists
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/app/alfresco/conf/Catalina/localhost/alfresco.xml
+      register: alfresco_xml
+    - name: copy alfresco.xml and share.xml if needed
+      become: yes
+      become_user: alfresco
+      copy:
+        remote_src: yes
+        src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/conf/Catalina/localhost/{{item}}
+        dest: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
+      loop:
+        - alfresco.xml
+        - share.xml
+      when: alfresco_xml.stat.exists == False
+    - name: fix defective paths in alfresco.xml and share.xml
+      become: yes
+      become_user: alfresco
+      replace:
+        path: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
+        regexp: "\\.\\.\\/"
+        replace: ""
+      loop:
+        - alfresco.xml
+        - share.xml
+      
+- name: copy shared resources
+  block:
+    - name: see if shared resources already copied
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml
+      register: share_config_custom_xml
+    - name: copy shared resources if needed
+      become: yes
+      become_user: alfresco
+      shell: cp -a /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/shared/classes/* /opt/app/alfresco/shared/classes/
+      when: share_config_custom_xml.stat.exists == False
+
+- name: create alfresco database schema
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
+  loop:
+    - alfresco
+    
+
+- name: copy alfresco-mmt.jar
+  become: yes
+  become_user: alfresco
+  copy:
+    remote_src: true
+    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/bin/alfresco-mmt.jar
+    dest: /opt/app/alfresco/bin/alfresco-mmt.jar
+
+- name: unzip RMA zip file if needed
+  become: yes
+  become_user: alfresco
+  unarchive:
+    src: /opt/install/alfresco/alfresco-rm-community-{{ alfresco_records_management_version }}.zip
+    remote_src: yes
+    dest: /opt/install/alfresco
+    creates: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
+    
+- name: apply alfresco modules
+  include_tasks: "{{ role_path }}/tasks/apply-amp.yml"
+  loop:
+    - title: Alfresco Share Services AMP
+      amp_path: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp
+      target_war: alfresco.war
+    - title: Governance Services
+      amp_path: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
+      target_war: alfresco.war
+    - title: AGS Share
+      amp_path: /opt/install/alfresco/alfresco-rm-community-share-{{ alfresco_records_management_version }}.amp
+      target_war: share.war
+  loop_control:
+    loop_var: amp
+      
+- name: copy alfreco-global-properties sample file
+  become: yes
+  become_user: alfresco
+  copy:
+    remote_src: yes
+    force: no
+    src: /opt/app/alfresco/shared/classes/alfresco-global.properties.sample
+    dest: /opt/app/alfresco/shared/classes/alfresco-global.properties
+
+- name: populate alfresco-global.properties
+  become: yes
+  become_user: alfresco
+  blockinfile:
+    path: /opt/app/alfresco/shared/classes/alfresco-global.properties
+    insertbefore: BOF
+    block: |
+      dir.root=/opt/data/alfresco/alf_data
+      db.name=alfresco
+      db.username=alfresco
+      db.password={{ default_database_password }}
+      db.driver=org.mariadb.jdbc.Driver
+      db.url=jdbc:mysql://arkcase-ce.local:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=true&serverSslCert=/etc/ssl/ca/arkcase-ca.crt
+      db.schema.update=true
+      db.pool.max=50
+      db.pool.validate.query=SELECT 1
+      alfresco.context=alfresco
+      alfresco.host=arkcase-ce.local
+      alfresco.port=7070
+      alfresco.protocol=https
+      share.context=share
+      share.host=arkcase-ce.local
+      share.port=7070
+      share.protocol=https
+      # audit app support
+      audit.enabled=true
+      jodconverter.enabled=false
+      ooo.enabled=false
+      external.authentication.proxyUserName=admin
+      external.authentication.enabled=true
+      external.authentication.defaultAdministratorUserNames=admin
+      external.authentication.proxyHeader=X-Alfresco-Remote-User
+      synchronization.synchronizeChangesOnly=false
+      synchronization.syncWhenMissingPeopleLogIn=true
+      synchronization.syncOnStartup=true
+      ldap.authentication.active=true
+      ldap.authentication.allowGuestLogin=false
+      ldap.authentication.java.naming.factory.initial=com.sun.jndi.ldap.LdapCtxFactory
+      ldap.authentication.java.naming.security.authentication=simple
+      ldap.synchronization.java.naming.security.authentication=simple
+      ldap.authentication.escapeCommasInBind=false
+      ldap.authentication.escapeCommasInUid=false
+      ldap.authentication.defaultAdministratorUserNames=
+      ldap.authentication.authenticateFTP=false
+      ldap.synchronization.active=true
+      ldap.synchronization.queryBatchSize=0
+      ldap.synchronization.attributeBatchSize=0
+      ldap.synchronization.modifyTimestampAttributeName=whenChanged
+      ldap.synchronization.userFirstNameAttributeName=givenName
+      ldap.synchronization.userLastNameAttributeName=sn
+      ldap.synchronization.userEmailAttributeName=mail
+      ldap.synchronization.userOrganizationalIdAttributeName=o
+      ldap.synchronization.defaultHomeFolderProvider=largeHomeFolderProvider
+      ldap.synchronization.groupIdAttributeName=cn
+      ldap.synchronization.groupDisplayNameAttributeName=displayName
+      ldap.synchronization.groupMemberAttributeName=member
+      ldap.synchronization.enableProgressEstimation=true
+      ldap.authentication.java.naming.read.timeout=0
+      #################################################################
+      # For Active Directory / Samba
+      authentication.chain=external1:external,ldap1:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+      ldap.synchronization.groupQuery=objectClass\=group
+      ldap.synchronization.groupDifferentialQuery=(&(objectclass\=group)(!(whenChanged<\={0})))
+      ldap.synchronization.personQuery=objectClass\=user
+      ldap.synchronization.personDifferentialQuery=(&(objectClass\=user)(!(whenChanged<\={0})))
+      ldap.synchronization.timestampFormat=yyyyMMddHHmmss'.0Z'
+      ldap.synchronization.groupType=group
+      ldap.synchronization.personType=user
+      ldap.synchronization.userIdAttributeName=samAccountName
+      #### local Samba (arkcase-ce.local)
+      ldap.authentication.java.naming.provider.url=ldaps://arkcase-ce.local:636
+      ldap.synchronization.java.naming.security.principal=CN=Administrator,CN=Users,{{ ldap_base }}
+      ldap.synchronization.java.naming.security.credentials={{ samba_admin_password }}
+      ldap.synchronization.groupSearchBase=OU=Groups,OU=ArkCase,{{ ldap_base }}
+      ldap.synchronization.userSearchBase=OU=Users,OU=ArkCase,{{ ldap_base}}
+      ldap.authentication.userNameFormat=%s@arkcase-ce.local
+      # from John Shinnick
+      system.usages.enabled=false
+      cifs.enabled=false
+      sync.mode=OFF
+      syncService.mode=OFF
+      activities.feed.notifier.enabled=false
+      sync.pullJob.enabled=false
+      sync.pushJob.enabled=false
+      alfresco.cluster.enabled=false
+
+
+- name: configure alfresco.log location
+  block:
+    - name: see if ce-log4j.properties already exists
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties
+      register: log4j_exists
+    - name: unzip default log4j.properties
+      become: yes
+      become_user: alfresco
+      command: unzip -d /opt/app/alfresco/shared/classes/alfresco/extension -j /opt/app/alfresco/webapps/alfresco.war WEB-INF/classes/log4j.properties
+      when: log4j_exists.stat.exists == False
+      register: log4j_unzipped
+    - name: configure alfresco.log location
+      become: yes
+      become_user: alfresco
+      replace:
+        path: /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties
+        regexp: "log4j.appender.File.File=alfresco.log"
+        replace: "log4j.appender.File.File=/opt/log/alfresco/alfresco.log"
+      when: log4j_unzipped is changed
+    - name: rename log4j.properties
+      become: yes
+      become_user: alfresco
+      command: mv /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties /opt/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties
+      when: log4j_unzipped is changed
+    - name: remove default log4j.properties
+      become: yes
+      become_user: alfresco
+      command: zip -d /opt/app/alfresco/webapps/alfresco.war WEB-INF/classes/log4j.properties
+      when: log4j_unzipped is changed
+      
+- name: configure share.log location
+  block:
+    - name: see if temp share log4j.properties already exists
+      become: yes
+      become_user: alfresco
+      stat:
+        path: /opt/tmp/alfresco/WEB-INF/classes/log4j.properties
+      register: share_log4j_exists
+    - name: unzip share default log4j.properties
+      become: yes
+      become_user: alfresco
+      command: unzip -d /opt/tmp/alfresco /opt/app/alfresco/webapps/share.war WEB-INF/classes/log4j.properties
+      when: share_log4j_exists.stat.exists == False
+      register: share_log4j_unzipped
+    - name: configure share.log location
+      become: yes
+      become_user: alfresco
+      replace:
+        path: /opt/tmp/alfresco/WEB-INF/classes/log4j.properties
+        regexp: "log4j.appender.File.File=share.log"
+        replace: "log4j.appender.File.File=/opt/log/alfresco/share.log"
+      when: share_log4j_unzipped is changed
+      register: share_log4j_updated
+    - name: update share.war with new share location
+      become: yes
+      become_user: alfresco
+      command: zip -r /opt/app/alfresco/webapps/share.war WEB-INF
+      args:
+        chdir: /opt/tmp/alfresco
+      when: share_log4j_updated is changed
+      
+      
+- name: Alfresco systemd unit file
+  become: yes
+  copy:
+    src: "{{ role_path }}/files/alfresco.service"
+    dest: /etc/systemd/system/alfresco.service
+    
+- name: alfresco logrotate
+  become: yes
+  copy:
+    src: "{{ role_path }}/files/alfresco"
+    dest: /etc/logrotate.d/alfresco
+
+- name: enable Alfresco to start on boot
+  become: yes
+  systemd:
+    name: alfresco
+    enabled: yes
+    masked: no
+
+- name: start Alfresco
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: alfresco
+    state: started
+
+- name: wait for Alfresco startup to finish
+  wait_for:
+    port: 7070
+    delay: 3
+    timeout: 180
+
+- name: remove the cookie.txt file if it exists
+  file:
+    path: cookie.txt
+    state: absent
+  changed_when: false
+    
+- name: login to Share
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://arkcase-ce.local:7070/share/page/dologin"
+  changed_when: false
+
+- name: check if login succeeded
+  command: cat cookie.txt
+  register: cookie_out
+  failed_when: '"alfLogin" not in cookie_out.stdout'
+  changed_when: false
+
+- name: get the CSRFToken
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://arkcase-ce.local:7070/share/service/modules/authenticated?a=user"
+  changed_when: false
+
+- name: check if we got the CSRFToken
+  command: cat cookie.txt
+  register: csrf_cookie_out
+  failed_when: '"Alfresco-CSRFToken" not in csrf_cookie_out.stdout'
+  changed_when: false
+
+- name: parse the CSRFToken
+  shell: egrep ^arkcase-ce.local cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
+  register: csrftoken_parsed
+  changed_when: false
+
+- name: decode csrftoken
+  set_fact:
+    csrftoken: "{{ csrftoken_parsed.stdout|urldecode }}"
+
+- name: create acm share site
+  include_tasks: create-site.yml
+  vars:
+    s_title: "acm"
+    s_name: "acm"
+    s_description: "ArkCase Collaboration Site"
+    s_preset: "site-dashboard"
+    s_type: "{http://www.alfresco.org/model/site/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/recordsmanagement/1.0}rmsite"
+    s_csrftoken: "{{ csrftoken }}"
+
+- name: list the document library, so we can then add some folders
+  uri:
+    url: https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+  register: doclib_out
+  failed_when: '"nodeRef" not in doclib_out.content'
+
+- name: see what folders already exist
+  uri:
+    url: "https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+  register: existing_folders_out
+
+- name: ensure the right folders are in the document library
+  uri:
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/site/folder/acm/documentlibrary"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      name: "{{ item }}"
+      title: "{{ item }}"
+  register: folder_create_out
+  failed_when: '"site" not in folder_create_out.content'
+  loop: "{{ content_management_folders }}"
+  when: 'item not in existing_folders_out.content'
+
+- name: create records management share site
+  include_tasks: create-site.yml
+  vars:
+    s_title: "Records Management"
+    s_name: "rm"
+    s_description: "Records Management Site"
+    s_preset: "rm-site-dashboard"
+    s_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/dod5015/1.0}site"
+    s_csrftoken: "{{ csrftoken }}"
+
+- name: fetch the RM container
+  uri:
+    url: https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/containers/rm
+    validate_certs: false
+    user: admin
+    password: admin
+  register: rm_container_out
+
+# the join filter is just to lift the only array member into a string...
+# there will be only 1 node with name documentLibrary, so this JSON filter
+# will always return a single-element array.
+- name: find the container node ref
+  set_fact:
+    container_noderef: "{{ rm_container_out.json | json_query(noderef_query) | join(',') }}"
+  vars:
+    noderef_query: "containers[?name=='documentLibrary'].nodeRef"
+
+- name: create the top-level category
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ container_noderef }}"
+    c_name: "ACM"
+
+- name: get the RM site containers, so we can find the ACM noderef
+  uri:
+    url: "https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
+    user: admin
+    password: admin
+    validate_certs: no
+  register: rm_existing_folders_out
+
+- name: find the ACM folder noderef
+  set_fact:
+    acm_category_noderef: "{{ rm_existing_folders_out.json | json_query(rm_noderef_query) | join(',') }}"
+  vars:
+    rm_noderef_query: "items[?name=='ACM'].nodeRef"
+
+- name: create record manager categories
+  include_tasks: create-category.yml
+  vars:
+    c_container_noderef: "{{ acm_category_noderef }}"
+    c_name: "{{ item }}"
+  loop: "{{ records_management_categories }}"
+
+- name: add groups to acm site
+  uri: 
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/sites/acm/memberships"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      group:
+        fullName: "GROUP_{{ item.name }}"
+      role: "{{ item.alfresco_role }}"
+  register: group_add_out
+  failed_when: '"authority" not in group_add_out.content'
+  loop: "{{ ldap_groups|flatten }}"
+
+- name: add groups to records management admin role
+  uri: 
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name }}"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+  register: rma_admin_add_out
+  failed_when: '"{}" not in rma_admin_add_out.content'
+  loop: "{{ ldap_groups|flatten }}"
+
+- name: add groups to records management site
+  uri: 
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/sites/rm/memberships"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      group:
+        fullName: "GROUP_{{ item.name }}"
+      role: "{{ item.alfresco_role }}"
+  register: rma_group_add_out
+  failed_when: '"authority" not in rma_group_add_out.content'
+  loop: "{{ ldap_groups|flatten }}"

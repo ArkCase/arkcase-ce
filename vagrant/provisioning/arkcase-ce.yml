@@ -4,8 +4,90 @@
     - virtualbox
     - common
     - pki
+    - samba
     - mariadb
+    - alfresco
     - activemq
+  vars:
+    arkcase_host_name: arkcase-ce.local
+
+    mariadb_jdbc_version: 2.2.6
+    default_database_password: "@rKc@3S!"
+
+    # tomcat_major_version needed to build download URL
+    tomcat_major_version: 9
+    tomcat_version: 9.0.12
+
+    alfresco_release_name: 201806-GA
+    alfresco_content_services_version: 6.0.7-ga
+    alfresco_records_management_version: 3.0.a
+
+    records_management_categories:
+      - "Case Files"
+      - "Complaints"
+      - "Document Repoositories"
+      - "Requests"
+      - "Tasks"
+    content_management_folders:
+      - "Case Files"
+      - "Complaints"
+      - "Document Repositories"
+      - "Expenses"
+      - "People"
+      - "Tasks"
+      - "Timesheets"
+      - "User Profile"
     
-    
-    
+    samba_version: 4.9.1
+    samba_domain: "DC.ARKCASE-CE"
+    # samba_realm becomes the directory context e.g. dc=arkcase-ce,dc=local
+    samba_realm: "arkcase-ce.local"
+    samba_host_ip: "192.168.56.15"
+    samba_admin_password: "@rKc@3e"
+    samba_server_role: dc
+
+    ldap_base: "DC=arkcase-ce,DC=local"
+
+    ldap_groups:
+      - description: External users
+        name: ARKCASE_EXTERNAL
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Consumers (read-only) users
+        name: ARKCASE_CONSUMER
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Contributors (editors)
+        name: ARKCASE_CONTRIBUTOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: System administrators
+        name: ARKCASE_ADMINISTRATOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Supervisors (approvers)
+        name: ARKCASE_SUPERVISOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Entity administrators (maintain person and org records)
+        name: ARKCASE_ENTITY_ADMINISTRATOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+
+    arkcase_admin_password: "@rKc@3e"
+
+    ldap_users:
+      - user_id: arkcase-administrator
+        description: ArkCase admin user
+        name: ArkCase Administrator
+        mail: arkcase-administrator@arkcase.com
+        firstName: ArkCase
+        lastName: Administrator
+        password: "{{ arkcase_admin_password }}"
+        groups:
+          - ARKCASE_ADMINISTRATOR
+
+    virtualbox_version: 5.2.22
+
+    activemq_version: 5.15.8
+
