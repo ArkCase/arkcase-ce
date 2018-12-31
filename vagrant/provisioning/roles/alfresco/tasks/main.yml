@@ -434,15 +434,7 @@
       title: "{{ item }}"
   register: folder_create_out
   failed_when: '"site" not in folder_create_out.content'
-  loop:
-    - "Case Files"
-    - "Complaints"
-    - "Document Repositories"
-    - "Expenses"
-    - "People"
-    - "Tasks"
-    - "Timesheets"
-    - "User Profile"
+  loop: "{{ content_management_folders }}"
   when: 'item not in existing_folders_out.content'
 
 - name: create records management share site
@@ -493,33 +485,57 @@
   vars:
     rm_noderef_query: "items[?name=='ACM'].nodeRef"
 
-- name: create Case Files category
+- name: create record manager categories
   include_tasks: create-category.yml
   vars:
     c_container_noderef: "{{ acm_category_noderef }}"
-    c_name: "Case Files"
+    c_name: "{{ item }}"
+  loop: "{{ records_management_categories }}"
 
-- name: create Complaints category
-  include_tasks: create-category.yml
-  vars:
-    c_container_noderef: "{{ acm_category_noderef }}"
-    c_name: "Complaints"
+- name: add groups to acm site
+  uri: 
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/sites/acm/memberships"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      group:
+        fullName: "GROUP_{{ item.name }}"
+      role: "{{ item.alfresco_role }}"
+  register: group_add_out
+  failed_when: '"authority" not in group_add_out.content'
+  loop: "{{ ldap_groups|flatten }}"
 
-- name: create Document Repositories category
-  include_tasks: create-category.yml
-  vars:
-    c_container_noderef: "{{ acm_category_noderef }}"
-    c_name: "Document Repositories"
+- name: add groups to records management admin role
+  uri: 
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name }}"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+  register: rma_admin_add_out
+  failed_when: '"{}" not in rma_admin_add_out.content'
+  loop: "{{ ldap_groups|flatten }}"
 
-- name: create Requests category
-  include_tasks: create-category.yml
-  vars:
-    c_container_noderef: "{{ acm_category_noderef }}"
-    c_name: "Requests"
-
-- name: create Tasks category
-  include_tasks: create-category.yml
-  vars:
-    c_container_noderef: "{{ acm_category_noderef }}"
-    c_name: "Tasks"
-    
+- name: add groups to records management site
+  uri: 
+    url: "https://arkcase-ce.local:7070/alfresco/s/api/sites/rm/memberships"
+    method: POST
+    user: admin
+    password: admin
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      group:
+        fullName: "GROUP_{{ item.name }}"
+      role: "{{ item.alfresco_role }}"
+  register: rma_group_add_out
+  failed_when: '"authority" not in rma_group_add_out.content'
+  loop: "{{ ldap_groups|flatten }}"

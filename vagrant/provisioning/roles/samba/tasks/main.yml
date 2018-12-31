@@ -179,80 +179,11 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_groups|flatten }}"
      
-- name: add arkcase admin user
-  ldap_entry:
-    server_uri: ldaps://{{ arkcase_host_name }}:636
-    validate_certs: no
-    bind_dn: CN=Administrator,CN=Users,{{ ldap_base }}
-    bind_pw: "{{ samba_admin_password }}"
-    dn: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
-    objectClass:
-      - organizationalPerson
-      - person
-      - user
-      - top
-    attributes:
-      # note, Samba doesn't let you set memberOf directory, you
-      # have to create the user, then add them to the group.
-      description: ArkCase admin user
-      samAccountName: arkcase-administrator
-      name: ArkCase Administrator
-      mail: arkcase-administrator@armedia.com
-      givenName: ArkCase
-      sn: Administrator
-      cn: arkcase-administrator
-  register: admin_user 
-
-- name: set arkcase admin password
-  block:
-    - name: base64 encode password
-      shell: echo -n '"{{ arkcase_admin_password }}"' | iconv -f utf8 -t utf16le | base64 -w 0
-      # IgBAAHIASwBjAEAAMwBlACIACgA=
-      register: base64_password
-      changed_when: false
-    - name: copy change password ldif file
-      become: yes
-      copy:
-        content: |
-          dn: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
-          changetype: modify
-          replace: unicodePwd
-          unicodePwd:: {{ base64_password.stdout }}
-        dest: /opt/install/samba/password_change.ldif
-    - name: execute password change
-      shell: LDAPTLS_REQCERT=never ldapmodify -H ldaps://{{ arkcase_host_name }} -D CN=Administrator,CN=Users,{{ ldap_base }} -w {{ samba_admin_password }} -x -f /opt/install/samba/password_change.ldif
-  when: admin_user is changed
-
-- name: enable arkcase admin accoiunt
-  block:
-    - name: copy enable user ldif file
-      become: yes
-      copy:
-        content: |
-          dn: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
-          changetype: modify
-          replace: userAccountControl
-          userAccountControl: 512
-        dest: /opt/install/samba/activate_admin.ldif
-    - name: execute password change
-      shell: LDAPTLS_REQCERT=never ldapmodify -H ldaps://{{ arkcase_host_name }} -D CN=Administrator,CN=Users,{{ ldap_base }} -w {{ samba_admin_password }} -x -f /opt/install/samba/activate_admin.ldif
-  when: admin_user is changed
-      
-- name: add arkcase admin account to admin group
-  block:
-    - name: copy add-admin-to-group ldif file
-      become: yes
-      copy:
-        content: |
-          dn: CN=ARKCASE_ADMINISTRATOR,OU=Groups,OU=ArkCase,{{ ldap_base }}
-          changetype: modify
-          add: member
-          member: CN=arkcase-administrator,OU=Users,OU=ArkCase,{{ ldap_base }}
-        dest: /opt/install/samba/add_admin_to_group.ldif
-    - name: execute add user to group
-      shell: LDAPTLS_REQCERT=never ldapmodify -H ldaps://{{ arkcase_host_name }} -D CN=Administrator,CN=Users,{{ ldap_base }} -w {{ samba_admin_password }} -x -f /opt/install/samba/add_admin_to_group.ldif
-  when: admin_user is changed
-      
+- name: add users
+  include_tasks: add-user.yml
+  loop: "{{ ldap_users }}"    
+  loop_control:
+    loop_var: u  
 
           
 
