@@ -539,3 +539,18 @@
   register: rma_group_add_out
   failed_when: '"authority" not in rma_group_add_out.content'
   loop: "{{ ldap_groups|flatten }}"
+
+- name: Expose alfresco app port
+  become: yes
+  firewalld:
+    port: "7070/tcp"
+    permanent: true
+    zone: public
+    state: enabled
+  register: alfresco_port
+
+- name: Reload firewalld
+  become: yes
+  command: firewall-cmd --reload
+  when: alfresco_port is changed
+

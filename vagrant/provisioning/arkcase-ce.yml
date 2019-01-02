@@ -8,8 +8,17 @@
     - mariadb
     - alfresco
     - activemq
+    - solr
   vars:
     arkcase_host_name: arkcase-ce.local
+
+    jmx_password: P@ssw0rd
+
+    solr_version: 7.6.0
+    solr_jmx_enabled: true
+    solr_cores:
+      - "acmAdvancedSearch"
+      - "acmQuickSearch"
 
     mariadb_jdbc_version: 2.2.6
     default_database_password: "@rKc@3S!"
