@@ -1,0 +1,86 @@
+- name: solr required packages
+  become: yes
+  yum:
+    state: present
+    name:
+      - lsof
+
+# solr startup script requires an enabled user, with
+# a real shell, and a valid password
+- name: solr user
+  become: yes
+  user:
+    name: solr
+    shell: /bin/bash
+    password: "{{ default_database_password | password_hash('sha512') }}"
+    update_password: on_create
+    state: present
+
+- name: Solr folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: solr
+    owner: solr
+  loop:
+    - /opt/data/solr
+    - /opt/log/solr
+    - /opt/app/solr
+    - /opt/install/solr
+  register: solr_folder_structure
+
+- name: enable logrotate for solr log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  args:
+    apply:
+      vars:
+        item: solr
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "Solr"
+      dest: "/opt/install/solr/solr-{{ solr_version }}.tgz"
+      owner: "solr"
+      url: "https://archive.apache.org/dist/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
+
+- name: unarchive Solr distribution
+  become: yes
+  become_user: solr
+  unarchive:
+    remote_src: yes
+    src: /opt/install/solr/solr-{{ solr_version }}.tgz
+    dest: /opt/app/solr
+    extra_opts:
+      - --strip-components=1
+    creates: /opt/app/solr/LICENSE.txt
+  register: solr_unarchived
+
+- name: configure Solr JMX
+  import_tasks: jmx.yml
+  when: solr_jmx_enabled  == true
+
+- name: Create ArkCase Solr configset for Cores
+  import_tasks: configset.yml
+
+- name: Install Solr service
+  import_tasks: install-service.yml
+
+- name: start Solr
+  become: yes
+  systemd:
+    name: solr
+    state: started
+
+- name: wait for solr to finish starting
+  wait_for:
+    port: 8983
+    delay: 5
+    timeout: 60
+
+- name: Create ArkCase cores
+  include_tasks: cores.yml
+  loop: "{{ solr_cores }}"
+    
+- name: Expose required ports for solr
+  include_tasks: firewall.yml
