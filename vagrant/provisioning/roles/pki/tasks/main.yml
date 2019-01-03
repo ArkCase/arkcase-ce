@@ -54,13 +54,6 @@
   command: openssl rsa -in /etc/ssl/private/acm-arkcase.pem -out /etc/ssl/private/acm-arkcase.rsa.pem
   when: server_private_key is changed
 
-#- name: copy server private key to OS key store
-#  become: yes
-#  copy:
-#    remote_src: yes
-#    src: /etc/ssl/private/acm-arkcase.rsa.pem
-#    dest: /etc/pki/tls/private/acm-arkcase.rsa.pem
-
 - name: server csr
   become: yes
   openssl_csr:
@@ -171,3 +164,12 @@
             keystore_create: yes
             state: present
       when: "arkcase_ts_stat.stat.exists == False or 'arkcase' not in key_out.stdout"
+
+- name: add ArkCase client cert to Java key store
+  become: yes
+  java_cert:
+    cert_alias: arkcase
+    cert_path: /etc/ssl/ca/acm-arkcase-client.cert.pem
+    keystore_path: /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts
+    keystore_pass: changeit
+    state: present

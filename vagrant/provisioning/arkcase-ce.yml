@@ -9,10 +9,30 @@
     - alfresco
     - activemq
     - solr
+    - pentaho
   vars:
     arkcase_host_name: arkcase-ce.local
 
+    database_host_name: arkcase-ce.local
+    database_server_ssl_cert: /etc/ssl/ca/arkcase-ca.crt
+
+    database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
+    database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites=TLSv1.2&amp;trustServerCertificate=true&amp;serverSslCert={{ database_server_ssl_cert }}"
+    database_arkcase_schema: arkcase
+    database_arkcase_user: arkcase
+
+    database_pentaho_hibernate_schema: hibernate
+    database_pentaho_hibernate_user: hibuser
+    database_pentaho_quartz_schema: quartz
+    database_pentaho_quartz_user: pentaho_user
+    database_pentaho_jackrabbit_schema: jackrabbit
+    database_pentaho_jackrabbit_user: jcr_user
+
     jmx_password: P@ssw0rd
+
+    pentaho_major_version: 8.2
+    pentaho_minor_version: 0.0-342
+    pentaho_server_url: "https://{{ arkcase_host_name }}:2002/pentaho"
 
     solr_version: 7.6.0
     solr_jmx_enabled: true

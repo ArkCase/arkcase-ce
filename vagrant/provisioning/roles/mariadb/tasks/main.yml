@@ -50,7 +50,7 @@
       shell: cat /etc/my.cnf.d/server.cnf
       register: server_cnf_contents
       changed_when: false
-    - name: update server.cnf if needed
+    - name: update server.cnf TLS properties, if needed
       lineinfile:
         path: /etc/my.cnf.d/server.cnf
         state: present
@@ -62,7 +62,15 @@
         - "ssl-key=/etc/ssl/private/acm-arkcase.rsa.pem"
         - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
       when: server_cnf_contents.stdout.find('ssl-cipher=TLSv1.2') == -1
-      register: server_cnf
+      register: server_cnf_tls
+    - name: update server.cnf max_packet property, if needed (Pentaho needs larger packet size)
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+        state: present
+        insertafter: "\\[mysqld\\]"
+        line: "max_allowed_packet=15M"
+      when: server_cnf_contents.stdout.find('max_allowed_packet') == -1
+      register: server_cnf_packet
     - name: read client.cnf
       shell: cat /etc/my.cnf.d/client.cnf
       register: client_cnf_contents
@@ -119,7 +127,7 @@
   systemd:
     name: mariadb
     state: restarted
-  when: server_cnf is changed or client_cnf is changed or mariadb_install is changed
+  when: server_cnf_tls is changed or server_cnf_packet is changed or client_cnf is changed or mariadb_install is changed
     
     
     

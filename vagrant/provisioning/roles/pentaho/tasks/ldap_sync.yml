@@ -1,0 +1,10 @@
+- name: LDAP application context
+  template:
+    src: applicationContext-security-ldap.properties
+    dest: /opt/app/pentaho/pentaho-server/pentaho-solutions/system/
+    
+- name: spring properties
+  copy:
+    src: repository.spring.properties
+    dest: /opt/app/pentaho/pentaho-server/pentaho-solutions/system/
+    
