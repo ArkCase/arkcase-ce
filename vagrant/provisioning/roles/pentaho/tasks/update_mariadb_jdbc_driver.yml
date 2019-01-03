@@ -1,0 +1,14 @@
+- name: remove the older MySQL jar file
+  become: yes
+  become_user: pentaho
+  file:
+    dest: /opt/app/pentaho/pentaho-server/tomcat/lib/mysql-connector-java-5.1.17.jar
+    state: absent
+
+- name: link the newer MariaDB jar file
+  become: yes
+  become_user: pentaho
+  file:
+    src: /opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+    dest: /opt/app/pentaho/pentaho-server/tomcat/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+    state: link
