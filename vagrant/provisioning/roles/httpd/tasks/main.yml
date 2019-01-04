@@ -1,0 +1,65 @@
+- name: install httpd
+  become: yes
+  yum:
+    state: present
+    name:
+      - httpd
+      - mod_ssl
+
+- name: httpd folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: apache
+    group: apache
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "httpd_log_t"
+    selevel: "s0"
+  loop:
+    - "/opt/log/httpd"
+    - "/opt/data/httpd"
+    - "/opt/data/httpd/htdocs"
+
+- name: ArkCase TLS configuration
+  become: yes
+  copy:
+    backup: yes
+    src: httpd-ssl.conf
+    dest: /etc/httpd/conf.d/ssl.conf
+  register: tls_conf
+    
+- name: enable httpd to run at startup
+  become: yes
+  systemd:
+    name: httpd
+    enabled: yes
+    masked: no
+
+- name: restart httpd if needed
+  become: yes
+  systemd:
+    name: httpd
+    state: restarted
+  when: tls_conf is changed
+
+- name: see if httpd_can_network_connect is already enabled
+  command: /usr/sbin/getsebool httpd_can_network_connect
+  register: httpd_network_enabled
+  changed_when: false
+  
+- name: tell SELinux that httpd can proxy to other local services
+  become: yes
+  command: setsebool httpd_can_network_connect 1
+  when: "'on' not in httpd_network_enabled.stdout"
+
+- name: open firewall port
+  become: yes
+  firewalld:
+    port: "443/tcp"
+    permanent: yes
+    zone: public
+    state: enabled
+    immediate: yes
+
