@@ -142,3 +142,11 @@
   loop_control:
     loop_var: r
     
+- name: open firewall port
+  become: yes
+  firewalld:
+    port: "2002/tcp"
+    permanent: yes
+    zone: public
+    state: enabled
+    immediate: yes
