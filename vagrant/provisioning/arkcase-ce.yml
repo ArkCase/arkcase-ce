@@ -11,8 +11,12 @@
     - solr
     - pentaho
     - httpd
+    - snowbound
   vars:
     arkcase_host_name: arkcase-ce.local
+
+    snowbound_vendor_version: "4.10"
+    snowbound_arkcase_version: "3.2.17"
 
     database_host_name: arkcase-ce.local
     database_server_ssl_cert: /etc/ssl/ca/arkcase-ca.crt

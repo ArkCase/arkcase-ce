@@ -2,16 +2,20 @@
 - include_tasks: alfresco_downloads.yml
 
 - include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
-  loop:
-    - service: alfresco
-      user: alfresco
-      tomcat_home: /opt/app/alfresco
-      tls_port: 7070
-      catalina_out: /opt/log/alfresco/catalina.out
-      catalina_temp: /opt/tmp/alfresco
-      log_folder: /opt/log/alfresco
-  loop_control:
-    loop_var: tc
+  args:
+    apply:
+      vars:
+        tc:
+          service: alfresco
+          user: alfresco
+          tomcat_home: /opt/app/alfresco
+          tls_port: 7070
+          shutdown_port: 7005
+          jmx_remote_port: 50506
+          jmx_rmi_port: 50507
+          catalina_out: /opt/log/alfresco/catalina.out
+          catalina_temp: /opt/tmp/alfresco
+          log_folder: /opt/log/alfresco
   register: tomcat_unarchived
   
 - name: remove all files under /webapp, if needed

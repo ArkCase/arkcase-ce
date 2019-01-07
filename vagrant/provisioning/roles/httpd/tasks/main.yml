@@ -51,8 +51,8 @@
   
 - name: tell SELinux that httpd can proxy to other local services
   become: yes
-  command: setsebool httpd_can_network_connect 1
-  when: "'on' not in httpd_network_enabled.stdout"
+  command: setsebool -P httpd_can_network_connect 1
+  when: "httpd_network_enabled.stdout is search('off$')"
 
 - name: open firewall port
   become: yes
