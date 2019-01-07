@@ -119,6 +119,24 @@
                 type="RSA" />
             </SSLHostConfig>
           </Connector>
+    - name: JMX password file
+      become: yes
+      become_user: "{{ tc.user }}"
+      copy:
+        dest: "{{ tc.tomcat_home }}/password.file"
+        content: |
+          monitorRole {{ jmx_password }}
+          controlRole {{ jmx_password }}
+        mode: 0600
+    - name: JMX access file
+      become: yes
+      become_user: "{{ tc.user }}"
+      copy:
+        dest: "{{ tc.tomcat_home }}/access.file"
+        content: |
+          monitorRole readonly
+          controlRole readwrite
+        mode: 0644
     - name: set JAVA_OPTS
       become: yes
       become_user: "{{ tc.user }}"
@@ -129,7 +147,7 @@
         insertbefore: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
         block: |
-          export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=/opt/common/arkcase.ks -Djavax.net.ssl.trustStore=/opt/common/arkcase.ts"
+          export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=/opt/common/arkcase.ks -Djavax.net.ssl.trustStore=/opt/common/arkcase.ts -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port={{ tc.jmx_remote_port }} -Dcom.sun.management.jmxremote.rmi.port={{ tc.jmx_rmi_port }} -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=arkcase-ce.local -Dcom.sun.management.jmxremote.password.file={{ tc.tomcat_home }}/password.file -Dcom.sun.management.jmxremote.access.file={{ tc.tomcat_home }}/access.file"
     - name: set other environment variables
       become: yes
       become_user: "{{ tc.user }}"
@@ -144,6 +162,15 @@
           export CATALINA_PID="{{ tc.catalina_temp }}/catalina.pid"
           export CATALINA_TMPDIR="{{ tc.catalina_temp }}"
           
+    - name: set shutdown port
+      become: yes
+      become_user: "{{ tc.user }}"
+      replace:
+        backup: yes
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        regexp: 'Server port="8005" shutdown="SHUTDOWN"'
+        replace: 'Server port="{{ tc.shutdown_port }}" shutdown="SHUTDOWN"'
+      
         
 
         

@@ -1,0 +1,26 @@
+/opt/log/snowbound/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+/opt/log/snowbound/*.out {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+/opt/log/snowbound/*.txt {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}

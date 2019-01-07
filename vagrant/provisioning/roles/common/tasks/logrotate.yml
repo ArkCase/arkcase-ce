@@ -1,12 +1,9 @@
-- name: check if var_log_t already on {{ item }} log folder
-  command: ls -lZd /opt/log/{{ item }}
-  register: logrotate_enabled
-  changed_when: false
-- block:
-    - name: set var_log_t on {{ item }} log folder, if needed
-      become: yes
-      command: semanage fcontext -a -t var_log_t -s system_u "/opt/log/{{ item }}(/.*)?"
-    - name: restorecon {{ item }} log folders
-      become: yes
-      command: restorecon -RFv "/opt/log/{{ item }}"
-  when: "'var_log_t' not in logrotate_enabled.stdout"
+- name: set var_log_t on {{ item }} log folder, if needed
+  become: yes
+  file:
+    path: "/opt/log/{{ item }}"
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "var_log_t"
+    selevel: "s0"
+
