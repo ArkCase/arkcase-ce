@@ -1,17 +1,17 @@
 ---
 - hosts: all
   roles:
-   # - virtualbox
-   # - common
-   # - pki
-   # - samba
-   # - mariadb
-   # - httpd
-   # - alfresco
-   # - activemq
-   # - solr
-   # - pentaho
-   # - snowbound
+    - virtualbox
+    - common
+    - pki
+    - samba
+    - mariadb
+    - httpd
+    - alfresco
+    - activemq
+    - solr
+    - pentaho
+    - snowbound
     - arkcase
   vars:
     arkcase_host_name: arkcase-ce.local
