@@ -1,6 +1,10 @@
 - include_tasks: alfresco_user_and_folders.yml
 - include_tasks: alfresco_downloads.yml
 
+- name: record Alfresco https port, so as to fix the share-config-custom.xml later
+  set_fact:
+    alfresco_tls_port: 7070
+
 - include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
   args:
     apply:
@@ -9,10 +13,13 @@
           service: alfresco
           user: alfresco
           tomcat_home: /opt/app/alfresco
-          tls_port: 7070
+          tls_port: "{{ alfresco_tls_port }}"
           shutdown_port: 7005
           jmx_remote_port: 50506
           jmx_rmi_port: 50507
+          http_port: 7080
+          redirect_port: 7443
+          ajp_port: 7009
           catalina_out: /opt/log/alfresco/catalina.out
           catalina_temp: /opt/tmp/alfresco
           log_folder: /opt/log/alfresco
@@ -128,10 +135,21 @@
       shell: cp -a /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/shared/classes/* /opt/app/alfresco/shared/classes/
       when: share_config_custom_xml.stat.exists == False
 
+- name: fix alfresco location in share-config-custom.xml
+  become: yes
+  become_user: alfresco
+  replace:
+    backup: yes
+    path: /opt/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml
+    regexp: 'http://localhost:8080'
+    replace: 'https://{{ arkcase_host_name }}:{{ alfresco_tls_port }}'
+
 - name: create alfresco database schema
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
-  loop:
-    - alfresco
+  args:
+    apply:
+      vars:
+        item: alfresco
     
 
 - name: copy alfresco-mmt.jar
@@ -193,11 +211,11 @@
       db.pool.validate.query=SELECT 1
       alfresco.context=alfresco
       alfresco.host=arkcase-ce.local
-      alfresco.port=7070
+      alfresco.port=443
       alfresco.protocol=https
       share.context=share
       share.host=arkcase-ce.local
-      share.port=7070
+      share.port=443
       share.protocol=https
       # audit app support
       audit.enabled=true

@@ -66,6 +66,10 @@
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
     common_name: "{{ arkcase_host_name }}"
+    subject_alt_name:
+      - DNS:arkcase-host
+      - DNS:acm-arkcase
+      - DNS:arkcase-ce.local
   register: server_csr
 
 - name: Sign server CSR
@@ -106,6 +110,10 @@
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
     common_name: "{{ arkcase_host_name }}"
+    subject_alt_name:
+      - DNS:arkcase-host
+      - DNS:acm-arkcase
+      - DNS:arkcase-ce.local
   register: client_csr
 
 - name: Sign client CSR
@@ -157,19 +165,30 @@
         - name: add ArkCase client cert to Java truststore
           become: yes
           java_cert:
-            cert_alias: arkcase
-            cert_path: /etc/ssl/ca/acm-arkcase-client.cert.pem
+            cert_alias: "{{ item.alias }}"
+            cert_path: "{{ item.path }}"
             keystore_path: /opt/common/arkcase.ts
             keystore_pass: password
             keystore_create: yes
             state: present
+          loop:
+            - alias: "arkcase-client"
+              path: "/etc/ssl/ca/acm-arkcase-client.cert.pem"
+            - alias: "arkcase"
+              path: "/etc/ssl/crt/acm-arkcase.crt"
       when: "arkcase_ts_stat.stat.exists == False or 'arkcase' not in key_out.stdout"
 
 - name: add ArkCase client cert to Java key store
   become: yes
   java_cert:
-    cert_alias: arkcase
-    cert_path: /etc/ssl/ca/acm-arkcase-client.cert.pem
+    cert_alias: "{{ item.alias }}"
+    cert_path: "{{ item.path }}"
     keystore_path: /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts
     keystore_pass: changeit
     state: present
+  loop:
+    - alias: "arkcase-client"
+      path: "/etc/ssl/ca/acm-arkcase-client.cert.pem"
+    - alias: "arkcase"
+      path: "/etc/ssl/crt/acm-arkcase.crt"
+

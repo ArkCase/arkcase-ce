@@ -28,11 +28,19 @@
     mode: 0644
   when: "'AFDP' not in solrconfig_contents.stdout"
 
+- name: see if schema.xml exists
+  become: yes
+  become_user: solr
+  stat:
+    path: "/opt/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
+  register: schema_xml
+
 - name: see if schema.xml has the ArkCase updates
   become: yes
   become_user: solr
   shell: "cat /opt/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
   register: schema_contents
+  when: schema_xml.stat.exists == true
   changed_when: false
     
 - name: copy schema.xml if needed
@@ -42,7 +50,7 @@
     src: schema.xml
     dest: "/opt/app/solr/server/solr/configsets/arkcase/conf/"
     mode: 0644
-  when: "'AFDP' not in schema_contents.stdout"
+  when: "schema_xml.stat.exists == false or 'AFDP' not in schema_contents.stdout"
     
 - name: Delete default managed-schema
   become: yes

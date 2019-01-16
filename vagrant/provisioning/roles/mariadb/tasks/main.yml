@@ -1,10 +1,25 @@
+- name: configure MariaDB v10 repository
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mariadb.repo
+    force: no
+    content: |
+      # MariaDB 10.3 CentOS repository list - created 2019-01-09 21:49 UTC
+      # http://downloads.mariadb.org/mariadb/repositories/
+      [mariadb]
+      name = MariaDB
+      baseurl = http://yum.mariadb.org/10.3/centos7-amd64
+      gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgcheck=0
+
 - name: install MariaDB packages
   become: yes
   yum:
     state: installed
-    name: 
-      - mariadb
-      - mariadb-server
+    disable_gpg_check: yes
+    name:
+      - MariaDB-server
+      - MariaDB-client
       - MySQL-python
   register: mariadb_install
 
@@ -43,7 +58,7 @@
     - /opt/log/mariadb
   when: mariadb_folder_structure is changed
 
-- name: enable tls 1.2
+- name: update server config file
   become: yes
   block:
     - name: read server.cnf
@@ -71,17 +86,29 @@
         line: "max_allowed_packet=15M"
       when: server_cnf_contents.stdout.find('max_allowed_packet') == -1
       register: server_cnf_packet
+    - name: network connection properties
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+        state: present
+        regexp: "^{{ item }}$"
+        insertafter: "\\[mysqld\\]"
+        line: "{{ item }}"
+      #when: server_cnf_contents.stdout.find(item) == -1
+      register: server_cnf_network
+      loop:
+        - "skip-name-resolve=true"
+        - "bind-address=0.0.0.0"
     - name: read client.cnf
-      shell: cat /etc/my.cnf.d/client.cnf
+      shell: cat /etc/my.cnf.d/mysql-clients.cnf
       register: client_cnf_contents
       changed_when: false
     - name: update client.cnf if needed
       lineinfile:
-        path: /etc/my.cnf.d/client.cnf
+        path: /etc/my.cnf.d/mysql-clients.cnf
         state: present
+        insertafter: "\\[mysql\\]"
         line: "{{ item }}"
       loop:
-        - "[mysql]"
         - "ssl-cert=/etc/ssl/ca/acm-arkcase-client.cert.pem"
         - "ssl-key=/etc/ssl/private/acm-arkcase-client.rsa.pem"
         - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
@@ -91,21 +118,24 @@
 - name: set data folder
   become: yes
   lineinfile:
-    path: /etc/my.cnf
+    path: /etc/my.cnf.d/server.cnf
+    insertafter: "\\[mysqld\\]"
     regexp: '^datadir='
     line: 'datadir=/opt/data/mariadb'
 
 - name: set log folder
   become: yes
   lineinfile:
-    path: /etc/my.cnf
+    path: /etc/my.cnf.d/server.cnf
+    insertafter: "\\[mysqld\\]"
     regexp: '^log-error='
     line: 'log-error=/opt/log/mariadb/mariadb.log'
 
 - name: set socket path
   become: yes
   lineinfile:
-    path: /etc/my.cnf
+    path: /etc/my.cnf.d/server.cnf
+    insertafter: "\\[mysqld\\]"
     regexp: '^socket='
     line: 'socket=/opt/data/mariadb/mysql.sock'
 
@@ -114,6 +144,14 @@
   copy:
     src: logrotate.d/mariadb
     dest: /etc/logrotate.d/mariadb
+
+- name: initialize database structures if needed
+  become: yes
+  become_user: mysql
+  command: mysql_install_db
+  args:
+    chdir: /opt/data/mariadb
+    creates: /opt/data/mariadb/mysql/
 
 - name: enable MariaDB to start on boot
   become: yes
@@ -127,7 +165,14 @@
   systemd:
     name: mariadb
     state: restarted
-  when: server_cnf_tls is changed or server_cnf_packet is changed or client_cnf is changed or mariadb_install is changed
+  when: server_cnf_tls is changed or server_cnf_packet is changed or client_cnf is changed or mariadb_install is changed or server_cnf_network is changed
     
-    
-    
+
+- name: Expose mariadb port
+  become: yes
+  firewalld:
+    port: "3306/tcp"
+    permanent: true
+    zone: public
+    state: enabled
+    immediate: true

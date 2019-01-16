@@ -16,7 +16,7 @@
 - name: deploy report "{{ r.path }}/{{ r.definition }}"
   become: yes
   become_user: pentaho
-  command: /opt/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ arkcase_host_name }}:2002/pentaho --username=arkcase-administrator --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ r.path }} --file-path="/opt/install/pentaho/report-definitions/{{ r.path }}/{{ r.definition }}" --logfile=/opt/log/pentaho/upload.log --permission=true --overwrite=true --retainOwnership=true
+  command: /opt/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ arkcase_host_name }}:2002/pentaho --username={{ arkcase_admin_user }} --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ r.path }} --file-path="/opt/install/pentaho/report-definitions/{{ r.path }}/{{ r.definition }}" --logfile=/opt/log/pentaho/upload.log --permission=true --overwrite=true --retainOwnership=true
   when: report_definition is changed
   register: import_results
   failed_when: "'Import was successful' not in import_results.stdout"

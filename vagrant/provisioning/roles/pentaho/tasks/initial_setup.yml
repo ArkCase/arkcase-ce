@@ -30,7 +30,7 @@
     - name: "Pentaho CE Server"
       dest: "/opt/install/pentaho/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
       owner: "pentaho"
-      url: "https://iweb.dl.sourceforge.net/project/pentaho/Pentaho%20{{ pentaho_major_version }}/server/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
+      url: "http://iweb.dl.sourceforge.net/project/pentaho/Pentaho%20{{ pentaho_major_version }}/server/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
 
 - name: unarchive Pentaho distribution
   become: yes
@@ -40,4 +40,6 @@
     src: /opt/install/pentaho/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip
     dest: /opt/app/pentaho
     creates: /opt/app/pentaho/pentaho-server/tomcat/LICENSE
+    extra_opts:
+      - -o
   register: pentaho_unarchived

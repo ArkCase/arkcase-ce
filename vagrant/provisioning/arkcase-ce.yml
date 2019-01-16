@@ -1,17 +1,18 @@
 ---
 - hosts: all
   roles:
-    - virtualbox
-    - common
-    - pki
-    - samba
-    - mariadb
-    - alfresco
-    - activemq
-    - solr
-    - pentaho
-    - httpd
-    - snowbound
+   # - virtualbox
+   # - common
+   # - pki
+   # - samba
+   # - mariadb
+   # - httpd
+   # - alfresco
+   # - activemq
+   # - solr
+   # - pentaho
+   # - snowbound
+    - arkcase
   vars:
     arkcase_host_name: arkcase-ce.local
 
@@ -59,7 +60,7 @@
     records_management_categories:
       - "Case Files"
       - "Complaints"
-      - "Document Repoositories"
+      - "Document Repositories"
       - "Requests"
       - "Tasks"
     content_management_folders:
@@ -108,13 +109,14 @@
         alfresco_role: SiteManager
         alfresco_rma_role: Administrator
 
+    arkcase_admin_user: "arkcase-admin"
     arkcase_admin_password: "@rKc@3e"
 
     ldap_users:
-      - user_id: arkcase-administrator
-        description: ArkCase admin user
-        name: ArkCase Administrator
-        mail: arkcase-administrator@arkcase.com
+      - user_id: "{{ arkcase_admin_user }}"
+        description: ArkCase administrator
+        name: ArkCase Admin
+        mail: arkcase-admin@arkcase-ce.local
         firstName: ArkCase
         lastName: Administrator
         password: "{{ arkcase_admin_password }}"
@@ -124,4 +126,4 @@
     virtualbox_version: 5.2.22
 
     activemq_version: 5.15.8
-
+    

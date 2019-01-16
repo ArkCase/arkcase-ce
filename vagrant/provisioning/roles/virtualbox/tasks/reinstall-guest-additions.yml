@@ -4,11 +4,11 @@
       shell: mount
       register: mounted
       changed_when: false
-    - name: mount guest addtions
+    - name: mount guest additions
       become: yes
       shell: mount -t iso9660 -o loop /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso /mnt
       when: mounted.stdout.find('VBoxGuestAdditions') == -1
-    - name: build guest addtions
+    - name: build guest additions
       become: yes
       shell: ./VBoxLinuxAdditions.run
       args:

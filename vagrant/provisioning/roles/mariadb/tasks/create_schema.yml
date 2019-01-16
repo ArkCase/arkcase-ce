@@ -16,7 +16,7 @@
         password: "{{ default_database_password }}" 
         priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
         state: present 
-    - name: create {{ item }} MySQL user (IP address_
+    - name: create {{ item }} MySQL user (IP address)
       become: yes
       mysql_user:
         login_unix_socket: /opt/data/mariadb/mysql.sock
@@ -24,16 +24,7 @@
         name: "{{ item }}"
         password: "{{ default_database_password }}" 
         priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
-        state: present 
-    - name: create {{ item }} MySQL user (host name)
-      become: yes
-      mysql_user:
-        login_unix_socket: /opt/data/mariadb/mysql.sock
-        host: "arkcase-ce.local"
-        name: "{{ item }}"
-        password: "{{ default_database_password }}" 
-        priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
-        state: present 
+        state: present
     
 
   

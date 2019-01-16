@@ -63,8 +63,15 @@
     regexp: "{{ item.regexp }}"
     replace: "{{ item.line }}"
   loop:
-    - { regexp: "^wrapper\\.java\\.additional\\.11=\\-Dactivemq.data=%ACTIVEMQ_DATA%", line: "wrapper.java.additional.11=-Dactivemq.data=/opt/data/activemq" }
-    - { regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log", line: "wrapper.logfile=/opt/log/activemq/wrapper.log" }
+    - regexp: "^wrapper\\.java\\.additional\\.11=\\-Dactivemq.data=%ACTIVEMQ_DATA%"
+      line: "wrapper.java.additional.11=-Dactivemq.data=/opt/data/activemq"
+    - regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log"
+      line: "wrapper.logfile=/opt/log/activemq/wrapper.log"
+    - regexp: "^wrapper\\.java\\.additional\\.5=\\-Djavax\\.net\\.ssl\\.keyStore=%ACTIVEMQ_CONF%/broker.ks"
+      line: "wrapper.java.additional.5=-Djavax.net.ssl.keyStore=/opt/common/arkcase.ks"
+    - regexp: "^wrapper\\.java\\.additional\\.6=\\-Djavax\\.net\\.ssl\\.trustStore=%ACTIVEMQ_CONF%/broker.ts"
+      line: "wrapper.java.additional.6=-Djavax.net.ssl.trustStore=/opt/common/arkcase.ts"
+      
 
 - name: set activemq.log location
   become: yes
@@ -140,40 +147,6 @@
         dest: /opt/app/activemq/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
         state: link
 
-
-# truststore: /opt/app/activemq/conf/broker.ts
-# keystore: /opt/app/activemq/conf/broker.ts
-
-- name: ActiveMQ keystore and trust store
-  block:
-    - name: see if ArkCase keys already applied to ActiveMQ keystore
-      become: yes
-      become_user: activemq
-      command: keytool -v -list -keystore /opt/app/activemq/conf/broker.ts -storepass password
-      register: key_out
-      changed_when: false
-    - name: apply ArkCase keys to ActiveMQ
-      block:
-        - name: backup keystore 
-          become: yes
-          become_user: activemq
-          command: mv /opt/app/activemq/conf/{{ item }} /opt/app/activemq/conf/{{ item }}.original
-          loop:
-            - broker.ks
-            - broker.ts
-        - name: copy arkcase trust store and key store to ActiveMQ
-          become: yes
-          copy:
-            remote_src: yes
-            src: /opt/common/{{ item.from }}
-            dest: /opt/app/activemq/conf/{{ item.to }}
-          loop:
-            - from: arkcase.ts
-              to: broker.ts
-            - from: arkcase.ks
-              to: broker.ks
-      when: "'arkcase' not in key_out.stdout"
-
 - name: sslContext in activemq.xml
   become: yes
   become_user: activemq
@@ -183,9 +156,9 @@
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: SSLCONTEXT -->"
     block: |
       <sslContext>
-          <sslContext keyStore="broker.ks" keyStorePassword="password" trustStore="broker.ts" trustStorePassword="password"/>
+          <sslContext keyStore="file:///opt/common/arkcase.ks" keyStorePassword="password" trustStore="file:///opt/common/arkcase.ts" trustStorePassword="password"/>
       </sslContext>
-  when: activemq_xml.stdout.find('sslContext keystore="broker.ks"') == -1
+  when: activemq_xml.stdout.find('sslContext keyStore="file:///opt/common/arkcase.ks"') == -1
       
 - name: first time start, to create the tables
   block:
@@ -222,7 +195,7 @@
     - { regexp: 'createTablesOnStartup="true"', replace: 'createTablesOnStartup="false"' }
     - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
     - { regexp: 'uri="tcp', replace: 'uri="ssl' }
-    - { regexp: 'uri="stomp\\:', replace: 'uri="stomp+ssl' }
+    - { regexp: 'uri="stomp://', replace: 'uri="stomp+ssl://' }
 
 - name: jetty.xml file/blob support
   become: yes
@@ -283,3 +256,18 @@
     daemon_reload: true
     name: activemq
     state: started
+
+- name: Expose activemq ports
+  become: yes
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    zone: public
+    state: enabled
+    immediate: true
+  loop:
+    - "61616"
+    - "61613"
+    - "8161"
+    
+    
