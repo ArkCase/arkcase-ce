@@ -39,6 +39,9 @@
           shutdown_port: 3005
           jmx_remote_port: 50508
           jmx_rmi_port: 50509
+          http_port: 2080
+          redirect_port: 2443
+          ajp_port: 2009
           catalina_out: /opt/log/snowbound/catalina.out
           catalina_temp: /opt/tmp/snowbound
           log_folder: /opt/log/snowbound

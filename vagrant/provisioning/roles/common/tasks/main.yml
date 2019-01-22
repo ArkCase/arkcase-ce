@@ -78,8 +78,12 @@
     - /opt/tmp
 
 - name: add arkcase-ce.local to hosts file
+  become: yes
   lineinfile:
     path: /etc/hosts
-    line: "192.168.56.15 arkcase-ce.local"
+    line: "{{ item }}"
+  loop:
+    - "192.168.56.15 arkcase-ce.local"
+    - "192.168.56.1 arkcase-host"
     
 

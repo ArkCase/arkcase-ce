@@ -1,0 +1,6 @@
+- name: create arkcase database schema
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
+  args:
+    apply:
+      vars:
+        item: arkcase

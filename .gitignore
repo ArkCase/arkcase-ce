@@ -7,3 +7,9 @@
 # vagrant
 *.box
 .vagrant
+
+# action items
+todo.org
+
+# python compiled modules
+vagrant/provisioning/filter_plugins/__pycache__/urldecode.cpython-37.pyc

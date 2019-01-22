@@ -70,3 +70,22 @@ VAGRANT_DEFAULT_PROVIDER=virtualbox vagrant up
 ```
 
 Note, you may have to edit the `Vagrantfile` to correct the path to the arkcase-ce.box file, which you should have just created in the above steps.
+
+# External ArkCase Notes
+
+1. Add the ArkCase cert to your Java keystore
+   ```bash
+   scp vagrant@arkcase-ce.local:/etc/ssl/ca/arkcase-ca.crt .
+   scp vagrant@arkcase-ce.local:/opt/common/arkcase.ks .
+   scp vagrant@arkcase-ce.local:/opt/common/arkcase.ts .
+   scp vagrant@arkcase-ce.local:/etc/ssl/private/acm-arkcase.rsa.pem .
+   scp vagrant@arkcase-ce.local:/etc/ssl/crt/acm-arkcase.crt .
+   # add all the certs from your JVM to the arkcase.ts
+   keytool -importkeystore -srckeystore $JAVA_HOME/jre/lib/security/cacerts -srcstorepass changeit -destkeystore arkcase.ts -deststorepass password -noprompt
+
+   ```
+   Update the JDBC URL in your ArkCase datasource.properties with the path to the arkcase-ca.crt.
+   
+2. Make sure a Maria JDBC driver jar file is in your Tomcat lib folder.  The MySQL JDBC jar file doesn't work due to our TLS restrictions.
+
+3. `vagrant plugin install vagrant-hostsupdater`
