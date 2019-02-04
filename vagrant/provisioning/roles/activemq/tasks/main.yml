@@ -184,6 +184,18 @@
       command: /opt/app/activemq/bin/linux-x86-64/activemq stop
       when: activemq_first_start is changed
 
+- name: set activemq_msgs.msg column to be 'longblob' instead of 'blob'
+  block:
+    - name: find current datatype for activemq_msgs.msg
+      become: yes
+      command: mysql -uroot --socket=/opt/data/mariadb/mysql.sock activemq -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = 'activemq' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
+      register: find_data_type
+      changed_when: false
+    - name: update data type, if necessary
+      become: yes
+      command: mysql -uroot --socket=/opt/data/mariadb/mysql.sock activemq -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
+      when: "'blob' == find_data_type.stdout"
+
 - name: activemq.xml updates
   become: yes
   become_user: activemq
