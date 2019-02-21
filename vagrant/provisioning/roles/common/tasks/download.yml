@@ -1,0 +1,12 @@
+- name: Check if {{ item.name }} already downloaded
+  stat:
+    path: "{{ item.dest }}" 
+  register: already_downloaded
+- name: download {{ item.name }} if needed
+  become: yes
+  become_user: "{{ item.owner }}"
+  get_url:
+    dest: "{{ item.dest }}"
+    url: "{{ item.url }}"
+  when: already_downloaded.stat.exists == False 
+  register: "{{ item.name }}_downloaded"    

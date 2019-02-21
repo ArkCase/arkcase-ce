@@ -1,0 +1,9 @@
+- name: set var_log_t on {{ item }} log folder, if needed
+  become: yes
+  file:
+    path: "/opt/log/{{ item }}"
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "var_log_t"
+    selevel: "s0"
+

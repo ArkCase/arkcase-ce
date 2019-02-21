@@ -1,0 +1,31 @@
+# Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
+- name: Pentaho systemd unit file
+  become: yes
+  copy:
+    src: "pentaho.service"
+    dest: /etc/systemd/system/pentaho.service
+  register: pentaho_systemd
+
+- name: reload daemon-files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: pentaho_systemd is changed
+  
+- name: enable Pentaho to start on boot
+  become: yes
+  systemd:
+    name: pentaho
+    enabled: yes
+    masked: no
+
+- name: start Pentaho, if not already started
+  become: yes
+  systemd:
+    name: pentaho
+    state: started
+
+- name: wait for Pentaho to start
+  wait_for:
+    port: 2002
+    delay: 5
+    timeout: 300

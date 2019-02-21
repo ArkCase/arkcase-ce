@@ -1,0 +1,13 @@
+- name: see if {{ item }} core already created
+  become: yes
+  become_user: solr
+  stat:
+    path: /opt/data/solr/{{ item }}
+  register: core_stat
+
+- name: Create {{ item }} core
+  become: yes
+  become_user: solr
+  shell: "/opt/app/solr/bin/solr create -c {{ item }} -d /opt/app/solr/server/solr/configsets/arkcase"
+  when: core_stat.stat.exists == False
+    

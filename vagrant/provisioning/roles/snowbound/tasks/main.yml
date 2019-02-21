@@ -1,0 +1,160 @@
+- name: snowbound user
+  become: yes
+  user:
+    name: snowbound
+    shell: /bin/false
+    state: present
+
+- name: Snowbound folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: snowbound
+    owner: snowbound
+  loop:
+    - /opt/data/snowbound
+    - /opt/log/snowbound
+    - /opt/app/snowbound
+    - /opt/install/snowbound
+    - /opt/tmp/snowbound
+  register: snowbound_folder_structure
+
+- name: enable logrotate for snowbound log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  args:
+    apply:
+      vars:
+        item: snowbound
+
+- include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
+  args:
+    apply:
+      vars:
+        tc:
+          service: snowbound
+          user: snowbound
+          tomcat_home: /opt/app/snowbound
+          tls_port: 2005
+          shutdown_port: 3005
+          jmx_remote_port: 50508
+          jmx_rmi_port: 50509
+          http_port: 2080
+          redirect_port: 2443
+          ajp_port: 2009
+          catalina_out: /opt/log/snowbound/catalina.out
+          catalina_temp: /opt/tmp/snowbound
+          log_folder: /opt/log/snowbound
+  register: snowbound_tomcat_unarchived
+
+- name: download VirtualViewer war file
+  include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  args:
+    apply:
+      vars:
+        item: 
+          name: VirtualViewer war file
+          dest: /opt/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
+          owner: snowbound
+          url: https://github.com/ArkCase/arkcase-dependencies/raw/master/VirtualViewerJavaHTML5/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
+  
+- name: conf/Catalina/localhost folder
+  become: yes
+  become_user: snowbound
+  file:
+    path: /opt/app/snowbound/conf/Catalina/localhost
+    state: directory
+
+- name: snowbound catalina conf file
+  become: yes
+  become_user: snowbound
+  copy:
+    src: VirtualViewerJavaHTML5.xml
+    dest: /opt/app/snowbound/conf/Catalina/localhost/
+  
+- name: snowbound-docs folder
+  become: yes
+  become_user: snowbound
+  file:
+    path: /opt/data/snowbound/snowbound-docs
+    state: directory
+
+- name: link ~/.snowbound-docs to /opt/data/snowbound folder
+  become: yes
+  become_user: snowbound
+  file:
+    src: /opt/data/snowbound/snowbound-docs
+    dest: /home/snowbound/.snowbound-docs
+    state: link
+
+- name: copy fonts file
+  become: yes
+  become_user: snowbound
+  copy:
+    src: "fonts.tar.gz"
+    dest: "/opt/data/snowbound"
+  register: fonts_copied
+- name: expand fonts file
+  become: yes
+  become_user: snowbound
+  unarchive:
+    remote_src: yes
+    src: /opt/data/snowbound/fonts.tar.gz
+    dest: /opt/data/snowbound
+  when: fonts_copied is changed
+- name: update fonts cache
+  become: yes
+  become_user: snowbound
+  shell: fc-cache -f -v
+  args: 
+    chdir: /opt/data/snowbound
+  when: fonts_copied is changed
+- name: set JAVA_FONTS option
+  become: yes
+  become_user: snowbound
+  lineinfile:
+    backup: yes
+    path: "/opt/app/snowbound/bin/setenv.sh"
+    line: 'export JAVA_FONTS="/opt/data/snowbound/.fonts/"'  
+
+- name: Snowbound systemd unit file
+  become: yes
+  copy:
+    src: "{{ role_path }}/files/snowbound.service"
+    dest: /etc/systemd/system/snowbound.service
+  register: snowbound_systemd
+    
+- name: snowbound logrotate
+  become: yes
+  copy:
+    src: snowbound
+    dest: /etc/logrotate.d/snowbound
+
+- name: enable Snowbound to start on boot
+  become: yes
+  systemd:
+    name: snowbound
+    enabled: yes
+    masked: no
+
+- name: reload systemctl files
+  become: yes
+  command: systemctl daemon-reload
+  when: snowbound_systemd is changed
+
+- name: Update Snowbound war file
+  become: yes
+  become_user: snowbound
+  copy:
+    remote_src: yes
+    src: /opt/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
+    dest: /opt/app/snowbound/webapps/VirtualViewerJavaHTML5.war
+  register: snowbound_war
+
+- name: start Snowbound
+  become: yes
+  systemd:
+    name: snowbound
+    state: restarted
+  when: snowbound_war is changed
+
