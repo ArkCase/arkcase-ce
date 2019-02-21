@@ -7,29 +7,16 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  # make sure hosts-updater plugin is installed
-  # Check for missing plugins
-  required_plugins = %w(vagrant-hostsupdater)
-  plugin_installed = false
-  required_plugins.each do |plugin|
-    unless Vagrant.has_plugin?(plugin)
-      system "vagrant plugin install #{plugin}"
-      plugin_installed = true
-    end
-  end
+  # disable the default synced folder
+  config.vm.synced_folder '.', '/vagrant', disabled: true
 
-  # If new plugins installed, restart Vagrant process
-  if plugin_installed === true
-    exec "vagrant #{ARGV.join' '}"
-  end
-  
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "../arkcase-ce.box"
+  config.vm.box = "packer/builds/virtualbox-centos7.box"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs

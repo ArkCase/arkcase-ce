@@ -2,90 +2,47 @@
 
 This project is to build and maintain a Vagrant base box (VirtualBox provider) with a minimal CentOS distribution, and then install ArkCase Community Edition (ArkCase CE) via Ansible packages.
 
+# Prerequisites
+
+Your host desktop must have:
+
+* Ansible 2.7.1 or higher (<https://www.ansible.com/>)
+* Packer (<https://www.packer.io>)
+* VirtualBox (<https://www.virtualbox.org/>).  
+
 # Create the Base CentOS Image
 
 This image will be a plain CentOS minimal install, with a few changes so it will work with Vagrant and Ansible.  Our goal is to do the least amount of work possible for the box to work with Vagrant and Ansible.
 
-1. Download desired CentOS minimal ISO (https://www.centos.org/download)
+1. Download Hashicorp's excellent Packer tool from <https://www.packer.io>. Install packer in the appropriate manner for your particular operating system.
 
-2. Run `box-builder/scripts/build-vm.sh`.  The VM must have at least 8G RAM, at least 128G disk space, and at least 2 CPUs.  Example: ` ./build-vm.sh -n "ArkCase CE" -i /path/to/CentOS-7-x86_64-Minimal-1804.iso -m 8192 -s 131072 -c 2`
+2. Clone this repository, if you haven't already done so, then open a command line terminal window and cd (change directory) to the `packer` folder of this repository. 
 
-3. So far I didn't find a way to automate the CentOS installation.  Start the new VM through the VirtualBox UI and install CentOS in the normal way.
-    * Make sure the host name is `arkcase-ce.local`
-    * Make sure both network interfaces are enabled (configured to start automatically)
-    * For the disk space partitioning, make sure /opt has its own partition, with a sizable amount of space.  Based on a 128G disk, something like this: 
-        1. /opt: 64 GiB
-        2. /home: 23 GiB
-        3. /boot: 1024 MiB
-        4. /: 32 GiB
-        5. swap: 8064 MiB
-    * Root password: standard Armedia STIG password
-    * User: name "ArkCase User", userid arkuser, password arkuser
-    * When prompted, click Reboot button to complete the installation
-    
-4. Login as root
+3. Examine the file `centos7.json`.  This file sets the new VM to have 8G RAM (do not lessen this value, but you can make it higher if you want) and 128G disk space (again, you can choose  higher value, but do not choose a lower one).  
 
-5. Install Ansible: `yum -y install ansible`
+4. Examine the file `http/ks.cfg`.  This file configures the new VM to have a static IP address of 192.168.56.15, with a gateway of 192.168.56.1.  To verify this will work on your host desktop, run this command on your host:
 
-6. Vagrant support
-    * Set the SSH `UseDNS` option to `no`: 
-        1. Edit the file `/etc/ssh/sshd_config`
-        2. Add the line `UseDNS no`
-        3. Save and close the file
-    * Create a user with id `vagrant`, password `vagrant`
-    * Grant the `vagrant` user passwordless sudo: `echo "vagrant ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers`
-    * Add the recognized Vagrant public key to ~/vagrant/.ssh/authorized_keys:
+   `VBoxManage list hostonlyifs | grep "IPAddress"`  (for Linux or MacOS)
+   `VBoxManage list hostonlyifs | findstr "IPAddress"`  (for Windows)
+   
+If you see `192.168.56.1` in the output, the default settings shown above will work fine for you.  If you don't see any output at all, then use the VirtualBox user interface to create a new hostonly network, and then run the above command again.  If you see one or more IP addresses, but do not see `192.168.56.1`, then choose one of them, and update `http/ks.cfg` and replace `192.168.56.1` with the selected address, and replace `192.168.56.15` with a valid IP address from your selected hostonly network; also, replace all other occurrences within this entire repository of `192.168.56.1` and `192.168.56.15` with these same values.
 
-    ```bash
-    mkdir /home/vagrant/.ssh
-    chmod 0700 /home/vagrant/.ssh
-    echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key" >> /home/vagrant/.ssh/authorized_keys
-    chmod 0600 /home/vagrant/.ssh/authorized_keys
-    ```
+5. Run the command `/path/to/packer build centos7.json` (being careful to use the full path to Hashicorp Packer, to avoid accidentally calling other utilities that may also be named "packer").  After some time it should create a Vagrant box image based on the minimal CentOS 7.5 distribution.
 
-7. VirtualBox Guest Additions
-    * From VirtualBox menu, select Devices / Insert Guest Additions CD Image ...
-    * In the virtual machine, as root user: 
-    
-    ```bash
-    mount /dev/cdrom /mnt
-    cd /mnt
-    ./VBoxLinuxAdditions.run
-    ```
-    
-    Most likely you will have to install some kernel packages, development tools, and support packages; be guided by the error messages, until `./VboxLinuxAddtions.run` works.
-    
-8. Cleanup
-    * yum clean all ; rm -rf /var/cache/yum
-    
-9. Create the Core Base Box
-    * `vagrant package --base "The name of the VirtualBox VM" --output arkcase-ce.box`
-    
-    
-# Provision an ArkCase CE Virtualbox VM
+# Start and Provision the ArkCase CE Vagrant VM
+
+1. Update the file `vagrant/Vagrantfile` in this repository, ensuring that the path to the box image is the same image that you just built in Step 5.  The value should already be correct, if you built according to these instructions, but make sure anyway.
+
+2. Install the Vagrant hosts-updater plugin, and start the box.  This will call a set of Ansible roles to provision all the ArkCase services; it will take some time.
 
 ```bash
-cd vagrant
-VAGRANT_DEFAULT_PROVIDER=virtualbox vagrant up
+cd /path/to/this/repository/vagrant
+vagrant plugin install vagrant-hostsupdater
+export VAGRANT_DEFAULT_PROVIDER=virtualbox # for Linux or MacOS
+set VAGRANT_DEFAULT_PROVIDER=virtualbox # for Windows
+vagrant up
 ```
 
-Note, you may have to edit the `Vagrantfile` to correct the path to the arkcase-ce.box file, which you should have just created in the above steps.
+You may see errors from file downloads timing out; if you see these errors, just run `vagrant provision` and Vagrant will try again; usually it will work the second time.  If you see any other errors please raise a GitHub issue.
 
-# External ArkCase Notes
 
-1. Add the ArkCase cert to your Java keystore
-   ```bash
-   scp vagrant@arkcase-ce.local:/etc/ssl/ca/arkcase-ca.crt .
-   scp vagrant@arkcase-ce.local:/opt/common/arkcase.ks .
-   scp vagrant@arkcase-ce.local:/opt/common/arkcase.ts .
-   scp vagrant@arkcase-ce.local:/etc/ssl/private/acm-arkcase.rsa.pem .
-   scp vagrant@arkcase-ce.local:/etc/ssl/crt/acm-arkcase.crt .
-   # add all the certs from your JVM to the arkcase.ts
-   keytool -importkeystore -srckeystore $JAVA_HOME/jre/lib/security/cacerts -srcstorepass changeit -destkeystore arkcase.ts -deststorepass password -noprompt
-
-   ```
-   Update the JDBC URL in your ArkCase datasource.properties with the path to the arkcase-ca.crt.
-   
-2. Make sure a Maria JDBC driver jar file is in your Tomcat lib folder.  The MySQL JDBC jar file doesn't work due to our TLS restrictions.
-
-3. `vagrant plugin install vagrant-hostsupdater`
