@@ -1,0 +1,21 @@
+- name: Copy access file
+  become: yes
+  become_user: solr
+  copy:
+    dest: /opt/app/solr/access.file
+    force: no
+    content: |
+      monitorRole readonly
+      controlRole readwrite
+    mode: 0644
+
+- name: Copy password file
+  become: yes
+  become_user: solr
+  copy:
+    dest: /opt/app/solr/password.file
+    force: no
+    content: |
+      monitorRole {{ jmx_password }}
+      controlRole {{ jmx_password }}
+    mode: 0600

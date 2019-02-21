@@ -1,0 +1,178 @@
+- name: configure MariaDB v10 repository
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mariadb.repo
+    force: no
+    content: |
+      # MariaDB 10.3 CentOS repository list - created 2019-01-09 21:49 UTC
+      # http://downloads.mariadb.org/mariadb/repositories/
+      [mariadb]
+      name = MariaDB
+      baseurl = http://yum.mariadb.org/10.3/centos7-amd64
+      gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgcheck=0
+
+- name: install MariaDB packages
+  become: yes
+  yum:
+    state: installed
+    disable_gpg_check: yes
+    name:
+      - MariaDB-server
+      - MariaDB-client
+      - MySQL-python
+  register: mariadb_install
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "MariaDB JDBC Driver"
+      dest: "/opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+      owner: "root"
+      url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+
+- name: MariaDB folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: mysql
+    owner: mysql
+  loop:
+    - /opt/data/mariadb
+    - /opt/log/mariadb
+  register: mariadb_folder_structure
+
+- name: set SE context on MariaDB folders
+  become: yes
+  command: semanage fcontext -a -t {{ item.context }} -s system_u {{ item.path }}
+  loop:
+    - { context: "mysqld_db_t", path:  "/opt/data/mariadb(/.*)?" }
+    - { context: "mysqld_log_t", path: "/opt/log/mariadb(/.*)?" }
+  when: mariadb_folder_structure is changed
+    
+- name: restorecon MariaDB folders
+  become: yes
+  command: restorecon -RFv {{ item }}
+  loop:
+    - /opt/data/mariadb
+    - /opt/log/mariadb
+  when: mariadb_folder_structure is changed
+
+- name: update server config file
+  become: yes
+  block:
+    - name: read server.cnf
+      shell: cat /etc/my.cnf.d/server.cnf
+      register: server_cnf_contents
+      changed_when: false
+    - name: update server.cnf TLS properties, if needed
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+        state: present
+        insertafter: "\\[mysqld\\]"
+        line: "{{ item }}"
+      loop:
+        - "ssl-cipher=TLSv1.2"
+        - "ssl-cert=/etc/ssl/ca/acm-arkcase.cert.pem"
+        - "ssl-key=/etc/ssl/private/acm-arkcase.rsa.pem"
+        - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
+      when: server_cnf_contents.stdout.find('ssl-cipher=TLSv1.2') == -1
+      register: server_cnf_tls
+    - name: update server.cnf max_packet property, if needed (Pentaho needs larger packet size)
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+        state: present
+        insertafter: "\\[mysqld\\]"
+        line: "max_allowed_packet=15M"
+      when: server_cnf_contents.stdout.find('max_allowed_packet') == -1
+      register: server_cnf_packet
+    - name: network connection properties
+      lineinfile:
+        path: /etc/my.cnf.d/server.cnf
+        state: present
+        regexp: "^{{ item }}$"
+        insertafter: "\\[mysqld\\]"
+        line: "{{ item }}"
+      #when: server_cnf_contents.stdout.find(item) == -1
+      register: server_cnf_network
+      loop:
+        - "skip-name-resolve=true"
+        - "bind-address=0.0.0.0"
+    - name: read client.cnf
+      shell: cat /etc/my.cnf.d/mysql-clients.cnf
+      register: client_cnf_contents
+      changed_when: false
+    - name: update client.cnf if needed
+      lineinfile:
+        path: /etc/my.cnf.d/mysql-clients.cnf
+        state: present
+        insertafter: "\\[mysql\\]"
+        line: "{{ item }}"
+      loop:
+        - "ssl-cert=/etc/ssl/ca/acm-arkcase-client.cert.pem"
+        - "ssl-key=/etc/ssl/private/acm-arkcase-client.rsa.pem"
+        - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
+      when: client_cnf_contents.stdout.find('ssl-cert') == -1
+      register: client_cnf
+
+- name: set data folder
+  become: yes
+  lineinfile:
+    path: /etc/my.cnf.d/server.cnf
+    insertafter: "\\[mysqld\\]"
+    regexp: '^datadir='
+    line: 'datadir=/opt/data/mariadb'
+
+- name: set log folder
+  become: yes
+  lineinfile:
+    path: /etc/my.cnf.d/server.cnf
+    insertafter: "\\[mysqld\\]"
+    regexp: '^log-error='
+    line: 'log-error=/opt/log/mariadb/mariadb.log'
+
+- name: set socket path
+  become: yes
+  lineinfile:
+    path: /etc/my.cnf.d/server.cnf
+    insertafter: "\\[mysqld\\]"
+    regexp: '^socket='
+    line: 'socket=/opt/data/mariadb/mysql.sock'
+
+- name: mariadb logrotate
+  become: yes
+  copy:
+    src: logrotate.d/mariadb
+    dest: /etc/logrotate.d/mariadb
+
+- name: initialize database structures if needed
+  become: yes
+  become_user: mysql
+  command: mysql_install_db
+  args:
+    chdir: /opt/data/mariadb
+    creates: /opt/data/mariadb/mysql/
+
+- name: enable MariaDB to start on boot
+  become: yes
+  systemd:
+    name: mariadb
+    enabled: yes
+    masked: no
+
+- name: start MariaDB
+  become: yes
+  systemd:
+    name: mariadb
+    state: restarted
+  when: server_cnf_tls is changed or server_cnf_packet is changed or client_cnf is changed or mariadb_install is changed or server_cnf_network is changed
+    
+
+- name: Expose mariadb port
+  become: yes
+  firewalld:
+    port: "3306/tcp"
+    permanent: true
+    zone: public
+    state: enabled
+    immediate: true

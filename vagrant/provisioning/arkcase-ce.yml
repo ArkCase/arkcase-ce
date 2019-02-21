@@ -3,3 +3,128 @@
   roles:
     - virtualbox
     - common
+    - pki
+    - samba
+    - mariadb
+    - httpd
+    - alfresco
+    - activemq
+    - solr
+    - pentaho
+    - snowbound
+    - arkcase
+    - tesseract
+  vars:
+    arkcase_host_name: arkcase-ce.local
+
+    snowbound_vendor_version: "4.10"
+    snowbound_arkcase_version: "3.3.1"
+
+    database_host_name: arkcase-ce.local
+    database_server_ssl_cert: /etc/ssl/ca/arkcase-ca.crt
+
+    database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
+    database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites=TLSv1.2&amp;trustServerCertificate=true&amp;serverSslCert={{ database_server_ssl_cert }}"
+    database_arkcase_schema: arkcase
+    database_arkcase_user: arkcase
+
+    database_pentaho_hibernate_schema: hibernate
+    database_pentaho_hibernate_user: hibuser
+    database_pentaho_quartz_schema: quartz
+    database_pentaho_quartz_user: pentaho_user
+    database_pentaho_jackrabbit_schema: jackrabbit
+    database_pentaho_jackrabbit_user: jcr_user
+
+    jmx_password: P@ssw0rd
+
+    pentaho_major_version: 8.2
+    pentaho_minor_version: 0.0-342
+    pentaho_server_url: "https://{{ arkcase_host_name }}/pentaho"
+
+    solr_version: 7.6.0
+    solr_jmx_enabled: true
+    solr_cores:
+      - "acmAdvancedSearch"
+      - "acmQuickSearch"
+
+    mariadb_jdbc_version: 2.2.6
+    default_database_password: "@rKc@3S!"
+
+    # tomcat_major_version needed to build download URL
+    tomcat_major_version: 9
+    tomcat_version: 9.0.12
+
+    alfresco_release_name: 201806-GA
+    alfresco_content_services_version: 6.0.7-ga
+    alfresco_records_management_version: 3.0.a
+
+    records_management_categories:
+      - "Case Files"
+      - "Complaints"
+      - "Document Repositories"
+      - "Requests"
+      - "Tasks"
+    content_management_folders:
+      - "Case Files"
+      - "Complaints"
+      - "Document Repositories"
+      - "Expenses"
+      - "People"
+      - "Tasks"
+      - "Timesheets"
+      - "User Profile"
+    
+    samba_version: 4.9.1
+    samba_domain: "DC.ARKCASE-CE"
+    # samba_realm becomes the directory context e.g. dc=arkcase-ce,dc=local
+    samba_realm: "arkcase-ce.local"
+    samba_host_ip: "192.168.56.15"
+    samba_admin_password: "@rKc@3e"
+    samba_server_role: dc
+
+    ldap_base: "DC=arkcase-ce,DC=local"
+
+    ldap_groups:
+      - description: External users
+        name: ARKCASE_EXTERNAL
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Consumers (read-only) users
+        name: ARKCASE_CONSUMER
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Contributors (editors)
+        name: ARKCASE_CONTRIBUTOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: System administrators
+        name: ARKCASE_ADMINISTRATOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Supervisors (approvers)
+        name: ARKCASE_SUPERVISOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+      - description: Entity administrators (maintain person and org records)
+        name: ARKCASE_ENTITY_ADMINISTRATOR
+        alfresco_role: SiteManager
+        alfresco_rma_role: Administrator
+
+    arkcase_admin_user: "arkcase-admin"
+    arkcase_admin_password: "@rKc@3e"
+
+    ldap_users:
+      - user_id: "{{ arkcase_admin_user }}"
+        description: ArkCase administrator
+        name: ArkCase Admin
+        mail: arkcase-admin@arkcase-ce.local
+        firstName: ArkCase
+        lastName: Administrator
+        password: "{{ arkcase_admin_password }}"
+        groups:
+          - ARKCASE_ADMINISTRATOR
+
+    virtualbox_version: 5.2.24
+
+    activemq_version: 5.15.8
+    

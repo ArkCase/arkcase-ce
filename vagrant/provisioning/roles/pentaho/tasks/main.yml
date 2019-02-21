@@ -1,0 +1,106 @@
+- name: user and folder creation, and download
+  include_tasks: initial_setup.yml
+
+- name: get newer JDBC driver
+  include_tasks: update_mariadb_jdbc_driver.yml
+
+- name: create database schemas
+  import_tasks: create_database_schemas.yml
+  
+- name: configure ldap sync
+  import_tasks: ldap_sync.yml
+
+- name: import arkcase keystore
+  become: yes
+  become_user: pentaho
+  java_cert:
+    pkcs12_alias: arkcase
+    pkcs12_path: /opt/common/arkcase.p12
+    pkcs12_password: password
+    keystore_create: yes
+    keystore_pass: password
+    keystore_path: /opt/app/pentaho/pentaho-server/tomcat/conf/keystore
+    state: present
+    cert_alias: tomcat
+
+- name: startup files
+  become: yes
+  become_user: pentaho
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    backup: yes
+  loop:
+    - src: access.file
+      mode: "0644"
+      dest: /opt/app/pentaho
+    - src: password.file
+      mode: "0600"
+      dest: /opt/app/pentaho
+    - src: setenv.sh
+      mode: "u+x"
+      dest: /opt/app/pentaho/pentaho-server/tomcat/bin
+    - src: server.xml
+      mode: "0644"
+      dest: /opt/app/pentaho/pentaho-server/tomcat/conf
+
+- name: configure logging
+  import_tasks: configure_logging.yml
+
+- name: configure database
+  import_tasks: configure_database.yml
+
+- name: preauthentication setup
+  become: yes
+  become_user: pentaho
+  copy:
+    backup: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: arkcase-preauth-springsec-v4-1.1.1-bundled.jar
+      dest: /opt/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/lib/
+    - src: applicationContext-spring-security.xml
+      dest: /opt/app/pentaho/pentaho-server/pentaho-solutions/system/
+    - src: arkcase-preauth.xml
+      dest: /opt/app/pentaho/pentaho-server/pentaho-solutions/system/
+
+- name: server properties
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: server.properties
+    dest: /opt/app/pentaho/pentaho-server/pentaho-solutions/system/server.properties
+
+- name: systemd and initial startup
+  import_tasks: configure_startup.yml
+  
+- name: switch from jackrabbit to ldap auth
+  import_tasks: configure_ldap.yml
+
+- name: deploy reports
+  include_tasks: deploy_report.yml
+  loop:
+    - path: "arkcase"
+      definition: "ComplaintReport.prpt"
+    - path: "arkcase"
+      definition: "ComplaintDispositionCount.prpt"
+    - path: "arkcase"
+      definition: "caseSummary.prpt"
+    - path: "arkcase-audit"
+      definition: "AuditReportWithUrl.prpt"
+    - path: "arkcase-audit"
+      definition: "AuditReport.prpt"
+  loop_control:
+    loop_var: r
+    
+- name: open firewall port
+  become: yes
+  firewalld:
+    port: "2002/tcp"
+    permanent: yes
+    zone: public
+    state: enabled
+    immediate: yes

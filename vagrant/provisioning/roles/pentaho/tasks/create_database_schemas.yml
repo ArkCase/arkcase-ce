@@ -1,0 +1,22 @@
+- name: copy quartz DDL
+  become: yes
+  become_user: pentaho
+  copy:
+    src: quartz-create-db.sql
+    dest: /opt/install/pentaho/
+    
+- name: create hibernate schema (ansible will always report quartz as changed)
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema_specific_user.yml"
+  loop:
+    - schema: "hibernate"
+      user: "hibuser"
+      script: ""
+    - schema: "jackrabbit"
+      user: "jcr_user"
+      script: ""
+    - schema: "quartz"
+      user: "pentaho_user"
+      script: "quartz-create-db.sql"
+  loop_control:
+    loop_var: s
+    
