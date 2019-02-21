@@ -1,2 +1,23 @@
+- name: get kernel details
+  command: "uname -a"
+  register: uname
+
+- name: extract specific kernel version
+  set_fact:
+    kernel_version: "{{ uname.stdout.split(' ')[2] }}"
+
+- debug:
+    var: kernel_version
+  
+- name: required packages to build virtualbox guest additions
+  become: yes
+  yum:
+    state: present
+    name:
+      - "bzip2"
+      - "@Development Tools"
+      - "kernel-devel-{{ kernel_version }}"
+    
+
 - include: get-guest-additions.yml
 

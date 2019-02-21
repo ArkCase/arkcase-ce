@@ -124,7 +124,7 @@
         groups:
           - ARKCASE_ADMINISTRATOR
 
-    virtualbox_version: 5.2.22
+    virtualbox_version: 5.2.24
 
     activemq_version: 5.15.8
     

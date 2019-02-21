@@ -178,6 +178,40 @@
               path: "/etc/ssl/crt/acm-arkcase.crt"
       when: "arkcase_ts_stat.stat.exists == False or 'arkcase' not in key_out.stdout"
 
+- name: write encrypted symmetric key file for use in ArkCase webapp
+  block:
+    - name: check if symmetric key file exists
+      become: yes
+      stat:
+        path: /opt/common/symmetricKey.encrypted
+      register: sym_key_enc
+      changed_when: false
+    - name: write plaintext key
+      become: yes
+      copy:
+        dest: /opt/common/symmetricKey.txt
+        content: |
+          {{ 9999999999999999999999 | random | to_uuid }}
+      when: sym_key_enc.stat.exists == False
+    - name: extract public key from client cert
+      become: yes
+      command: openssl x509 -pubkey -noout -in /etc/ssl/ca/acm-arkcase-client.cert.pem -noout
+      register: client_pub_key
+      when: sym_key_enc.stat.exists == False
+      changed_when: false
+    - name: write public key to file
+      become: yes
+      copy:
+        dest: /opt/common/acm-arkcase-client.pub
+        content: |
+          {{ client_pub_key.stdout }}
+      when: sym_key_enc.stat.exists == False
+    - name: write encrypted plaintext
+      become: yes
+      command: openssl rsautl -encrypt -pubin -inkey /opt/common/acm-arkcase-client.pub -in /opt/common/symmetricKey.txt -out /opt/common/symmetricKey.encrypted
+      when: sym_key_enc.stat.exists == False
+        
+
 - name: add ArkCase client cert to Java key store
   become: yes
   java_cert:
