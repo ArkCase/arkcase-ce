@@ -22,8 +22,8 @@ This image will be a plain CentOS minimal install, with a few changes so it will
 
 4. Examine the file `http/ks.cfg`.  This file configures the new VM to have a static IP address of 192.168.56.15, with a gateway of 192.168.56.1.  To verify this will work on your host desktop, run this command on your host:
 
-   `VBoxManage list hostonlyifs | grep "IPAddress"`  (for Linux or MacOS)
-   `VBoxManage list hostonlyifs | findstr "IPAddress"`  (for Windows)
+    * Linux or MacOS: `VBoxManage list hostonlyifs | grep "IPAddress"`  
+    * Windows: `VBoxManage list hostonlyifs | findstr "IPAddress"` 
    
 If you see `192.168.56.1` in the output, the default settings shown above will work fine for you.  If you don't see any output at all, then use the VirtualBox user interface to create a new hostonly network, and then run the above command again.  If you see one or more IP addresses, but do not see `192.168.56.1`, then choose one of them, and update `http/ks.cfg` and replace `192.168.56.1` with the selected address, and replace `192.168.56.15` with a valid IP address from your selected hostonly network; also, replace all other occurrences within this entire repository of `192.168.56.1` and `192.168.56.15` with these same values.
 
@@ -33,7 +33,7 @@ If you see `192.168.56.1` in the output, the default settings shown above will w
 
 1. Update the file `vagrant/Vagrantfile` in this repository, ensuring that the path to the box image is the same image that you just built in Step 5.  The value should already be correct, if you built according to these instructions, but make sure anyway.
 
-2. Install the Vagrant hosts-updater plugin, and start the box.  This will call a set of Ansible roles to provision all the ArkCase services; it will take some time.
+2. Run the commands below to install the Vagrant hosts-updater plugin, and start the box.  This will call a set of Ansible roles to provision all the ArkCase services; it will take some time (30 minutes to an hour or more).
 
 ```bash
 cd /path/to/this/repository/vagrant
@@ -43,6 +43,6 @@ set VAGRANT_DEFAULT_PROVIDER=virtualbox # for Windows
 vagrant up
 ```
 
-You may see errors from file downloads timing out; if you see these errors, just run `vagrant provision` and Vagrant will try again; usually it will work the second time.  If you see any other errors please raise a GitHub issue.
+You may see errors from file downloads timing out; if you see these errors, just run `vagrant provision` and Vagrant will try again; usually it will work the second time.  If you see any other errors please raise a GitHub issue in this repository.
 
 
