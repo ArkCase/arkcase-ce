@@ -147,7 +147,18 @@
         insertbefore: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
         block: |
-          export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=/opt/common/arkcase.ks -Djavax.net.ssl.trustStore=/opt/common/arkcase.ts -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port={{ tc.jmx_remote_port }} -Dcom.sun.management.jmxremote.rmi.port={{ tc.jmx_rmi_port }} -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=arkcase-ce.local -Dcom.sun.management.jmxremote.password.file={{ tc.tomcat_home }}/password.file -Dcom.sun.management.jmxremote.access.file={{ tc.tomcat_home }}/access.file"
+          export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=/opt/common/arkcase.ks -Djavax.net.ssl.trustStore=/opt/common/arkcase.ts"
+    - name: set CATALINA_OPTS
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/bin/setenv.sh"
+        create: yes
+        mode: u+x
+        insertbefore: EOF
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - CATALINA_OPTS"
+        block: |
+          export CATALINA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port={{ tc.jmx_remote_port }} -Dcom.sun.management.jmxremote.rmi.port={{ tc.jmx_rmi_port }} -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=arkcase-ce.local -Dcom.sun.management.jmxremote.password.file={{ tc.tomcat_home }}/password.file -Dcom.sun.management.jmxremote.access.file={{ tc.tomcat_home }}/access.file"
     - name: set other environment variables
       become: yes
       become_user: "{{ tc.user }}"
