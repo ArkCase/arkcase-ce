@@ -4,3 +4,30 @@
     apply:
       vars:
         item: arkcase
+
+- name: set target version to default, if not specified
+  set_fact:
+    target_version: "{{ arkcase_webapp_version | default('') }}"
+
+- name: set whether to install
+  set_fact:    
+    install_arkcase: "{{ target_version != '' and target_version != '0' and target_version in arkcase_webapp_supported_versions }}"
+
+- name: if we are not installing, say why
+  debug:
+    msg: "Not installing ArkCase webapp, since it is not desired, or the desired version is not in the list of supported versions."
+  when: install_arkcase == false
+
+- name: say what we are installing
+  debug:
+    msg: "Installing ArkCase webapp version {{ target_version }}"
+  when: install_arkcase
+
+- name: install arkcase webapp
+  include_tasks: "arkcase-webapp.yml"
+  args:
+    apply:
+      vars:
+        target_version: "{{ target_version }}"
+  when: install_arkcase
+

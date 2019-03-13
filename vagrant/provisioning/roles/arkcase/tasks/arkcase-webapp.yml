@@ -1,0 +1,117 @@
+- name: output target version
+  debug:
+    var: target_version
+
+- include_tasks: arkcase_user_and_folders.yml
+- include_tasks: arkcase_downloads.yml
+
+- name: required packages to run ArkCase webapp
+  become: yes
+  yum:
+    state: present
+    name:
+      - yarn
+      - npm
+      - nodejs
+    
+- include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
+  args:
+    apply:
+      vars:
+        tc:
+          service: arkcase
+          user: arkcase
+          tomcat_home: /opt/app/arkcase
+          tls_port: 8843
+          shutdown_port: 4005
+          jmx_remote_port: 40506
+          jmx_rmi_port: 40507
+          http_port: 8080
+          redirect_port: 4443
+          ajp_port: 4009
+          catalina_out: /opt/log/arkcase/catalina.out
+          catalina_temp: /opt/tmp/arkcase
+          log_folder: /opt/log/arkcase
+  register: tomcat_unarchived
+
+- name: copy acm-law-enforcement war to arkcase.war
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "/opt/install/arkcase/acm-law-enforcement-{{ target_version }}.war"
+    dest: "/opt/app/arkcase/webapps/arkcase.war"
+    force: no
+
+- name: see if arkcase repo already cloned
+  become: yes
+  become_user: arkcase
+  stat:
+    path: "/home/arkcase/.arkcase/acm/datasource.properties"
+  register: repository_exists
+
+- name: clone arkcase configuration
+  become: yes
+  become_user: arkcase
+  git:
+    repo: "https://github.com/ArkCase/.arkcase.git"
+    dest: "/home/arkcase/.arkcase"
+    version: "arkcase-{{ target_version }}"
+  when: repository_exists.stat == false
+
+- name: link certs and keys to .arkcase folder
+  become: yes
+  become_user: arkcase
+  file:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    state: link
+  loop:
+    - src: "/etc/ssl/ca/arkcase-ca.crt"
+      path: "/home/arkcase/.arkcase/acm/private/arkcase-ca.crt"
+    - src: "/opt/common/arkcase.ks"
+      path: "/home/arkcase/.arkcase/acm/private/arkcase.ks"
+    - src: "/opt/common/arkcase.ts"
+      path: "/home/arkcase/.arkcase/acm/private/arkcase.ts"
+    - src: "/etc/ssl/private/acm-arkcase.rsa.pem"
+      path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.rsa.pem"
+    - src: "/etc/ssl/crt/acm-arkcase.crt"
+      path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.crt"
+    - src: "/opt/common/symmetricKey.encrypted"
+      path: "/home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted"
+
+- name: fix arkcase-host hostname
+  become: yes
+  replace:
+    path: "/etc/hosts"
+    backup: yes
+    regexp: "192.168.56.1 arkcase-host"
+    replace: "192.168.56.15 arkcase-host"
+
+- name: arkcase logrotate
+  become: yes
+  copy:
+    src: "arkcase"
+    dest: /etc/logrotate.d/arkcase
+
+- name: copy ArkCase systemd unit file
+  become: yes
+  copy:
+    src: arkcase.service
+    dest: /etc/systemd/system/arkcase.service
+
+- name: enable ArkCase to start on boot
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: arkcase
+    enabled: yes
+    masked: no
+
+- name: start ArkCase
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: arkcase
+    state: started
+    

@@ -15,6 +15,15 @@
     - arkcase
     - tesseract
   vars:
+    # "supported version" means there is a GitHub release tag named "arkcase-$VERSION".
+    # So, "3.3.0" is a supported version because the repository https://github.com/ArkCase/ArkCase
+    # has a release tagged "arkcase-3.3.0".  Furthermore, this release has a release artifact
+    # consisting of the acm-law-enforcement war file.  In short, the ArkCase war file can
+    # be downloaded from the URL "https://github.com/ArkCase/ArkCase/releases/download/arkcase-3.3.0/acm-law-enforcement-3.3.0.war".
+    # If there is no such URL, ArkCase installation will fail.
+    arkcase_webapp_supported_versions:
+      - "3.3.0"
+
     arkcase_host_name: arkcase-ce.local
 
     snowbound_vendor_version: "4.10"
