@@ -57,7 +57,7 @@
     repo: "https://github.com/ArkCase/.arkcase.git"
     dest: "/home/arkcase/.arkcase"
     version: "arkcase-{{ target_version }}"
-  when: repository_exists.stat == false
+  when: repository_exists.stat.exists == false
 
 - name: link certs and keys to .arkcase folder
   become: yes
