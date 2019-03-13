@@ -23,7 +23,7 @@
     # If there is no such URL, ArkCase installation will fail.
     arkcase_webapp_supported_versions:
       - "3.3.0"
-      
+
     arkcase_host_name: arkcase-ce.local
 
     snowbound_vendor_version: "4.10"
