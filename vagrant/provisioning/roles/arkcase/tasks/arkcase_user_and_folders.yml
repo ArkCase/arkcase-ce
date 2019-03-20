@@ -18,10 +18,13 @@
     - /opt/app/arkcase
     - /opt/install/arkcase
     - /opt/tmp/arkcase
+    - /opt/app/config-server
+    - /opt/log/config-server
   register: arkcase_folder_structure
 
 - name: enable logrotate for arkcase log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
   loop:
     - arkcase
+    - config-server
 

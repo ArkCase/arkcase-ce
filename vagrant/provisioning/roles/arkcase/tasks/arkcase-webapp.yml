@@ -88,25 +88,57 @@
     regexp: "192.168.56.1 arkcase-host"
     replace: "192.168.56.15 arkcase-host"
 
-- name: arkcase logrotate
+- name: arkcase and config server logrotate
   become: yes
   copy:
-    src: "arkcase"
-    dest: /etc/logrotate.d/arkcase
+    src: "{{ item }}"
+    dest: "/etc/logrotate.d/{{ item }}"
+  loop:
+    - "arkcase"
+    - "config-server"
 
-- name: copy ArkCase systemd unit file
+- name: copy ArkCase and config server systemd unit files
   become: yes
   copy:
-    src: arkcase.service
-    dest: /etc/systemd/system/arkcase.service
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: arkcase.service
+      dest: /etc/systemd/system/arkcase.service
+    - src: config-server.service
+      dest: /etc/systemd/system/config-server.service
 
-- name: enable ArkCase to start on boot
+- name: see if config-server repository folder is present; if not, no need to start config-server
+  become: yes
+  become_user: arkcase
+  stat:
+    path: "/home/arkcase/.arkcase/acm/acm-config-server-repo"
+  register: config_server_repo
+
+- name: enable ArkCase 
   become: yes
   systemd:
     daemon_reload: yes
     name: arkcase
     enabled: yes
     masked: no
+
+- name: enable config-server, if repo folder is present 
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: config-server
+    enabled: yes
+    masked: no
+  when: config_server_repo.stat.exists
+
+- name: start Config Server
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: config-server
+    state: started
+  when: config_server_repo.stat.exists
 
 - name: start ArkCase
   become: yes
