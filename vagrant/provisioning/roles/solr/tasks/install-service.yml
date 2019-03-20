@@ -6,9 +6,9 @@
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
-    - regexp: "\/opt\/solr"
+    - regexp: "/opt/solr"
       replace: "/opt/app/solr"
-    - regexp: "\/etc\/default/solr.in.sh"
+    - regexp: "/etc/default/solr.in.sh"
       replace: "/opt/app/solr/bin/solr.in.sh"
 
 - name: update environment file - basics

@@ -1,46 +1,3 @@
-- name: set hostname
-  become: yes
-  hostname:
-    name: "{{ arkcase_host_name }}"
-
-- name: check for virtualbox guest additions
-  stat: path=/usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso
-  register: virtualbox_guest_additions
-
-- name: update all packages
-  become: yes
-  yum:
-    name: '*'
-    state: latest
-
-# reboot check taken from https://www.jeffgeerling.com/blog/2018/reboot-and-wait-reboot-complete-ansible-playbook
-- name: Check for reboot
-  shell: if [ $(rpm -q kernel|tail -n 1) != kernel-$(uname -r) ]; then echo 'reboot'; else echo 'no'; fi
-  ignore_errors: true
-  register: reboot_hint
-  changed_when: false
-
-- name: rebuild guest additions if necessary
-  import_tasks: "{{ role_path }}/../virtualbox/tasks/reinstall-guest-additions.yml"
-  when: virtualbox_guest_additions.stat.exists == True and reboot_hint.stdout.find("reboot") != -1
-
-- name: rebooting
-  shell: "sleep 5 && reboot"
-  async: 1
-  poll: 0
-  become: yes
-  ignore_errors: true
-  register: rebooting
-  when: reboot_hint.stdout.find("reboot") != -1
-
-- name: Wait for rebooted box to come back
-  wait_for_connection:
-    connect_timeout: 20
-    sleep: 5
-    delay: 5
-    timeout: 300
-  when: rebooting is changed
-      
 - name: install required packages
   become: yes
   yum:
@@ -53,16 +10,15 @@
       - unzip
       - git
       - net-tools
-      - epel-release
+      - python-pip
 
-# need to run another yum, AFTER installing epel-release, to get epel packages
-- name: install epel packages
+- name: remove python2-passlib since it breaks solr password setting
   become: yes
   yum:
-    state: installed
-    name: 
-      - python-pip
-    
+    state: absent
+    name:
+      - python2-passlib
+
 - name: folder structure for app, data and logs
   become: yes
   file:
