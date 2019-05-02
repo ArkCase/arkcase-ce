@@ -31,14 +31,15 @@ If you see `192.168.56.1` in the output, the default settings shown above will w
 
 Then run the command `vagrant up` from the same folder where `Vagrantfile` is loaded.  After some time, it should report success.
 
-If the default 192.168.56.15 address did not work for you, and you had to update the static IP address in the manner described above), you must take some extra steps.  From a terminal window, run these commands from the same folder as the Vagrantfile, being careful to replace MY-NEW-IP-ADDRESS with the same IP address you assigned in the Vagrantfile; and to replace MY-NEW-HOST-ADDRESS with the hostonly IP address you chose.
+If the default 192.168.56.15 address did not work for you, and you had to update the static IP address in the manner described above), you must take some extra steps.  From a terminal window, run these command from the same folder as the Vagrantfile, being careful to replace MY-NEW-IP-ADDRESS with the same IP address you assigned in the Vagrantfile.
 
 ```bash
-vagrant ssh -c "sed 's|192.168.56.15 arkcase-ce.local|MY-NEW-IP-ADDRESS arkcase-ce.local|g' /etc/hosts"
-vagrant ssh -c "sed 's|192.168.56.1 arkcase-host|MY-NEW-HOST-ADDRESS arkcase-host|g' /etc/hosts"
+agrant ssh -c "sed -i 's|192.168.56.15|MY-NEW-IP-ADRESS|g' /etc/hosts"
 ```
 
 You should be able to open the web site `https://arcase-ce.local/arkcase` in your browser.  You will have to accept the ArkCase self-signed HTTPS certificate; instructions for how to do this vary by browser and operating system; you may have to search online for how to do this on your system.
+
+The default admin user is `admin@arkcase.org`, password `@rKc@3e`.
 
 You can skip the rest of these instructions.
 
