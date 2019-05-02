@@ -6,11 +6,33 @@ This project is to build and maintain a Vagrant base box (VirtualBox provider) w
 
 Your host desktop must have:
 
-* Ansible 2.7.1 or higher (<https://www.ansible.com/>)
 * Packer (<https://www.packer.io>)
 * VirtualBox (<https://www.virtualbox.org/>).  
 
-# Create the Base CentOS Image
+# If You Just Want to Download a Pre-built ArkCase Virtual Machine and Run ArkCase
+
+In this case, create a text file named `Vagrantfile` (no file extension) in an empty folder.  Edit this file to have the following contents:
+
+```
+Vagrant.configure("2") do |config|
+  config.vm.box = "arkcase/arkcase-ce"
+  config.vm.box_version = "3.3.1"
+  config.vm.network "private_network", ip: "192.168.56.15"  
+end
+```
+
+The above `Vagrantfile` assigns the VM a static IP address of `192.168.56.15`, and assumes your host has the default VirtualBox host IP address of `192.168.56.1`.  To verify this will work on your host desktop, run this command on your host:
+
+   `VBoxManage list hostonlyifs | grep "IPAddress"`  (for Linux or MacOS)
+   `VBoxManage list hostonlyifs | findstr "IPAddress"`  (for Windows)
+   
+If you see `192.168.56.1` in the output, the default settings shown above will work fine for you.  If you don't see any output at all, then use the VirtualBox user interface to create a new hostonly network, and then run the above command again.  If you see one or more IP addresses, but do not see `192.168.56.1`, then choose one of them, and update your `Vagrantfile` and replace `192.168.56.15` with a valid, unused IP address from this hostonly network.  
+
+Then run the command `vagrant up` from the same folder where `Vagrantfile` is loaded.  After some time, it should report success, and you should be able to open the web site `https://arcase-ce.local/arkcase`.  You will have to accept the ArkCase self-signed HTTPS certificate; instructions for how to do this vary by browser and operating system; you may have to search online for how to do this on your system.
+
+You can skip the rest of these instructions.
+
+# If You Want to Create the Base CentOS Image and Install ArkCase Yourself
 
 This image will be a plain CentOS minimal install, updated to work well with Vagrant and Ansible.  
 
