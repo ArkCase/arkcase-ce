@@ -38,7 +38,7 @@ Vagrant.configure("2") do |config|
   # using a specific IP.
   config.vm.network "private_network", ip: "192.168.56.15"
   config.vm.hostname = "arkcase-ce.local"
-  config.hostsupdater.remove_on_suspend = false
+  # config.hostsupdater.remove_on_suspend = false
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on

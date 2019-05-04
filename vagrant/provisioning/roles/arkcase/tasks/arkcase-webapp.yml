@@ -34,6 +34,16 @@
           log_folder: /opt/log/arkcase
   register: tomcat_unarchived
 
+- name: add config-server option to JAVA_OPTS
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "/opt/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - CONFIG-SERVER JAVA_OPTS"
+    block: |
+      export JAVA_OPTS="$JAVA_OPTS -Dacm.configurationserver.propertyfile=/home/arkcase/.arkcase/acm/conf.yml"
+
 - name: copy acm-law-enforcement war to arkcase.war
   become: yes
   become_user: arkcase
@@ -47,7 +57,7 @@
   become: yes
   become_user: arkcase
   stat:
-    path: "/home/arkcase/.arkcase/acm/datasource.properties"
+    path: "/home/arkcase/.arkcase/acm/conf.yml"
   register: repository_exists
 
 - name: clone arkcase configuration
