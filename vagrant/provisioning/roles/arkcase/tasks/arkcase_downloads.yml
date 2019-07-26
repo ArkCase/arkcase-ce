@@ -12,4 +12,3 @@
       dest: /opt/app/config-server/config-server.jar
       owner: arkcase
       url: https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar
-      

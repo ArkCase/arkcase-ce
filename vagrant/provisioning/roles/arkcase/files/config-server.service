@@ -3,10 +3,9 @@ Description=ArkCase Config Server
 After=syslog.target
 
 [Service]
-ExecStart=/usr/bin/java -Dserver.port=9999 -Djava.net.preferIPv4Stack=true -jar /opt/app/config-server/config-server.jar
+ExecStart=/opt/app/config-server/config-server.jar
 SuccessExitStatus=143
 Environment=LOGGING_FILE=/opt/log/config-server/acmConfigServer.log
-Type=forking
 WorkingDirectory=/opt/app/config-server
 User=arkcase
 Group=arkcase
@@ -19,3 +18,4 @@ SyslogIdentifier=config-server
 
 [Install]
 WantedBy=multi-user.target
+

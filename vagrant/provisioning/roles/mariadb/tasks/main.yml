@@ -4,13 +4,13 @@
     dest: /etc/yum.repos.d/mariadb.repo
     force: no
     content: |
-      # MariaDB 10.3 CentOS repository list - created 2019-01-09 21:49 UTC
+      # MariaDB 10.4 CentOS repository list - created 2019-01-09 21:49 UTC
       # http://downloads.mariadb.org/mariadb/repositories/
       [mariadb]
       name = MariaDB
-      baseurl = http://yum.mariadb.org/10.3/centos7-amd64
+      baseurl = http://yum.mariadb.org/10.4/centos7-amd64
       gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
-      gpgcheck=0
+      gpgcheck=1
 
 - name: install MariaDB packages
   become: yes
@@ -33,30 +33,17 @@
 - name: MariaDB folders
   become: yes
   file:
-    path: "{{ item }}"
+    path: "{{ item.name }}"
     state: directory
     group: mysql
     owner: mysql
+    setype: "{{ item.setype }}"
   loop:
-    - /opt/data/mariadb
-    - /opt/log/mariadb
+    - name: "/opt/data/mariadb"
+      setype: "mysqld_db_t"
+    - name: "/opt/log/mariadb"
+      setype: "mysqld_log_t"
   register: mariadb_folder_structure
-
-- name: set SE context on MariaDB folders
-  become: yes
-  command: semanage fcontext -a -t {{ item.context }} -s system_u {{ item.path }}
-  loop:
-    - { context: "mysqld_db_t", path:  "/opt/data/mariadb(/.*)?" }
-    - { context: "mysqld_log_t", path: "/opt/log/mariadb(/.*)?" }
-  when: mariadb_folder_structure is changed
-    
-- name: restorecon MariaDB folders
-  become: yes
-  command: restorecon -RFv {{ item }}
-  loop:
-    - /opt/data/mariadb
-    - /opt/log/mariadb
-  when: mariadb_folder_structure is changed
 
 - name: update server config file
   become: yes
@@ -73,9 +60,9 @@
         line: "{{ item }}"
       loop:
         - "ssl-cipher=TLSv1.2"
-        - "ssl-cert=/etc/ssl/ca/acm-arkcase.cert.pem"
-        - "ssl-key=/etc/ssl/private/acm-arkcase.rsa.pem"
-        - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
+        - "ssl-cert=/etc/ssl/crt/arkcase-server.crt"
+        - "ssl-key=/etc/ssl/private/arkcase-server.rsa.pem"
+        - "ssl-ca=/etc/ssl/crt/arkcase-chain.crt"
       when: server_cnf_contents.stdout.find('ssl-cipher=TLSv1.2') == -1
       register: server_cnf_tls
     - name: update server.cnf max_packet property, if needed (Pentaho needs larger packet size)
@@ -109,10 +96,11 @@
         insertafter: "\\[mysql\\]"
         line: "{{ item }}"
       loop:
-        - "ssl-cert=/etc/ssl/ca/acm-arkcase-client.cert.pem"
-        - "ssl-key=/etc/ssl/private/acm-arkcase-client.rsa.pem"
-        - "ssl-ca=/etc/ssl/ca/arkcase-ca.crt"
-      when: client_cnf_contents.stdout.find('ssl-cert') == -1
+        - "ssl-cert=/etc/ssl/crt/arkcase-client.crt"
+        - "ssl-key=/etc/ssl/private/arkcase-client.rsa.pem"
+        - "ssl-ca=/etc/ssl/crt/arkcase-chain.crt"
+        - "socket=/opt/data/mariadb/mysql.sock"
+      when: client_cnf_contents.stdout.find('arkcase-client') == -1
       register: client_cnf
 
 - name: set data folder

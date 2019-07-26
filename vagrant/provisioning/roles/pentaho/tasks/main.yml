@@ -14,8 +14,8 @@
   become: yes
   become_user: pentaho
   java_cert:
-    pkcs12_alias: arkcase
-    pkcs12_path: /opt/common/arkcase.p12
+    pkcs12_alias: arkcase_client
+    pkcs12_path: /opt/common/arkcase-client.p12
     pkcs12_password: password
     keystore_create: yes
     keystore_pass: password
@@ -45,6 +45,14 @@
       mode: "0644"
       dest: /opt/app/pentaho/pentaho-server/tomcat/conf
 
+- name: set TLS options in import-export script
+  become: yes
+  become_user: pentaho
+  replace:
+    path: /opt/app/pentaho/pentaho-server/import-export.sh
+    regexp: "-Xmx2048m"
+    replace: "-Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=/opt/common/arkcase.ks -Djavax.net.ssl.trustStore=/opt/common/arkcase.ts -Xmx2048m"
+      
 - name: configure logging
   import_tasks: configure_logging.yml
 

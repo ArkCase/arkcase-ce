@@ -17,27 +17,27 @@ In this case, create a text file named `Vagrantfile` (no file extension) in an e
 Vagrant.configure("2") do |config|
   config.vm.box = "arkcase/arkcase-ce"
   config.vm.box_version = "3.3.1"
-  config.vm.network "private_network", ip: "192.168.56.15"  
+  config.vm.network "private_network", type: "dhcp"
 end
 ```
 
-The above `Vagrantfile` assigns the VM a static IP address of `192.168.56.15`, and assumes your host has the default VirtualBox host IP address of `192.168.56.1`.  To verify this will work on your host desktop, run this command on your host:
-
-   `VBoxManage list hostonlyifs | grep "IPAddress"`  (for Linux or MacOS)
-   
-   `VBoxManage list hostonlyifs | findstr "IPAddress"`  (for Windows)
-   
-If you see `192.168.56.1` in the output, the default settings shown above will work fine for you.  If you don't see any output at all, then use the VirtualBox user interface to create a new hostonly network, and then run the above command again.  If you see one or more IP addresses, but do not see `192.168.56.1`, then choose one of them, and update your `Vagrantfile` and replace `192.168.56.15` with a valid, unused IP address from this hostonly network.  
+The above `Vagrantfile` creates a private network with a DHCP-assigned IP address.
 
 Then run the command `vagrant up` from the same folder where `Vagrantfile` is loaded.  After some time, it should report success.
 
-If the default 192.168.56.15 address did not work for you, and you had to update the static IP address in the manner described above), you must take some extra steps.  From a terminal window, run these command from the same folder as the Vagrantfile, being careful to replace MY-NEW-IP-ADDRESS with the same IP address you assigned in the Vagrantfile.
+To find the IP address of your new VM, run this command from a terminal window in the same folder as the Vagrantfile:
 
-```bash
-vagrant ssh -c "sed -i 's|192.168.56.15|MY-NEW-IP-ADRESS|g' /etc/hosts"
-```
+`vagrant ssh -c ifconfig`
 
-You should be able to open the web site `https://arcase-ce.local/arkcase` in your browser (if you see an error message like "host not found" you may have to add a line  to your `/etc/hosts` file (Linux and MacOS) or your `C:\Windows\System32\Drivers\etc\hosts` file (Windows), like so: `192.168.56.15 arkcase-ce.local`).  You will have to accept the ArkCase self-signed HTTPS certificate; instructions for how to do this vary by browser and operating system; you may have to search online for how to do this on your system.
+It should be the IP address associated with the second interface.
+
+Next, update your hosts file with an entry like below:
+
+`192.168.56.15 arkcase-ce.local`
+
+Being careful to replace `192.168.56.15` with the correct IP address as output by the command `vagrant ssh -c ifconfig`.  Note, on Linux and Mac OSX, the hosts file is the file `/etc/hosts`; on Windows, it is `C:\Windows\System32\Drivers\etc\hosts` (or `%SystemDrive%\Windows\System32\Drivers\etc\hosts` in case Windows is not installed on the C drive).
+
+Now you should be able to open the web site `https://arcase-ce.local/arkcase` in your browser.  You will have to accept the ArkCase self-signed HTTPS certificate; instructions for how to do this vary by browser and operating system; you may have to search online for how to do this on your system.
 
 The default admin user is `arkcase-admin@arkcase.org`, password `@rKc@3e`.
 

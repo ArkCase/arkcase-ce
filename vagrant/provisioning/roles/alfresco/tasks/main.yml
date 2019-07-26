@@ -205,16 +205,16 @@
       db.username=alfresco
       db.password={{ default_database_password }}
       db.driver=org.mariadb.jdbc.Driver
-      db.url=jdbc:mysql://arkcase-ce.local:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=true&serverSslCert=/etc/ssl/ca/arkcase-ca.crt
+      db.url=jdbc:mariadb://{{ arkcase_host_name }}:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&requireSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=false&serverSslCert=/etc/ssl/crt/arkcase-server.crt
       db.schema.update=true
       db.pool.max=50
       db.pool.validate.query=SELECT 1
       alfresco.context=alfresco
-      alfresco.host=arkcase-ce.local
+      alfresco.host={{ arkcase_host_name }}
       alfresco.port=443
       alfresco.protocol=https
       share.context=share
-      share.host=arkcase-ce.local
+      share.host={{ arkcase_host_name }}
       share.port=443
       share.protocol=https
       # audit app support
@@ -263,13 +263,13 @@
       ldap.synchronization.personType=user
       ldap.synchronization.userIdAttributeName=samAccountName
       #### local Samba (arkcase-ce.local)
-      ldap.authentication.java.naming.provider.url=ldaps://arkcase-ce.local:636
+      ldap.authentication.java.naming.provider.url=ldaps://{{ arkcase_host_name }}:636
       ldap.synchronization.java.naming.security.principal=CN=Administrator,CN=Users,{{ ldap_base }}
       ldap.synchronization.java.naming.security.credentials={{ samba_admin_password }}
       ldap.synchronization.groupSearchBase=OU=Groups,OU=ArkCase,{{ ldap_base }}
       ldap.synchronization.userSearchBase=OU=Users,OU=ArkCase,{{ ldap_base}}
-      ldap.authentication.userNameFormat=%s@arkcase-ce.local
-      # from John Shinnick
+      ldap.authentication.userNameFormat=%s@{{ arkcase_host_name }}
+      # remove unneeded Alfresco activity
       system.usages.enabled=false
       cifs.enabled=false
       sync.mode=OFF
@@ -383,8 +383,11 @@
     state: absent
   changed_when: false
     
+# note, can't use get_uri here since we need to keep the cookie jar
 - name: login to Share
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://arkcase-ce.local:7070/share/page/dologin"
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://{{ arkcase_host_name }}:7070/share/page/dologin"
+  args:
+    warn: false
   changed_when: false
 
 - name: check if login succeeded
@@ -394,7 +397,9 @@
   changed_when: false
 
 - name: get the CSRFToken
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://arkcase-ce.local:7070/share/service/modules/authenticated?a=user"
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://{{ arkcase_host_name }}:7070/share/service/modules/authenticated?a=user"
+  args:
+    warn: false
   changed_when: false
 
 - name: check if we got the CSRFToken
@@ -425,7 +430,7 @@
 
 - name: list the document library, so we can then add some folders
   uri:
-    url: https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
+    url: https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
     user: admin
     password: admin
     validate_certs: no
@@ -435,7 +440,7 @@
 
 - name: see what folders already exist
   uri:
-    url: "https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
+    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
     password: admin
     validate_certs: no
@@ -444,7 +449,7 @@
 
 - name: ensure the right folders are in the document library
   uri:
-    url: "https://arkcase-ce.local:7070/alfresco/s/api/site/folder/acm/documentlibrary"
+    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/site/folder/acm/documentlibrary"
     method: POST
     user: admin
     password: admin
@@ -472,7 +477,7 @@
 
 - name: fetch the RM container
   uri:
-    url: https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/containers/rm
+    url: https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/containers/rm
     validate_certs: false
     user: admin
     password: admin
@@ -495,7 +500,7 @@
 
 - name: get the RM site containers, so we can find the ACM noderef
   uri:
-    url: "https://arkcase-ce.local:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
+    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
     password: admin
     validate_certs: no
@@ -516,7 +521,7 @@
 
 - name: add groups to acm site
   uri: 
-    url: "https://arkcase-ce.local:7070/alfresco/s/api/sites/acm/memberships"
+    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/sites/acm/memberships"
     method: POST
     user: admin
     password: admin
@@ -533,7 +538,7 @@
 
 - name: add groups to records management admin role
   uri: 
-    url: "https://arkcase-ce.local:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name }}"
+    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name }}"
     method: POST
     user: admin
     password: admin
@@ -547,7 +552,7 @@
 
 - name: add groups to records management site
   uri: 
-    url: "https://arkcase-ce.local:7070/alfresco/s/api/sites/rm/memberships"
+    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/sites/rm/memberships"
     method: POST
     user: admin
     password: admin

@@ -9,4 +9,4 @@
     dest: "{{ item.dest }}"
     url: "{{ item.url }}"
   when: already_downloaded.stat.exists == False 
-  register: "{{ item.name }}_downloaded"    
+  register: item_downloaded
