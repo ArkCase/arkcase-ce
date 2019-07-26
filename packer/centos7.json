@@ -6,16 +6,6 @@
     {
       "type": "shell",
       "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}'",
-      "script": "scripts/ansible.sh"
-    },
-    {
-      "type": "shell",
-      "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}'",
-      "script": "scripts/init.sh"
-    },
-    {
-      "type": "shell",
-      "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}'",
       "script": "scripts/vagrant-setup.sh"
     }
   ],
@@ -63,7 +53,7 @@
   "post-processors": [
     [
       {
-        "output": "builds/{{.Provider}}-centos7.box",
+        "output": "builds/{{.Provider}}-centos7-20190715.box",
         "type": "vagrant"
       }
     ]

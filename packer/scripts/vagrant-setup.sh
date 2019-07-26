@@ -1,6 +1,24 @@
-#!/bin/bash -eux
+#!/bin/sh
 
-# sshd no dns
+yum -y install epel-release
+
+yum -y upgrade
+
+yum -y group install "Development Tools"
+
+yum -y install deltarpm ansible bzip2 tar kernel-devel kernel-devel-`uname -a | awk '{ print $3 }'`
+
+echo "Mounting guest additions"
+mount -t iso9660 -o loop VBoxGuestAdditions_`cat .vbox_version`.iso /mnt
+cd /mnt
+echo "Building guest additions"
+./VBoxLinuxAdditions.run
+
+# Add vagrant user to sudoers.
+echo "vagrant        ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
+sed -i "s/^.*requiretty/#Defaults requiretty/" /etc/sudoers
+
+# sshd no dns... helps "vagrant ssh" work a little faster
 echo "UseDNS no" >> /etc/ssh/sshd_config
 
 # vagrant known public key

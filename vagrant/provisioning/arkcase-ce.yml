@@ -1,7 +1,6 @@
 ---
-- hosts: all
+- hosts: localhost
   roles:
-    - virtualbox
     - common
     - pki
     - samba
@@ -23,17 +22,22 @@
     # If there is no such URL, ArkCase installation will fail.
     arkcase_webapp_supported_versions:
       - "3.3.0"
+      - "3.3.1"
+
+    # `arkcase_config_server_version` must correspond to a release tag on the GitHub site; in other words,
+    # there must be a release artifact at the URL "https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar"
+    arkcase_config_server_version: "0.0.1"
 
     arkcase_host_name: arkcase-ce.local
 
     snowbound_vendor_version: "4.10"
-    snowbound_arkcase_version: "3.3.1"
+    snowbound_arkcase_version: "3.3.2"
 
     database_host_name: arkcase-ce.local
-    database_server_ssl_cert: /etc/ssl/ca/arkcase-ca.crt
+    database_server_ssl_cert: /etc/ssl/crt/arkcase-server.crt
 
     database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
-    database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites=TLSv1.2&amp;trustServerCertificate=true&amp;serverSslCert={{ database_server_ssl_cert }}"
+    database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites=TLSv1.2&amp;trustServerCertificate=false&amp;serverSslCert={{ database_server_ssl_cert }}"
     database_arkcase_schema: arkcase
     database_arkcase_user: arkcase
 
@@ -50,18 +54,21 @@
     pentaho_minor_version: 0.0-342
     pentaho_server_url: "https://{{ arkcase_host_name }}/pentaho"
 
-    solr_version: 7.6.0
+    solr_version: 7.7.2
     solr_jmx_enabled: true
     solr_cores:
       - "acmAdvancedSearch"
       - "acmQuickSearch"
 
+    # NOTE: Alfresco CE 2018-06 does NOT work with
+    # higher versions of Maria JDBC; specifically it does NOT
+    # work with 2.4.2.  Is known to work with 2.2.6.
     mariadb_jdbc_version: 2.2.6
     default_database_password: "@rKc@3S!"
 
     # tomcat_major_version needed to build download URL
     tomcat_major_version: 9
-    tomcat_version: 9.0.12
+    tomcat_version: 9.0.22
 
     alfresco_release_name: 201806-GA
     alfresco_content_services_version: 6.0.7-ga
@@ -83,11 +90,11 @@
       - "Timesheets"
       - "User Profile"
     
-    samba_version: 4.9.1
+    samba_version: 4.10.6
     samba_domain: "DC.ARKCASE-CE"
     # samba_realm becomes the directory context e.g. dc=arkcase-ce,dc=local
     samba_realm: "arkcase-ce.local"
-    samba_host_ip: "192.168.56.15"
+    samba_host_ip: "127.0.0.1"
     samba_admin_password: "@rKc@3e"
     samba_server_role: dc
 
@@ -132,8 +139,9 @@
         password: "{{ arkcase_admin_password }}"
         groups:
           - ARKCASE_ADMINISTRATOR
+        nonexpiring_password: yes
 
     virtualbox_version: 5.2.24
 
-    activemq_version: 5.15.8
+    activemq_version: 5.15.9
     

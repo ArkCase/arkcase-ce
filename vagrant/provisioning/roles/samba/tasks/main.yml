@@ -50,7 +50,14 @@
       - openldap-clients
       - pam-devel
       - python-ldap
+      - python36
+      - python36-devel
 
+- name: install Python packages
+  become: yes
+  pip:
+    name: python-config
+    
 - name: configure Samba, this will take 5 - 10 minutes
   become: yes
   command: ./configure --enable-debug --enable-selftest --with-ads --with-systemd --with-winbind --enable-gnutls --prefix=/opt/app/samba --datarootdir=/opt/data/samba --with-logdir=/opt/log/samba --localstatedir=/opt/data/samba  --libdir=/opt/app/samba/lib
@@ -97,8 +104,9 @@
     dest: /opt/app/samba/private/tls/
     mode: 0600
   loop:
-    - /etc/ssl/private/acm-arkcase-client.rsa.pem
-    - /etc/ssl/ca/acm-arkcase-client.cert.pem
+    - /etc/ssl/private/arkcase-server.pem
+    - /etc/ssl/crt/arkcase-server.crt
+    - /etc/ssl/crt/arkcase-chain.crt
 
 - name: set TLS propertes
   become: yes
@@ -107,9 +115,9 @@
     insertafter: "\\[global\\]"
     block: |
       tls enabled = yes
-      tls certfile = /opt/app/samba/private/tls/acm-arkcase-client.cert.pem
-      tls keyfile = /opt/app/samba/private/tls/acm-arkcase-client.rsa.pem
-      tls cafile = 
+      tls certfile = /opt/app/samba/private/tls/arkcase-server.crt
+      tls keyfile = /opt/app/samba/private/tls/arkcase-server.pem
+      tls cafile =  /opt/app/samba/private/tls/arkcase-chain.crt
   
 - name: copy Samba systemd unit file
   become: yes
@@ -185,6 +193,15 @@
   loop_control:
     loop_var: u  
 
+- name: see if administrator password is non-expiring already
+  shell: /opt/app/samba/bin/pdbedit -Lv Administrator | grep "Account Flags"
+  register: admin_account_flags
+  changed_when: false
+
+- name: set administrator password to never expire
+  command: /opt/app/samba/bin/samba-tool user setexpiry Administrator --noexpiry
+  when: "'X' not in admin_account_flags.stdout"
+    
           
 
       

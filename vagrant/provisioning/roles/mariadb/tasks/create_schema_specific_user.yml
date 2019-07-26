@@ -27,5 +27,4 @@
     priv: '*.*:REQUIRESSL/{{ s.schema }}.*:ALL'
     state: present 
     
-
   

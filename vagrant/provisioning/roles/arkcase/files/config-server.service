@@ -1,0 +1,21 @@
+[Unit]
+Description=ArkCase Config Server
+After=syslog.target
+
+[Service]
+ExecStart=/opt/app/config-server/config-server.jar
+SuccessExitStatus=143
+Environment=LOGGING_FILE=/opt/log/config-server/acmConfigServer.log
+WorkingDirectory=/opt/app/config-server
+User=arkcase
+Group=arkcase
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=config-server
+
+
+[Install]
+WantedBy=multi-user.target
+

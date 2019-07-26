@@ -7,8 +7,14 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
+  # we set insert_key to false since we are developing a box to be
+  # published for others to use; and this published box should have the
+  # default insecure key.  Hence we do NOT want Vagrant to create a new
+  # secure key since no one else will ever have that key.
+  config.ssh.insert_key=false
+
   # disable the default synced folder
-  config.vm.synced_folder '.', '/vagrant', disabled: true
+  #config.vm.synced_folder '.', '/vagrant', disabled: true
 
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
@@ -16,7 +22,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "../packer/builds/virtualbox-centos7.box"
+  config.vm.box = "../packer/builds/virtualbox-centos7-20190715.box"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -32,13 +38,13 @@ Vagrant.configure("2") do |config|
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine and only allow access
   # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+  #config.vm.network "forwarded_port", guest: 443, host: 10443, host_ip: "127.0.0.1"
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.56.15"
+  config.vm.network "private_network", type: "dhcp" #ip: "192.168.56.15"
   config.vm.hostname = "arkcase-ce.local"
-  config.hostsupdater.remove_on_suspend = false
+  # config.hostsupdater.remove_on_suspend = false
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -69,15 +75,8 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   apt-get update
-  #   apt-get install -y apache2
-  # SHELL
-  config.vm.provision :ansible do |ansible|
-    ansible.compatibility_mode = "2.0"
-    ansible.playbook = "provisioning/arkcase-ce.yml"
-    ansible.extra_vars = {
-      arkcase_webapp_version: ENV['ARKCASE_WEBAPP_VERSION']
-    }
-  end
+  config.vm.provision "shell", inline: <<-SHELL
+    cd /vagrant/provisioning
+    ansible-playbook -i 'arkcase-ce.local,' -e arkcase_webapp_version=#{ENV['ARKCASE_WEBAPP_VERSION']} arkcase-ce.yml
+  SHELL
 end

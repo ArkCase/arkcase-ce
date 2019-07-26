@@ -34,6 +34,16 @@
           log_folder: /opt/log/arkcase
   register: tomcat_unarchived
 
+- name: add config-server option to JAVA_OPTS
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "/opt/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - CONFIG-SERVER JAVA_OPTS"
+    block: |
+      export JAVA_OPTS="$JAVA_OPTS -Dacm.configurationserver.propertyfile=/home/arkcase/.arkcase/acm/conf.yml"
+
 - name: copy acm-law-enforcement war to arkcase.war
   become: yes
   become_user: arkcase
@@ -47,7 +57,7 @@
   become: yes
   become_user: arkcase
   stat:
-    path: "/home/arkcase/.arkcase/acm/datasource.properties"
+    path: "/home/arkcase/.arkcase/acm/conf.yml"
   register: repository_exists
 
 - name: clone arkcase configuration
@@ -59,6 +69,25 @@
     version: "arkcase-{{ target_version }}"
   when: repository_exists.stat.exists == false
 
+- name: capture current arkcase.yaml
+  become: yes
+  become_user: arkcase
+  shell: cat /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
+  register: arkcase_yaml_contents
+  changed_when: false
+
+- name: insert suggest handler in arkcase.yaml, if needed
+  become: yes
+  become_user: arkcase
+  lineinfile:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
+    state: present
+    insertafter: 'updateHandler: "update"'
+    line: '  suggestHandler: "suggest"'
+  when: arkcase_yaml_contents.stdout.find('suggestHandler') == -1
+
+# NOTE keep the /home/arkcase/.arkcase file names the
+# same until next release
 - name: link certs and keys to .arkcase folder
   become: yes
   become_user: arkcase
@@ -67,46 +96,139 @@
     path: "{{ item.path }}"
     state: link
   loop:
-    - src: "/etc/ssl/ca/arkcase-ca.crt"
+    - src: "/etc/ssl/crt/arkcase-chain.crt"
       path: "/home/arkcase/.arkcase/acm/private/arkcase-ca.crt"
     - src: "/opt/common/arkcase.ks"
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ks"
     - src: "/opt/common/arkcase.ts"
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ts"
-    - src: "/etc/ssl/private/acm-arkcase.rsa.pem"
+    - src: "/etc/ssl/private/arkcase-server.rsa.pem"
       path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.rsa.pem"
-    - src: "/etc/ssl/crt/acm-arkcase.crt"
+    - src: "/etc/ssl/crt/arkcase-server.crt"
       path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.crt"
     - src: "/opt/common/symmetricKey.encrypted"
       path: "/home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted"
 
-- name: fix arkcase-host hostname
+- name: set config-server.jar executable
   become: yes
-  replace:
-    path: "/etc/hosts"
-    backup: yes
-    regexp: "192.168.56.1 arkcase-host"
-    replace: "192.168.56.15 arkcase-host"
+  become_user: arkcase
+  file:
+    path: /opt/app/config-server/config-server.jar
+    mode: "u+x"
 
-- name: arkcase logrotate
-  become: yes
-  copy:
-    src: "arkcase"
-    dest: /etc/logrotate.d/arkcase
-
-- name: copy ArkCase systemd unit file
+- name: arkcase and config server logrotate
   become: yes
   copy:
-    src: arkcase.service
-    dest: /etc/systemd/system/arkcase.service
+    src: "{{ item }}"
+    dest: "/etc/logrotate.d/{{ item }}"
+  loop:
+    - "arkcase"
+    - "config-server"
 
-- name: enable ArkCase to start on boot
+- name: copy ArkCase and config server systemd unit files
+  become: yes
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: arkcase.service
+      dest: /etc/systemd/system/arkcase.service
+    - src: config-server.service
+      dest: /etc/systemd/system/config-server.service
+
+- name: copy config-server configuration file
+  become: yes
+  become_user: arkcase
+  copy:
+    src: config-server.conf
+    dest: /opt/app/config-server/config-server.conf
+    force: no
+
+
+##### Mule TLS fixes #####
+- name: ensure custom/WEB-INF/classes exists
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/custom/WEB-INF/classes
+    state: directory
+
+- name: see if tls-default.conf already exists
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
+  register: tls_default_file
+
+- name: copy fixed tls-default.conf file
+  become: yes
+  become_user: arkcase
+  copy:
+    src: tls-default.conf
+    dest: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
+  when: tls_default_file.stat.exists == false
+  register: default_file_copied
+
+- name: unarchive ArkCase search service jar
+  become: yes
+  become_user: arkcase
+  command: unzip -o arkcase.war WEB-INF/lib/acm-service-search-{{ target_version }}.jar
+  args:
+    chdir: /opt/app/arkcase/webapps
+    warn: false
+  when: default_file_copied is changed
+  register: search_service_jar
+
+- name: remove tls_defalt_conf from search service jar
+  become: yes
+  become_user: arkcase
+  command: zip -d acm-service-search-{{ target_version }}.jar tls-default.conf
+  args:
+    chdir: /opt/app/arkcase/webapps/WEB-INF/lib
+    warn: false
+  when: search_service_jar is changed
+  register: tls_default_removed_from_service
+
+- name: update arkcase.war with updated search service jar
+  become: yes
+  become_user: arkcase
+  command: zip -r -m arkcase.war WEB-INF
+  args:
+    chdir: /opt/app/arkcase/webapps
+    warn: false
+  when: tls_default_removed_from_service is changed
+
+- name: enable ArkCase 
   become: yes
   systemd:
     daemon_reload: yes
     name: arkcase
     enabled: yes
     masked: no
+
+- name: see if config-server repository folder is present; if not, no need to start config-server
+  become: yes
+  become_user: arkcase
+  stat:
+    path: "/home/arkcase/.arkcase/acm/acm-config-server-repo"
+  register: config_server_repo
+
+- name: enable config-server, if repo folder is present 
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: config-server
+    enabled: yes
+    masked: no
+  when: config_server_repo.stat.exists
+
+- name: start Config Server
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: config-server
+    state: started
+  when: config_server_repo.stat.exists
 
 - name: start ArkCase
   become: yes
