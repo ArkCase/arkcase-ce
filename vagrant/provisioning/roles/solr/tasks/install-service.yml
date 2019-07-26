@@ -34,7 +34,7 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - JMX"
     block: |
       SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file=/opt/app/solr/access.file -Dcom.sun.management.jmxremote.password.file=/opt/app/solr/password.file -Djava.rmi.server.hostname=arkcase-ce.local"
-  when: solr_jmx_enabled
+  when: solr_jmx_enabled|bool
 
 - name: update environment file - TLS
   become: yes

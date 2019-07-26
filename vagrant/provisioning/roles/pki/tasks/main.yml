@@ -15,131 +15,214 @@
     - /etc/ssl/ca
 
 # Generate an OpenSSL private key with the default values (4096 bits, RSA)
-- name: generate ca private key
+- name: generate root ca private key
   become: yes
   openssl_privatekey:
-    path: /etc/ssl/private/arkcase-ca.pem
+    path: /etc/ssl/private/arkcase-root.pem
+    type: RSA
+    size: 4096
 
-- name: generate ca certificate
+- name: generate root ca certificate signing request
   become: yes
   openssl_csr:
-    path: /etc/ssl/csr/arkcase-ca.csr
-    privatekey_path: /etc/ssl/private/arkcase-ca.pem
+    basic_constraints_critical: yes
+    basic_constraints:
+      - CA:TRUE
+    key_usage_critical: yes
+    key_usage:
+      - Digital Signature
+      - Certificate Sign
+      - CRL Sign
+    digest: sha256
+    path: /etc/ssl/csr/arkcase-root.csr
+    privatekey_path: /etc/ssl/private/arkcase-root.pem
     country_name: US
-    state_or_province_name: Virginia
+    state_or_province_name: VA
     locality_name: Vienna
     organization_name: ArkCase
     organizational_unit_name: Product Development
     common_name: ArkCase Root Certification Authority L0
     email_address: info@arkcase.com
-  register: ca_csr
+  register: root_csr
 
-- name: Sign ca certificate
+- name: Sign root ca certificate
   become: yes
   openssl_certificate:
-    path: /etc/ssl/ca/arkcase-ca.crt
-    privatekey_path: /etc/ssl/private/arkcase-ca.pem
-    csr_path: /etc/ssl/csr/arkcase-ca.csr
+    path: /etc/ssl/ca/arkcase-root.crt
+    privatekey_path: /etc/ssl/private/arkcase-root.pem
+    csr_path: /etc/ssl/csr/arkcase-root.csr
     provider: selfsigned
-  when: ca_csr is changed
+  when: root_csr is changed
+  register: root_cert
 
+- name: generate intermediate private key
+  become: yes
+  openssl_privatekey:
+    path: /etc/ssl/private/arkcase-intermediate.pem
+    type: RSA
+    size: 4096
+  register: intermediate_private_key
+
+# NOTE the intermediate CSR is signed with the intermediate key
+- name: generate intermediate csr
+  become: yes
+  openssl_csr:
+    basic_constraints_critical: yes
+    basic_constraints:
+      - CA:TRUE
+      - pathlen:0
+    key_usage_critical: yes
+    key_usage:
+      - Digital Signature
+      - Certificate Sign
+      - CRL Sign
+    digest: sha256
+    path: /etc/ssl/csr/arkcase-intermediate.csr
+    privatekey_path: /etc/ssl/private/arkcase-intermediate.pem
+    country_name: US
+    state_or_province_name: VA
+    locality_name: Vienna
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: ArkCase Intermediate Certificate Authority L1
+  register: intermediate_csr
+
+# the intermediate cert is signed with the root key
+# ownca provider makes it so the issuer of this certificate
+# is the root cert... "selfsigned" provider means the cert
+# is always self-signed (issuer same as subject).
+- name: Sign intermediate CSR
+  become: yes
+  openssl_certificate:
+    path: /etc/ssl/crt/arkcase-intermediate.crt
+    ownca_path: /etc/ssl/ca/arkcase-root.crt
+    ownca_privatekey_path: /etc/ssl/private/arkcase-root.pem
+    csr_path: /etc/ssl/csr/arkcase-intermediate.csr
+    provider: ownca
+  when: intermediate_csr is changed
+  register: intermediate_cert
+
+- name: generate the chain cert file
+  become: yes
+  shell: cat /etc/ssl/crt/arkcase-intermediate.crt /etc/ssl/ca/arkcase-root.crt > /etc/ssl/crt/arkcase-chain.crt
+  when: intermediate_cert is changed or root_cert is changed
+
+# Although 4096 bits is slightly more secure than 2048 bits,
+# it slows down TLS handshakes and significantly increases
+# processor load during handshakes. For this reason, most
+# websites use 2048-bit pairs.
 - name: generate server private key
   become: yes
   openssl_privatekey:
-    path: /etc/ssl/private/acm-arkcase.pem
+    path: /etc/ssl/private/arkcase-server.pem
+    type: RSA
+    size: 2048
   register: server_private_key
 
 - name: write server private key in RSA format, for MySQL et. al.
   become: yes
-  command: openssl rsa -in /etc/ssl/private/acm-arkcase.pem -out /etc/ssl/private/acm-arkcase.rsa.pem
+  command: openssl rsa -in /etc/ssl/private/arkcase-server.pem -out /etc/ssl/private/arkcase-server.rsa.pem
   when: server_private_key is changed
 
-- name: server csr
+- name: generate server csr
   become: yes
   openssl_csr:
-    path: /etc/ssl/csr/acm-arkcase.csr
-    privatekey_path: /etc/ssl/private/acm-arkcase.pem
+    basic_constraints_critical: no
+    basic_constraints:
+      - CA:FALSE
+    key_usage_critical: yes
+    key_usage:
+      - Digital Signature
+      - keyEncipherment
+    extended_key_usage_critical: no
+    extended_key_usage:
+      - serverAuth
+    digest: sha256
+    path: /etc/ssl/csr/arkcase-server.csr
+    privatekey_path: /etc/ssl/private/arkcase-server.pem
     country_name: US
     state_or_province_name: VA
     locality_name: Vienna
     organization_name: ArkCase
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
-    common_name: "{{ arkcase_host_name }}"
+    common_name: arkcase-ce.local
     subject_alt_name:
       - DNS:arkcase-host
-      - DNS:acm-arkcase
       - DNS:arkcase-ce.local
+      - DNS:arkcase-ce
+      - DNS:acm-activemq
   register: server_csr
 
+# the server cert is signed with the intermediate key
 - name: Sign server CSR
   become: yes
   openssl_certificate:
-    path: /etc/ssl/crt/acm-arkcase.crt
-    privatekey_path: /etc/ssl/private/arkcase-ca.pem
-    csr_path: /etc/ssl/csr/acm-arkcase.csr
-    provider: selfsigned
-  when: server_csr is changed
-  
-- name: sign the server certificate
-  become: yes
-  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase.csr -days 3650 -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 01 -out /etc/ssl/ca/acm-arkcase.cert.pem
+    path: /etc/ssl/crt/arkcase-server.crt
+    ownca_path: /etc/ssl/crt/arkcase-intermediate.crt
+    ownca_privatekey_path: /etc/ssl/private/arkcase-intermediate.pem
+    csr_path: /etc/ssl/csr/arkcase-server.csr
+    provider: ownca
   when: server_csr is changed
 
-
-- name: client private key
+# client key, for MariaDB which wants a separate key for clients and server  
+- name: generate client private key
   become: yes
   openssl_privatekey:
-    path: /etc/ssl/private/acm-arkcase-client.pem
+    path: /etc/ssl/private/arkcase-client.pem
+    type: RSA
+    size: 2048
   register: client_private_key
 
 - name: write client private key in RSA format, for MySQL et. al.
   become: yes
-  command: openssl rsa -in /etc/ssl/private/acm-arkcase-client.pem -out /etc/ssl/private/acm-arkcase-client.rsa.pem
+  command: openssl rsa -in /etc/ssl/private/arkcase-client.pem -out /etc/ssl/private/arkcase-client.rsa.pem
   when: client_private_key is changed
-    
-- name: client csr
+
+- name: generate client csr
   become: yes
   openssl_csr:
-    path: /etc/ssl/csr/acm-arkcase-client.csr
-    privatekey_path: /etc/ssl/private/acm-arkcase-client.pem
+    basic_constraints_critical: no
+    basic_constraints:
+      - CA:FALSE
+    key_usage_critical: yes
+    key_usage:
+      - nonRepudiation
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage_critical: no
+    extended_key_usage:
+      - clientAuth
+      - emailProtection
+    digest: sha256
+    path: /etc/ssl/csr/arkcase-client.csr
+    privatekey_path: /etc/ssl/private/arkcase-client.pem
     country_name: US
     state_or_province_name: VA
     locality_name: Vienna
     organization_name: ArkCase
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
-    common_name: "{{ arkcase_host_name }}"
+    common_name: arkcase-ce.local
     subject_alt_name:
       - DNS:arkcase-host
-      - DNS:acm-arkcase
       - DNS:arkcase-ce.local
+      - DNS:arkcase-ce
+      - DNS:acm-activemq
   register: client_csr
 
+# the client cert is signed with the intermediate key
 - name: Sign client CSR
   become: yes
   openssl_certificate:
-    path: /etc/ssl/crt/acm-arkcase-client.crt
-    privatekey_path: /etc/ssl/private/arkcase-ca.pem
-    csr_path: /etc/ssl/csr/acm-arkcase-client.csr
-    provider: selfsigned
-  when: server_csr is changed
-
-    
-- name: sign the client certificate - valid for 10 years from now
-  become: yes
-  command: openssl x509 -req -in /etc/ssl/csr/acm-arkcase-client.csr -days 3650 -CA /etc/ssl/ca/arkcase-ca.crt -CAkey /etc/ssl/private/arkcase-ca.pem -set_serial 02 -out /etc/ssl/ca/acm-arkcase-client.cert.pem
+    path: /etc/ssl/crt/arkcase-client.crt
+    ownca_path: /etc/ssl/crt/arkcase-intermediate.crt
+    ownca_privatekey_path: /etc/ssl/private/arkcase-intermediate.pem
+    csr_path: /etc/ssl/csr/arkcase-client.csr
+    provider: ownca
   when: client_csr is changed
 
-- name: add client cert to Java keystore
-  become: yes
-  java_cert:
-    cert_alias: arkcase_client
-    cert_path: /etc/ssl/ca/acm-arkcase-client.cert.pem
-    keystore_path: /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts
-    keystore_pass: changeit
-    state: present
-    
 - name: Java keystore and trust store
   block:
     - name: see if the Java keystore exists
@@ -156,13 +239,13 @@
       changed_when: false
     - name: write Java key store and trust store
       block:
-        - name: write arkcase.p12
+        - name: write arkcase.p12 (used by Pentaho)
           become: yes
-          command: openssl pkcs12 -export -in /etc/ssl/ca/acm-arkcase-client.cert.pem -inkey /etc/ssl/private/acm-arkcase-client.rsa.pem -out /opt/common/arkcase.p12 -name arkcase -chain -CAfile /etc/ssl/ca/arkcase-ca.crt -passout 'pass:password'
+          command: openssl pkcs12 -export -in /etc/ssl/crt/arkcase-client.crt -inkey /etc/ssl/private/arkcase-client.rsa.pem -out /opt/common/arkcase-client.p12 -name arkcase_client -chain -CAfile /etc/ssl/crt/arkcase-chain.crt -passout 'pass:password'
         - name: copy arkcase.p12 to key store format
           become: yes
-          command: keytool -importkeystore -deststorepass password -destkeypass password -destkeystore /opt/common/arkcase.ks -deststoretype pkcs12 -srckeystore /opt/common/arkcase.p12 -srcstoretype pkcs12 -srcstorepass password -alias arkcase
-        - name: add ArkCase client cert to Java truststore
+          command: keytool -importkeystore -deststorepass password -destkeypass password -destkeystore /opt/common/arkcase.ks -deststoretype pkcs12 -srckeystore /opt/common/arkcase-client.p12 -srcstoretype pkcs12 -srcstorepass password -alias arkcase_client
+        - name: add ArkCase certs to Java truststore
           become: yes
           java_cert:
             cert_alias: "{{ item.alias }}"
@@ -173,9 +256,12 @@
             state: present
           loop:
             - alias: "arkcase-client"
-              path: "/etc/ssl/ca/acm-arkcase-client.cert.pem"
-            - alias: "arkcase"
-              path: "/etc/ssl/crt/acm-arkcase.crt"
+              path: "/etc/ssl/crt/arkcase-client.crt"
+            - alias: "arkcase-chain"
+              path: "/etc/ssl/crt/arkcase-chain.crt"
+        - name: add JDK certs to Java trust store
+          become: yes
+          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore /opt/common/arkcase.ts -deststorepass password -noprompt
       when: "arkcase_ts_stat.stat.exists == False or 'arkcase' not in key_out.stdout"
 
 - name: write encrypted symmetric key file for use in ArkCase webapp
@@ -195,34 +281,33 @@
       when: sym_key_enc.stat.exists == False
     - name: extract public key from client cert
       become: yes
-      command: openssl x509 -pubkey -noout -in /etc/ssl/ca/acm-arkcase-client.cert.pem -noout
+      command: openssl x509 -pubkey -noout -in /etc/ssl/crt/arkcase-server.crt -noout
       register: client_pub_key
       when: sym_key_enc.stat.exists == False
       changed_when: false
     - name: write public key to file
       become: yes
       copy:
-        dest: /opt/common/acm-arkcase-client.pub
+        dest: /opt/common/arkcase-server.pub
         content: |
           {{ client_pub_key.stdout }}
       when: sym_key_enc.stat.exists == False
     - name: write encrypted plaintext
       become: yes
-      command: openssl rsautl -encrypt -pubin -inkey /opt/common/acm-arkcase-client.pub -in /opt/common/symmetricKey.txt -out /opt/common/symmetricKey.encrypted
+      command: openssl rsautl -encrypt -pubin -inkey /opt/common/arkcase-server.pub -in /opt/common/symmetricKey.txt -out /opt/common/symmetricKey.encrypted
       when: sym_key_enc.stat.exists == False
-        
 
-- name: add ArkCase client cert to Java key store
-  become: yes
-  java_cert:
-    cert_alias: "{{ item.alias }}"
-    cert_path: "{{ item.path }}"
-    keystore_path: /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts
-    keystore_pass: changeit
-    state: present
-  loop:
-    - alias: "arkcase-client"
-      path: "/etc/ssl/ca/acm-arkcase-client.cert.pem"
-    - alias: "arkcase"
-      path: "/etc/ssl/crt/acm-arkcase.crt"
+#- name: add ArkCase certs to Java key store
+#  become: yes
+#  java_cert:
+#    cert_alias: "{{ item.alias }}"
+#    cert_path: "{{ item.path }}"
+#    keystore_path: /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts
+#    keystore_pass: changeit
+#    state: present
+#  loop:
+#    - alias: "arkcase-intermediate"
+#      path: "/etc/ssl/crt/arkcase-intermediate.crt"
+#    - alias: "arkcase-server"
+#      path: "/etc/ssl/crt/arkcase-server.crt"
 

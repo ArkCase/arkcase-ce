@@ -58,7 +58,7 @@
 
 - name: configure Solr JMX
   import_tasks: jmx.yml
-  when: solr_jmx_enabled  == true
+  when: solr_jmx_enabled|bool 
 
 - name: Create ArkCase Solr configset for Cores
   import_tasks: configset.yml

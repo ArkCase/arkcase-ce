@@ -39,7 +39,8 @@
     path: /etc/hosts
     line: "{{ item }}"
   loop:
-    - "192.168.56.15 arkcase-ce.local"
-    - "192.168.56.1 arkcase-host"
+    - "127.0.0.1 arkcase-ce.local"
+    - "127.0.0.1 arkcase-host"
+    - "127.0.0.1 acm-activemq"
     
 

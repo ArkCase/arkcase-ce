@@ -113,9 +113,9 @@
             address="0.0.0.0">
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
             <SSLHostConfig protocols="TLSv1.2" certificateVerification="none">
-              <Certificate certificateFile="/etc/ssl/crt/acm-arkcase.crt"
-                certificateKeyFile="/etc/ssl/private/acm-arkcase.rsa.pem"
-                certificateChainFile="/etc/ssl/ca/acm-arkcase.cert.pem"
+              <Certificate certificateFile="/etc/ssl/crt/arkcase-server.crt"
+                certificateKeyFile="/etc/ssl/private/arkcase-server.rsa.pem"
+                certificateChainFile="/etc/ssl/crt/arkcase-chain.crt"
                 type="RSA" />
             </SSLHostConfig>
           </Connector>

@@ -29,6 +29,14 @@
     src: httpd-ssl.conf
     dest: /etc/httpd/conf.d/ssl.conf
   register: tls_conf
+
+- name: ArkCase index.html
+  become: yes
+  become_user: apache
+  copy:
+    backup: yes
+    src: index.html
+    dest: /opt/data/httpd/htdocs/index.html
     
 - name: enable httpd to run at startup
   become: yes

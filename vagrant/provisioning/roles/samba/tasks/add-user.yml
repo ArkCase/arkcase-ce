@@ -63,3 +63,12 @@
 - name: add {{ u.user_id }} account to groups
   include_tasks: add-user-to-group.yml
   loop: "{{ u.groups }}"
+
+- name: see if password is non-expiring already
+  shell: /opt/app/samba/bin/pdbedit -Lv {{ u.user_id }} | grep "Account Flags"
+  register: account_flags
+  changed_when: false
+
+- name: set password to never expire
+  command: /opt/app/samba/bin/samba-tool user setexpiry {{ u.user_id }} --noexpiry
+  when: u.nonexpiring_password and 'X' not in account_flags.stdout

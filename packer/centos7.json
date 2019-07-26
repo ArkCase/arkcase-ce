@@ -53,7 +53,7 @@
   "post-processors": [
     [
       {
-        "output": "builds/{{.Provider}}-centos7-20190320.box",
+        "output": "builds/{{.Provider}}-centos7-20190715.box",
         "type": "vagrant"
       }
     ]

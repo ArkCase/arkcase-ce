@@ -4,11 +4,9 @@ yum -y install epel-release
 
 yum -y upgrade
 
-yum -y install deltarpm ansible bzip2 tar
-
 yum -y group install "Development Tools"
 
-yum -y install kernel-devel kernel-devel-`uname -a | awk '{ print $3 }'`
+yum -y install deltarpm ansible bzip2 tar kernel-devel kernel-devel-`uname -a | awk '{ print $3 }'`
 
 echo "Mounting guest additions"
 mount -t iso9660 -o loop VBoxGuestAdditions_`cat .vbox_version`.iso /mnt
