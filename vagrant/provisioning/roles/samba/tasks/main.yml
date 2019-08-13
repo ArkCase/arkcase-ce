@@ -33,6 +33,12 @@
     creates: /opt/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}/README
   register: samba_unarchived
 
+- name: install upstream repository
+  become: yes
+  yum:
+    state: installed
+    name: https://centos7.iuscommunity.org/ius-release.rpm
+
 - name: Samba and LDAP required packages
   become: yes
   yum:
@@ -50,8 +56,15 @@
       - openldap-clients
       - pam-devel
       - python-ldap
-      - python36
-      - python36-devel
+      - python36u
+      - python36u-devel
+
+- name: link python3 executable
+  become: yes
+  file:
+    src: /usr/bin/python3.6
+    path: /usr/bin/python3
+    state: link
 
 - name: install Python packages
   become: yes

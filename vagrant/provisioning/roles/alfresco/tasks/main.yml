@@ -221,7 +221,7 @@
       audit.enabled=true
       jodconverter.enabled=false
       ooo.enabled=false
-      external.authentication.proxyUserName=admin
+      external.authentication.proxyUserName=
       external.authentication.enabled=true
       external.authentication.defaultAdministratorUserNames=admin
       external.authentication.proxyHeader=X-Alfresco-Remote-User
@@ -566,6 +566,36 @@
   register: rma_group_add_out
   failed_when: '"authority" not in rma_group_add_out.content'
   loop: "{{ ldap_groups|flatten }}"
+
+# make it so the filter URL pattern for the sync service
+# is not the actual sync service URL, this disables
+# CSRF filtering on the sync service, and that means
+# we can trigger an Alfresco LDAP sync from ArkCase
+- name: disable CSRF for Alfresco ldap sync service, part 1
+  become: yes
+  become_user: alfresco
+  replace:
+    path: /opt/app/alfresco/webapps/alfresco/WEB-INF/web.xml
+    regexp: "/service/enterprise/admin/*"
+    replace: /no-such-service/enterprise/admin/*"
+  register: web_xml_one
+
+- name: disable CSRF for Alfresco ldap sync service, part 2
+  become: yes
+  become_user: alfresco
+  replace:
+    path: /opt/app/alfresco/webapps/alfresco/WEB-INF/web.xml
+    regexp: "/s/enterprise/admin/*"
+    replace: /no-such-s/enterprise/admin/*"
+  register: web_xml_two
+  
+- name: update alfresco.war with web.xml change
+  become: yes
+  become_user: alfresco
+  command: zip ../alfresco.war WEB-INF/web.xml
+  args:
+    chdir: /opt/app/alfresco/webapps/alfresco
+  when: web_xml_one is changed or web_xml_two is changed
 
 - name: Expose alfresco app port
   become: yes

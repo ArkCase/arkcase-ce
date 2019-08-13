@@ -153,6 +153,7 @@
       - DNS:arkcase-ce.local
       - DNS:arkcase-ce
       - DNS:acm-activemq
+      - DNS:acm-arkcase
   register: server_csr
 
 # the server cert is signed with the intermediate key
@@ -210,6 +211,7 @@
       - DNS:arkcase-ce.local
       - DNS:arkcase-ce
       - DNS:acm-activemq
+      - DNS:acm-arkcase
   register: client_csr
 
 # the client cert is signed with the intermediate key
