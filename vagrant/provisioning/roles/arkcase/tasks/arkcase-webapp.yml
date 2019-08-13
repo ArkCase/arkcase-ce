@@ -44,6 +44,19 @@
     block: |
       export JAVA_OPTS="$JAVA_OPTS -Dacm.configurationserver.propertyfile=/home/arkcase/.arkcase/acm/conf.yml"
 
+
+- name: configure NodeJS minification
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "/opt/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - NODE_ENV"
+    block: |
+      # set Node.js production profile to minify JavaScript and CSS
+      #export NODE_ENV=development
+      export NODE_ENV=production
+
 - name: copy acm-law-enforcement war to arkcase.war
   become: yes
   become_user: arkcase
@@ -206,34 +219,14 @@
     enabled: yes
     masked: no
 
-- name: see if config-server repository folder is present; if not, no need to start config-server
-  become: yes
-  become_user: arkcase
-  stat:
-    path: "/home/arkcase/.arkcase/acm/acm-config-server-repo"
-  register: config_server_repo
-
-- name: enable config-server, if repo folder is present 
+- name: enable config-server
   become: yes
   systemd:
     daemon_reload: yes
     name: config-server
     enabled: yes
     masked: no
-  when: config_server_repo.stat.exists
 
-- name: start Config Server
-  become: yes
-  systemd:
-    daemon_reload: true
-    name: config-server
-    state: started
-  when: config_server_repo.stat.exists
-
-- name: start ArkCase
-  become: yes
-  systemd:
-    daemon_reload: true
-    name: arkcase
-    state: started
-    
+# we don't actually start the config server or
+# ArkCase since we want them to start on the
+# first real boot; not at installation time

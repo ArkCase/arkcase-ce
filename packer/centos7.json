@@ -31,9 +31,7 @@
       "ssh_port": 22,
       "ssh_wait_timeout": "10000s",
       "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
-      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
-      "virtualbox_version_file": ".vbox_version",
-      "vm_name": "packer-centos-7-x86_64",
+      "vm_name": "arkcase-centos-7-x86_64",
       "vboxmanage": [
         [
           "modifyvm",
@@ -53,7 +51,7 @@
   "post-processors": [
     [
       {
-        "output": "builds/{{.Provider}}-centos7-20190715.box",
+        "output": "builds/{{.Provider}}-centos7-20190812.box",
         "type": "vagrant"
       }
     ]

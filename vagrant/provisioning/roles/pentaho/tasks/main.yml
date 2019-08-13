@@ -45,6 +45,13 @@
       mode: "0644"
       dest: /opt/app/pentaho/pentaho-server/tomcat/conf
 
+- name: read current import-export script
+  become: yes
+  become_user: pentaho
+  command: cat /opt/app/pentaho/pentaho-server/import-export.sh
+  register: import_export
+  changed_when: false
+  
 - name: set TLS options in import-export script
   become: yes
   become_user: pentaho
@@ -52,6 +59,7 @@
     path: /opt/app/pentaho/pentaho-server/import-export.sh
     regexp: "-Xmx2048m"
     replace: "-Djavax.net.ssl.keyStorePassword=password -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=/opt/common/arkcase.ks -Djavax.net.ssl.trustStore=/opt/common/arkcase.ts -Xmx2048m"
+  when: "'/opt/common/arkcase.ks' not in import_export.stdout"
       
 - name: configure logging
   import_tasks: configure_logging.yml
