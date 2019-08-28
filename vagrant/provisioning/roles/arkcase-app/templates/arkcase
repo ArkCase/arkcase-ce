@@ -1,0 +1,26 @@
+{{ root_folder }}/log/arkcase/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+{{ root_folder }}/log/arkcase/*.out {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+{{ root_folder }}/log/arkcase/*.txt {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}

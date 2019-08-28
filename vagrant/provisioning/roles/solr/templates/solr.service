@@ -1,0 +1,19 @@
+[Unit]
+Description=Solr service
+
+[Service]
+Type=forking
+RemainAfterExit=true
+ExecStart={{ root_folder }}/app/solr/bin/init.d/solr start
+ExecStop={{ root_folder }}/app/solr/bin/init.d/solr stop
+PIDFile={{ root_folder }}/app/solr/bin/solr-8983.pid
+User=root
+Group=root
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=solr
+
+[Install]
+WantedBy=multi-user.target

@@ -12,7 +12,7 @@
         tc:
           service: alfresco
           user: alfresco
-          tomcat_home: /opt/app/alfresco
+          tomcat_home: "{{ root_folder }}/app/alfresco"
           tls_port: "{{ alfresco_tls_port }}"
           shutdown_port: 7005
           jmx_remote_port: 50506
@@ -20,15 +20,15 @@
           http_port: 7080
           redirect_port: 7443
           ajp_port: 7009
-          catalina_out: /opt/log/alfresco/catalina.out
-          catalina_temp: /opt/tmp/alfresco
-          log_folder: /opt/log/alfresco
+          catalina_out: "{{ root_folder }}/log/alfresco/catalina.out"
+          catalina_temp: "{{ root_folder }}/tmp/alfresco"
+          log_folder: "{{ root_folder }}/log/alfresco"
   register: tomcat_unarchived
   
 - name: remove all files under /webapp, if needed
   become: yes
   become_user: alfresco
-  shell: rm -rf /opt/app/alfresco/webapps/*
+  shell: rm -rf "{{ root_folder }}/app/alfresco/webapps/*"
   when: tomcat_unarchived is changed
 
 - name: Tomcat shared and modules folders
@@ -38,18 +38,18 @@
     path: "{{ item }}"
     state: directory
   loop:
-    - /opt/app/alfresco/shared
-    - /opt/app/alfresco/shared/classes
-    - /opt/app/alfresco/shared/lib
-    - /opt/app/alfresco/modules
-    - /opt/app/alfresco/modules/platform
-    - /opt/app/alfresco/modules/share
+    - "{{ root_folder }}/app/alfresco/shared"
+    - "{{ root_folder }}/app/alfresco/shared/classes"
+    - "{{ root_folder }}/app/alfresco/shared/lib"
+    - "{{ root_folder }}/app/alfresco/modules"
+    - "{{ root_folder }}/app/alfresco/modules/platform"
+    - "{{ root_folder }}/app/alfresco/modules/share"
 
 - name: configure Tomcat shared loader
   become: yes
   become_user: alfresco
   replace:
-    path: /opt/app/alfresco/conf/catalina.properties
+    path: "{{ root_folder }}/app/alfresco/conf/catalina.properties"
     regexp: '^shared.loader=$'
     replace: 'shared.loader=${catalina.base}/shared/classes'
 
@@ -57,18 +57,18 @@
   become: yes
   become_user: alfresco
   file:
-    src: /opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
-    dest: /opt/app/alfresco/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar
+    src: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    dest: "{{ root_folder }}/app/alfresco/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
     state: link
 
 - name: unzip content services
   become: yes
   become_user: alfresco
   unarchive:
-    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip
+    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip"
     remote_src: true
-    dest: /opt/install/alfresco
-    creates: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/README.txt
+    dest: "{{ root_folder }}/install/alfresco"
+    creates: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/README.txt"
 
 
 - name: copy alfresco war files
@@ -77,8 +77,8 @@
   copy:
     remote_src: yes
     force: no
-    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/webapps/{{ item }}
-    dest: /opt/app/alfresco/webapps/{{ item }}
+    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/webapps/{{ item }}"
+    dest: "{{ root_folder }}/app/alfresco/webapps/{{ item }}"
   register: war_file_copy
   loop:
     - alfresco.war
@@ -91,21 +91,21 @@
       become: yes
       become_user: alfresco
       file:
-        path: /opt/app/alfresco/conf/Catalina/localhost
+        path: "{{ root_folder }}/app/alfresco/conf/Catalina/localhost"
         state: directory
     - name: see if alfresco.xml already exists
       become: yes
       become_user: alfresco
       stat:
-        path: /opt/app/alfresco/conf/Catalina/localhost/alfresco.xml
+        path: "{{ root_folder }}/app/alfresco/conf/Catalina/localhost/alfresco.xml"
       register: alfresco_xml
     - name: copy alfresco.xml and share.xml if needed
       become: yes
       become_user: alfresco
       copy:
         remote_src: yes
-        src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/conf/Catalina/localhost/{{item}}
-        dest: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
+        src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/conf/Catalina/localhost/{{item}}"
+        dest: "{{ root_folder }}/app/alfresco/conf/Catalina/localhost/{{ item }}"
       loop:
         - alfresco.xml
         - share.xml
@@ -114,7 +114,7 @@
       become: yes
       become_user: alfresco
       replace:
-        path: /opt/app/alfresco/conf/Catalina/localhost/{{ item }}
+        path: "{{ root_folder }}/app/alfresco/conf/Catalina/localhost/{{ item }}"
         regexp: "\\.\\.\\/"
         replace: ""
       loop:
@@ -127,12 +127,12 @@
       become: yes
       become_user: alfresco
       stat:
-        path: /opt/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml
+        path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml"
       register: share_config_custom_xml
     - name: copy shared resources if needed
       become: yes
       become_user: alfresco
-      shell: cp -a /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/shared/classes/* /opt/app/alfresco/shared/classes/
+      shell: cp -a {{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/shared/classes/* {{ root_folder }}/app/alfresco/shared/classes/
       when: share_config_custom_xml.stat.exists == False
 
 - name: fix alfresco location in share-config-custom.xml
@@ -140,7 +140,7 @@
   become_user: alfresco
   replace:
     backup: yes
-    path: /opt/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml
+    path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml"
     regexp: 'http://localhost:8080'
     replace: 'https://{{ arkcase_host_name }}:{{ alfresco_tls_port }}'
 
@@ -157,29 +157,29 @@
   become_user: alfresco
   copy:
     remote_src: true
-    src: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/bin/alfresco-mmt.jar
-    dest: /opt/app/alfresco/bin/alfresco-mmt.jar
+    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/bin/alfresco-mmt.jar"
+    dest: "{{ root_folder }}/app/alfresco/bin/alfresco-mmt.jar"
 
 - name: unzip RMA zip file if needed
   become: yes
   become_user: alfresco
   unarchive:
-    src: /opt/install/alfresco/alfresco-rm-community-{{ alfresco_records_management_version }}.zip
+    src: "{{ root_folder }}/install/alfresco/alfresco-rm-community-{{ alfresco_records_management_version }}.zip"
     remote_src: yes
-    dest: /opt/install/alfresco
-    creates: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
+    dest: "{{ root_folder }}/install/alfresco"
+    creates: "{{ root_folder }}/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp"
     
 - name: apply alfresco modules
-  include_tasks: "{{ role_path }}/tasks/apply-amp.yml"
+  include_tasks: "apply-amp.yml"
   loop:
     - title: Alfresco Share Services AMP
-      amp_path: /opt/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp
+      amp_path: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp"
       target_war: alfresco.war
     - title: Governance Services
-      amp_path: /opt/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp
+      amp_path: "{{ root_folder }}/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp"
       target_war: alfresco.war
     - title: AGS Share
-      amp_path: /opt/install/alfresco/alfresco-rm-community-share-{{ alfresco_records_management_version }}.amp
+      amp_path: "{{ root_folder }}/install/alfresco/alfresco-rm-community-share-{{ alfresco_records_management_version }}.amp"
       target_war: share.war
   loop_control:
     loop_var: amp
@@ -190,32 +190,32 @@
   copy:
     remote_src: yes
     force: no
-    src: /opt/app/alfresco/shared/classes/alfresco-global.properties.sample
-    dest: /opt/app/alfresco/shared/classes/alfresco-global.properties
+    src: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties.sample"
+    dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
 
 - name: populate alfresco-global.properties
   become: yes
   become_user: alfresco
   blockinfile:
-    path: /opt/app/alfresco/shared/classes/alfresco-global.properties
+    path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
     insertbefore: BOF
     block: |
-      dir.root=/opt/data/alfresco/alf_data
+      dir.root={{ root_folder }}/data/alfresco/alf_data
       db.name=alfresco
       db.username=alfresco
       db.password={{ default_database_password }}
       db.driver=org.mariadb.jdbc.Driver
-      db.url=jdbc:mariadb://{{ arkcase_host_name }}:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&requireSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=false&serverSslCert=/etc/ssl/crt/arkcase-server.crt
+      db.url=jdbc:mariadb://{{ database_host_name }}:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&requireSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=false&serverSslCert={{ ssl_cert }}
       db.schema.update=true
       db.pool.max=50
       db.pool.validate.query=SELECT 1
       alfresco.context=alfresco
       alfresco.host={{ arkcase_host_name }}
-      alfresco.port=443
+      alfresco.port={{ alfresco_tls_port }}
       alfresco.protocol=https
       share.context=share
       share.host={{ arkcase_host_name }}
-      share.port=443
+      share.port={{ alfresco_tls_port }}
       share.protocol=https
       # audit app support
       audit.enabled=true
@@ -262,13 +262,13 @@
       ldap.synchronization.groupType=group
       ldap.synchronization.personType=user
       ldap.synchronization.userIdAttributeName=samAccountName
-      #### local Samba (arkcase-ce.local)
-      ldap.authentication.java.naming.provider.url=ldaps://{{ arkcase_host_name }}:636
-      ldap.synchronization.java.naming.security.principal=CN=Administrator,CN=Users,{{ ldap_base }}
-      ldap.synchronization.java.naming.security.credentials={{ samba_admin_password }}
-      ldap.synchronization.groupSearchBase=OU=Groups,OU=ArkCase,{{ ldap_base }}
-      ldap.synchronization.userSearchBase=OU=Users,OU=ArkCase,{{ ldap_base}}
-      ldap.authentication.userNameFormat=%s@{{ arkcase_host_name }}
+      #### LDAP host-specific settings
+      ldap.authentication.java.naming.provider.url={{ ldap_url }}
+      ldap.synchronization.java.naming.security.principal={{ ldap_bind_user }}
+      ldap.synchronization.java.naming.security.credentials={{ ldap_bind_password }}
+      ldap.synchronization.groupSearchBase={{ ldap_group_base }}
+      ldap.synchronization.userSearchBase={{ ldap_user_base }}
+      ldap.authentication.userNameFormat=%s@{{ ldap_user_domain }}
       # remove unneeded Alfresco activity
       system.usages.enabled=false
       cifs.enabled=false
@@ -286,31 +286,31 @@
       become: yes
       become_user: alfresco
       stat:
-        path: /opt/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties
+        path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties"
       register: log4j_exists
     - name: unzip default log4j.properties
       become: yes
       become_user: alfresco
-      command: unzip -d /opt/app/alfresco/shared/classes/alfresco/extension -j /opt/app/alfresco/webapps/alfresco.war WEB-INF/classes/log4j.properties
+      command: unzip -d "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension" -j "{{ root_folder }}/app/alfresco/webapps/alfresco.war" WEB-INF/classes/log4j.properties
       when: log4j_exists.stat.exists == False
       register: log4j_unzipped
     - name: configure alfresco.log location
       become: yes
       become_user: alfresco
       replace:
-        path: /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties
+        path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/log4j.properties"
         regexp: "log4j.appender.File.File=alfresco.log"
-        replace: "log4j.appender.File.File=/opt/log/alfresco/alfresco.log"
+        replace: 'log4j.appender.File.File="{{ root_folder }}/log/alfresco/alfresco.log"'
       when: log4j_unzipped is changed
     - name: rename log4j.properties
       become: yes
       become_user: alfresco
-      command: mv /opt/app/alfresco/shared/classes/alfresco/extension/log4j.properties /opt/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties
+      command: mv "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/log4j.properties" "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/ce-log4j.properties"
       when: log4j_unzipped is changed
     - name: remove default log4j.properties
       become: yes
       become_user: alfresco
-      command: zip -d /opt/app/alfresco/webapps/alfresco.war WEB-INF/classes/log4j.properties
+      command: zip -d "{{ root_folder }}/app/alfresco/webapps/alfresco.war" WEB-INF/classes/log4j.properties
       when: log4j_unzipped is changed
       
 - name: configure share.log location
@@ -319,42 +319,42 @@
       become: yes
       become_user: alfresco
       stat:
-        path: /opt/tmp/alfresco/WEB-INF/classes/log4j.properties
+        path: "{{ root_folder }}/tmp/alfresco/WEB-INF/classes/log4j.properties"
       register: share_log4j_exists
     - name: unzip share default log4j.properties
       become: yes
       become_user: alfresco
-      command: unzip -d /opt/tmp/alfresco /opt/app/alfresco/webapps/share.war WEB-INF/classes/log4j.properties
+      command: unzip -d {{ root_folder }}/tmp/alfresco {{ root_folder }}/app/alfresco/webapps/share.war WEB-INF/classes/log4j.properties
       when: share_log4j_exists.stat.exists == False
       register: share_log4j_unzipped
     - name: configure share.log location
       become: yes
       become_user: alfresco
       replace:
-        path: /opt/tmp/alfresco/WEB-INF/classes/log4j.properties
+        path: "{{ root_folder }}/tmp/alfresco/WEB-INF/classes/log4j.properties"
         regexp: "log4j.appender.File.File=share.log"
-        replace: "log4j.appender.File.File=/opt/log/alfresco/share.log"
+        replace: 'log4j.appender.File.File="{{ root_folder }}/log/alfresco/share.log"'
       when: share_log4j_unzipped is changed
       register: share_log4j_updated
     - name: update share.war with new share location
       become: yes
       become_user: alfresco
-      command: zip -r /opt/app/alfresco/webapps/share.war WEB-INF
+      command: zip -r "{{ root_folder }}/app/alfresco/webapps/share.war" WEB-INF
       args:
-        chdir: /opt/tmp/alfresco
+        chdir: "{{ root_folder }}/tmp/alfresco"
       when: share_log4j_updated is changed
       
       
 - name: Alfresco systemd unit file
   become: yes
-  copy:
-    src: "{{ role_path }}/files/alfresco.service"
+  template:
+    src: "alfresco.service"
     dest: /etc/systemd/system/alfresco.service
     
 - name: alfresco logrotate
   become: yes
-  copy:
-    src: "{{ role_path }}/files/alfresco"
+  template: 
+    src: "alfresco"
     dest: /etc/logrotate.d/alfresco
 
 - name: enable Alfresco to start on boot
@@ -409,7 +409,7 @@
   changed_when: false
 
 - name: parse the CSRFToken
-  shell: egrep ^arkcase-ce.local cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
+  shell: egrep ^{{ arkcase_host_name }} cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
   register: csrftoken_parsed
   changed_when: false
 
@@ -575,18 +575,18 @@
   become: yes
   become_user: alfresco
   replace:
-    path: /opt/app/alfresco/webapps/alfresco/WEB-INF/web.xml
+    path: "{{ root_folder }}/app/alfresco/webapps/alfresco/WEB-INF/web.xml"
     regexp: "/service/enterprise/admin/*"
-    replace: /no-such-service/enterprise/admin/*"
+    replace: "/no-such-service/enterprise/admin/*"
   register: web_xml_one
 
 - name: disable CSRF for Alfresco ldap sync service, part 2
   become: yes
   become_user: alfresco
   replace:
-    path: /opt/app/alfresco/webapps/alfresco/WEB-INF/web.xml
+    path: "{{ root_folder }}/app/alfresco/webapps/alfresco/WEB-INF/web.xml"
     regexp: "/s/enterprise/admin/*"
-    replace: /no-such-s/enterprise/admin/*"
+    replace: "/no-such-s/enterprise/admin/*"
   register: web_xml_two
   
 - name: update alfresco.war with web.xml change
@@ -594,7 +594,7 @@
   become_user: alfresco
   command: zip ../alfresco.war WEB-INF/web.xml
   args:
-    chdir: /opt/app/alfresco/webapps/alfresco
+    chdir: "{{ root_folder }}/app/alfresco/webapps/alfresco"
   when: web_xml_one is changed or web_xml_two is changed
 
 - name: Expose alfresco app port
@@ -610,4 +610,3 @@
   become: yes
   command: firewall-cmd --reload
   when: alfresco_port is changed
-

@@ -1,0 +1,26 @@
+{{ root_folder }}/log/alfresco/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+{{ root_folder }}/log/alfresco/*.out {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+{{ root_folder }}/log/alfresco/*.txt {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}

@@ -5,7 +5,7 @@
 <!--===========================================================================
 HITACHI VANTARA PROPRIETARY AND CONFIDENTIAL
 
-Copyright 2002 - 2017 Hitachi Vantara. All rights reserved.
+Copyright 2002 - 2019 Hitachi Vantara. All rights reserved.
 
 NOTICE: All information including source code contained herein is, and
 remains the sole property of Hitachi Vantara and its licensors. The intellectual
@@ -24,26 +24,37 @@ confidentiality and non-disclosure agreements or other agreements with Hitachi V
 explicitly covering such access.
 ============================================================================-->
 <hibernate-configuration>
-    <session-factory>
+  <session-factory>
   
-  	<property name="cache.provider_class">net.sf.ehcache.hibernate.SingletonEhCacheProvider</property>
+    <property name="cache.provider_class">net.sf.ehcache.hibernate.SingletonEhCacheProvider</property>
 
-        <property name="hibernate.generate_statistics">true</property>
-        <property name="hibernate.cache.use_query_cache">true</property>
+    <property name="hibernate.generate_statistics">true</property>
+    <property name="hibernate.cache.use_query_cache">true</property>
   
-        <!--  MySQL Configuration -->
-        <property name="connection.driver_class">{{ database_mysql_jdbc_driver }}</property>
-        <property name="connection.url">jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_hibernate_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}</property>
-        <property name="dialect">org.hibernate.dialect.MySQL5InnoDBDialect</property>
-        <property name="connection.username">{{ database_pentaho_hibernate_user }}</property>
-        <property name="connection.password">{{ default_database_password }}</property>
-        <property name="connection.pool_size">10</property>
-        <property name="show_sql">false</property>
-        <property name="hibernate.jdbc.use_streams_for_binary">true</property>
+    <!--  MySQL Configuration -->
+    <property name="connection.driver_class">{{ database_mysql_jdbc_driver }}</property>
+    <property name="connection.url">jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_hibernate_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}</property>
+    <property name="dialect">org.hibernate.dialect.MySQL5InnoDBDialect</property>
+    <property name="connection.username">{{ database_pentaho_hibernate_user }}</property>
+    <property name="connection.password">{{ default_database_password }}</property>
+    <property name="connection.pool_size">10</property>
+    <property name="show_sql">false</property>
+    <property name="hibernate.jdbc.use_streams_for_binary">true</property>
 
-        <!-- replaces DefinitionVersionManager -->
-        <property name="hibernate.hbm2ddl.auto">update</property>
-        <!-- load resource from classpath -->
-        <mapping resource="hibernate/mysql5innodb.hbm.xml" />
-    </session-factory>
+    <!-- The settings below are for c3p0; which is required to handle mysql connection close after a default of 8 hrs -->
+    <property name="connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
+    <property name="hibernate.c3p0.acquire_increment">3</property>
+    <property name="hibernate.c3p0.idle_test_period">14400</property>
+    <property name="hibernate.c3p0.min_size">5</property>
+    <property name="hibernate.c3p0.max_size">75</property>
+    <property name="hibernate.c3p0.max_statements">0</property>
+    <property name="hibernate.c3p0.timeout">25200</property>
+    <property name="hibernate.c3p0.preferredTestQuery">select 1</property>
+    <property name="hibernate.c3p0.testConnectionOnCheckout">true</property>
+
+    <!-- replaces DefinitionVersionManager -->
+    <property name="hibernate.hbm2ddl.auto">update</property>
+    <!-- load resource from classpath -->
+    <mapping resource="hibernate/mysql5innodb.hbm.xml" />
+  </session-factory>
 </hibernate-configuration>

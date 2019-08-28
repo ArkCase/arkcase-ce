@@ -1,0 +1,18 @@
+- name: find {{ user_id }} group memberships
+  shell: LDAPTLS_REQCERT=never ldapsearch -H {{ ldap_url }} -b {{ ldap_base }} -D {{ ldap_bind_user }} -w '{{ ldap_bind_password }}' -x "(&(samAccountName={{ user_id }})(memberOf=CN={{ item }},{{ ldap_group_base }}))"
+  register: group_memberships
+  changed_when: false
+- name: copy add-user-to-group ldif file
+  become: yes
+  copy:
+    content: |
+      dn: CN={{ item }},{{ ldap_group_base }}
+      changetype: modify
+      add: member
+      member: CN={{ user_id }},{{ ldap_user_base }}
+    dest: "{{ root_folder }}/install/add_user_to_group.ldif"
+  when: "'givenName' not in group_memberships.stdout"
+  register: add_user_to_group_ldif
+- name: execute add user to group
+  shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D {{ ldap_bind_user }} -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/add_user_to_group.ldif
+  when: add_user_to_group_ldif is changed

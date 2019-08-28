@@ -26,7 +26,7 @@
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: "MariaDB JDBC Driver"
-      dest: "/opt/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+      dest: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
       owner: "root"
       url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 
@@ -39,9 +39,9 @@
     owner: mysql
     setype: "{{ item.setype }}"
   loop:
-    - name: "/opt/data/mariadb"
+    - name: "{{ mariadb_data_folder }}"
       setype: "mysqld_db_t"
-    - name: "/opt/log/mariadb"
+    - name: "{{ mariadb_log_folder }}"
       setype: "mysqld_log_t"
   register: mariadb_folder_structure
 
@@ -59,11 +59,11 @@
         insertafter: "\\[mysqld\\]"
         line: "{{ item }}"
       loop:
-        - "ssl-cipher=TLSv1.2"
-        - "ssl-cert=/etc/ssl/crt/arkcase-server.crt"
-        - "ssl-key=/etc/ssl/private/arkcase-server.rsa.pem"
-        - "ssl-ca=/etc/ssl/crt/arkcase-chain.crt"
-      when: server_cnf_contents.stdout.find('ssl-cipher=TLSv1.2') == -1
+        - "ssl-cipher={{ ssl_cipher }}"
+        - "ssl-cert={{ ssl_cert }}"
+        - "ssl-key={{ ssl_key_rsa }}"
+        - "ssl-ca={{ ssl_ca }}"
+      when: server_cnf_contents.stdout.find('ssl-cipher=' ~ ssl_cipher) == -1
       register: server_cnf_tls
     - name: update server.cnf max_packet property, if needed (Pentaho needs larger packet size)
       lineinfile:
@@ -80,7 +80,7 @@
         regexp: "^{{ item }}$"
         insertafter: "\\[mysqld\\]"
         line: "{{ item }}"
-      #when: server_cnf_contents.stdout.find(item) == -1
+      when: not server_cnf_contents.stdout is match('^' + item)
       register: server_cnf_network
       loop:
         - "skip-name-resolve=true"
@@ -89,6 +89,7 @@
       shell: cat /etc/my.cnf.d/mysql-clients.cnf
       register: client_cnf_contents
       changed_when: false
+      when: client_ssl_cert != ""
     - name: update client.cnf if needed
       lineinfile:
         path: /etc/my.cnf.d/mysql-clients.cnf
@@ -96,11 +97,11 @@
         insertafter: "\\[mysql\\]"
         line: "{{ item }}"
       loop:
-        - "ssl-cert=/etc/ssl/crt/arkcase-client.crt"
-        - "ssl-key=/etc/ssl/private/arkcase-client.rsa.pem"
-        - "ssl-ca=/etc/ssl/crt/arkcase-chain.crt"
-        - "socket=/opt/data/mariadb/mysql.sock"
-      when: client_cnf_contents.stdout.find('arkcase-client') == -1
+        - "ssl-cert={{ client_ssl_cert }}"
+        - "ssl-key={{ client_ssl_key_rsa }}"
+        - "ssl-ca={{ client_ssl_ca }}"
+        - "socket={{ mariadb_data_folder }}/mysql.sock"
+      when: client_ssl_cert != "" and client_cnf_contents.stdout.find('arkcase-client') == -1
       register: client_cnf
 
 - name: set data folder
@@ -109,7 +110,7 @@
     path: /etc/my.cnf.d/server.cnf
     insertafter: "\\[mysqld\\]"
     regexp: '^datadir='
-    line: 'datadir=/opt/data/mariadb'
+    line: 'datadir={{ mariadb_data_folder }}'
 
 - name: set log folder
   become: yes
@@ -117,7 +118,7 @@
     path: /etc/my.cnf.d/server.cnf
     insertafter: "\\[mysqld\\]"
     regexp: '^log-error='
-    line: 'log-error=/opt/log/mariadb/mariadb.log'
+    line: 'log-error={{ mariadb_log_folder }}/mariadb.log'
 
 - name: set socket path
   become: yes
@@ -125,11 +126,11 @@
     path: /etc/my.cnf.d/server.cnf
     insertafter: "\\[mysqld\\]"
     regexp: '^socket='
-    line: 'socket=/opt/data/mariadb/mysql.sock'
+    line: 'socket={{ mariadb_data_folder}}/mysql.sock'
 
 - name: mariadb logrotate
   become: yes
-  copy:
+  template:
     src: logrotate.d/mariadb
     dest: /etc/logrotate.d/mariadb
 
@@ -138,8 +139,8 @@
   become_user: mysql
   command: mysql_install_db
   args:
-    chdir: /opt/data/mariadb
-    creates: /opt/data/mariadb/mysql/
+    chdir: "{{ mariadb_data_folder }}"
+    creates: "{{ mariadb_data_folder }}/mysql/"
 
 - name: enable MariaDB to start on boot
   become: yes
@@ -155,12 +156,3 @@
     state: restarted
   when: server_cnf_tls is changed or server_cnf_packet is changed or client_cnf is changed or mariadb_install is changed or server_cnf_network is changed
     
-
-- name: Expose mariadb port
-  become: yes
-  firewalld:
-    port: "3306/tcp"
-    permanent: true
-    zone: public
-    state: enabled
-    immediate: true

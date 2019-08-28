@@ -1,0 +1,19 @@
+- name: output command to be run
+  debug: 
+    msg: "{{ root_folder }}/install/arkcase/fixGroups.py {{ s.base_path_no_xlsx }} {{ s.replacements }}"
+
+- name: update assignment rules spreadsheet {{ s.base_path }}
+  become: yes
+  become_user: arkcase
+  command: "{{ root_folder }}/install/arkcase/fixGroups.py {{ s.base_path_no_xlsx }} {{ s.replacements }}"
+  register: rule_update
+  changed_when: "'replacing' in rule_update.stdout"
+
+- name: backup original file and replace with updatd file, if necessary
+  become: yes
+  become_user: arkcase
+  command: "{{ item }}"
+  when: rule_update is changed 
+  loop:
+    - mv {{ s.base_path_no_xlsx }}.xlsx {{ s.base_path_no_xlsx }}-backup.xlsx
+    - mv {{ s.base_path_no_xlsx }}-updated.xlsx {{ s.base_path_no_xlsx }}.xlsx

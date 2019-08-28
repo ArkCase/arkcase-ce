@@ -1,0 +1,17 @@
+################### Arkcase ActiveMq Configuration (arkcase-activemq.properties) ####################
+# Comma-separated list of package names.  Objects of classes from these
+# packages (and sub-packages under these packages) can be sent to an
+# ActiveMQ destination.  When you see "This class is not trusted to be
+# serialized as ObjectMessage payload" in your ArkCase log file, add
+# the relevant package to this property.
+ark.activemq:
+  trustedPackages: "com.armedia"
+  defaultTrustedPackages: "org.mule,java.lang,javax.security,java.util,org.apache.activemq,org.fusesource.hawtbuf,com.thoughtworks.xstream.mapper"
+  #URL of the ActiveMQ broker.
+  transportConnectorURI: "ssl://acm-activemq:61616"
+  #Maximum number of connections to ActiveMQ.
+  maxConnections: 10
+  #username to connect to the ActiveMQ instance
+  username: "guest"
+  #password for the ActiveMQ user identified by ark.activemq.username
+  password: "guest"

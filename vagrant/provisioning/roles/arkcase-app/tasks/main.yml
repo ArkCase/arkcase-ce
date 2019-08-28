@@ -1,0 +1,579 @@
+- name: install Python Excel module
+  become: yes
+  pip: 
+    name: 
+      - openpyxl
+      - lxml
+    extra_args: --upgrade
+
+- name: download ArkCase war file and config server jar file (if using GitHub)
+  include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: ArkCase war file
+      dest: "{{ root_folder }}/install/arkcase/arkcase-{{ arkcase_version }}.war"
+      owner: arkcase
+      url: https://github.com/ArkCase/ArkCase/releases/download/arkcase-{{ arkcase_version }}/arkcase-{{ arkcase_version }}.war
+    - name: config-server jar file
+      dest: "{{ root_folder }}/app/config-server/config-server.jar"
+      owner: arkcase
+      url: https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar
+  when: arkcase_retrieve_strategy == "github"
+
+- name: set maven repository (snapshot)
+  set_fact:
+    repository_url: "{{ maven_repository_snapshot }}"
+  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' in arkcase_version"
+
+- name: set maven repository (release)
+  set_fact:
+    repository_url: "{{ maven_repository_release }}"
+  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' not in arkcase_version"
+
+- name: download arkcase war file (if using Maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}"
+    group_id: "com.armedia.acm.acm-standard-applications"
+    artifact_id: "acm-law-enforcement"
+    version: "{{ arkcase_version }}"
+    extension: "war"
+    dest: "{{ root_folder }}/install/arkcase/arkcase-{{arkcase_version }}.war"
+  when: arkcase_retrieve_strategy == "maven"
+- name: download config server jar file (if using Maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}"
+    group_id: "com.armedia.acm"
+    artifact_id: "config-server"
+    version: "{{ arkcase_version }}"
+    extension: "jar"
+    dest: "{{ root_folder }}/app/config-server/config-server.jar"
+    mode: "u=rwx,g=r,o=r"
+  when: arkcase_retrieve_strategy == "maven"
+
+- name: set maven extension repository (snapshot)
+  set_fact:
+    extension_repository_url: "{{ maven_repository_extension_snapshot }}"
+  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' in arkcase_configuration_maven_version"
+
+- name: set maven extensionrepository (release)
+  set_fact:
+    extension_repository_url: "{{ maven_repository_extension_release }}"
+  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' not in arkcase_configuration_maven_version"
+
+- name: download extension (if configured)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ extension_repository_url }}"
+    group_id: "{{ arkcase_extension_maven_group }}"
+    artifact_id: "{{ arkcase_extension_maven_artifact }}"
+    version: "{{ arkcase_extension_maven_version }}"
+    extension: "jar"
+    dest: "{{ root_folder }}/install/arkcase/{{ arkcase_extension_maven_artifact }}.jar"
+    mode: "u=rw,g=r,o=r"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
+  when: arkcase_extension_install|bool
+
+- name: download extension configuration (if configured)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ extension_repository_url }}"
+    group_id: "com.armedia.arkcase"
+    artifact_id: "arkcase-config"
+    version: "{{ arkcase_configuration_maven_version }}"
+    classifier: "{{ arkcase_configuration_classifier }}"
+    extension: "zip"
+    dest: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}.zip"
+    mode: "u=rw,g=r,o=r"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
+  when: arkcase_extension_install|bool
+   
+- name: deploy extension reports
+  include_tasks: deploy_extension_report.yml
+  loop: "{{ arkcase_extension_reports|flatten }}"
+  when: arkcase_extension_install_reports|bool
+  loop_control:
+    loop_var: r
+
+- name: arkcase and config server logrotate
+  become: yes
+  template:
+    src: "{{ item }}"
+    dest: "/etc/logrotate.d/{{ item }}"
+  loop:
+    - "arkcase"
+    - "config-server"
+
+- name: copy ArkCase and config server systemd unit files
+  become: yes
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: arkcase.service
+      dest: /etc/systemd/system/arkcase.service
+    - src: config-server.service
+      dest: /etc/systemd/system/config-server.service
+
+- name: copy config-server configuration file
+  become: yes
+  become_user: arkcase
+  template:
+    src: config-server.conf
+    dest: "{{ root_folder }}/app/config-server/config-server.conf"
+    force: no
+
+##### Mule TLS fixes #####
+- name: ensure custom/WEB-INF/classes exists
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/custom/WEB-INF/classes
+    state: directory
+
+- name: see if tls-default.conf already exists
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
+  register: tls_default_file
+
+- name: copy fixed tls-default.conf file
+  become: yes
+  become_user: arkcase
+  copy:
+    src: tls-default.conf
+    dest: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
+  when: tls_default_file.stat.exists == false
+  register: default_file_copied
+
+- name: unarchive ArkCase search service jar
+  become: yes
+  become_user: arkcase
+  command: unzip -o arkcase-{{ arkcase_version }}.war WEB-INF/lib/acm-service-search-{{ arkcase_version }}.jar
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+    warn: false
+  register: search_service_jar
+
+- name: list files in search service jar
+  become: yes
+  become_user: arkcase
+  command: unzip -l acm-service-search-{{ arkcase_version }}.jar
+  args:
+    chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
+    warn: false
+  register: search_service_contents
+  changed_when: false 
+
+- name: remove tls_defalt_conf from search service jar
+  become: yes
+  become_user: arkcase
+  command: zip -d acm-service-search-{{ arkcase_version }}.jar tls-default.conf
+  args:
+    chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
+    warn: false
+  when: search_service_jar is changed and 'tls-default.conf' in search_service_contents.stdout
+  register: tls_default_removed_from_service
+
+- name: update arkcase.war with updated search service jar
+  become: yes
+  become_user: arkcase
+  command: zip -r -m arkcase-{{ arkcase_version}}.war WEB-INF
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+    warn: false
+  when: tls_default_removed_from_service is changed
+
+- name: enable ArkCase 
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: arkcase
+    enabled: yes
+    masked: no
+
+- name: enable config-server
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: config-server
+    enabled: yes
+    masked: no
+
+### Initial deployment... TODO: support redeployment
+- name: unzip the configuration files
+  become: yes
+  become_user: arkcase
+  unarchive:
+    src: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}.zip"
+    dest: "/home/arkcase/.arkcase"
+    creates: "/home/arkcase/.arkcase/acm/conf.yml"
+
+- name: capture current arkcase.yaml
+  become: yes
+  become_user: arkcase
+  shell: cat /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
+  register: arkcase_yaml_contents
+  changed_when: false
+
+- name: insert suggest handler in arkcase.yaml, if needed
+  become: yes
+  become_user: arkcase
+  lineinfile:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
+    state: present
+    insertafter: 'updateHandler: "update"'
+    line: '  suggestHandler: "suggest"'
+  when: arkcase_yaml_contents.stdout.find('suggestHandler') == -1
+
+- name: check whether the symmetric key is a symlink
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted
+  register: symkey_stat
+
+- name: remove the default symmetric key
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted
+    state: absent
+  when: not symkey_stat.stat.islnk
+
+# NOTE keep the /home/arkcase/.arkcase file names the
+# same until next release
+- name: link certs and keys to .arkcase folder
+  become: yes
+  become_user: arkcase
+  file:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    state: link
+  loop:
+    - src: "{{ ssl_ca }}"
+      path: "/home/arkcase/.arkcase/acm/private/arkcase-ca.crt"
+    - src: "{{ java_key_store }}"
+      path: "/home/arkcase/.arkcase/acm/private/arkcase.ks"
+    - src: "{{ java_trust_store }}"
+      path: "/home/arkcase/.arkcase/acm/private/arkcase.ts"
+    - src: "{{ ssl_key }}"
+      path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.rsa.pem"
+    - src: "{{ ssl_cert }}"
+      path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.crt"
+    - src: "{{ root_folder }}/common/symmetricKey.encrypted"
+      path: "/home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted"
+
+
+- name: set arkcase ldap properties
+  become: yes
+  become_user: arkcase
+  template:
+    src: spring-config-armedia-ldap.properties
+    dest: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.properties
+
+- name: check if the openldap group file exists
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml
+  register: group_xml
+
+- name: fix the LDAP group files, if necessary
+  become: yes
+  become_user: arkcase
+  command: "{{ item }}"
+  when: group_xml.stat.exists
+  loop:
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml.sample
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-adtest-ad.xml.sample /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.xml
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.properties /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.properties.sample
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-adtest-ad.properties.sample /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.properties
+
+- name: update bean names in LDAP group file
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.xml
+    regexp: adtest
+    replace: armedia
+
+- name: check if the openldap user file exists
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml
+  register: user_xml
+
+- name: fix the LDAP user files, if necessary
+  become: yes
+  become_user: arkcase
+  command: "{{ item }}"
+  when: user_xml.stat.exists
+  loop:
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml.sample
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-adtest-ad.xml.sample /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.xml
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.properties /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.properties.sample
+    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-adtest-ad.properties.sample /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.properties
+
+- name: update bean names in LDAP user files
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ item }}"
+    regexp: adtest
+    replace: armedia
+  loop:
+    -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.xml
+    -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.properties
+
+- name: server-specific configuration
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: server.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
+
+- name: read current config server configuration
+  become: yes
+  become_user: arkcase
+  command: cat /home/arkcase/.arkcase/acm/conf.yml
+  register: conf_yml
+  changed_when: false
+
+- name: update config server configuration
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "runtime"
+    replace: "server,runtime"
+  when: "'server,runtime' not in conf_yml.stdout"
+
+- name: see if audit patterns is in the main folder
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/auditPatterns.properties
+  register: audit_patterns
+
+- name: copy audit patterns if necessary
+  become: yes
+  become_user: arkcase
+  copy: 
+    remote_src: yes
+    backup: yes
+    src: /home/arkcase/.arkcase/acm/auditPatterns.properties
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring/auditPatterns.properties
+  when: audit_patterns.stat.exists
+
+- name: copy the script to update rules spreadsheets
+  become: yes
+  become_user: arkcase
+  copy:
+    src: fixGroups.py
+    dest: "{{ root_folder }}/install/arkcase/fixGroups.py"
+    mode: "u+rwx,g+rx,o+rx"
+
+- name: update rules spreadsheets
+  include_tasks: update_rules_spreadsheets.yml
+  loop: "{{ rules_spreadsheet_updates }}"
+  loop_control:
+    loop_var: s
+
+### password fixes.  TODO: encrypt the passwords with the server-unique pub key
+- name: plaintext passwords (yaml)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+# note, using dot to match regexp special chars
+    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
+      replace: "admin"
+    - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
+      replace: "AcMd3v$"
+    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
+      replace: "guest"
+    - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
+      replace: "{{ default_database_password }}"
+    - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
+      replace: "armediaaeskey123"
+
+- name: plaintext passwords (forms properties)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/acm-forms.properties
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+# note, using dot to match regexp special chars
+    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
+      replace: "admin"
+    - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
+      replace: "AcMd3v$"
+    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
+      replace: "guest"
+    - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
+      replace: "{{ default_database_password }}"
+    - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
+      replace: "armediaaeskey123"
+
+- name: plaintext passwords (alfresco cmis properties)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+# note, using dot to match regexp special chars
+    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
+      replace: "admin"
+    - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
+      replace: "AcMd3v$"
+    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
+      replace: "guest"
+    - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
+      replace: "{{ default_database_password }}"
+    - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
+      replace: "armediaaeskey123"
+    - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
+      replace: "admin"
+
+- name: plaintext passwords (alfresco cmis properties)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/cmis/mule-config-opencmis-cmis.properties
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+# note, using dot to match regexp special chars
+    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
+      replace: "admin"
+    - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
+      replace: "AcMd3v$"
+    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
+      replace: "guest"
+    - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
+      replace: "{{ default_database_password }}"
+    - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
+      replace: "armediaaeskey123"
+    - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
+      replace: "admin"
+
+- name: cmis host name
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
+    regexp: "acm-arkcase"
+    replace: "{{ arkcase_host_name }}"
+
+- name: remove activemq properties, if present
+  become: yes
+  become_user: arkcase
+  file: 
+    path: /home/arkcase/.arkcase/acm/arkcase-activemq.properties
+    state: absent
+
+- name: copy activemq-config.yaml if necessary
+  become: yes
+  become_user: arkcase
+  copy: 
+    src: activemq-config.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    force: no
+
+- name: copy quartz.properties if necessary
+  become: yes
+  become_user: arkcase
+  copy: 
+    src: quartz.properties
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring/quartz.properties
+    force: no
+
+- name: fix encryption properties
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/encryption/spring-properties-encryption.xml
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: JKS
+      replace: PKCS12
+    - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
+      replace: "{{ java_key_store }}"
+    - regexp: "password"
+      replace: "{{ java_key_store_pass }}"
+    - regexp: 'value="armedia"'
+      replace: 'value="arkcase_client"'
+
+- name: proxy servlet
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: spring-config-proxy.xml
+    dest: /home/arkcase/.arkcase/acm/spring/proxy-config/spring-config-proxy.xml
+
+# TODO: keep an eye on whether this fix is still needed, as session 
+# management keeps being improved
+- name: hazelcast session management fix
+  become: yes
+  become_user: arkcase
+  replace: 
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/spring-security/spring-security-config-ldap.xml
+    regexp: 'session-authentication-strategy-ref="concurrentSessionControlAuthenticationStrategy"'
+    replace: 'session-fixation-protection="migrateSession"'
+
+- name: arkcase.log location
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/log4j2.xml
+    regexp: 'fileName="\$\{sys\:catalina.base\}/logs'
+    replace: 'fileName="{{ root_folder}}/log/arkcase'
+
+### start arkcase and config server
+- name: copy extension jar
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/{{ arkcase_extension_maven_artifact }}.jar"
+    dest: "/home/arkcase/.arkcase/custom/WEB-INF/lib/{{ arkcase_extension_maven_artifact }}.jar"
+  when: arkcase_extension_install
+
+- name: copy arkcase war
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/arkcase-{{ arkcase_version }}.war"
+    dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
+

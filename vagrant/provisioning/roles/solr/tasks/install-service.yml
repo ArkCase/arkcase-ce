@@ -2,60 +2,61 @@
   become: yes
   become_user: solr
   replace:
-    path: /opt/app/solr/bin/init.d/solr
+    path: "{{ root_folder }}/app/solr/bin/init.d/solr"
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
+    # hard coded to /opt/solr, don't change below setting
     - regexp: "/opt/solr"
-      replace: "/opt/app/solr"
+      replace: "{{ root_folder }}/app/solr"
     - regexp: "/etc/default/solr.in.sh"
-      replace: "/opt/app/solr/bin/solr.in.sh"
+      replace: "{{ root_folder }}/app/solr/bin/solr.in.sh"
 
 - name: update environment file - basics
   become: yes
   become_user: solr
   blockinfile:
-    path: /opt/app/solr/bin/solr.in.sh
+    path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - BASICS"
     block: |
       SOLR_OPTS="$SOLR_OPTS -Dsolr.autoSoftCommit.maxTime=1000 -Dsolr.jetty.host=0.0.0.0 -Djava.net.preferIPv4Stack=true"
-      SOLR_DATA_HOME=/opt/data/solr
-      SOLR_LOGS_DIR=/opt/log/solr
+      SOLR_DATA_HOME={{ root_folder }}/data/solr
+      SOLR_LOGS_DIR={{ root_folder }}/log/solr
       SOLR_LOG_LEVEL=INFO
-      SOLR_HOST=arkcase-ce.local
+      SOLR_HOST={{ arkcase_host_name }}
 
 - name: update environment file - jmx enabled
   become: yes
   become_user: solr
   blockinfile:
-    path: /opt/app/solr/bin/solr.in.sh
+    path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - JMX"
     block: |
-      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file=/opt/app/solr/access.file -Dcom.sun.management.jmxremote.password.file=/opt/app/solr/password.file -Djava.rmi.server.hostname=arkcase-ce.local"
+      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file={{ root_folder }}/app/solr/access.file -Dcom.sun.management.jmxremote.password.file={{ root_folder }}/app/solr/password.file -Djava.rmi.server.hostname={{ arkcase_host_name }}"
   when: solr_jmx_enabled|bool
 
 - name: update environment file - TLS
   become: yes
   become_user: solr
   blockinfile:
-    path: /opt/app/solr/bin/solr.in.sh
+    path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS"
     block: |
       SOLR_SSL_ENABLED=true
-      SOLR_SSL_KEY_STORE=/opt/common/arkcase.ks
-      SOLR_SSL_KEY_STORE_PASSWORD=password
-      SOLR_SSL_TRUST_STORE=/opt/common/arkcase.ts
-      SOLR_SSL_TRUST_STORE_PASSWORD=password
+      SOLR_SSL_KEY_STORE={{ java_key_store }}
+      SOLR_SSL_KEY_STORE_PASSWORD={{ java_key_store_pass }}
+      SOLR_SSL_TRUST_STORE={{ java_trust_store }}
+      SOLR_SSL_TRUST_STORE_PASSWORD={{ java_trust_store_pass }}
       SOLR_SSL_TRUST_STORE_TYPE=JKS
       SOLR_SSL_NEED_CLIENT_AUTH=false
       SOLR_SSL_WANT_CLIENT_AUTH=false
 
 - name: Solr systemd unit file
   become: yes
-  copy:
+  template:
     src: solr.service
     dest: /etc/systemd/system/solr.service
   register: systemd_solr_updated

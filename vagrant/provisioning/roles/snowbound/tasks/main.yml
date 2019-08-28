@@ -4,6 +4,8 @@
     name: snowbound
     shell: /bin/false
     state: present
+    create_home: yes
+    home: /home/snowbound
 
 - name: Snowbound folders
   become: yes
@@ -13,11 +15,11 @@
     group: snowbound
     owner: snowbound
   loop:
-    - /opt/data/snowbound
-    - /opt/log/snowbound
-    - /opt/app/snowbound
-    - /opt/install/snowbound
-    - /opt/tmp/snowbound
+    - "{{ root_folder }}/data/snowbound"
+    - "{{ root_folder }}/log/snowbound"
+    - "{{ root_folder }}/app/snowbound"
+    - "{{ root_folder }}/install/snowbound"
+    - "{{ root_folder }}/tmp/snowbound"
   register: snowbound_folder_structure
 
 - name: enable logrotate for snowbound log folder if necessary
@@ -34,7 +36,7 @@
         tc:
           service: snowbound
           user: snowbound
-          tomcat_home: /opt/app/snowbound
+          tomcat_home: "{{ root_folder }}/app/snowbound"
           tls_port: 2005
           shutdown_port: 3005
           jmx_remote_port: 50508
@@ -42,48 +44,102 @@
           http_port: 2080
           redirect_port: 2443
           ajp_port: 2009
-          catalina_out: /opt/log/snowbound/catalina.out
-          catalina_temp: /opt/tmp/snowbound
-          log_folder: /opt/log/snowbound
+          catalina_out: "{{ root_folder }}/log/snowbound/catalina.out"
+          catalina_temp: "{{ root_folder }}/tmp/snowbound"
+          log_folder: "{{ root_folder }}/log/snowbound"
   register: snowbound_tomcat_unarchived
 
-- name: download VirtualViewer war file
+- name: download VirtualViewer war file (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   args:
     apply:
       vars:
         item: 
           name: VirtualViewer war file
-          dest: /opt/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
+          dest: "{{ root_folder }}/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
           owner: snowbound
           url: https://github.com/ArkCase/arkcase-dependencies/raw/master/VirtualViewerJavaHTML5/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
+  when: snowbound_retrieve_strategy == "github"
+
+- name: set maven repository (snapshot)
+  set_fact:
+    repository_url: "{{ maven_repository_snapshot }}"
+  when: "'SNAPSHOT' in snowbound_arkcase_version"
+
+- name: set maven repository (release)
+  set_fact:
+    repository_url: "{{ maven_repository_release }}"
+  when: "'SNAPSHOT' not in snowbound_arkcase_version"
+
+- name: download VirtualViewer war file (if using Maven)
+  become: yes
+  become_user: snowbound
+  maven_artifact:
+    repository_url: "{{ repository_url }}"
+    group_id: "com.armedia.integrations"
+    artifact_id: "virtualviewer"
+    version: "{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}"
+    extension: "war"
+    dest: "{{ root_folder }}/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
+  when: snowbound_retrieve_strategy == "maven"
+
+- name: expand the WEB-INF/web.xml file
+  become: yes
+  become_user: snowbound
+  command: unzip -o VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war WEB-INF/web.xml
+  args:
+    warn: no
+    chdir: "{{ root_folder }}/install/snowbound"
+
+- name: fix the WEB-INF/web.xml file
+  become: yes
+  become_user: snowbound
+  replace:
+    path: "{{ root_folder }}/install/snowbound/WEB-INF/web.xml"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "https://acm-snowbound:8443"
+      replace: "https://{{ arkcase_host_name }}"
+    - regexp: "https://acm-arkcase:8843"
+      replace: "https://{{ arkcase_host_name }}"
+  register: web_xml
+
+- name: update snowbound.war with updated web.xml
+  become: yes
+  become_user: snowbound
+  command: zip -r VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war WEB-INF
+  args:
+    warn: no
+    chdir: "{{ root_folder }}/install/snowbound"
+  when: web_xml is changed
   
 - name: conf/Catalina/localhost folder
   become: yes
   become_user: snowbound
   file:
-    path: /opt/app/snowbound/conf/Catalina/localhost
+    path: "{{ root_folder }}/app/snowbound/conf/Catalina/localhost"
     state: directory
 
 - name: snowbound catalina conf file
   become: yes
   become_user: snowbound
-  copy:
+  template:
     src: VirtualViewerJavaHTML5.xml
-    dest: /opt/app/snowbound/conf/Catalina/localhost/
+    dest: "{{ root_folder }}/app/snowbound/conf/Catalina/localhost/"
   
 - name: snowbound-docs folder
   become: yes
   become_user: snowbound
   file:
-    path: /opt/data/snowbound/snowbound-docs
+    path: "{{ root_folder }}/data/snowbound/snowbound-docs"
     state: directory
 
-- name: link ~/.snowbound-docs to /opt/data/snowbound folder
+- name: link ~/.snowbound-docs to {{ root_folder }}/data/snowbound folder
   become: yes
   become_user: snowbound
   file:
-    src: /opt/data/snowbound/snowbound-docs
+    src: "{{ root_folder }}/data/snowbound/snowbound-docs"
     dest: /home/snowbound/.snowbound-docs
     state: link
 
@@ -92,41 +148,41 @@
   become_user: snowbound
   copy:
     src: "fonts.tar.gz"
-    dest: "/opt/data/snowbound"
+    dest: "{{ root_folder }}/data/snowbound"
   register: fonts_copied
 - name: expand fonts file
   become: yes
   become_user: snowbound
   unarchive:
     remote_src: yes
-    src: /opt/data/snowbound/fonts.tar.gz
-    dest: /opt/data/snowbound
+    src: "{{ root_folder }}/data/snowbound/fonts.tar.gz"
+    dest: "{{ root_folder }}/data/snowbound"
   when: fonts_copied is changed
 - name: update fonts cache
   become: yes
   become_user: snowbound
   shell: fc-cache -f -v
   args: 
-    chdir: /opt/data/snowbound
+    chdir: "{{ root_folder }}/data/snowbound"
   when: fonts_copied is changed
 - name: set JAVA_FONTS option
   become: yes
   become_user: snowbound
   lineinfile:
     backup: yes
-    path: "/opt/app/snowbound/bin/setenv.sh"
-    line: 'export JAVA_FONTS="/opt/data/snowbound/.fonts/"'  
+    path: "{{ root_folder }}/app/snowbound/bin/setenv.sh"
+    line: 'export JAVA_FONTS="{{ root_folder }}/data/snowbound/.fonts/"'  
 
 - name: Snowbound systemd unit file
   become: yes
-  copy:
-    src: "{{ role_path }}/files/snowbound.service"
+  template:
+    src: "snowbound.service"
     dest: /etc/systemd/system/snowbound.service
   register: snowbound_systemd
     
 - name: snowbound logrotate
   become: yes
-  copy:
+  template:
     src: snowbound
     dest: /etc/logrotate.d/snowbound
 
@@ -147,8 +203,8 @@
   become_user: snowbound
   copy:
     remote_src: yes
-    src: /opt/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
-    dest: /opt/app/snowbound/webapps/VirtualViewerJavaHTML5.war
+    src: "{{ root_folder }}/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
+    dest: "{{ root_folder }}/app/snowbound/webapps/VirtualViewerJavaHTML5.war"
   register: snowbound_war
 
 - name: start Snowbound
@@ -156,5 +212,5 @@
   systemd:
     name: snowbound
     state: restarted
-  when: snowbound_war is changed
+  when: snowbound_war is changed or web_xml is changed
 

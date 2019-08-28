@@ -1,0 +1,66 @@
+- name: add {{ u.user_id }} user
+  ldap_entry:
+    server_uri: "{{ ldap_url }}"
+    validate_certs: no
+    bind_dn: "{{ ldap_bind_user }}"
+    bind_pw: "{{ ldap_bind_password }}"
+    dn: CN={{ u.user_id }},{{ldap_user_base}}
+    objectClass:
+      - organizationalPerson
+      - person
+      - user
+      - top
+    attributes:
+      # note, Samba doesn't let you set memberOf directory, you
+      # have to create the user, then add them to the group.
+      description: "{{ u.description }}"
+      samAccountName: "{{ u.user_id }}"
+      name: "{{ u.name }}"
+      mail: "{{ u.mail }}"
+      givenName: "{{ u.firstName }}"
+      sn: "{{ u.lastName }}"
+      cn: "{{ u.user_id }}"
+  register: new_user 
+
+- name: set {{ u.user_id }} password
+  block:
+    - name: base64 encode password
+      shell: echo -n '"{{ u.password }}"' | iconv -f utf8 -t utf16le | base64 -w 0
+      register: base64_password
+      changed_when: false
+    - name: copy change password ldif file
+      become: yes
+      copy:
+        content: |
+          dn: CN={{ u.user_id }},{{ ldap_user_base }}
+          changetype: modify
+          replace: unicodePwd
+          unicodePwd:: {{ base64_password.stdout }}
+        dest: "{{ root_folder }}/install/password_change.ldif"
+    - name: execute password change
+      shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D {{ ldap_bind_user }} -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/password_change.ldif
+  when: ldap_force_password_reset or new_user is changed
+
+- name: enable {{ u.user_id }} account
+  block:
+    - name: copy enable user ldif file
+      become: yes
+      copy:
+        content: |
+          dn: CN={{ u.user_id }},{{ ldap_user_base }}
+          changetype: modify
+          replace: userAccountControl
+          userAccountControl: 512
+        dest: "{{ root_folder }}/install/activate_user.ldif"
+    - name: enable user
+      shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D {{ ldap_bind_user }} -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/activate_user.ldif
+ # when: new_user is changed
+      
+- name: store user id
+  set_fact: 
+    user_id: "{{ u.user_id }}"
+
+- name: add {{ u.user_id }} account to groups
+  include_tasks: add-user-to-group.yml
+  loop: "{{ u.groups }}"
+

@@ -2,8 +2,8 @@
   become: yes
   become_user: pentaho
   copy:
-    src: quartz-create-db.sql
-    dest: /opt/install/pentaho/
+    src: "{{ role_path }}/../pentaho/files/quartz-create-db.sql"
+    dest: "{{ root_folder }}/install/pentaho/"
     
 - name: create hibernate schema (ansible will always report quartz as changed)
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema_specific_user.yml"

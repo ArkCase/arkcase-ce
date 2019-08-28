@@ -15,6 +15,8 @@
     password: "{{ default_database_password | password_hash('sha512') }}"
     update_password: on_create
     state: present
+    create_home: yes
+    home: /home/solr
 
 - name: Solr folders
   become: yes
@@ -24,10 +26,10 @@
     group: solr
     owner: solr
   loop:
-    - /opt/data/solr
-    - /opt/log/solr
-    - /opt/app/solr
-    - /opt/install/solr
+    - "{{ root_folder }}/data/solr"
+    - "{{ root_folder }}/log/solr"
+    - "{{ root_folder }}/app/solr"
+    - "{{ root_folder }}/install/solr"
   register: solr_folder_structure
 
 - name: enable logrotate for solr log folder if necessary
@@ -40,7 +42,7 @@
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: "Solr"
-      dest: "/opt/install/solr/solr-{{ solr_version }}.tgz"
+      dest: "{{ root_folder }}/install/solr/solr-{{ solr_version }}.tgz"
       owner: "solr"
       url: "https://archive.apache.org/dist/lucene/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz"
 
@@ -49,11 +51,11 @@
   become_user: solr
   unarchive:
     remote_src: yes
-    src: /opt/install/solr/solr-{{ solr_version }}.tgz
-    dest: /opt/app/solr
+    src: "{{ root_folder }}/install/solr/solr-{{ solr_version }}.tgz"
+    dest: "{{ root_folder }}/app/solr"
     extra_opts:
       - --strip-components=1
-    creates: /opt/app/solr/LICENSE.txt
+    creates: "{{ root_folder }}/app/solr/LICENSE.txt"
   register: solr_unarchived
 
 - name: configure Solr JMX

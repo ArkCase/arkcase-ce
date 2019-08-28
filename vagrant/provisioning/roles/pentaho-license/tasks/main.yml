@@ -1,0 +1,44 @@
+- name: copy license files
+  become: yes
+  become_user: "pentaho"
+  copy:
+    src: "{{ item }}"
+    dest: "{{ root_folder }}/install/pentaho/"
+  register: license_file_update
+  loop:
+    - "Pentaho Analysis Enterprise Edition.lic"
+    - "Pentaho BI Platform Enterprise Edition.lic"
+    - "Pentaho Dashboard Designer.lic"
+    - "Pentaho Reporting Enterprise Edition.lic"
+
+- name: create pentaho license folder
+  become: yes
+  become_user: pentaho
+  file: 
+    path: /home/pentaho/.pentaho
+    state: directory
+
+- name: install licenses, if necessary
+  become: yes
+  become_user: pentaho
+  shell: sh {{ root_folder }}/app/pentaho/license-installer/install_license.sh install -q "{{ root_folder }}/install/pentaho/{{ item }}"
+  environment:
+    PENTAHO_INSTALLED_LICENSE_PATH: /home/pentaho/.pentaho/.installedLicenses.xml
+  when: license_file_update is changed
+  register: pentaho_license_script_out
+  loop:
+    - "Pentaho Analysis Enterprise Edition.lic"
+    - "Pentaho BI Platform Enterprise Edition.lic"
+    - "Pentaho Dashboard Designer.lic"
+    - "Pentaho Reporting Enterprise Edition.lic"
+  failed_when: "'The license has been successfully processed' not in pentaho_license_script_out.stdout"
+
+
+# - debug: var=pentaho_license_script_out
+
+- name: restart Pentaho to install new licenses, if necessary
+  become: yes
+  systemd:
+    name: pentaho
+    state: restarted
+  when: license_file_update is changed
