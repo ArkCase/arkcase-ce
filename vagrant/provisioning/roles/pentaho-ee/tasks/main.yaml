@@ -2,7 +2,7 @@
   become: yes
   become_user: pentaho
   maven_artifact:
-    repository_url: "{{ maven_repository_release }}"
+    repository_url: "{{ maven_repository_pentaho_ee }}"
     group_id: "pentaho-ee"
     artifact_id: "{{ item }}"
     version: "{{ pentaho_ee_version }}"
@@ -38,6 +38,8 @@
     - pir-plugin-ee
     - pentaho-server-ee
 
+# NOTE, the echo in the below commands is to provide the interactive
+# response expected by the Pentaho installer.jar
 - name: install artifacts
   become: yes
   become_user: pentaho

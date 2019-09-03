@@ -5,10 +5,12 @@ email_service_account: "nosuchmailbox@arkcase.com"
 email_service_account_escaped: "nosuchmailbox%40arkcase.com"
 email_service_password: "not-a-real-password"
 
+# external_host: the host name a browser will use
 external_host: arkcase-ce.local
+# internal host: the actual host name of the VM
 internal_host: arkcase-ce.local
 
-### NOTE ensure samba domain is based on the internal_host
+### ensure samba domain is based on the internal_host
 samba_domain: "DC.ARKCASE-CE"
 
 # server_admin goes in the httpd conf file, and is the email
@@ -35,7 +37,7 @@ ldap_group_no_base: "OU=Groups,OU=ArkCase"
 ldap_group_base: "{{ ldap_group_no_base }},{{ ldap_base }}"
 ldap_user_no_base: "OU=Users,OU=ArkCase"
 ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
-ldap_prefix: "000."
+ldap_prefix: ""
 
 # if yes, will reset the password unconditionally.  
 # otherwise, will set the password only if the user is created (user did not already exist)
@@ -167,11 +169,42 @@ arkcase_extension_reports:
 arkcase_configuration_classifier: ""
 arkcase_configuration_maven_version: ""
 
+    
+
 maven_repository_base: "https://project.armedia.com/nexus/repository"
-maven_repository_snapshot: "{{ maven_repository_base }}/armedia.snapshot"
-maven_repository_release: "{{ maven_repository_base }}/armedia.release"
+maven_repository_snapshot: "{{ maven_repository_base }}/arkcase.snapshot"
+maven_repository_release: "{{ maven_repository_base }}/arkcase.release"
 maven_repository_extension_snapshot: "{{ maven_repository_base }}/{{ arkcase_extension_maven_artifact }}.snapshot"
 maven_repository_extension_release: "{{ maven_repository_base }}/{{ arkcase_extension_maven_artifact }}.release"
+maven_repository_pentaho_ee: "{{ maven_repository_base }}/pentaho-ee.release"
+maven_repository_pentaho_ee_licenses: "{{ maven_repository_base }}/pentaho-ee-licenses.release"
+maven_pentaho_license_year: "2019"
+
+# some installations require additional artifacts...
+arkcase_deploy_extra_artifacts: no
+arkcase_extra_artifacts:
+  - name: example
+    maven_repository_url: "{{ maven_repository_extension_snapshot }}"
+    maven_group_id: ""
+    maven_artifact_id: ""
+    maven_version: ""
+    maven_extension: ""
+    deploy_path: ""
+    deploy_filename: ""
+    post_install_required: yes
+    post_install:
+      property_replacements_required: yes
+      property_replacements:
+        - path: ""
+          regexp: ""
+          replace: ""
+      file_replacements_required: yes
+      file_replacements:
+        - path: ""
+          replace_with: ""
+          update_artifact: yes
+      restart_arkcase: yes
+    
 
 # if `arkcase_retrieve_strategy` is "github" then `arkcase_config_server_version` must
 # correspond to a release tag on the GitHub site; in other words,
