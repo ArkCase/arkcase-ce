@@ -74,13 +74,25 @@
         path: "{{ root_folder }}/common/symmetricKey.encrypted"
       register: sym_key_enc
       changed_when: false
-    - name: write plaintext key
+    - name: write plaintext key file, this will have a new line
       become: yes
       copy:
-        dest: "{{ root_folder }}/common/symmetricKey.txt"
+        dest: "{{ root_folder }}/common/symmetricKeyWithNewline.txt"
         content: |
           {{ 9999999999999999999999 | random | to_uuid }}
       when: sym_key_enc.stat.exists == False
+      register: plaintext_with_newline
+    - name: remove the trailing new line from the symmetric key file
+      become: yes
+      shell: tr -d '\n' <{{ root_folder }}/common/symmetricKeyWithNewline.txt > {{ root_folder }}/common/symmetricKey.txt
+      when: plaintext_with_newline is changed
+      register: trim_plaintext
+    - name: remove the original plaintext that had the newline
+      become: yes
+      file:
+        path: "{{ root_folder }}/common/symmetricKeyWithNewline.txt"
+        state: absent
+      when: trim_plaintext is changed
     - name: extract public key from client cert
       become: yes
       command: openssl x509 -pubkey -noout -in {{ client_ssl_cert }} -noout
@@ -98,4 +110,5 @@
       become: yes
       command: openssl rsautl -encrypt -pubin -inkey "{{ root_folder }}/common/arkcase-client.pub" -in "{{ root_folder }}/common/symmetricKey.txt" -out "{{ root_folder }}/common/symmetricKey.encrypted"
       when: sym_key_enc.stat.exists == False
+
 

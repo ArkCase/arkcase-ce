@@ -1,7 +1,7 @@
 acm:
   driverClassName: "{{ database_mysql_jdbc_driver }}"
   url: "jdbc:mysql://{{ arkcase_host_name }}:3306/arkcase?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_cipher }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
-  password: "{{ default_database_password }}"
+  password: "ENC({{ encrypted_default_database }})"
 elk:
   server:
     url: "https://{{ external_host }}/arkcase/acm-elastic"
@@ -15,7 +15,7 @@ report:
   plugin:
     PENTAHO_SERVER_URL: "https://{{ external_host }}"
     PENTAHO_SERVER_USER: "{{ arkcase_admin_user }}"
-    PENTAHO_SERVER_PASSWORD: "{{ arkcase_admin_password }}"
+    PENTAHO_SERVER_PASSWORD: "ENC({{ encrypted_admin_user_password }})"
     PENTAHO_SERVER_INTERNAL_URL: "https://{{ arkcase_host_name }}"
     PENTAHO_SERVER_INTERNAL_PORT: 2002
 solr:
@@ -23,13 +23,13 @@ solr:
   port: 443
 ecm:
   viewer.snowbound: "https://{{ external_host }}/arkcase/VirtualViewerJavaHTML5/index.html?documentId=ecmFileId=$[fileId]%26acm_ticket=$[ticket]%26userid=$[userid]"
-  viewer.snowbound.encryptionKey: "armediaaeskey123"
+  viewer.snowbound.encryptionKey: "{{ snowbound_symmetric_key }}"
   viewer.snowbound.readonly:
     url: "https://{{ external_host }}/arkcase/VirtualViewerJavaHTML5/index-read-only.html?documentId=ecmFileId=$[fileId]%26acm_ticket=$[ticket]%26userid=$[userid]"
 outlook.exchange.integration:
   enabled: yes
   system_user_email: "{{ email_service_account }}"
-  system_user_email_password: "{{ email_service_password }}"
+  system_user_email_password: "ENC({{ encrypted_email_service_password }})"
   system_user_id: "{{ email_service_account }}"
 ################### Notification Plugin Configuration (notification.properties) ####################  
 notification:
@@ -57,7 +57,7 @@ application:
     issueCollectorFlag: false
 alfresco:
   admin:
-    baseurl: "https://{{ arkcase_host_name }}/alfresco/s/enterprise/admin/admin-sync"
+    baseurl: "https://{{ arkcase_host_name }}/alfresco/s/admin/admin-sync"
   sync:
     host: "{{ arkcase_host_name }}"
     port: "443"
@@ -71,9 +71,9 @@ email:
   fixed-rate: 120000
   #set some existing email here for testing 
   CASE_FILE.user: "{{ email_service_account_escaped }}"
-  CASE_FILE.password: "{{ email_service_password }}"
+  CASE_FILE.password: "ENC({{ encrypted_email_service_password }})"
   COMPLAINT.user: "{{ email_service_account_escaped }}"
-  COMPLAINT.password: "{{ email_service_password }}"
+  COMPLAINT.password: "ENC({{ encrypted_email_service_password }})"
   protocol: "imap"
   fetch.folder: "Inbox"
   host: "{{ email_host_imap }}"
@@ -93,7 +93,7 @@ email:
     userFrom: "{{ email_user_from }}"
     port: "{{ email_sender_port|int }}"
     username: "{{ email_smtp_username }}"
-    password: "{{ email_smtp_password }}"
+    password: "ENC({{ encrypted_email_smtp_password }})"
     convertDocumentsToPdf: {{ email_convert_documents_to_pdf|bool }}
 ocr:
   tempPath: "{{ root_folder }}/tmp/arkcase"
@@ -102,7 +102,7 @@ ark.activemq:
   transportConnectorURI: "ssl://acm-activemq:61616"
 acm.websockets:
   stomp_broker_relay.keystore: "{{ java_key_store }}"
-  stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
+  stomp_broker_relay.keystore_pass: "ENC({{ encrypted_java_key_store_pass }})"
   stomp_broker_relay.truststore: "{{ java_trust_store }}"
-  stomp_broker_relay.truststore_pass: "{{ java_trust_store_pass }}"
+  stomp_broker_relay.truststore_pass: "ENC{{ encrypted_java_trust_store_pass }})"
   stomp_broker_relay.truststore_type: "PKCS12"

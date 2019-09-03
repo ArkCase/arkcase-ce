@@ -1,3 +1,43 @@
+- name: decrypt the symmetric key (using private key)
+  become: yes
+  command: openssl rsautl -decrypt -inkey {{ client_ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKey.decrypted
+
+- name: encrypt passwords
+  include_tasks: encrypt_password.yml
+  loop: 
+      - name: default_database
+        value: "{{ default_database_password }}"
+      - name: default_user
+        value: "{{ default_user_password }}"
+      - name: default_alfresco
+        value: admin
+      - name: old_default_user
+        value: AcMd3v$
+      - name: activemq_guest
+        value: guest
+      - name: snowbound_key
+        value: armediaaeskey123
+      - name: admin_user_password
+        value: "{{ arkcase_admin_password }}"
+      - name: email_service_password
+        value: "{{ email_service_password }}"
+      - name: email_smtp_password
+        value: "{{ email_smtp_password }}"
+      - name: java_key_store_pass
+        value: "{{ java_key_store_pass }}"
+      - name: java_trust_store_pass
+        value: "{{ java_trust_store_pass }}"
+      - name: ldap_bind_password
+        value: "{{ ldap_bind_password }}"
+  loop_control:
+    loop_var: p
+
+- name: remove the decrypted symmetric key
+  become: yes
+  file:
+    path: "{{ root_folder }}/common/symmetricKey.decrypted"
+    state: absent
+
 - name: install Python Excel module
   become: yes
   pip: 
@@ -12,7 +52,11 @@
     - name: ArkCase war file
       dest: "{{ root_folder }}/install/arkcase/arkcase-{{ arkcase_version }}.war"
       owner: arkcase
-      url: https://github.com/ArkCase/ArkCase/releases/download/arkcase-{{ arkcase_version }}/arkcase-{{ arkcase_version }}.war
+      url: https://github.com/ArkCase/ArkCase/releases/download/arkcase-{{ arkcase_version }}/acm-law-enforcement-{{ arkcase_version }}.war
+    - name: ArkCase configuration
+      dest: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_version }}.zip"
+      owner: arkcase
+      url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
     - name: config-server jar file
       dest: "{{ root_folder }}/app/config-server/config-server.jar"
       owner: arkcase
@@ -52,6 +96,13 @@
     dest: "{{ root_folder }}/app/config-server/config-server.jar"
     mode: "u=rwx,g=r,o=r"
   when: arkcase_retrieve_strategy == "maven"
+
+- name: ensure config server jar is executable... necessary when using github
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ root_folder }}/app/config-server/config-server.jar"
+    mode: "u=rwx,g=r,o=r"
 
 - name: set maven extension repository (snapshot)
   set_fact:
@@ -93,6 +144,37 @@
     username: "{{ maven_user }}"
     password: "{{ maven_password }}"
   when: arkcase_extension_install|bool
+
+- name: unzip the configuration files (for an extension)
+  become: yes
+  become_user: arkcase
+  unarchive:
+    src: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}.zip"
+    dest: "/home/arkcase/.arkcase"
+    creates: "/home/arkcase/.arkcase/acm/conf.yml"
+  when: arkcase_retrieve_strategy == 'maven'
+  
+- name: unzip the configuration files (from github)
+  become: yes
+  become_user: arkcase
+  unarchive:
+    src: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_version }}.zip"
+    dest: "/home/arkcase/.arkcase"
+    creates: "/home/arkcase/.arkcase/acm/conf.yml"
+  when: arkcase_retrieve_strategy == 'github'
+  register: arkcase_config_unzipped
+
+- name: junk the first-level github release folder, if necessary
+  become: yes
+  become_user: arkcase
+  shell: mv /home/arkcase/.arkcase/.arkcase-arkcase-{{ arkcase_version }}/* /home/arkcase/.arkcase/
+  when: arkcase_config_unzipped is changed
+
+- name: deploy core reports
+  include_tasks: deploy_report.yml
+  loop: "{{ arkcase_core_reports|flatten }}"
+  loop_control:
+    loop_var: r
    
 - name: deploy extension reports
   include_tasks: deploy_extension_report.yml
@@ -207,15 +289,7 @@
     enabled: yes
     masked: no
 
-### Initial deployment... TODO: support redeployment
-- name: unzip the configuration files
-  become: yes
-  become_user: arkcase
-  unarchive:
-    src: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}.zip"
-    dest: "/home/arkcase/.arkcase"
-    creates: "/home/arkcase/.arkcase/acm/conf.yml"
-
+  
 - name: capture current arkcase.yaml
   become: yes
   become_user: arkcase
@@ -246,7 +320,7 @@
   file:
     path: /home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted
     state: absent
-  when: not symkey_stat.stat.islnk
+  when: symkey_stat.stat.exists and not symkey_stat.stat.islnk
 
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
@@ -305,6 +379,7 @@
     path: /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.xml
     regexp: adtest
     replace: armedia
+  when: group_xml.stat.exists
 
 - name: check if the openldap user file exists
   become: yes
@@ -335,14 +410,8 @@
   loop:
     -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.xml
     -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.properties
+  when: user_xml.stat.exists
 
-- name: server-specific configuration
-  become: yes
-  become_user: arkcase
-  template:
-    backup: yes
-    src: server.yml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
 
 - name: read current config server configuration
   become: yes
@@ -368,6 +437,13 @@
     path: /home/arkcase/.arkcase/acm/auditPatterns.properties
   register: audit_patterns
 
+- name: ensure config server spring folder exists
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring
+    state: directory
+
 - name: copy audit patterns if necessary
   become: yes
   become_user: arkcase
@@ -392,7 +468,7 @@
   loop_control:
     loop_var: s
 
-### password fixes.  TODO: encrypt the passwords with the server-unique pub key
+
 - name: plaintext passwords (yaml)
   become: yes
   become_user: arkcase
@@ -404,15 +480,15 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "admin"
+      replace: "ENC({{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
-      replace: "AcMd3v$"
+      replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "guest"
+      replace: "ENC({{ encrypted_activemq_guest }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
-      replace: "{{ default_database_password }}"
+      replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
-      replace: "armediaaeskey123"
+      replace: "ENC({{ encrypted_snowbound_key }})"
 
 - name: plaintext passwords (forms properties)
   become: yes
@@ -425,16 +501,23 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "admin"
+      replace: "ENC({{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
-      replace: "AcMd3v$"
+      replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "guest"
+      replace: "ENC({{ encrypted_activemq_guest }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
-      replace: "{{ default_database_password }}"
+      replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
-      replace: "armediaaeskey123"
+      replace: "ENC({{ encrypted_snowbound_key }})"
 
+- name: see if we have an alfresco cmis properties file
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
+  register: alfresco_cmis_properties
+      
 - name: plaintext passwords (alfresco cmis properties)
   become: yes
   become_user: arkcase
@@ -446,19 +529,27 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "admin"
+      replace: "ENC({{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
-      replace: "AcMd3v$"
+      replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "guest"
+      replace: "ENC({{ encrypted_activemq_guest }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
-      replace: "{{ default_database_password }}"
+      replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
-      replace: "armediaaeskey123"
+      replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "admin"
+      replace: "ENC({{ encrypted_default_alfresco }})"
+  when: alfresco_cmis_properties.stat.exists
 
-- name: plaintext passwords (alfresco cmis properties)
+- name: see if we have an opencmis cmis properties file
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/cmis/mule-config-opencmis-cmis.properties
+  register: open_cmis_properties
+  
+- name: plaintext passwords (opencmis cmis properties)
   become: yes
   become_user: arkcase
   replace:
@@ -469,18 +560,29 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "admin"
+      replace: "ENC({{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
-      replace: "AcMd3v$"
+      replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "guest"
+      replace: "ENC({{ encrypted_activemq_guest }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
-      replace: "{{ default_database_password }}"
+      replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
-      replace: "armediaaeskey123"
+      replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "admin"
+      replace: "ENC({{ encrypted_default_alfresco }})"
+  when: open_cmis_properties.stat.exists
 
+# this template includes encrypted passwords
+# so it must be run after we encrypt the passwords
+- name: server-specific configuration
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: server.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
+  
 - name: cmis host name
   become: yes
   become_user: arkcase
@@ -496,6 +598,7 @@
   file: 
     path: /home/arkcase/.arkcase/acm/arkcase-activemq.properties
     state: absent
+  when: arkcase_version is version('3.3.3', '>=')
 
 - name: copy activemq-config.yaml if necessary
   become: yes
@@ -504,6 +607,7 @@
     src: activemq-config.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
     force: no
+  when: arkcase_version is version('3.3.3', '>=')    
 
 - name: copy quartz.properties if necessary
   become: yes
@@ -527,8 +631,10 @@
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
       replace: "{{ java_key_store }}"
     - regexp: "password"
-      replace: "{{ java_key_store_pass }}"
+      replace: "ENC({{ encrypted_java_key_store_pass }})"
     - regexp: 'value="armedia"'
+      replace: 'value="arkcase_client"'
+    - regexp: 'value="arkcase"'
       replace: 'value="arkcase_client"'
 
 - name: proxy servlet
@@ -559,7 +665,7 @@
     regexp: 'fileName="\$\{sys\:catalina.base\}/logs'
     replace: 'fileName="{{ root_folder}}/log/arkcase'
 
-### start arkcase and config server
+### prepare for starting arkcase and config server
 - name: copy extension jar
   become: yes
   become_user: arkcase

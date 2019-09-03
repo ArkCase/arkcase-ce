@@ -193,6 +193,14 @@
     src: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties.sample"
     dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
 
+# in Alfresco CE, no support for encrypting property values
+- name: protect alfresco-global.properties file
+  become: yes
+  become_user: alfresco
+  file:
+    path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
+    mode: 0600
+
 - name: populate alfresco-global.properties
   become: yes
   become_user: alfresco
@@ -200,6 +208,10 @@
     path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
     insertbefore: BOF
     block: |
+      synchronization.syncOnStartup=true
+      synchronization.syncWhenMissingPeopleLogIn=true
+      synchronization.autoCreatePeopleOnLogin=false
+      csrf.filter.enabled=false
       dir.root={{ root_folder }}/data/alfresco/alf_data
       db.name=alfresco
       db.username=alfresco
@@ -610,3 +622,9 @@
   become: yes
   command: firewall-cmd --reload
   when: alfresco_port is changed
+
+# Alfresco CE 6.1 download... but, there is no compatible RMA yet,
+# so we can't use it
+#https://download.alfresco.com/cloudfront/release/community/201901-GA-build-205/alfresco-content-services-community-distribution-6.1.2-ga.zip
+
+# install docs: https://docs.alfresco.com/community/concepts/install-community-intro.html

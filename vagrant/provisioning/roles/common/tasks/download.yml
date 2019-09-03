@@ -5,8 +5,6 @@
 - name: download {{ item.name }} if needed
   become: yes
   become_user: "{{ item.owner }}"
-  get_url:
-    dest: "{{ item.dest }}"
-    url: "{{ item.url }}"
+  command: wget "{{ item.url }}" -O "{{ item.dest }}"
   when: already_downloaded.stat.exists == False 
   register: item_downloaded

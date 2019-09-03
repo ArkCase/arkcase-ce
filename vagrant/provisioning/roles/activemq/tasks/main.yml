@@ -171,6 +171,7 @@
 - name: first time start, to create the tables
   block:
     - name: check whether the ActiveMQ tables were already created
+      become: yes
       command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "show tables;"
       register: show_tables
       changed_when: false

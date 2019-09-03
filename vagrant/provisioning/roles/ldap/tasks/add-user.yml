@@ -64,3 +64,21 @@
   include_tasks: add-user-to-group.yml
   loop: "{{ u.groups }}"
 
+### so far we only know how to set non-expiring passwords for
+### local Samba users
+- name: check status of pdbedit file
+  stat:
+    path: "{{ root_folder }}/app/samba/bin/pdbedit"
+  register: pdbedit_file
+  
+- name: see if password is non-expiring already
+  become: yes
+  shell: '{{ root_folder }}/app/samba/bin/pdbedit -Lv {{ u.user_id }} | grep "Account Flags"'
+  register: account_flags
+  when: u.nonexpiring_password and ldap_host == internal_host and pdbedit_file.stat.exists
+  changed_when: false
+
+- name: set password to never expire
+  become: yes
+  command: '{{ root_folder }}/app/samba/bin/samba-tool user setexpiry {{ u.user_id }} --noexpiry'
+  when: ldap_host == internal_host and pdbedit_file.stat.exists and u.nonexpiring_password and 'X' not in account_flags.stdout

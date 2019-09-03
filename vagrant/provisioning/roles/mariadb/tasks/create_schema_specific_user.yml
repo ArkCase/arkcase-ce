@@ -25,6 +25,5 @@
     name: "{{ s.user }}"
     password: "{{ default_database_password }}" 
     priv: '*.*:REQUIRESSL/{{ s.schema }}.*:ALL'
-    state: present 
-    
-  
+    state: present
+
