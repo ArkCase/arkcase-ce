@@ -78,6 +78,8 @@
   become_user: arkcase
   maven_artifact:
     repository_url: "{{ repository_url }}"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
     group_id: "com.armedia.acm.acm-standard-applications"
     artifact_id: "acm-law-enforcement"
     version: "{{ arkcase_version }}"
@@ -89,6 +91,8 @@
   become_user: arkcase
   maven_artifact:
     repository_url: "{{ repository_url }}"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
     group_id: "com.armedia.acm"
     artifact_id: "config-server"
     version: "{{ arkcase_version }}"

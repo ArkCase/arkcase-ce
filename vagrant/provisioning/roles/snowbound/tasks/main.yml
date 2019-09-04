@@ -76,7 +76,9 @@
   become_user: snowbound
   maven_artifact:
     repository_url: "{{ repository_url }}"
-    group_id: "com.armedia.integrations"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
+group_id: "com.armedia.integrations"
     artifact_id: "virtualviewer"
     version: "{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}"
     extension: "war"

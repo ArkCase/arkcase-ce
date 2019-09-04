@@ -3,6 +3,8 @@
   become_user: pentaho
   maven_artifact:
     repository_url: "{{ maven_repository_pentaho_ee }}"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
     group_id: "pentaho-ee"
     artifact_id: "{{ item }}"
     version: "{{ pentaho_ee_version }}"
