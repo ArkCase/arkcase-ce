@@ -78,7 +78,7 @@
     repository_url: "{{ repository_url }}"
     username: "{{ maven_user }}"
     password: "{{ maven_password }}"
-group_id: "com.armedia.integrations"
+    group_id: "com.armedia.integrations"
     artifact_id: "virtualviewer"
     version: "{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}"
     extension: "war"

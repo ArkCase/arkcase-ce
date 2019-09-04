@@ -1,6 +1,17 @@
+- name: install any extra artifacts
+  include_tasks: extra_artifacts.yml
+  loop: "{{ arkcase_extra_artifacts }}"
+  loop_control:
+    loop_var: e
+  when: arkcase_deploy_extra_artifacts | bool
+
 - name: decrypt the symmetric key (using private key)
   become: yes
-  command: openssl rsautl -decrypt -inkey {{ client_ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKey.decrypted
+  command: openssl rsautl -decrypt -inkey {{ client_ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
+
+- name: remove the trailing new line from the symmetric key file
+  become: yes
+  shell: tr -d '\n' <{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted > {{ root_folder }}/common/symmetricKey.decrypted
 
 - name: encrypt passwords
   include_tasks: encrypt_password.yml
@@ -23,8 +34,6 @@
         value: "{{ email_service_password }}"
       - name: email_smtp_password
         value: "{{ email_smtp_password }}"
-      - name: java_key_store_pass
-        value: "{{ java_key_store_pass }}"
       - name: java_trust_store_pass
         value: "{{ java_trust_store_pass }}"
       - name: ldap_bind_password
@@ -36,6 +45,12 @@
   become: yes
   file:
     path: "{{ root_folder }}/common/symmetricKey.decrypted"
+    state: absent
+
+- name: remove the decrypted symmetric key with new line
+  become: yes
+  file:
+    path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
 
 - name: install Python Excel module
@@ -485,6 +500,8 @@
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
       replace: "ENC({{ encrypted_default_alfresco }})"
+    - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
+      replace: "ENC{{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -506,6 +523,8 @@
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
       replace: "ENC({{ encrypted_default_alfresco }})"
+    - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
+      replace: "ENC{{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -534,6 +553,8 @@
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
       replace: "ENC({{ encrypted_default_alfresco }})"
+    - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
+      replace: "ENC{{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -565,6 +586,8 @@
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
       replace: "ENC({{ encrypted_default_alfresco }})"
+    - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
+      replace: "ENC{{ encrypted_default_alfresco }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -635,7 +658,7 @@
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
       replace: "{{ java_key_store }}"
     - regexp: "password"
-      replace: "ENC({{ encrypted_java_key_store_pass }})"
+      replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'
       replace: 'value="arkcase_client"'
     - regexp: 'value="arkcase"'
@@ -669,12 +692,6 @@
     regexp: 'fileName="\$\{sys\:catalina.base\}/logs'
     replace: 'fileName="{{ root_folder}}/log/arkcase'
 
-- name: isntall any extra artifacts
-  include_tasks: extra_artifacts.yml
-  loop: "{{ arkcase_extra_artifacts }}"
-  loop_control:
-    loop_var: e
-  when: arkcase_deploy_extra_artifacts | bool
 
 ### prepare for starting arkcase and config server
 - name: copy extension jar

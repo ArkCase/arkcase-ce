@@ -60,4 +60,4 @@
   systemd:
     name: pentaho
     state: restarted
-  when: license_file_update is changed
+  when: pentaho_license_script_out is changed

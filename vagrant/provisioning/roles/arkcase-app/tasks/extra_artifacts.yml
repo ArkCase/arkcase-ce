@@ -35,8 +35,8 @@
     remote_src: yes
     src: "{{ item.src }}"
     dest: "{{ e.files.path }}/{{ item.dest }}"
-  loop: "{{ e.files.copy }}"
-  when: e.create_files | bool and e.copy_files | bool
+  loop: "{{ e.files.files_to_copy }}"
+  when: e.create_files | bool and e.files.copy_files | bool
 
 - name: template {{ e.name }} files
   become: yes
@@ -44,6 +44,6 @@
   copy:
     content: "{{ item.src }}"
     dest: "{{ e.files.path }}/{{ item.dest }}"
-  loop: "{{ e.files.template }}"
-  when: e.create_files | bool and e.template_files | bool
+  loop: "{{ e.files.templates }}"
+  when: e.create_files | bool and e.files.template_files | bool
   
