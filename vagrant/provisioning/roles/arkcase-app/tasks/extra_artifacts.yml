@@ -1,0 +1,49 @@
+- name: retrieve {{ e.name }} artifact
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ e.maven_repository_url }}"
+    group_id: "{{ e.maven_group_id }}"
+    artifact_id: "{{ e.maven_artifact_id }}"
+    version: "{{ e.maven_version }}"
+    extension: "{{ e.maven_extension }}"
+    dest: "{{ root_folder }}/install/arkcase/{{ e.maven_artifact_id }}.{{ e.maven_extension }}"
+    mode: "u=rw,g=r,o=r"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
+
+- name: copy {{ e.name }} artifact
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/{{ e.maven_artifact_id }}.{{ e.maven_extension }}"
+    dest: "{{ e.deploy_path }}/{{ e.deploy_filename }}"
+
+- name: create {{ e.name }} file folder
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ e.files.path }}"
+    state: directory
+  when: e.create_files | bool
+    
+- name: copy {{ e.name }} files
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ item.src }}"
+    dest: "{{ e.files.path }}/{{ item.dest }}"
+  loop: "{{ e.files.copy }}"
+  when: e.create_files | bool and e.copy_files | bool
+
+- name: template {{ e.name }} files
+  become: yes
+  become_user: arkcase
+  copy:
+    content: "{{ item.src }}"
+    dest: "{{ e.files.path }}/{{ item.dest }}"
+  loop: "{{ e.files.template }}"
+  when: e.create_files | bool and e.template_files | bool
+  

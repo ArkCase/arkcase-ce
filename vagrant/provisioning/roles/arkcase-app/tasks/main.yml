@@ -669,6 +669,13 @@
     regexp: 'fileName="\$\{sys\:catalina.base\}/logs'
     replace: 'fileName="{{ root_folder}}/log/arkcase'
 
+- name: isntall any extra artifacts
+  include_tasks: extra_artifacts.yml
+  loop: "{{ arkcase_extra_artifacts }}"
+  loop_control:
+    loop_var: e
+  when: arkcase_deploy_extra_artifacts | bool
+
 ### prepare for starting arkcase and config server
 - name: copy extension jar
   become: yes
