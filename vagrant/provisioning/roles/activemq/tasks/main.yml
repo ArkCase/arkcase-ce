@@ -111,7 +111,7 @@
   loop:
     - activemq
     
-- name: jdbc support
+- name: jdbc support and dead letter queue policy
   block:
     - name: read activemq.xml
       shell: cat "{{ root_folder }}/app/activemq/conf/activemq.xml"
@@ -138,6 +138,23 @@
                   <property name="timeBetweenEvictionRunsMillis" value="3000"/>
               </bean>
       when: activemq_xml.stdout.find('bean id="mysql_ds"') == -1
+    - name: set dead letter queue policy, if not already set
+      become: yes
+      become_user: activemq
+      blockinfile:
+        path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
+        insertbefore: "</policyEntries>"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: DEAD LETTER QUEUE POLICY -->"
+        block: |
+          <policyEntry queue=">">
+            <deadLetterStrategy>
+              <!--
+                Use the prefix 'DLQ.' for the destination name, and make the DLQ a queue rather than a        topic
+              -->
+              <individualDeadLetterStrategy queuePrefix="DLQ." useQueueForQueueMessages="true"     processNonPersistent="true" />
+              </deadLetterStrategy>
+          </policyEntry>
+      when: activemq_xml.stdout.find('individualDeadLetterStrategy') == -1
     - name: set persistence adapter, if not already set
       become: yes
       become_user: activemq
