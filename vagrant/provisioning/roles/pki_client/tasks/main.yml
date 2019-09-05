@@ -28,7 +28,7 @@
     - name: see if the Java keystore exists
       become: yes
       stat:
-        path: "{{ java_key_store }}"
+        path: "{{ java_key_store_jks }}"
       register: arkcase_ks_stat
       changed_when: false
     - name: see if keys already added to the Java keystore
@@ -42,9 +42,12 @@
         - name: write arkcase.p12 (used by Pentaho)
           become: yes
           command: openssl pkcs12 -export -in {{ client_ssl_cert }} -inkey {{ client_ssl_key_rsa }} -out "{{ java_p12_store }}" -name arkcase_client -chain -CAfile {{ client_ssl_ca }} -passout 'pass:{{ java_key_store_pass }}'
-        - name: copy arkcase.p12 to key store format
+        - name: copy arkcase.p12 to key store format (PKCS12 format)
           become: yes
           command: keytool -importkeystore -deststorepass {{ java_key_store_pass }} -destkeypass {{ java_key_store_pass }} -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_client -noprompt
+        - name: copy arkcase.p12 to key store format (JKS format)
+          become: yes
+          command: keytool -importkeystore -deststorepass {{ java_key_store_pass }} -destkeypass {{ java_key_store_pass }} -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_client -noprompt
         - name: add ArkCase certs to Java truststore
           become: yes
           java_cert:
