@@ -397,7 +397,7 @@
     backup: yes
     path: /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.xml
     regexp: adtest
-    replace: armedia
+    replace: "{{ ldap_user_domain }}"
   when: group_xml.stat.exists
 
 - name: check if the openldap user file exists
@@ -425,12 +425,21 @@
     backup: yes
     path: "{{ item }}"
     regexp: adtest
-    replace: armedia
+    replace: "{{ ldap_user_domain }}"
   loop:
     -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.xml
     -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.properties
   when: user_xml.stat.exists
 
+- name: update bean names in LDAP main XML file
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.xml
+    regexp: armedia_
+    replace: "{{ ldap_user_domain }}_"
+  when: ldap_user_domain != 'armedia'
 
 - name: read current config server configuration
   become: yes

@@ -102,7 +102,7 @@ ark.activemq:
   transportConnectorURI: "ssl://acm-activemq:61616"
 acm.websockets:
   stomp_broker_relay.keystore: "{{ java_key_store }}"
-  stomp_broker_relay.keystore_pass: "ENC({{ encrypted_java_key_store_pass }})"
+  stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
   stomp_broker_relay.truststore: "{{ java_trust_store }}"
   stomp_broker_relay.truststore_pass: "ENC({{ encrypted_java_trust_store_pass }})"
   stomp_broker_relay.truststore_type: "PKCS12"
