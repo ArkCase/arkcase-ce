@@ -15,7 +15,7 @@
 - name: copy report definition file "{{ r.pentaho_path }}/{{ r.name }}"
   become: yes
   become_user: pentaho
-  command: unzip -u -j -d {{ root_folder }}/install/pentaho/report-definitions/extension/{{ r.pentaho_path }} {{ root_folder }}/install/arkcase/{{ arkcase_extension_maven_artifact }}.jar {{ r.jar_path }}
+  command: unzip -u -o -j -d {{ root_folder }}/install/pentaho/report-definitions/extension/{{ r.pentaho_path }} {{ root_folder }}/install/arkcase/{{ arkcase_extension_maven_artifact }}.jar {{ r.jar_path }}
   args:
     warn: no
   register: report_definition
