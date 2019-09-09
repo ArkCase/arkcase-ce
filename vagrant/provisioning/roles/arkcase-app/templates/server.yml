@@ -60,7 +60,8 @@ alfresco:
     baseurl: "https://{{ arkcase_host_name }}/alfresco/s/admin/admin-sync"
   sync:
     host: "{{ arkcase_host_name }}"
-    port: "443"
+    port: 443
+    enabled: {{ enable_alfresco_sync | lower }}
 ################### Alfresco RMA Plugin Configuration (alfrescoRmaPlugin.properties) ####################
 alfresco_host: "{{ arkcase_host_name }}"
 alfresco_port: 443
@@ -77,24 +78,24 @@ email:
   protocol: "imap"
   fetch.folder: "Inbox"
   host: "{{ email_host_imap }}"
-  port: "{{ email_port_imap|int }}"
+  port: {{ email_port_imap|int }}
   debug: true
   userId: "mail-service"
   create:
-    case.enabled: "{{ create_case_from_email_enabled }}"
-    complaint.enabled: "{{ create_complaint_from_email_enabled }}"
+    case.enabled: {{ create_case_from_email_enabled | lower }}
+    complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
   sender:
     type: "{{ email_sender_protocol }}"
     encryption: "{{ email_sender_encryption }}"
-    allowAttachments: "{{ email_allow_attachments|bool }}"
-    allowDocuments: "{{ email_allow_documents|bool }}"
+    allowAttachments: {{ email_allow_attachments | lower }}
+    allowDocuments: {{ email_allow_documents | lower }}
     host: "{{ email_smtp_host }}"
-    allowHyperlinks: {{ email_allow_hyperlinks|bool }}
+    allowHyperlinks: {{ email_allow_hyperlinks | lower }}
     userFrom: "{{ email_user_from }}"
-    port: "{{ email_sender_port|int }}"
+    port: {{ email_sender_port|int }}
     username: "{{ email_smtp_username }}"
     password: "ENC({{ encrypted_email_smtp_password }})"
-    convertDocumentsToPdf: {{ email_convert_documents_to_pdf|bool }}
+    convertDocumentsToPdf: {{ email_convert_documents_to_pdf | lower }}
 ocr:
   tempPath: "{{ root_folder }}/tmp/arkcase/"
 ark.activemq:

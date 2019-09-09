@@ -128,7 +128,7 @@
     extension_repository_url: "{{ maven_repository_extension_snapshot }}"
   when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' in arkcase_configuration_maven_version"
 
-- name: set maven extensionrepository (release)
+- name: set maven extension repository (release)
   set_fact:
     extension_repository_url: "{{ maven_repository_extension_release }}"
   when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' not in arkcase_configuration_maven_version"
@@ -164,6 +164,22 @@
     password: "{{ maven_password }}"
   when: arkcase_extension_install|bool
 
+- name: download core configuration (if using Maven, and no extension is configured)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}"
+    group_id: "com.armedia.arkcase"
+    artifact_id: "arkcase-config"
+    version: "{{ arkcase_version }}"
+    classifier: "core"
+    extension: "zip"
+    dest: "{{ root_folder }}/install/arkcase/arkcase-config-core.zip"
+    mode: "u=rw,g=r,o=r"
+    username: "{{ maven_user }}"
+    password: "{{ maven_password }}"
+  when: arkcase_retrieve_strategy == 'maven' and not arkcase_extension_install|bool  
+
 - name: unzip the configuration files (for an extension)
   become: yes
   become_user: arkcase
@@ -171,8 +187,17 @@
     src: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}.zip"
     dest: "/home/arkcase/.arkcase"
     creates: "/home/arkcase/.arkcase/acm/conf.yml"
-  when: arkcase_retrieve_strategy == 'maven'
-  
+  when: arkcase_retrieve_strategy == 'maven' and arkcase_extension_install
+
+- name: unzip the core configuration files (if using Maven, and no extension is configured)
+  become: yes
+  become_user: arkcase
+  unarchive:
+    src: "{{ root_folder }}/install/arkcase/arkcase-config-core.zip"
+    dest: "/home/arkcase/.arkcase"
+    creates: "/home/arkcase/.arkcase/acm/conf.yml"
+  when: arkcase_retrieve_strategy == 'maven' and not arkcase_extension_install
+
 - name: unzip the configuration files (from github)
   become: yes
   become_user: arkcase
@@ -365,12 +390,6 @@
       path: "/home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted"
 
 
-- name: set arkcase ldap properties
-  become: yes
-  become_user: arkcase
-  template:
-    src: spring-config-armedia-ldap.properties
-    dest: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.properties
 
 - name: check if the openldap group file exists
   become: yes
@@ -398,6 +417,14 @@
     path: /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.xml
     regexp: adtest
     replace: "{{ ldap_user_domain }}"
+  when: group_xml.stat.exists
+
+- name: set arkcase ldap properties
+  become: yes
+  become_user: arkcase
+  template:
+    src: spring-config-armedia-ldap.properties
+    dest: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.properties
   when: group_xml.stat.exists
 
 - name: check if the openldap user file exists
@@ -439,7 +466,7 @@
     path: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.xml
     regexp: armedia_
     replace: "{{ ldap_user_domain }}_"
-  when: ldap_user_domain != 'armedia'
+  when: ldap_user_domain != 'armedia' and user_xml.stat.exists
 
 - name: read current config server configuration
   become: yes
@@ -520,6 +547,19 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
 
+- name: plaintext passwords (activemq-config.yaml)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+# note, using dot to match regexp special chars
+    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
+      replace: "ENC({{ encrypted_activemq_guest }})"
+      
 - name: plaintext passwords (forms properties)
   become: yes
   become_user: arkcase
@@ -628,6 +668,24 @@
     regexp: "acm-arkcase"
     replace: "{{ arkcase_host_name }}"
 
+- name: see if we have an Alfresco sync service XML file
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-alfresco-sync.xml
+  register: alfresco_sync_xml
+  changed_when: false
+
+- name: enable alfresco sync, if necessary
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-alfresco-sync.xml
+    regexp: 'name="enabled" value="false"'
+    replace: 'name="enabled" value="true"'
+  when: alfresco_sync_xml.stat.exists and enable_alfresco_sync
+
 - name: remove activemq properties, if present
   become: yes
   become_user: arkcase
@@ -643,7 +701,17 @@
     src: activemq-config.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
     force: no
-  when: arkcase_version is version('3.3.3', '>=')    
+  when: arkcase_version is version('3.3.3', '>=')
+
+- name: update existing activemq-config.yaml
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    regexp: acm-arkcase
+    replace: acm-activemq
+  when: arkcase_version is version('3.3.3', '>=')
 
 - name: copy quartz.properties if necessary
   become: yes

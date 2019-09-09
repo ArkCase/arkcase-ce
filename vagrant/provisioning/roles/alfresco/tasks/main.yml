@@ -201,6 +201,23 @@
     path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
     mode: 0600
 
+# alfresco sync audit application
+- name: ensure audit app folder exists
+  become: yes
+  become_user: alfresco
+  file:
+    path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/audit"
+    state: directory
+  when: enable_alfresco_sync | bool
+
+- name: copy alfresco audit app xml
+  become: yes
+  become_user: alfresco
+  copy:
+    src: alfresco-audit-arkcase-extractors.xml
+    dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/audit"
+  when: enable_alfresco_sync | bool
+
 - name: populate alfresco-global.properties
   become: yes
   become_user: alfresco
@@ -238,8 +255,6 @@
       external.authentication.defaultAdministratorUserNames=admin
       external.authentication.proxyHeader=X-Alfresco-Remote-User
       synchronization.synchronizeChangesOnly=false
-      synchronization.syncWhenMissingPeopleLogIn=true
-      synchronization.syncOnStartup=true
       ldap.authentication.active=true
       ldap.authentication.allowGuestLogin=false
       ldap.authentication.java.naming.factory.initial=com.sun.jndi.ldap.LdapCtxFactory
@@ -280,7 +295,7 @@
       ldap.synchronization.java.naming.security.credentials={{ ldap_bind_password }}
       ldap.synchronization.groupSearchBase={{ ldap_group_base }}
       ldap.synchronization.userSearchBase={{ ldap_user_base }}
-      ldap.authentication.userNameFormat=%s@{{ ldap_user_domain }}
+      ldap.authentication.userNameFormat=%s@{{ active_directory_domain }}
       # remove unneeded Alfresco activity
       system.usages.enabled=false
       cifs.enabled=false
@@ -290,6 +305,13 @@
       sync.pullJob.enabled=false
       sync.pushJob.enabled=false
       alfresco.cluster.enabled=false
+      # Chemistry fixes
+      opencmis.context.override=true
+      opencmis.context.value=
+      opencmis.servletpath.override=true
+      opencmis.servletpath.value=
+      opencmis.server.override=true
+      opencmis.server.value=https://{{ external_host }}/alfresco/api
 
 
 - name: configure alfresco.log location

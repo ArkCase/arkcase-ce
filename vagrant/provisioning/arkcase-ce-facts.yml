@@ -27,7 +27,13 @@ ldap_url: "{{ ldap_protocol }}://{{ ldap_host }}:{{ ldap_port }}"
 ldap_base: "DC=arkcase-ce,DC=local"
 ldap_bind_user: "CN=Administrator,CN=Users,{{ ldap_base }}"
 ldap_bind_password: "{{ default_user_password }}"
+
+# ldap_user_domain is how people will log into
+# ArkCase; at the ArkCase login they will login as
+# "user@{{ ldap_user_domain }}"
 ldap_user_domain: "arkcase.org"
+# active_directory_domain is of course the AD domain
+active_directory_domain: "arkcase-ce.local"
 
 # The group and user base will be created if necessary
 ldap_ancestor_ous:
@@ -247,11 +253,12 @@ ssl_key_rsa: "/etc/tls/private/arkcase-server.rsa.key"
 client_ssl_key_rsa: "/etc/tls/private/arkcase-client.rsa.key"
 java_trust_store: "{{ root_folder }}/common/arkcase.ts"
 java_key_store: "{{ root_folder }}/common/arkcase.ks"
+java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"
 java_trust_store_pass: "{{ default_user_password }}"
 java_key_store_pass: "{{ default_user_password }}"
 java_p12_store: "{{ root_folder }}/common/arkcase-client.p12"
 
-samba_version: 4.10.6
+samba_version: 4.10.8
 samba_realm: "{{ internal_host }}"
 samba_host_ip: "127.0.0.1"
 samba_admin_password: "{{ default_user_password }}"
@@ -285,6 +292,7 @@ pentaho_ee_version: 8.3.0
 # below versions used only for pentaho CE
 pentaho_major_version: 8.3
 pentaho_minor_version: 0.0-371
+pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
 
 pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
 
@@ -307,6 +315,9 @@ tomcat_version: 9.0.22
 alfresco_release_name: 201806-GA
 alfresco_content_services_version: 6.0.7-ga
 alfresco_records_management_version: 3.0.a
+
+# whether to enable sync from alfresco to arkcase
+enable_alfresco_sync: true
 
 records_management_categories:
   - "Case Files"

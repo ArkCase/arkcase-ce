@@ -4,6 +4,7 @@
       dest: "{{ root_folder }}/install/pentaho/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
       owner: "pentaho"
       url: "http://iweb.dl.sourceforge.net/project/pentaho/Pentaho%20{{ pentaho_major_version }}/server/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
+      checksum: "{{ pentaho_ce_checksum }}"
 
 - name: unarchive Pentaho distribution
   become: yes
