@@ -56,42 +56,39 @@
       vars:
         item: 
           name: VirtualViewer war file
-          dest: "{{ root_folder }}/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
+          dest: "{{ root_folder }}/install/snowbound/snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
           owner: snowbound
           url: https://github.com/ArkCase/arkcase-dependencies/raw/master/VirtualViewerJavaHTML5/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
   when: snowbound_retrieve_strategy == "github"
+  register: snowbound_war
 
-- name: set maven repository (snapshot)
-  set_fact:
-    repository_url: "{{ maven_repository_snapshot }}"
-  when: "'SNAPSHOT' in snowbound_arkcase_version"
-
-- name: set maven repository (release)
-  set_fact:
-    repository_url: "{{ maven_repository_release }}"
-  when: "'SNAPSHOT' not in snowbound_arkcase_version"
-
-- name: download VirtualViewer war file (if using Maven)
+- name: download VirtualViewer war file (if using sftp)
   become: yes
   become_user: snowbound
-  maven_artifact:
-    repository_url: "{{ repository_url }}"
-    username: "{{ maven_user }}"
-    password: "{{ maven_password }}"
-    group_id: "com.armedia.integrations"
-    artifact_id: "virtualviewer"
-    version: "{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}"
-    extension: "war"
-    dest: "{{ root_folder }}/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
-  when: snowbound_retrieve_strategy == "maven"
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
+  args:
+    chdir: "{{ root_folder }}/tmp/snowbound"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  when: snowbound_retrieve_strategy == "sftp"
+
+- name: copy war file to install folder (this will tell us if it actually changed)
+  become: yes
+  become_user: snowbound
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/snowbound/snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
+    dest: "{{ root_folder }}/install/snowbound/snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
+  register: snowbound_war
 
 - name: expand the WEB-INF/web.xml file
   become: yes
   become_user: snowbound
-  command: unzip -o VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war WEB-INF/web.xml
+  command: unzip -o snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war WEB-INF/web.xml
   args:
     warn: no
     chdir: "{{ root_folder }}/install/snowbound"
+  when: snowbound_war is changed
 
 - name: fix the WEB-INF/web.xml file
   become: yes
@@ -106,11 +103,12 @@
     - regexp: "https://acm-arkcase:8843"
       replace: "https://{{ arkcase_host_name }}"
   register: web_xml
+  when: snowbound_war is changed
 
 - name: update snowbound.war with updated web.xml
   become: yes
   become_user: snowbound
-  command: zip -r VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war WEB-INF
+  command: zip -r snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war WEB-INF
   args:
     warn: no
     chdir: "{{ root_folder }}/install/snowbound"
@@ -205,14 +203,14 @@
   become_user: snowbound
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/install/snowbound/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
+    src: "{{ root_folder }}/install/snowbound/snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
     dest: "{{ root_folder }}/app/snowbound/webapps/VirtualViewerJavaHTML5.war"
-  register: snowbound_war
+  register: snowbound_war_copied
 
 - name: start Snowbound
   become: yes
   systemd:
     name: snowbound
     state: restarted
-  when: snowbound_war is changed or web_xml is changed
+  when: snowbound_war_copied is changed or web_xml is changed
 

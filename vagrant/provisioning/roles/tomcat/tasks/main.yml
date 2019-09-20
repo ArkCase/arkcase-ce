@@ -24,6 +24,15 @@
         extra_opts:
           - --strip-components=1
         creates: "{{ tc.tomcat_home }}/README.md"
+    - name: copy private key for {{ tc.service }}
+      become: yes
+      copy: 
+        remote_src: yes
+        src: "{{ ssl_key }}"
+        dest: "{{ tc.tomcat_home }}/conf/{{ tc.user }}.key"
+        owner: "{{ tc.user }}"
+        group: "{{ tc.user }}"
+        mode: 0600
     - name: create folder for native library build
       become: yes
       become_user: "{{ tc.user }}"
@@ -114,7 +123,7 @@
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
             <SSLHostConfig protocols="{{ ssl_cipher }}" certificateVerification="none">
               <Certificate certificateFile="{{ ssl_cert }}"
-                certificateKeyFile="{{ ssl_key }}"
+                certificateKeyFile="{{ tc.tomcat_home }}/conf/{{ tc.user }}.key"
                 certificateChainFile="{{ ssl_ca }}"
                 type="RSA" />
             </SSLHostConfig>

@@ -1,3 +1,11 @@
+- name: define bean name
+  set_fact:
+    ldap_user_domain_bean_name: "{{ ldap_user_domain | replace('.', '_') }}"
+
+- name: log bean name
+  debug:
+    msg: "ldap bean name: {{ ldap_user_domain_bean_name }}"
+
 - name: install any extra artifacts
   include_tasks: extra_artifacts.yml
   loop: "{{ arkcase_extra_artifacts }}"
@@ -65,11 +73,11 @@
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: ArkCase war file
-      dest: "{{ root_folder }}/install/arkcase/arkcase-{{ arkcase_version }}.war"
+      dest: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version }}.war"
       owner: arkcase
       url: https://github.com/ArkCase/ArkCase/releases/download/arkcase-{{ arkcase_version }}/acm-law-enforcement-{{ arkcase_version }}.war
     - name: ArkCase configuration
-      dest: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_version }}.zip"
+      dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
       owner: arkcase
       url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
     - name: config-server jar file
@@ -78,141 +86,116 @@
       url: https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar
   when: arkcase_retrieve_strategy == "github"
 
-- name: set maven repository (snapshot)
-  set_fact:
-    repository_url: "{{ maven_repository_snapshot }}"
-  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' in arkcase_version"
-
-- name: set maven repository (release)
-  set_fact:
-    repository_url: "{{ maven_repository_release }}"
-  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' not in arkcase_version"
-
-- name: download arkcase war file (if using Maven)
+- name: download arkcase war file (if using sftp)
   become: yes
   become_user: arkcase
-  maven_artifact:
-    repository_url: "{{ repository_url }}"
-    username: "{{ maven_user }}"
-    password: "{{ maven_password }}"
-    group_id: "com.armedia.acm.acm-standard-applications"
-    artifact_id: "acm-law-enforcement"
-    version: "{{ arkcase_version }}"
-    extension: "war"
-    dest: "{{ root_folder }}/install/arkcase/arkcase-{{arkcase_version }}.war"
-  when: arkcase_retrieve_strategy == "maven"
-- name: download config server jar file (if using Maven)
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase{{ arkcase_version }}.war
+  args:
+    chdir: "{{ root_folder }}/tmp/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  when: arkcase_retrieve_strategy == "sftp"
+
+- name: copy war file to install folder (this will tell us if it actually changed)
   become: yes
   become_user: arkcase
-  maven_artifact:
-    repository_url: "{{ repository_url }}"
-    username: "{{ maven_user }}"
-    password: "{{ maven_password }}"
-    group_id: "com.armedia.acm"
-    artifact_id: "config-server"
-    version: "{{ arkcase_version }}"
-    extension: "jar"
-    dest: "{{ root_folder }}/app/config-server/config-server.jar"
-    mode: "u=rwx,g=r,o=r"
-  when: arkcase_retrieve_strategy == "maven"
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/arkcase/arkcase{{ arkcase_version }}.war"
+    dest: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version }}.war"
+  register: arkcase_war
+  when: arkcase_retrieve_strategy == "sftp"
 
-- name: ensure config server jar is executable... necessary when using github
+- name: download config server jar file (if using sftp)
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/config-server{{ arkcase_config_server_version }}.jar
+  args:
+    chdir: "{{ root_folder }}/tmp/config-server"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  when: arkcase_retrieve_strategy == "sftp"
+
+- name: copy config server jar file to app folder (this will tell us if it actually changed)
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/config-server/config-server{{ arkcase_config_server_version }}.jar"
+    dest: "{{ root_folder }}/app/config-server/config-server{{ arkcase_config_server_version }}.jar"
+  register: config_server_jar
+  when: arkcase_retrieve_strategy == "sftp"
+
+- name: ensure config server jar is executable
   become: yes
   become_user: arkcase
   file:
     path: "{{ root_folder }}/app/config-server/config-server.jar"
     mode: "u=rwx,g=r,o=r"
 
-- name: set maven extension repository (snapshot)
-  set_fact:
-    extension_repository_url: "{{ maven_repository_extension_snapshot }}"
-  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' in arkcase_configuration_maven_version"
-
-- name: set maven extension repository (release)
-  set_fact:
-    extension_repository_url: "{{ maven_repository_extension_release }}"
-  when: "arkcase_retrieve_strategy == 'maven' and 'SNAPSHOT' not in arkcase_configuration_maven_version"
-
 - name: download extension (if configured)
   become: yes
   become_user: arkcase
-  maven_artifact:
-    repository_url: "{{ extension_repository_url }}"
-    group_id: "{{ arkcase_extension_maven_group }}"
-    artifact_id: "{{ arkcase_extension_maven_artifact }}"
-    version: "{{ arkcase_extension_maven_version }}"
-    extension: "jar"
-    dest: "{{ root_folder }}/install/arkcase/{{ arkcase_extension_maven_artifact }}.jar"
-    mode: "u=rw,g=r,o=r"
-    username: "{{ maven_user }}"
-    password: "{{ maven_password }}"
-  when: arkcase_extension_install|bool
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ arkcase_extension_id }}{{ arkcase_extension_version }}.jar
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_extension_password }}"
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
 
 - name: download extension configuration (if configured)
   become: yes
   become_user: arkcase
-  maven_artifact:
-    repository_url: "{{ extension_repository_url }}"
-    group_id: "com.armedia.arkcase"
-    artifact_id: "arkcase-config"
-    version: "{{ arkcase_configuration_maven_version }}"
-    classifier: "{{ arkcase_configuration_classifier }}"
-    extension: "zip"
-    dest: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}.zip"
-    mode: "u=rw,g=r,o=r"
-    username: "{{ maven_user }}"
-    password: "{{ maven_password }}"
-  when: arkcase_extension_install|bool
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/arkcase-config{{ arkcase_extension_version }}.zip
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_extension_password }}"
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
 
-- name: download core configuration (if using Maven, and no extension is configured)
+- name: rename extension config zip to common file name
   become: yes
   become_user: arkcase
-  maven_artifact:
-    repository_url: "{{ repository_url }}"
-    group_id: "com.armedia.arkcase"
-    artifact_id: "arkcase-config"
-    version: "{{ arkcase_version }}"
-    classifier: "core"
-    extension: "zip"
-    dest: "{{ root_folder }}/install/arkcase/arkcase-config-core.zip"
-    mode: "u=rw,g=r,o=r"
-    username: "{{ maven_user }}"
-    password: "{{ maven_password }}"
-  when: arkcase_retrieve_strategy == 'maven' and not arkcase_extension_install|bool  
+  command: mv {{ root_folder }}/install/arkcase/arkcase-config{{ arkcase_extension_version }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool and not "{{ root_folder }}/install/arkcase/arkcase-config{{ arkcase_extension_version }}.zip" == "{{ root_folder }}/install/arkcase/arkcase-config.zip"
 
-- name: unzip the configuration files (for an extension)
+- name: download configuration (if using sftp, and no extension is configured)
   become: yes
   become_user: arkcase
-  unarchive:
-    src: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}.zip"
-    dest: "/home/arkcase/.arkcase"
-    creates: "/home/arkcase/.arkcase/acm/conf.yml"
-  when: arkcase_retrieve_strategy == 'maven' and arkcase_extension_install
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version}}.zip
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool
 
-- name: unzip the core configuration files (if using Maven, and no extension is configured)
+- name: rename core config zip to common file name
+  become: yes
+  become_user: arkcase
+  command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
+  when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool 
+
+- name: unzip the configuration files
   become: yes
   become_user: arkcase
   unarchive:
-    src: "{{ root_folder }}/install/arkcase/arkcase-config-core.zip"
+    src: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
     dest: "/home/arkcase/.arkcase"
     creates: "/home/arkcase/.arkcase/acm/conf.yml"
-  when: arkcase_retrieve_strategy == 'maven' and not arkcase_extension_install
-
-- name: unzip the configuration files (from github)
-  become: yes
-  become_user: arkcase
-  unarchive:
-    src: "{{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_version }}.zip"
-    dest: "/home/arkcase/.arkcase"
-    creates: "/home/arkcase/.arkcase/acm/conf.yml"
-  when: arkcase_retrieve_strategy == 'github'
   register: arkcase_config_unzipped
 
-- name: junk the first-level github release folder, if necessary
+- name: see if the first level config folder needs to be removed
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcae/.arkcase-arkcase-{{ arkcase_version }}
+  register: first_level_folder
+
+- name: junk the first-level config folder, if necessary
   become: yes
   become_user: arkcase
   shell: mv /home/arkcase/.arkcase/.arkcase-arkcase-{{ arkcase_version }}/* /home/arkcase/.arkcase/
-  when: arkcase_config_unzipped is changed
+  when: arkcase_config_unzipped is changed and first_level_folder.stat.exists
 
 - name: deploy core reports
   include_tasks: deploy_report.yml
@@ -282,7 +265,7 @@
 - name: unarchive ArkCase search service jar
   become: yes
   become_user: arkcase
-  command: unzip -o arkcase-{{ arkcase_version }}.war WEB-INF/lib/acm-service-search-{{ arkcase_version }}.jar
+  shell: unzip -o arkcase{{ arkcase_version }}.war WEB-INF/lib/acm-service-search-*.jar
   args:
     chdir: "{{ root_folder }}/install/arkcase"
     warn: false
@@ -291,7 +274,7 @@
 - name: list files in search service jar
   become: yes
   become_user: arkcase
-  command: unzip -l acm-service-search-{{ arkcase_version }}.jar
+  shell: unzip -l acm-service-search-*.jar
   args:
     chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
     warn: false
@@ -301,7 +284,7 @@
 - name: remove tls_defalt_conf from search service jar
   become: yes
   become_user: arkcase
-  command: zip -d acm-service-search-{{ arkcase_version }}.jar tls-default.conf
+  shell: zip -d acm-service-search-*.jar tls-default.conf
   args:
     chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
     warn: false
@@ -311,7 +294,7 @@
 - name: update arkcase.war with updated search service jar
   become: yes
   become_user: arkcase
-  command: zip -r -m arkcase-{{ arkcase_version}}.war WEB-INF
+  command: zip -r -m arkcase{{ arkcase_version}}.war WEB-INF
   args:
     chdir: "{{ root_folder }}/install/arkcase"
     warn: false
@@ -332,7 +315,6 @@
     name: config-server
     enabled: yes
     masked: no
-
   
 - name: capture current arkcase.yaml
   become: yes
@@ -382,91 +364,54 @@
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ks"
     - src: "{{ java_trust_store }}"
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ts"
-    - src: "{{ ssl_key }}"
-      path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.rsa.pem"
     - src: "{{ ssl_cert }}"
       path: "/home/arkcase/.arkcase/acm/private/acm-arkcase.crt"
     - src: "{{ root_folder }}/common/symmetricKey.encrypted"
       path: "/home/arkcase/.arkcase/acm/encryption/symmetricKey.encrypted"
 
+- name: copy private key to .arkcase folder
+  become: yes
+  copy:
+    remote_src: yes
+    src: "{{ ssl_key }}"
+    dest: "/home/arkcase/.arkcase/acm/private/acm-arkcase.rsa.pem"
+    owner: arkcase
+    group: arkcase
+    mode: 0600
 
-
-- name: check if the openldap group file exists
+- name: remove OpenLDAP files
   become: yes
   become_user: arkcase
-  stat:
-    path: /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml
-  register: group_xml
-
-- name: fix the LDAP group files, if necessary
-  become: yes
-  become_user: arkcase
-  command: "{{ item }}"
-  when: group_xml.stat.exists
+  file:
+    path: "{{ item }}"
+    state: absent
   loop:
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml.sample
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-adtest-ad.xml.sample /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.xml
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.properties /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.properties.sample
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-group-adtest-ad.properties.sample /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.properties
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.properties"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.properties"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.properties"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.xml"
 
-- name: update bean names in LDAP group file
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-ad.xml
-    regexp: adtest
-    replace: "{{ ldap_user_domain }}"
-  when: group_xml.stat.exists
-
-- name: set arkcase ldap properties
+- name: ArkCase LDAP configuration
   become: yes
   become_user: arkcase
   template:
-    src: spring-config-armedia-ldap.properties
-    dest: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.properties
-  when: group_xml.stat.exists
-
-- name: check if the openldap user file exists
-  become: yes
-  become_user: arkcase
-  stat:
-    path: /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml
-  register: user_xml
-
-- name: fix the LDAP user files, if necessary
-  become: yes
-  become_user: arkcase
-  command: "{{ item }}"
-  when: user_xml.stat.exists
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
   loop:
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml.sample
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-adtest-ad.xml.sample /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.xml
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.properties /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.properties.sample
-    - mv /home/arkcase/.arkcase/acm/spring/spring-config-user-adtest-ad.properties.sample /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.properties
-
-- name: update bean names in LDAP user files
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: "{{ item }}"
-    regexp: adtest
-    replace: "{{ ldap_user_domain }}"
-  loop:
-    -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.xml
-    -  /home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-ad.properties
-  when: user_xml.stat.exists
-
-- name: update bean names in LDAP main XML file
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.xml
-    regexp: armedia_
-    replace: "{{ ldap_user_domain }}_"
-  when: ldap_user_domain != 'armedia' and user_xml.stat.exists
+    - src: "spring-config-ldap.properties"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ ldap_user_domain_bean_name }}-ldap.properties"
+    - src: "spring-config-ldap.xml"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ ldap_user_domain_bean_name }}-ldap.xml"
+    - src: "spring-config-group-ad.properties"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ ldap_user_domain_bean_name }}-ad.properties"
+    - src: "spring-config-group-ad.xml"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ ldap_user_domain_bean_name }}-ad.xml"
+    - src: "spring-config-user-ad.properties"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ ldap_user_domain_bean_name }}-ad.properties"
+    - src: "spring-config-user-ad.xml"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ ldap_user_domain_bean_name }}-ad.xml"
 
 - name: read current config server configuration
   become: yes
@@ -522,7 +467,6 @@
   loop: "{{ rules_spreadsheet_updates }}"
   loop_control:
     loop_var: s
-
 
 - name: plaintext passwords (yaml)
   become: yes
@@ -692,7 +636,7 @@
   file: 
     path: /home/arkcase/.arkcase/acm/arkcase-activemq.properties
     state: absent
-  when: arkcase_version is version('3.3.3', '>=')
+  when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
 - name: copy activemq-config.yaml if necessary
   become: yes
@@ -701,7 +645,7 @@
     src: activemq-config.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
     force: no
-  when: arkcase_version is version('3.3.3', '>=')
+  when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
 - name: update existing activemq-config.yaml
   become: yes
@@ -711,7 +655,7 @@
     path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
     regexp: acm-arkcase
     replace: acm-activemq
-  when: arkcase_version is version('3.3.3', '>=')
+  when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
 - name: copy quartz.properties if necessary
   become: yes
@@ -769,15 +713,14 @@
     regexp: 'fileName="\$\{sys\:catalina.base\}/logs'
     replace: 'fileName="{{ root_folder}}/log/arkcase'
 
-
 ### prepare for starting arkcase and config server
 - name: copy extension jar
   become: yes
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/install/arkcase/{{ arkcase_extension_maven_artifact }}.jar"
-    dest: "/home/arkcase/.arkcase/custom/WEB-INF/lib/{{ arkcase_extension_maven_artifact }}.jar"
+    src: "{{ root_folder }}/install/arkcase/{{ arkcase_extension_id }}.jar"
+    dest: "/home/arkcase/.arkcase/custom/WEB-INF/lib/{{ arkcase_extension_id }}.jar"
   when: arkcase_extension_install
 
 - name: copy arkcase war
@@ -785,6 +728,6 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/install/arkcase/arkcase-{{ arkcase_version }}.war"
+    src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
 

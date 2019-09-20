@@ -1,24 +1,20 @@
 - name: retrieve {{ e.name }} artifact
   become: yes
   become_user: arkcase
-  maven_artifact:
-    repository_url: "{{ e.maven_repository_url }}"
-    group_id: "{{ e.maven_group_id }}"
-    artifact_id: "{{ e.maven_artifact_id }}"
-    version: "{{ e.maven_version }}"
-    extension: "{{ e.maven_extension }}"
-    dest: "{{ root_folder }}/install/arkcase/{{ e.maven_artifact_id }}.{{ e.maven_extension }}"
-    mode: "u=rw,g=r,o=r"
-    username: "{{ maven_user }}"
-    password: "{{ maven_password }}"
+  command: sshpass -e sftp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {{ sftp_user }}@{{ e.sftp_base_url }}:{{ e.sftp_folder }}/{{ e.sftp_artifact }}
+    args:
+      chdir: "{{ root_folder }}/install/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_password }}"
 
-- name: copy {{ e.name }} artifact
+- name: copy {{ e.name }} artifact to install folder (this will tell us if it actually changed)
   become: yes
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/install/arkcase/{{ e.maven_artifact_id }}.{{ e.maven_extension }}"
-    dest: "{{ e.deploy_path }}/{{ e.deploy_filename }}"
+    src: "{{ root_folder }}/install/arkcase/{{ e.sftp_artifact }}"
+    dest: ""{{ e.deploy_path }}/{{ e.deploy_filename }}"
+  register: extra_artifact
 
 - name: create {{ e.name }} file folder
   become: yes

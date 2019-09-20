@@ -29,6 +29,13 @@
     state: present
     cert_alias: tomcat
 
+- name: ensure proper permissions on pentaho keystore
+  become: yes
+  become_user: pentaho
+  file:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
+    mode: 0600
+
 - name: jmx config files
   become: yes
   become_user: pentaho

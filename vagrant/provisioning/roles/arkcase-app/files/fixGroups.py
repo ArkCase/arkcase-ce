@@ -21,7 +21,7 @@ for r in range(1, sheet.max_row + 1):
         for p in range(2, len(sys.argv), 2):
             old_string = sys.argv[p]
             new_string = sys.argv[p + 1]
-            if old_string <> new_string and v == old_string:
+            if old_string <> new_string and hasattr(v, 'strip') and v.strip() == old_string:
                 print "replacing " + v
                 sheet[rowcol_index] = new_string
                 updated = True

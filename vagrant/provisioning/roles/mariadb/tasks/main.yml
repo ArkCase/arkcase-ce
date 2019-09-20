@@ -45,6 +45,21 @@
       setype: "mysqld_log_t"
   register: mariadb_folder_structure
 
+- name: copy private keys for mariadb use
+  become: yes
+  copy: 
+    remote_src: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: mysql
+    group: mysql
+    mode: 0600
+  loop:
+    - src: "{{ ssl_key_rsa }}"
+      dest: "{{ mariadb_data_folder }}/mysql.server.key"
+    - src: "{{ client_ssl_key_rsa }}"
+      dest: "{{ mariadb_data_folder }}/mysql.client.key"
+
 - name: update server config file
   become: yes
   block:
@@ -61,7 +76,7 @@
       loop:
         - "ssl-cipher={{ ssl_cipher }}"
         - "ssl-cert={{ ssl_cert }}"
-        - "ssl-key={{ ssl_key_rsa }}"
+        - "ssl-key={{ mariadb_data_folder }}/mysql.server.key"
         - "ssl-ca={{ ssl_ca }}"
       when: server_cnf_contents.stdout.find('ssl-cipher=' ~ ssl_cipher) == -1
       register: server_cnf_tls
@@ -70,7 +85,7 @@
         path: /etc/my.cnf.d/server.cnf
         state: present
         insertafter: "\\[mysqld\\]"
-        line: "max_allowed_packet=15M"
+        line: "max_allowed_packet=1024M"
       when: server_cnf_contents.stdout.find('max_allowed_packet') == -1
       register: server_cnf_packet
     - name: network connection properties
@@ -98,7 +113,7 @@
         line: "{{ item }}"
       loop:
         - "ssl-cert={{ client_ssl_cert }}"
-        - "ssl-key={{ client_ssl_key_rsa }}"
+        - "ssl-key={{ mariadb_data_folder }}/mysql.client.key"
         - "ssl-ca={{ client_ssl_ca }}"
         - "socket={{ mariadb_data_folder }}/mysql.sock"
       when: client_ssl_cert != "" and client_cnf_contents.stdout.find('arkcase-client') == -1

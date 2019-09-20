@@ -23,6 +23,17 @@
   command: openssl rsa -in {{ client_ssl_key }} -out {{ client_ssl_key_rsa }}
   when: not client_ssl_key_rsa_stat.stat.exists|bool
 
+- name: ensure secure permissions on private keys
+  become: yes
+  file: 
+    path: "{{ item }}"
+    mode: 0600
+  loop:
+    - "{{ ssl_key }}"
+    - "{{ client_ssl_key }}"
+    - "{{ ssl_key_rsa }}"
+    - "{{ client_ssl_key_rsa }}"
+
 - name: Java keystore and trust store
   block:
     - name: see if the Java keystore exists

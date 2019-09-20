@@ -54,6 +54,12 @@
       SOLR_SSL_NEED_CLIENT_AUTH=false
       SOLR_SSL_WANT_CLIENT_AUTH=false
 
+- name: Solr logrotate
+  become: yes
+  template:
+    src: solr
+    dest: /etc/logrotate.d/solr
+
 - name: Solr systemd unit file
   become: yes
   template:

@@ -38,7 +38,7 @@
           unicodePwd:: {{ base64_password.stdout }}
         dest: "{{ root_folder }}/install/password_change.ldif"
     - name: execute password change
-      shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D {{ ldap_bind_user }} -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/password_change.ldif
+      shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/password_change.ldif
   when: ldap_force_password_reset or new_user is changed
 
 - name: enable {{ u.user_id }} account
@@ -53,7 +53,7 @@
           userAccountControl: 512
         dest: "{{ root_folder }}/install/activate_user.ldif"
     - name: enable user
-      shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D {{ ldap_bind_user }} -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/activate_user.ldif
+      shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/activate_user.ldif
  # when: new_user is changed
       
 - name: store user id

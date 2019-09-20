@@ -1,0 +1,10 @@
+---
+- hosts: localhost
+  roles:
+    - common
+    - arkcase-pre-upgrade
+    - arkcase-prerequisites
+    - arkcase-app
+    - foia
+    - arkcase-post-upgrade
+

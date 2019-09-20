@@ -1,0 +1,18 @@
+{{ root_folder }}/log/solr/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+{{ root_folder }}/log/solr/*.current {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
