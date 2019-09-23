@@ -107,3 +107,10 @@ acm.websockets:
   stomp_broker_relay.truststore: "{{ java_trust_store }}"
   stomp_broker_relay.truststore_pass: "ENC({{ encrypted_java_trust_store_pass }})"
   stomp_broker_relay.truststore_type: "PKCS12"
+################### Calendar Configured Object Types (calendarConfiguredObjectTypes.properties) ####################
+calendar:
+  configuration: "{\"CASE_FILE\":{\"integrationEnabled\":{{ calendar_enabled_for_case_files | lower }},\"systemEmail\"\
+  :\"{{ email_service_account }}\",\"password\":\"ENC({{ encrypted_email_service_password }})\"\
+  ,\"purgeOptions\":\"{{ calendar_purge_option }}\",\"daysClosed\":null},\"COMPLAINT\":{\"\
+  integrationEnabled\":{{ calendar_enabled_for_complaints | lower }},\"systemEmail\":\"{{ email_service_account }}\",\"password\":\"ENC({{ encrypted_email_service_password }})\",\"purgeOptions\"\
+  :\"{{ calendar_purge_option }}\",\"daysClosed\":null}}"

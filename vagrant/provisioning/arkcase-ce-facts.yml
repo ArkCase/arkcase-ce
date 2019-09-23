@@ -5,6 +5,10 @@ email_service_account: "nosuchmailbox@arkcase.com"
 email_service_account_escaped: "nosuchmailbox%40arkcase.com"
 email_service_password: "not-a-real-password"
 
+calendar_enabled_for_case_files: false
+calendar_purge_option: "RETAIN_INDEFINITELY"
+calendar_enabled_for_complaints: false
+
 # external_host: the host name a browser will use
 external_host: arkcase-ce.local
 # internal host: the actual host name of the VM
