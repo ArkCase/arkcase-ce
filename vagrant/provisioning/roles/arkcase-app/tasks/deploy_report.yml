@@ -1,0 +1,24 @@
+- name: create report definition folder "{{ r.path }}"
+  become: yes
+  become_user: pentaho
+  file:
+    path: "{{ root_folder }}/install/pentaho/report-definitions/{{ r.path }}"
+    state: directory
+
+- name: copy report definition file "{{ r.path }}/{{ r.definition }}"
+  become: yes
+  become_user: pentaho
+  copy:
+    src: "report-definitions/{{ r.path }}/{{ r.definition }}"
+    dest: "{{ root_folder }}/install/pentaho/report-definitions/{{ r.path }}/{{ r.definition }}"
+  register: report_definition
+  
+- name: deploy report "{{ r.path }}/{{ r.definition }}"
+  become: yes
+  become_user: pentaho
+  command: '{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ arkcase_host_name }}:2002/pentaho --username={{ arkcase_admin_user }} --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ r.path }} --file-path="{{ root_folder }}/install/pentaho/report-definitions/{{ r.path }}/{{ r.definition }}" --logfile={{ root_folder }}/log/pentaho/upload.log --permission=true --overwrite=true --retainOwnership=true'
+  when: report_definition is changed
+  register: import_results
+  failed_when: "'Import was successful' not in import_results.stdout"
+
+  

@@ -1,0 +1,351 @@
+#################################
+## host-specific settings
+#################################
+email_service_account: "nosuchmailbox@arkcase.com"
+email_service_account_escaped: "nosuchmailbox%40arkcase.com"
+email_service_password: "not-a-real-password"
+
+calendar_enabled_for_case_files: false
+calendar_purge_option: "RETAIN_INDEFINITELY"
+calendar_enabled_for_complaints: false
+
+# external_host: the host name a browser will use
+external_host: arkcase-ce.local
+# internal host: the actual host name of the VM
+internal_host: arkcase-ce.local
+
+### ensure samba domain is based on the internal_host
+samba_domain: "DC.ARKCASE-CE"
+
+# server_admin goes in the httpd conf file, and is the email
+# address of the arkcase-admin user
+server_admin: "david.miller@arkcase.com"
+
+default_user_password: "@rKc@3e"
+
+# This LDAP information is for the local Samba instance
+ldap_host: "{{ internal_host }}"
+ldap_protocol: ldaps
+ldap_port: 636
+ldap_url: "{{ ldap_protocol }}://{{ ldap_host }}:{{ ldap_port }}"
+ldap_base: "DC=arkcase-ce,DC=local"
+ldap_bind_user: "CN=Administrator,CN=Users,{{ ldap_base }}"
+ldap_bind_password: "{{ default_user_password }}"
+
+# ldap_user_domain is how people will log into
+# ArkCase; at the ArkCase login they will login as
+# "user@{{ ldap_user_domain }}"
+ldap_user_domain: "arkcase.org"
+# active_directory_domain is of course the AD domain
+active_directory_domain: "arkcase-ce.local"
+
+# The group and user base will be created if necessary
+ldap_ancestor_ous:
+  - "{{ ldap_base }}"
+  - "OU=ArkCase, {{ ldap_base }}"
+ldap_group_no_base: "OU=Groups,OU=ArkCase"
+ldap_group_base: "{{ ldap_group_no_base }},{{ ldap_base }}"
+ldap_user_no_base: "OU=Users,OU=ArkCase"
+ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
+ldap_prefix: ""
+
+# if yes, will reset the password unconditionally.  
+# otherwise, will set the password only if the user is created (user did not already exist)
+ldap_force_password_reset: yes
+
+# it takes some work to get Ansible to output the rolesToGroups value in the format 
+# needed by ArkCase.  Each role name and each group name have to be surrounded by \\\", 
+# and separated by a colon, and everything has to be one long line
+roles_to_groups: "{\\\"ROLE_ENTITY_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_CONSUMER\\\": \\\"{{ ldap_prefix }}ARKCASE_CONSUMER@ARKCASE.ORG\\\", \\\"ROLE_SUPERVISOR\\\": \\\"{{ ldap_prefix }}ARKCASE_SUPERVISOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_EXTERNAL\\\": \\\"{{ ldap_prefix }}ARKCASE_EXTERNAL@ARKCASE.ORG\\\", \\\"ROLE_CONTRIBUTOR\\\": \\\"{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@ARKCASE.ORG\\\"}"
+
+ldap_groups:
+  - description: Entity administrators
+    name: "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Consumers
+    name: "{{ ldap_prefix }}ARKCASE_CONSUMER"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Supervisors
+    name: "{{ ldap_prefix }}ARKCASE_SUPERVISOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Administrators
+    name: "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: External users
+    name: "{{ ldap_prefix }}ARKCASE_EXTERNAL"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Contributors
+    name: "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+        
+arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
+arkcase_admin_password: "{{ default_user_password }}"
+arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
+
+ldap_users:
+  - user_id: "{{ arkcase_admin_user }}"
+    description: ArkCase administrator
+    name: ArkCase Administrator
+    mail: "{{ server_admin }}"
+    firstName: ArkCase
+    lastName: Administrator
+    password: "{{ arkcase_admin_password }}"
+    groups:
+      - "{{ arkcase_admin_group }}"
+    nonexpiring_password: yes
+
+# for each spreadsheet to be udpated, first give the path WITHOUT the .xlsx extension, then give a list of pairs of "string to be replaced", "replacement string"
+rules_spreadsheet_updates:
+  - base_path_no_xlsx: /home/arkcase/.arkcase/acm/rules/drools-assignment-rules
+    replacements: '"owning group, ARKCASE_SUPERVISOR@ARMEDIA.COM" "owning group, {{ ldap_prefix }}ARKCASE_SUPERVISOR@ARMEDIA.COM" "owning group, ARKCASE_ENTITY_ADMINISTRATOR@ARMEDIA.COM" "owning group, {{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARMEDIA.COM"'
+
+
+
+########################################
+### email settings
+#######################################
+# below settings work for Outlook 365    
+
+email_host_imap: "outlook.office365.com"
+email_port_imap: 993
+email_sender_protocol: "smtp"
+email_sender_encryption: "starttls"
+email_sender_port: 587
+email_allow_attachments: true
+email_allow_documents: true
+email_allow_hyperlinks: true
+email_smtp_host: "smtp.office365.com"
+email_user_from: "{{ email_service_account }}"
+email_smtp_username: "{{ email_service_account }}"
+email_smtp_password: "{{ email_service_password }}"
+email_convert_documents_to_pdf: false
+create_case_from_email_enabled: false
+create_complaint_from_email_enabled: false
+
+# retrieve arkcase from GitHub ("github") or Maven ("maven")
+arkcase_retrieve_strategy: "github"
+
+# arkcase_webapp_supported_version is for github (i.e, CE) downloads.
+# "supported version" means there is a GitHub release tag named "arkcase-$VERSION".
+# So, "3.3.0" is a supported version because the repository https://github.com/ArkCase/ArkCase
+# has a release tagged "arkcase-3.3.0".  Furthermore, this release has a release artifact
+# consisting of the acm-law-enforcement war file.  In short, the ArkCase war file can
+# be downloaded from the URL "https://github.com/ArkCase/ArkCase/releases/download/arkcase-3.3.0/acm-law-enforcement-3.3.0.war".
+# If there is no such URL, ArkCase installation will fail.
+arkcase_webapp_supported_versions:
+  - "3.3.0"
+  - "3.3.1"
+  - "3.3.1-r1"
+
+# arkcase_version is either a maven version (for maven download) 
+# or a github release version (for github downloads)
+arkcase_version: "3.3.1-r1"
+
+# arkcase extension 
+arkcase_extension_install: no
+arkcase_extension_maven_group: ""
+arkcase_extension_maven_artifact: ""
+arkcase_extension_maven_version: ""
+
+# core reports, these are always deployed
+arkcase_core_reports:
+  - path: "arkcase"
+    definition: "ComplaintReport.prpt"
+  - path: "arkcase"
+    definition: "ComplaintDispositionCount.prpt"
+  - path: "arkcase"
+    definition: "caseSummary.prpt"
+  - path: "arkcase-audit"
+    definition: "AuditReportWithUrl.prpt"
+  - path: "arkcase-audit"
+    definition: "AuditReport.prpt"
+
+
+# extension reports... each different extension may or may not have its own path 
+# in the jar file where report definitions are stored
+arkcase_extension_install_reports: no
+arkcase_extension_reports:
+  - name: ""
+    jar_path: ""
+    pentaho_path: ""
+
+# following properties only used if {{ arkcase_extension_install }} is "yes"
+arkcase_configuration_classifier: ""
+arkcase_configuration_maven_version: ""
+
+    
+
+maven_repository_base: "https://project.armedia.com/nexus/repository"
+maven_repository_snapshot: "{{ maven_repository_base }}/arkcase.snapshot"
+maven_repository_release: "{{ maven_repository_base }}/arkcase.release"
+maven_repository_extension_snapshot: "{{ maven_repository_base }}/{{ arkcase_extension_maven_artifact }}.snapshot"
+maven_repository_extension_release: "{{ maven_repository_base }}/{{ arkcase_extension_maven_artifact }}.release"
+maven_repository_pentaho_ee: "{{ maven_repository_base }}/pentaho-ee.release"
+maven_repository_pentaho_ee_licenses: "{{ maven_repository_base }}/pentaho-ee-licenses.release"
+maven_pentaho_license_year: "2019"
+
+# some installations require additional artifacts...
+arkcase_deploy_extra_artifacts: no
+arkcase_extra_artifacts:
+  - name: example
+    maven_repository_url: "{{ maven_repository_extension_snapshot }}"
+    maven_group_id: ""
+    maven_artifact_id: ""
+    maven_version: ""
+    maven_extension: ""
+    deploy_path: ""
+    deploy_filename: ""
+    post_install_required: yes
+    post_install:
+      property_replacements_required: yes
+      property_replacements:
+        - path: ""
+          regexp: ""
+          replace: ""
+      file_replacements_required: yes
+      file_replacements:
+        - path: ""
+          replace_with: ""
+          update_artifact: yes
+      restart_arkcase: yes
+    
+
+# if `arkcase_retrieve_strategy` is "github" then `arkcase_config_server_version` must
+# correspond to a release tag on the GitHub site; in other words,
+# there must be a release artifact at the URL
+# "https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar"
+arkcase_config_server_version: "0.0.1"
+
+# retrieve snowbound from GitHub ("github") or Maven ("maven")
+snowbound_retrieve_strategy: "github"
+snowbound_vendor_version: "4.10"
+snowbound_arkcase_version: "3.3.2"
+snowbound_symmetric_key: ""
+
+
+### default values that shouldn't have to change
+
+arkcase_host_name: "{{ internal_host }}"
+
+root_folder: "/opt/arkcase"
+
+mariadb_data_folder: "{{ root_folder }}/data/mariadb"
+mariadb_log_folder: "{{ root_folder }}/log/mariadb"
+
+ssl_cipher: "TLSv1.2"
+
+# for the pki role (used by CE installer to create a self-hosted
+# PKI), these facts are prescriptive, and the pki role will
+# create these files.  For the pki_client role (which creates
+# the Java key stores and the ArkCase symmetric key, these
+# files are descriptive, and the files must exist.
+ssl_key: "/etc/tls/private/arkcase-server.pem"
+ssl_ca: "/etc/tls/crt/arkcase-chain.crt"
+ssl_cert: "/etc/tls/crt/arkcase-server.crt"
+client_ssl_key: "/etc/tls/private/arkcase-client.pem"
+client_ssl_ca: "{{ ssl_ca }}"
+client_ssl_cert: "/etc/tls/crt/arkcase-client.crt"
+
+# these files will be created by the installer
+ssl_key_rsa: "/etc/tls/private/arkcase-server.rsa.key"
+client_ssl_key_rsa: "/etc/tls/private/arkcase-client.rsa.key"
+java_trust_store: "{{ root_folder }}/common/arkcase.ts"
+java_key_store: "{{ root_folder }}/common/arkcase.ks"
+java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"
+java_trust_store_pass: "{{ default_user_password }}"
+java_key_store_pass: "{{ default_user_password }}"
+java_p12_store: "{{ root_folder }}/common/arkcase-client.p12"
+
+samba_version: 4.10.8
+samba_realm: "{{ internal_host }}"
+samba_host_ip: "127.0.0.1"
+samba_admin_password: "{{ default_user_password }}"
+samba_server_role: dc
+
+
+database_host_name: "{{ arkcase_host_name }}"
+database_server_ssl_cert: "{{ ssl_cert }}"
+
+database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
+database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites={{ ssl_cipher }}&amp;trustServerCertificate=false&amp;serverSslCert={{ database_server_ssl_cert }}"
+database_arkcase_schema: arkcase
+database_arkcase_user: arkcase
+
+database_pentaho_hibernate_schema: hibernate
+database_pentaho_hibernate_user: hibuser
+database_pentaho_quartz_schema: quartz
+database_pentaho_quartz_user: pentaho_user
+database_pentaho_jackrabbit_schema: jackrabbit
+database_pentaho_jackrabbit_user: jcr_user
+
+jmx_password: P@ssw0rd
+
+# for Pentaho EE you must have the Pentaho EE license files
+# (NOT included in this repository), and you must have downloaded
+# the installer artifacts from Pentaho's support portal and uploaded
+# them to a Maven repository.  Also, run the `pentaho_ee` role instead of
+# `pentaho`
+pentaho_ee_version: 8.3.0
+
+# below versions used only for pentaho CE
+pentaho_major_version: 8.3
+pentaho_minor_version: 0.0-371
+pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
+
+pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
+
+solr_version: 7.7.2
+solr_jmx_enabled: true
+solr_cores:
+  - "acmAdvancedSearch"
+  - "acmQuickSearch"
+
+# NOTE: Alfresco CE 2018-06 does NOT work with
+# higher versions of Maria JDBC; specifically it does NOT
+# work with 2.4.2.  Is known to work with 2.2.6.
+mariadb_jdbc_version: 2.2.6
+default_database_password: "@rKc@3S!"
+
+# tomcat_major_version needed to build download URL
+tomcat_major_version: 9
+tomcat_version: 9.0.22
+
+alfresco_release_name: 201806-GA
+alfresco_content_services_version: 6.0.7-ga
+alfresco_records_management_version: 3.0.a
+
+# whether to enable sync from alfresco to arkcase
+enable_alfresco_sync: true
+
+records_management_categories:
+  - "Case Files"
+  - "Complaints"
+  - "Document Repositories"
+  - "Requests"
+  - "Tasks"
+content_management_folders:
+  - "Case Files"
+  - "Complaints"
+  - "Document Repositories"
+  - "Expenses"
+  - "People"
+  - "Recycle Bin"
+  - "Tasks"
+  - "Timesheets"
+  - "User Profile"
+    
+
+
+# we don't use this value yet, but maybe it could be used to
+# set non-expiring passwords on AD users
+# from https://social.technet.microsoft.com/wiki/contents/articles/29480.active-directory-fun-with-maximum-password-age.aspx... just under 30,000 years from now
+active_directory_non_expiring_password_age: -9223372036854775808
+
+activemq_version: 5.15.9
+    

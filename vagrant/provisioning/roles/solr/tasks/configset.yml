@@ -2,20 +2,20 @@
   become: yes
   become_user: solr
   stat:
-    path: /opt/app/solr/server/solr/configsets/arkcase/
+    path: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/"
   register: arkcase_configset
   changed_when: false
 
 - name: Copy _default configset to create new configset
   become: yes
   become_user: solr
-  shell: "cp -Rpf /opt/app/solr/server/solr/configsets/_default /opt/app/solr/server/solr/configsets/arkcase"
+  shell: "cp -Rpf {{ root_folder }}/app/solr/server/solr/configsets/_default {{ root_folder }}/app/solr/server/solr/configsets/arkcase"
   when: arkcase_configset.stat.exists == False
 
 - name: see if solrconfig.xml has the ArkCase updates
   become: yes
   become_user: solr
-  shell: "cat /opt/app/solr/server/solr/configsets/arkcase/conf/solrconfig.xml"
+  shell: "cat {{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/solrconfig.xml"
   register: solrconfig_contents
   changed_when: false
     
@@ -24,7 +24,7 @@
   become_user: solr
   copy:
     src: solrconfig.xml
-    dest: "/opt/app/solr/server/solr/configsets/arkcase/conf/"
+    dest: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/"
     mode: 0644
   when: "'AFDP' not in solrconfig_contents.stdout"
 
@@ -32,13 +32,13 @@
   become: yes
   become_user: solr
   stat:
-    path: "/opt/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
+    path: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
   register: schema_xml
 
 - name: see if schema.xml has the ArkCase updates
   become: yes
   become_user: solr
-  shell: "cat /opt/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
+  shell: "cat {{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
   register: schema_contents
   when: schema_xml.stat.exists == true
   changed_when: false
@@ -48,7 +48,7 @@
   become_user: solr
   copy:
     src: schema.xml
-    dest: "/opt/app/solr/server/solr/configsets/arkcase/conf/"
+    dest: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/"
     mode: 0644
   when: "schema_xml.stat.exists == false or 'AFDP' not in schema_contents.stdout"
     
@@ -56,6 +56,6 @@
   become: yes
   become_user: solr
   file:
-    path: "/opt/app/solr/server/solr/configsets/arkcase/conf/managed-schema"
+    path: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/managed-schema"
     state: absent
     

@@ -2,7 +2,7 @@
   become: yes
   become_user: solr
   copy:
-    dest: /opt/app/solr/access.file
+    dest: "{{ root_folder }}/app/solr/access.file"
     force: no
     content: |
       monitorRole readonly
@@ -13,7 +13,7 @@
   become: yes
   become_user: solr
   copy:
-    dest: /opt/app/solr/password.file
+    dest: "{{ root_folder }}/app/solr/password.file"
     force: no
     content: |
       monitorRole {{ jmx_password }}

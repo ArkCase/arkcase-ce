@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Context>
-    <!-- These parameters are used in web.xml (their replacement happens in ArkCaseServletContextListener.setInitParameters()) -->
-    <Parameter name="snowbound.base" value="https://arkcase-ce.local" override="false"/>
-    <Parameter name="arkcase.base" value="https://arkcase-ce.local" override="false"/>
-    <Parameter name="secret.key" value="armediaaeskey123" override="false"/>
-</Context>

@@ -4,6 +4,8 @@
     name: alfresco
     shell: /bin/false
     state: present
+    create_home: yes
+    home: /home/alfresco
 
 - name: alfresco folders
   become: yes
@@ -13,12 +15,12 @@
     group: alfresco
     owner: alfresco
   loop:
-    - /opt/data/alfresco
-    - /opt/data/alfresco/alf_data
-    - /opt/log/alfresco
-    - /opt/app/alfresco
-    - /opt/install/alfresco
-    - /opt/tmp/alfresco
+    - "{{ root_folder }}/data/alfresco"
+    - "{{ root_folder }}/data/alfresco/alf_data"
+    - "{{ root_folder }}/log/alfresco"
+    - "{{ root_folder }}/app/alfresco"
+    - "{{ root_folder }}/install/alfresco"
+    - "{{ root_folder }}/tmp/alfresco"
   register: alfresco_folder_structure
 
 - name: enable logrotate for alfresco log folder if necessary

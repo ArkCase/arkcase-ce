@@ -1,7 +1,7 @@
 - name: create {{ s.schema }} database (empty schema)
   become: yes
   mysql_db:
-    login_unix_socket: /opt/data/mariadb/mysql.sock
+    login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
     name: "{{ s.schema }}"
     encoding: utf8
     state: present
@@ -9,22 +9,21 @@
 - name: create {{ s.schema }} database (with schema)
   become: yes
   mysql_db:
-    login_unix_socket: /opt/data/mariadb/mysql.sock
+    login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
     name: "{{ s.schema }}"
     encoding: utf8
     state: import
-    target: "/opt/install/pentaho/{{ s.script }}"
+    target: "{{ root_folder }}/install/pentaho/{{ s.script }}"
     single_transaction: yes
   when: s.script | length > 0
   
 - name: create {{ s.user }} MySQL user
   become: yes
   mysql_user:
-    login_unix_socket: /opt/data/mariadb/mysql.sock
+    login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
     host: "%"
     name: "{{ s.user }}"
     password: "{{ default_database_password }}" 
     priv: '*.*:REQUIRESSL/{{ s.schema }}.*:ALL'
-    state: present 
-    
-  
+    state: present
+

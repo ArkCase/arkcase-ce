@@ -1,0 +1,18 @@
+{{ root_folder }}/log/pentaho/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+{{ root_folder }}/log/pentaho/*.out {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+

@@ -1,0 +1,33 @@
+- name: pentaho user
+  become: yes
+  user:
+    name: pentaho
+    shell: /bin/false
+    state: present
+    create_home: yes
+    home: /home/pentaho
+
+- name: Pentaho folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: pentaho
+    owner: pentaho
+  loop:
+    - "{{ root_folder }}/data/pentaho"
+    - "{{ root_folder }}/log/pentaho"
+    - "{{ root_folder }}/app/pentaho"
+    - "{{ root_folder }}/install/pentaho"
+    - "{{ root_folder }}/tmp/pentaho"
+  register: pentaho_folder_structure
+
+- name: enable logrotate for pentaho log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  args:
+    apply:
+      vars:
+        item: pentaho
+
+- name: create Pentaho database schemas
+  include_tasks: create_database_schemas.yml

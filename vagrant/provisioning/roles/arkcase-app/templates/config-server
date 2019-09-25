@@ -1,0 +1,8 @@
+{{ root_folder }}/log/config-server/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}

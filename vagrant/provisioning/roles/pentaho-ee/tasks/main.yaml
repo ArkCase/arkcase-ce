@@ -1,0 +1,86 @@
+- name: download Pentaho EE artifacts
+  become: yes
+  become_user: pentaho
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_pentaho_user }}@{{ sftp_service_base_url }}:{{ sftp_pentaho_folder }}/{{ item }}
+  args:
+    chdir: "{{ root_folder }}/install/pentaho"
+    creates: "{{ root_folder }}/install/pentaho/{{ item }}"
+  environment:
+    SSHPASS: "{{ sftp_pentaho_password }}"
+  loop:
+    - paz-plugin-ee-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip
+    - pdd-plugin-ee-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip
+    - pir-plugin-ee-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip
+    - pentaho-server-ee-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip
+
+- name: create temp install folders
+  become: yes
+  become_user: pentaho
+  file:
+    path: "{{ root_folder }}/tmp/pentaho/{{ item }}"
+    state: directory
+  loop:
+    - paz-plugin-ee
+    - pdd-plugin-ee
+    - pir-plugin-ee
+    - pentaho-server-ee
+
+- name: unzip artifacts
+  become: yes
+  become_user: pentaho
+  command: unzip -j -d "{{ root_folder }}/tmp/pentaho/{{ item }}" "{{ root_folder }}/install/pentaho/{{ item }}-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip"
+  args:
+    creates: "{{ root_folder }}/tmp/pentaho/{{ item }}/license.txt"
+    warn: no
+  loop:
+    - paz-plugin-ee
+    - pdd-plugin-ee
+    - pir-plugin-ee
+    - pentaho-server-ee
+
+# NOTE, the echo in the below commands is to provide the interactive
+# response expected by the Pentaho installer.jar
+- name: install artifacts
+  become: yes
+  become_user: pentaho
+  shell: echo -e "{{ item.installer_response }}" | java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
+  args: 
+    creates: "{{ item.creates }}"
+  loop:
+    - name: pentaho-server-ee
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
+      installer_response: "               1\n{{ root_folder }}/app/pentaho\n1"
+    - name: paz-plugin-ee
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
+      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n1"
+    - name: pdd-plugin-ee
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
+      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\nY\n1"
+    - name: pir-plugin-ee
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
+      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\nY\n1"
+  
+#### pentaho-ee specific updates... all updates common
+#### to both pentaho-ce and pentaho-ee are in the
+#### pentaho-configuration role
+
+- name: database configuration templates
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: context.xml
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/META-INF/context.xml"
+    - src: mysql5.hibernate.cfg.xml
+      dest: "{{ root_folder}}/app/pentaho/pentaho-server/pentaho-solutions/system/hibernate/mysql5.hibernate.cfg.xml"
+
+- name: server properties
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: server.properties
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/server.properties"

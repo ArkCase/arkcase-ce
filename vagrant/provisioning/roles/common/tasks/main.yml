@@ -16,6 +16,7 @@
       - deltarpm
       - bzip2
       - tar
+      - wget
 
 - name: remove python2-passlib since it breaks solr password setting
   become: yes
@@ -30,22 +31,25 @@
     path: "{{ item }}"
     state: directory
   loop:
-    - /opt
-    - /opt/app
-    - /opt/data
-    - /opt/log
-    - /opt/install
-    - /opt/common
-    - /opt/tmp
+    - "{{ root_folder }}"
+    - "{{ root_folder }}/app"
+    - "{{ root_folder }}/data"
+    - "{{ root_folder }}/log"
+    - "{{ root_folder }}/install"
+    - "{{ root_folder }}/common"
+    - "{{ root_folder }}/tmp"
 
-- name: add arkcase-ce.local to hosts file
+- name: add {{ arkcase_host_name }} to hosts file
   become: yes
   lineinfile:
     path: /etc/hosts
     line: "{{ item }}"
   loop:
-    - "127.0.0.1 arkcase-ce.local"
+    - "127.0.0.1 {{ arkcase_host_name }}"
     - "127.0.0.1 arkcase-host"
     - "127.0.0.1 acm-activemq"
     
-
+- name: set timezone to UTC
+  become: yes
+  timezone:
+    name: UTC

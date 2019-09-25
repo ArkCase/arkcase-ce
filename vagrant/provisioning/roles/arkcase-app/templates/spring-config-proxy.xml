@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd">
+
+    <bean id="/VirtualViewerJavaHTML5/**" class="org.springframework.web.servlet.mvc.ServletWrappingController">
+        <property name="servletClass" value="com.armedia.acm.proxy.http.ProxyServlet"/>
+        <property name="servletName" value="snowbound"/>
+        <property name="initParameters">
+            <props>
+                <!-- TODO: parameterize the URLs -->
+                <prop key="targetUri">https://{{ arkcase_host_name }}/</prop>
+                <prop key="http.protocol.handle-redirects">true</prop>
+                <!-- resource names regex patterns separated with comma "," if multiple.
+                Will be processed and override urls inside the response-->
+                <prop key="responseUrlMatchers">^.*config\.js$</prop>
+                <prop key="skipResponseUrlMatchers">.*ttf$, .*woff$, .*png$</prop>
+                <!-- given pairs for replacement pattern1:replacement1,pattern2:replacement2-->
+                <prop key="responseContentRewritePairs">/VirtualViewerJavaHTML5/:/arkcase/VirtualViewerJavaHTML5/</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="/pentaho/**" class="org.springframework.web.servlet.mvc.ServletWrappingController">
+        <property name="servletClass" value="com.armedia.acm.proxy.http.ProxyServlet"/>
+        <property name="servletName" value="pentaho"/>
+        <property name="initParameters">
+            <props>
+                <!-- TODO: parameterize the URLs -->
+                <prop key="targetUri">https://{{ arkcase_host_name }}:2002/</prop>
+                <prop key="http.protocol.handle-redirects">true</prop>
+                <!-- resource names regex patterns separated with comma "," if multiple.
+                Will be processed and override urls inside the response-->
+                <prop key="responseUrlMatchers">^.*$</prop>
+                <!-- resource names regex patterns separated with comma "," if multiple.
+                Will be processed and override urls inside the response-->
+                <prop key="skipResponseUrlMatchers">.*ttf$, .*woff$</prop>
+                <!-- given pairs for replacement pattern1:replacement1,pattern2:replacement2-->
+                <prop key="responseContentRewritePairs">(?&lt;=CONTEXT_PATH = ['"][\\]?/)pentaho(?=[\\]?/['"]):arkcase/pentaho,(?&lt;=src=['"])/pentaho/:/arkcase/pentaho/,(?&lt;=root. ['"][\\]?/)pentaho(?=[\\]?/['"]):arkcase/pentaho</prop>
+                <!-- comma delimited content types which need to be skip for processing-->
+                <prop key="skipResponseContentTypes">application/x-font-(woff|ttf).*$,
+                    application/(pdf|excel|x-shockwave-flash|vnd\.ms-excel|vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet).*$, image/.*$
+                </prop>
+                <!-- comma delimited pair of pattern which match url, and parameter which need to be appended-->
+                <!--<prop key="appendUrlParams">^.*prpt/viewer$:userid=${PENTAHO_SERVER_USER}&amp;password=${PENTAHO_SERVER_PASSWORD}</prop>-->
+                <!-- comma delimited pair of pattern which match url, and header values that need to be added. Use var(VARIABLE_NAME) to use runtime variables for values. 
+                     Currently implemented variables are: MDC_PENTAHO_USER_ID -->
+                <prop key="setAdditionalHeaders">
+                    ^.*prpt/viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpt/report$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpti/prpti.view$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID)
+                </prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="/solr/banana/**" class="org.springframework.web.servlet.mvc.ServletWrappingController">
+        <property name="servletClass" value="com.armedia.acm.proxy.http.ProxyServlet"/>
+        <property name="servletName" value="solr"/>
+        <property name="initParameters">
+            <props>
+                <!-- TODO: parameterize the URLs -->
+                <prop key="targetUri">https://{{ arkcase_host_name }}/</prop>
+                <prop key="http.protocol.handle-redirects">true</prop>
+                <!-- resource names regex patterns separated with comma "," if multiple.
+                Will be processed and override urls inside the response-->
+                <prop key="responseUrlMatchers">^.*$</prop>
+                <!-- comma delimited content types which need to be skip for processing-->
+                <prop key="skipResponseContentTypes">application/x-font-(woff|ttf).*$</prop>
+                <!-- given pairs for replacement pattern1:replacement1,pattern2:replacement2-->
+                <prop key="responseContentRewritePairs">/solr/banana/:/arkcase/solr/banana/</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="/weather/**" class="org.springframework.web.servlet.mvc.ServletWrappingController">
+        <property name="servletClass" value="com.armedia.acm.proxy.http.ProxyServlet"/>
+        <property name="servletName" value="openweathermap"/>
+        <property name="initParameters">
+            <props>
+                <!-- TODO: parameterize the URLs -->
+                <prop key="targetUri">http://api.openweathermap.org/data/2.5</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
