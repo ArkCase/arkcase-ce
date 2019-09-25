@@ -1,0 +1,10 @@
+{{ root_folder }}/log/httpd/*_log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 5M
+}
+
+

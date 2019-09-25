@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--+
+    | Application context containing header-based authenticator implementation
+    +-->
+<beans:beans
+    xmlns="http://www.springframework.org/schema/security"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:beans="http://www.springframework.org/schema/beans"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+                        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd"
+                        default-lazy-init="true">
+
+    <!-- Remember to set the right version (V2 or V3) in the classname -->
+    <beans:bean id="arkcasePreAuthFilter" class="com.armedia.arkcase.preauth.spring.ArkCasePreAuthenticatedProcessingFilterV4">
+        <!-- The name of the header to read the username from -->
+        <beans:property name="principalRequestHeader" value="X-ARKCASE-EXTERNAL-USER" />
+
+        <!-- use principalExpression and principalReplacement if/when the user principal isn't exactly the username, to parse it out -->
+        <!-- <property name="principalExpression" value="^([^/@]+)(/[^@]+)*(@.*)?$" /> -->
+        <!-- <property name="principalReplacement" value="\1" /> -->
+
+        <!-- whether the header is required or not - usually not -->
+        <beans:property name="requirePrincipalHeader" value="false" />
+
+        <!-- do not change this -->
+        <beans:property name="authenticationManager" ref="authenticationManager" />        
+    </beans:bean>
+
+    <!-- DO NOT TOUCH - no changes needed here -->
+
+    <http entry-point-ref="basicProcessingFilterEntryPoint" authentication-manager-ref="authenticationManager">
+        <custom-filter position="PRE_AUTH_FILTER" ref="arkcasePreAuthFilter"/>
+    </http>
+     
+    <beans:bean id="arkcasePreAuthProvider" class="org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider">
+        <beans:property name="preAuthenticatedUserDetailsService">
+            <beans:bean id="userDetailsServiceWrapper" class="org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper">
+                <beans:property name="userDetailsService" ref="cachingUserDetailsService" />
+            </beans:bean>
+        </beans:property>
+    </beans:bean>
+</beans:beans>

@@ -1,0 +1,232 @@
+- name: link MariaDB jar file
+  become: yes
+  become_user: pentaho
+  file:
+    src: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    state: link
+
+- name: LDAP application context
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "applicationContext-security-ldap.properties"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
+    - src: "repository.spring.properties"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
+
+- name: import arkcase keystore
+  become: yes
+  become_user: pentaho
+  java_cert:
+    pkcs12_alias: arkcase_client
+    pkcs12_path: "{{ root_folder }}/common/arkcase-client.p12"
+    pkcs12_password: "{{ java_key_store_pass }}"
+    keystore_create: yes
+    keystore_pass: password
+    keystore_path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
+    state: present
+    cert_alias: tomcat
+
+- name: ensure proper permissions on pentaho keystore
+  become: yes
+  become_user: pentaho
+  file:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
+    mode: 0600
+
+- name: jmx config files
+  become: yes
+  become_user: pentaho
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    backup: yes
+  loop:
+    - src: "access.file"
+      mode: "0644"
+      dest: "{{ root_folder }}/app/pentaho"
+    - src: "password.file"
+      mode: "0600"
+      dest: "{{ root_folder }}/app/pentaho"
+
+- name: tomcat config files
+  become: yes
+  become_user: pentaho
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+    backup: yes
+  loop:
+    - src: "setenv.sh"
+      mode: "u+x"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin"
+    - src: "server.xml"
+      mode: "0644"
+      dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/conf"
+
+- name: read current import-export script
+  become: yes
+  become_user: pentaho
+  command: cat {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh
+  register: import_export
+  changed_when: false
+  
+- name: set TLS options in import-export script
+  become: yes
+  become_user: pentaho
+  replace:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
+    regexp: "-Xmx2048m"
+    replace: "-Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Xmx2048m"
+  when: "'Djavax.net.ssl.keyStorePassword' not in import_export.stdout"
+
+- name: configure Tomcat log file locations
+  become: yes
+  become_user: pentaho
+  replace:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/logging.properties"
+    backup: yes
+    regexp: '\$\{catalina\.base\}\/logs'
+    replace: "{{ root_folder }}/log/pentaho"
+
+- name: configure Pentaho log file locations
+  become: yes
+  become_user: pentaho
+  replace:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/classes/log4j.xml"
+    backup: yes
+    regexp: '\.\.\/logs\/'
+    replace: "{{ root_folder }}/log/pentaho/"
+
+- name: pentaho logrotate
+  become: yes
+  template:
+    src: "templates/pentaho"
+    dest: /etc/logrotate.d/pentaho
+
+- name: database configuration templates
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "repository.xml"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/jackrabbit/repository.xml"
+
+- name: database configuration files
+  become: yes
+  become_user: pentaho
+  copy:
+    backup: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "quartz.properties"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/quartz/"
+    - src: "hibernate-settings.xml"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/hibernate/"
+    - src: "activemq.xml"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/karaf/etc/"
+
+- name: copy audit_sql.xml (local file)
+  become: yes
+  become_user: pentaho
+  copy:
+    backup: yes
+    remote_src: yes
+    src: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dialects/mysql5/audit_sql.xml"
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/audit_sql.xml"
+
+- name: add resource-refs to web.xml
+  become: yes
+  become_user: pentaho
+  blockinfile:
+    backup: yes
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/web.xml"
+    insertafter: "insert additional resource-refs"
+    marker: "<!-- {mark} ANSIBLE MANAGED RESOURCE REFS -->"
+    content: |
+      <resource-ref>
+        <description>acm3DataSource</description>
+        <res-ref-name>jdbc/acm3DataSource</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <res-auth>Container</res-auth>
+      </resource-ref>
+
+- name: preauthentication setup
+  become: yes
+  become_user: pentaho
+  copy:
+    backup: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "arkcase-preauth-springsec-v4-1.1.1-bundled.jar"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/lib/"
+    - src: "applicationContext-spring-security.xml"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
+    - src: "arkcase-preauth.xml"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
+
+# Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
+- name: Pentaho systemd unit file
+  become: yes
+  template:
+    src: "pentaho.service"
+    dest: /etc/systemd/system/pentaho.service
+  register: pentaho_systemd
+
+- name: reload daemon-files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: pentaho_systemd is changed
+  
+- name: enable Pentaho to start on boot
+  become: yes
+  systemd:
+    name: pentaho
+    enabled: yes
+    masked: no
+
+- name: start Pentaho, if not already started
+  become: yes
+  systemd:
+    name: pentaho
+    state: started
+
+- name: wait for Pentaho to start
+  wait_for:
+    port: 2002
+    delay: 5
+    timeout: 300
+
+- name: ensure ldap security is being used
+  become: yes
+  become_user: pentaho
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/security.properties"
+    regexp: jackrabbit
+    replace: ldap
+  register: security_provider_updated
+
+- name: restart pentaho, if needed
+  become: yes
+  systemd:
+    name: pentaho
+    state: restarted
+  when: security_provider_updated is changed
+  
+- name: wait for pentaho to come back, if it was restarted
+  wait_for:
+    port: 2002
+    delay: 5
+    timeout: 300
+  when: security_provider_updated is changed
+

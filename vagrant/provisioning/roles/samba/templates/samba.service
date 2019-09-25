@@ -1,0 +1,13 @@
+[Unit]
+Description= Samba 4 Active Directory
+After=syslog.target
+After=network.target
+
+[Service]
+Type=forking
+PIDFile={{ root_folder }}/data/samba/run/samba.pid
+ExecStart={{ root_folder }}/app/samba/sbin/samba --log-basename={{ root_folder }}/log/samba
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target

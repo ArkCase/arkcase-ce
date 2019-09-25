@@ -35,7 +35,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
   -->
-  <luceneMatchVersion>7.6.0</luceneMatchVersion>
+  <luceneMatchVersion>7.7.2</luceneMatchVersion>
 
   <!-- Use classic schema.xml  -->	
   <schemaFactory class="ClassicIndexSchemaFactory"/>

@@ -18,13 +18,25 @@
     setype: "httpd_log_t"
     selevel: "s0"
   loop:
-    - "/opt/log/httpd"
-    - "/opt/data/httpd"
-    - "/opt/data/httpd/htdocs"
+    - "{{ root_folder }}/log/httpd"
+    - "{{ root_folder }}/data/httpd"
+    - "{{ root_folder }}/data/httpd/htdocs"
+    - "{{ root_folder }}/tmp/httpd"
+    - "{{ root_folder }}/install/httpd"
+
+- name: copy private key for httpd
+  become: yes
+  copy:
+    remote_src: yes
+    src: "{{ ssl_key }}"
+    dest: "{{ root_folder }}/data/httpd/httpd.key"
+    owner: apache
+    group: apache
+    mode: 0600
 
 - name: ArkCase TLS configuration
   become: yes
-  copy:
+  template:
     backup: yes
     src: httpd-ssl.conf
     dest: /etc/httpd/conf.d/ssl.conf
@@ -33,10 +45,16 @@
 - name: ArkCase index.html
   become: yes
   become_user: apache
-  copy:
+  template:
     backup: yes
     src: index.html
-    dest: /opt/data/httpd/htdocs/index.html
+    dest: "{{ root_folder }}/data/httpd/htdocs/index.html"
+
+- name: httpd logrotate
+  become: yes
+  template:
+    src: arkcase-httpd
+    dest: /etc/logrotate.d/arkcase-httpd
     
 - name: enable httpd to run at startup
   become: yes

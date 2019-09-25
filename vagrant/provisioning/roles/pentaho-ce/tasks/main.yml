@@ -1,0 +1,51 @@
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "Pentaho CE Server"
+      dest: "{{ root_folder }}/install/pentaho/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
+      owner: "pentaho"
+      url: "http://iweb.dl.sourceforge.net/project/pentaho/Pentaho%20{{ pentaho_major_version }}/server/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
+      checksum: "{{ pentaho_ce_checksum }}"
+
+- name: unarchive Pentaho distribution
+  become: yes
+  become_user: pentaho
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/pentaho/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
+    dest: "{{ root_folder }}/app/pentaho"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/LICENSE"
+    extra_opts:
+      - -o
+  register: pentaho_unarchived
+
+#### pentaho-ce specific updates... all updates common
+#### to both pentaho-ce and pentaho-ee are in the
+#### pentaho-configuration role
+- name: database configuration templates
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: context.xml
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/META-INF/context.xml"
+    - src: mysql5.hibernate.cfg.xml
+      dest: "{{ root_folder}}/app/pentaho/pentaho-server/pentaho-solutions/system/hibernate/mysql5.hibernate.cfg.xml"
+  
+- name: server properties
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: server.properties
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/server.properties"
+
+- name: remove the older MySQL jar file
+  become: yes
+  become_user: pentaho
+  file:
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/lib/mysql-connector-java-5.1.17.jar"
+    state: absent
+    

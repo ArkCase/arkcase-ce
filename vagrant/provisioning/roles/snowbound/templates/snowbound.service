@@ -1,0 +1,17 @@
+[Unit]
+Description=Snowbound service
+
+[Service]
+Type=forking
+ExecStart={{ root_folder }}/app/snowbound/bin/startup.sh
+ExecStop={{ root_folder }}/app/snowbound/bin/shutdown.sh -force
+User=snowbound
+Group=snowbound
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=snowbound
+
+[Install]
+WantedBy=multi-user.target
