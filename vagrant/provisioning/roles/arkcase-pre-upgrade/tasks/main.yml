@@ -26,10 +26,18 @@
   command: mv {{ root_folder }}/data/arkcase-home/.arkcase {{ config_backup_folder_path }}
   when: arkcase_config_path.stat.exists
 
+- name: see if war files exist
+  become: yes
+  become_user: arkcase
+  stat:
+    path: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
+  register: war_file
+
 - name: backup war files
   become: yes
   become_user: arkcase
   shell: mv {{ root_folder }}/app/arkcase/webapps/*.war {{ config_backup_folder_path }}
+  when: war_file.stat.exists
 
 - name: cleanup Tomcat folders
   become: yes
