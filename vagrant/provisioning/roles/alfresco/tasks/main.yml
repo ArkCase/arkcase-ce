@@ -333,8 +333,8 @@
       become_user: alfresco
       replace:
         path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/log4j.properties"
-        regexp: "log4j.appender.File.File=alfresco.log"
-        replace: 'log4j.appender.File.File="{{ root_folder }}/log/alfresco/alfresco.log"'
+        regexp: log4j.appender.File.File=alfresco.log
+        replace: log4j.appender.File.File={{ root_folder }}/log/alfresco/alfresco.log
       when: log4j_unzipped is changed
     - name: rename log4j.properties
       become: yes
@@ -366,8 +366,8 @@
       become_user: alfresco
       replace:
         path: "{{ root_folder }}/tmp/alfresco/WEB-INF/classes/log4j.properties"
-        regexp: "log4j.appender.File.File=share.log"
-        replace: 'log4j.appender.File.File="{{ root_folder }}/log/alfresco/share.log"'
+        regexp: log4j.appender.File.File=share.log
+        replace: log4j.appender.File.File={{ root_folder }}/log/alfresco/share.log
       when: share_log4j_unzipped is changed
       register: share_log4j_updated
     - name: update share.war with new share location

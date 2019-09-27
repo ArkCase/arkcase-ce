@@ -20,7 +20,7 @@
   become: yes
   become_user: pentaho
   java_cert:
-    pkcs12_alias: arkcase_client
+    pkcs12_alias: arkcase_server
     pkcs12_path: "{{ root_folder }}/common/arkcase-client.p12"
     pkcs12_password: "{{ java_key_store_pass }}"
     keystore_create: yes
@@ -81,8 +81,8 @@
   replace:
     path: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
     regexp: "-Xmx2048m"
-    replace: "-Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Xmx2048m"
-  when: "'Djavax.net.ssl.keyStorePassword' not in import_export.stdout"
+    replace: "-Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Xmx2048m"
+  when: "'Djavax.net.ssl.trustStorePassword' not in import_export.stdout"
 
 - name: configure Tomcat log file locations
   become: yes

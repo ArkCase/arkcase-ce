@@ -39,6 +39,11 @@
     - "{{ root_folder }}/common"
     - "{{ root_folder }}/tmp"
 
+- name: set hostname
+  become: yes
+  hostname:
+    name: "{{ arkcase_host_name }}"
+    
 - name: add {{ arkcase_host_name }} to hosts file
   become: yes
   lineinfile:

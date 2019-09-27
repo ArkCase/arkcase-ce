@@ -12,7 +12,8 @@ calendar_enabled_for_complaints: false
 # external_host: the host name a browser will use
 external_host: arkcase-ce.local
 # internal host: the actual host name of the VM
-internal_host: arkcase-ce.local
+base_domain: arkcase-ce.local
+internal_host: "{{ base_domain }}"
 
 ### ensure samba domain is based on the internal_host
 samba_domain: "DC.ARKCASE-CE"
@@ -238,7 +239,10 @@ root_folder: "/opt/arkcase"
 mariadb_data_folder: "{{ root_folder }}/data/mariadb"
 mariadb_log_folder: "{{ root_folder }}/log/mariadb"
 
-ssl_cipher: "TLSv1.2"
+ssl_version: "TLSv1.2"
+
+# ssl_cipher only for backward compatibility
+ssl_cipher: "{{ ssl_version }}"
 
 # for the pki role (used by CE installer to create a self-hosted
 # PKI), these facts are prescriptive, and the pki role will

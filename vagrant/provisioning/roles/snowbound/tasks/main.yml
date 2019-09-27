@@ -56,7 +56,7 @@
       vars:
         item: 
           name: VirtualViewer war file
-          dest: "{{ root_folder }}/install/snowbound/snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
+          dest: "{{ root_folder }}/tmp/snowbound/snowbound-integration-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war"
           owner: snowbound
           url: https://github.com/ArkCase/arkcase-dependencies/raw/master/VirtualViewerJavaHTML5/VirtualViewerJavaHTML5-{{ snowbound_vendor_version }}-{{ snowbound_arkcase_version }}.war
   when: snowbound_retrieve_strategy == "github"

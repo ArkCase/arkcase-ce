@@ -57,8 +57,6 @@
   loop:
     - src: "{{ ssl_key_rsa }}"
       dest: "{{ mariadb_data_folder }}/mysql.server.key"
-    - src: "{{ client_ssl_key_rsa }}"
-      dest: "{{ mariadb_data_folder }}/mysql.client.key"
 
 - name: update server config file
   become: yes
@@ -74,11 +72,11 @@
         insertafter: "\\[mysqld\\]"
         line: "{{ item }}"
       loop:
-        - "ssl-cipher={{ ssl_cipher }}"
+        - "tls-version={{ ssl_version }}"
         - "ssl-cert={{ ssl_cert }}"
         - "ssl-key={{ mariadb_data_folder }}/mysql.server.key"
         - "ssl-ca={{ ssl_ca }}"
-      when: server_cnf_contents.stdout.find('ssl-cipher=' ~ ssl_cipher) == -1
+      when: not server_cnf_contents.stdout is match('^' + item)
       register: server_cnf_tls
     - name: update server.cnf max_packet property, if needed (Pentaho needs larger packet size)
       lineinfile:
@@ -104,20 +102,17 @@
       shell: cat /etc/my.cnf.d/mysql-clients.cnf
       register: client_cnf_contents
       changed_when: false
-      when: client_ssl_cert != ""
     - name: update client.cnf if needed
       lineinfile:
         path: /etc/my.cnf.d/mysql-clients.cnf
         state: present
+        regexp: "^{{ item }}$"
         insertafter: "\\[mysql\\]"
         line: "{{ item }}"
-      loop:
-        - "ssl-cert={{ client_ssl_cert }}"
-        - "ssl-key={{ mariadb_data_folder }}/mysql.client.key"
-        - "ssl-ca={{ client_ssl_ca }}"
-        - "socket={{ mariadb_data_folder }}/mysql.sock"
-      when: client_ssl_cert != "" and client_cnf_contents.stdout.find('arkcase-client') == -1
+      when: not client_cnf_contents.stdout is match ('^' + item)
       register: client_cnf
+      loop:
+        - "socket={{ mariadb_data_folder }}/mysql.sock"
 
 - name: set data folder
   become: yes

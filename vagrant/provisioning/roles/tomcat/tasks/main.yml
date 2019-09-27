@@ -121,7 +121,7 @@
             useBodyEncodingForURI="true"
             address="0.0.0.0">
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
-            <SSLHostConfig protocols="{{ ssl_cipher }}" certificateVerification="none">
+            <SSLHostConfig protocols="{{ ssl_version }}" certificateVerification="none">
               <Certificate certificateFile="{{ ssl_cert }}"
                 certificateKeyFile="{{ tc.tomcat_home }}/conf/{{ tc.user }}.key"
                 certificateChainFile="{{ ssl_ca }}"
@@ -156,7 +156,7 @@
         insertbefore: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
         block: |
-          export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store }}"
+          export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }}"
     - name: set CATALINA_OPTS
       become: yes
       become_user: "{{ tc.user }}"

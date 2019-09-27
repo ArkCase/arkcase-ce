@@ -70,12 +70,11 @@
     - regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log"
       line: "wrapper.logfile={{ root_folder }}/log/activemq/wrapper.log"
     - regexp: "^wrapper\\.java\\.additional\\.3=\\-Djavax\\.net\\.ssl\\.keyStorePassword=password"
-      line: "wrapper.java.additional.3=-Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
+      line: "# wrapper.java.additional.3=-Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
     - regexp: "^wrapper\\.java\\.additional\\.4=\\-Djavax\\.net\\.ssl\\.trustStorePassword=password"
       line: "wrapper.java.additional.4=-Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }}"
-
     - regexp: "^wrapper\\.java\\.additional\\.5=\\-Djavax\\.net\\.ssl\\.keyStore=%ACTIVEMQ_CONF%/broker.ks"
-      line: "wrapper.java.additional.5=-Djavax.net.ssl.keyStore={{ java_key_store }}"
+      line: "# wrapper.java.additional.5=-Djavax.net.ssl.keyStore={{ java_key_store }}"
     - regexp: "^wrapper\\.java\\.additional\\.6=\\-Djavax\\.net\\.ssl\\.trustStore=%ACTIVEMQ_CONF%/broker.ts"
       line: "wrapper.java.additional.6=-Djavax.net.ssl.trustStore={{ java_trust_store }}"
       
