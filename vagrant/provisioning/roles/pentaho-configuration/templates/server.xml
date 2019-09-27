@@ -92,7 +92,7 @@
          documentation -->
     <Connector port="2002" protocol="org.apache.coyote.http11.Http11NioProtocol" SSLEnabled="true"
                    scheme="https" secure="true"
-                   clientAuth="false" sslEnabledProtocols="{{ ssl_cipher }}"
+                   clientAuth="false" sslEnabledProtocols="{{ ssl_version }}"
                    keystoreFile="${catalina.home}/conf/keystore" keystorePass="password"
                    truststoreFile="{{ java_trust_store }}" truststorePass="{{ java_trust_store_pass }}"
                    connectionTimeout="40000" maxHttpHeaderSize="32768"

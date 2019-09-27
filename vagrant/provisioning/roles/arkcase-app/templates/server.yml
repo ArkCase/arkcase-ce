@@ -1,6 +1,6 @@
 acm:
   driverClassName: "{{ database_mysql_jdbc_driver }}"
-  url: "jdbc:mysql://{{ arkcase_host_name }}:3306/arkcase?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_cipher }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
+  url: "jdbc:mysql://{{ arkcase_host_name }}:3306/arkcase?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_version }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
   password: "ENC({{ encrypted_default_database }})"
 elk:
   server:

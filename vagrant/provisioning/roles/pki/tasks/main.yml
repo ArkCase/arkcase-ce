@@ -43,7 +43,7 @@
     organization_name: ArkCase
     organizational_unit_name: Product Development
     # the common_name has to be a DNS-compatible name now.
-    common_name: root.authority.{{ arkcase_host_name }}
+    common_name: root.authority.{{ base_domain }}
     email_address: info@arkcase.com
   register: root_csr
 
@@ -87,7 +87,7 @@
     organization_name: ArkCase
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
-    common_name: intermediate.authority.{{ arkcase_host_name }}
+    common_name: intermediate.authority.{{ base_domain }}
   register: intermediate_csr
 
 # the intermediate cert is signed with the root key
@@ -149,7 +149,6 @@
     subject_alt_name:
       - DNS:{{ external_host }}
       - DNS:{{ internal_host }}
-      - DNS:acm-activemq
   register: server_csr
 
 # the server cert is signed with the intermediate key
@@ -163,56 +162,3 @@
     provider: ownca
     mode: 0644
   when: server_csr is changed
-
-# client key, for MariaDB which wants a separate key for clients and server  
-- name: generate client private key
-  become: yes
-  openssl_privatekey:
-    path: "{{ client_ssl_key }}"
-    type: RSA
-    size: 2048
-    mode: 0644
-  register: client_private_key
-
-- name: generate client csr
-  become: yes
-  openssl_csr:
-    basic_constraints_critical: no
-    basic_constraints:
-      - CA:FALSE
-    key_usage_critical: yes
-    key_usage:
-      - nonRepudiation
-      - digitalSignature
-      - keyEncipherment
-    extended_key_usage_critical: no
-    extended_key_usage:
-      - clientAuth
-      - emailProtection
-    digest: sha256
-    path: "/etc/tls/csr/arkcase-client.csr"
-    privatekey_path: "{{ client_ssl_key }}"
-    country_name: US
-    state_or_province_name: VA
-    locality_name: Vienna
-    organization_name: ArkCase
-    organizational_unit_name: Product Development
-    email_address: info@arkcase.com
-    common_name: "{{ arkcase_host_name }}"
-    subject_alt_name:
-      - DNS:{{ external_host }}
-      - DNS:{{ internal_host }}
-      - DNS:acm-activemq
-  register: client_csr
-
-# the client cert is signed with the intermediate key
-- name: Sign client CSR
-  become: yes
-  openssl_certificate:
-    path: "{{ client_ssl_cert }}"
-    ownca_path: "/etc/tls/crt/arkcase-intermediate.crt"
-    ownca_privatekey_path: "/etc/tls/private/arkcase-intermediate.pem"
-    csr_path: "/etc/tls/csr/arkcase-client.csr"
-    provider: ownca
-    mode: 0644
-  when: client_csr is changed

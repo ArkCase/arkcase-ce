@@ -13,16 +13,6 @@
   command: openssl rsa -in {{ ssl_key }} -out {{ ssl_key_rsa }}
   when: not ssl_key_rsa_stat.stat.exists|bool
 
-- name: see if client rsa private key exists
-  stat:
-    path: "{{ client_ssl_key_rsa }}"
-  register: client_ssl_key_rsa_stat
-
-- name: write client private key in RSA format, for MySQL et. al.
-  become: yes
-  command: openssl rsa -in {{ client_ssl_key }} -out {{ client_ssl_key_rsa }}
-  when: not client_ssl_key_rsa_stat.stat.exists|bool
-
 - name: ensure secure permissions on private keys
   become: yes
   file: 
@@ -30,16 +20,14 @@
     mode: 0600
   loop:
     - "{{ ssl_key }}"
-    - "{{ client_ssl_key }}"
     - "{{ ssl_key_rsa }}"
-    - "{{ client_ssl_key_rsa }}"
 
 - name: Java keystore and trust store
   block:
     - name: see if the Java keystore exists
       become: yes
       stat:
-        path: "{{ java_key_store_jks }}"
+        path: "{{ java_key_store }}"
       register: arkcase_ks_stat
       changed_when: false
     - name: see if keys already added to the Java keystore
@@ -52,13 +40,13 @@
       block:
         - name: write arkcase.p12 (used by Pentaho)
           become: yes
-          command: openssl pkcs12 -export -in {{ client_ssl_cert }} -inkey {{ client_ssl_key_rsa }} -out "{{ java_p12_store }}" -name arkcase_client -chain -CAfile {{ client_ssl_ca }} -passout 'pass:{{ java_key_store_pass }}'
+          command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key_rsa }} -out "{{ java_p12_store }}" -name arkcase_server -chain -CAfile {{ ssl_ca }} -passout 'pass:{{ java_key_store_pass }}'
         - name: copy arkcase.p12 to key store format (PKCS12 format)
           become: yes
-          command: keytool -importkeystore -deststorepass {{ java_key_store_pass }} -destkeypass {{ java_key_store_pass }} -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_client -noprompt
+          command: keytool -importkeystore -deststorepass {{ java_key_store_pass }} -destkeypass {{ java_key_store_pass }} -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_server -noprompt
         - name: copy arkcase.p12 to key store format (JKS format)
           become: yes
-          command: keytool -importkeystore -deststorepass {{ java_key_store_pass }} -destkeypass {{ java_key_store_pass }} -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_client -noprompt
+          command: keytool -importkeystore -deststorepass {{ java_key_store_pass }} -destkeypass {{ java_key_store_pass }} -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_server -noprompt
         - name: add ArkCase certs to Java truststore
           become: yes
           java_cert:
@@ -69,12 +57,10 @@
             keystore_create: yes
             state: present
           loop:
-            - alias: "arkcase-client"
-              path: "{{ client_ssl_cert }}"
-            - alias: "arkcase-chain"
-              path: "{{ client_ssl_ca }}"
             - alias: "arkcase-server"
               path: "{{ ssl_cert }}"
+            - alias: "arkcase-chain"
+              path: "{{ ssl_ca }}"
         - name: add JDK certs to Java trust store
           become: yes
           command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
@@ -107,22 +93,22 @@
         path: "{{ root_folder }}/common/symmetricKeyWithNewline.txt"
         state: absent
       when: trim_plaintext is changed
-    - name: extract public key from client cert
+    - name: extract public key from server cert
       become: yes
-      command: openssl x509 -pubkey -noout -in {{ client_ssl_cert }} -noout
-      register: client_pub_key
+      command: openssl x509 -pubkey -noout -in {{ ssl_cert }} -noout
+      register: pub_key
       when: sym_key_enc.stat.exists == False
       changed_when: false
     - name: write public key to file
       become: yes
       copy:
-        dest: "{{ root_folder }}/common/arkcase-client.pub"
+        dest: "{{ root_folder }}/common/arkcase-server.pub"
         content: |
-          {{ client_pub_key.stdout }}
+          {{ pub_key.stdout }}
       when: sym_key_enc.stat.exists == False
     - name: write encrypted plaintext
       become: yes
-      command: openssl rsautl -encrypt -pubin -inkey "{{ root_folder }}/common/arkcase-client.pub" -in "{{ root_folder }}/common/symmetricKey.txt" -out "{{ root_folder }}/common/symmetricKey.encrypted"
+      command: openssl rsautl -encrypt -pubin -inkey "{{ root_folder }}/common/arkcase-server.pub" -in "{{ root_folder }}/common/symmetricKey.txt" -out "{{ root_folder }}/common/symmetricKey.encrypted"
       when: sym_key_enc.stat.exists == False
 
 

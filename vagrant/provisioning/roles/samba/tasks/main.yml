@@ -114,7 +114,7 @@
   copy:
     remote_src: yes
     src: "{{ item.path }}"
-    dest: "{{ root_folder }}/app/samba/private/tls/{{ item.name }}"
+    dest: "{{ root_folder }}/app/samba/private/{{ item.name }}"
     mode: 0600
   loop:
     - path: "{{ ssl_key }}"
@@ -131,9 +131,9 @@
     insertafter: "\\[global\\]"
     block: |
       tls enabled = yes
-      tls certfile = {{ root_folder }}/app/samba/private/tls/arkcase-server.crt
-      tls keyfile = {{ root_folder }}/app/samba/private/tls/arkcase-server.pem
-      tls cafile =  {{ root_folder }}/app/samba/private/tls/arkcase-chain.crt
+      tls certfile = {{ root_folder }}/app/samba/private/arkcase-server.crt
+      tls keyfile = {{ root_folder }}/app/samba/private/arkcase-server.pem
+      tls cafile = {{ root_folder }}/app/samba/private/arkcase-chain.crt
   
 - name: copy Samba systemd unit file
   become: yes

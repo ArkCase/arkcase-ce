@@ -15,7 +15,7 @@
 
 - name: decrypt the symmetric key (using private key)
   become: yes
-  command: openssl rsautl -decrypt -inkey {{ client_ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
+  command: openssl rsautl -decrypt -inkey {{ ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
 
 - name: remove the trailing new line from the symmetric key file
   become: yes
@@ -60,6 +60,14 @@
   file:
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
+
+# might have to upgrade PIP itself before installing openpyxl
+- name: update PIP if necessary
+  become: yes
+  pip:
+    name:
+      - pip
+    extra_args: --upgrade
 
 - name: install Python Excel module
   become: yes
@@ -157,7 +165,7 @@
   become: yes
   become_user: arkcase
   command: mv {{ root_folder }}/install/arkcase/arkcase-config{{ arkcase_extension_version }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool and not "{{ root_folder }}/install/arkcase/arkcase-config{{ arkcase_extension_version }}.zip" == "{{ root_folder }}/install/arkcase/arkcase-config.zip"
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not root_folder ~ "/install/arkcase/arkcase-config" ~ arkcase_extension_version ~ ".zip" == root_folder ~ "/install/arkcase/arkcase-config.zip"
 
 - name: download configuration (if using sftp, and no extension is configured)
   become: yes
@@ -188,14 +196,21 @@
   become: yes
   become_user: arkcase
   stat:
-    path: /home/arkcase/.arkcae/.arkcase-arkcase-{{ arkcase_version }}
+    path: /home/arkcase/.arkcase/.arkcase-arkcase-{{ arkcase_version }}
   register: first_level_folder
 
 - name: junk the first-level config folder, if necessary
   become: yes
   become_user: arkcase
   shell: mv /home/arkcase/.arkcase/.arkcase-arkcase-{{ arkcase_version }}/* /home/arkcase/.arkcase/
-  when: arkcase_config_unzipped is changed and first_level_folder.stat.exists
+  when: first_level_folder.stat.exists
+
+- name: remove first level config folder, if necessary
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/.arkcase-arkcase-{{ arkcase_version }}
+    state: absent
 
 - name: deploy core reports
   include_tasks: deploy_report.yml
@@ -236,7 +251,7 @@
   template:
     src: config-server.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
-    force: no
+    force: yes
 
 ##### Mule TLS fixes #####
 - name: ensure custom/WEB-INF/classes exists
@@ -491,6 +506,13 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
 
+- name: see if activemq-config.yaml exists
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+  register: activemq_config_xml
+  
 - name: plaintext passwords (activemq-config.yaml)
   become: yes
   become_user: arkcase
@@ -503,6 +525,7 @@
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
       replace: "ENC({{ encrypted_activemq_guest }})"
+  when: activemq_config_xml.stat.exists
       
 - name: plaintext passwords (forms properties)
   become: yes
@@ -681,9 +704,9 @@
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'
-      replace: 'value="arkcase_client"'
+      replace: 'value="arkcase_server"'
     - regexp: 'value="arkcase"'
-      replace: 'value="arkcase_client"'
+      replace: 'value="arkcase_server"'
 
 - name: proxy servlet
   become: yes
