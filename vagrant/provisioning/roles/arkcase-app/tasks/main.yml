@@ -491,12 +491,12 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
 
-- name: plaintext passwords (activemq-config.yaml)
+- name: plaintext passwords (arkcase-activemq.yaml)
   become: yes
   become_user: arkcase
   replace:
     backup: yes
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
@@ -638,21 +638,21 @@
     state: absent
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
-- name: copy activemq-config.yaml if necessary
+- name: copy arkcase-activemq.yaml if necessary
   become: yes
   become_user: arkcase
   copy: 
-    src: activemq-config.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    src: arkcase-activemq.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     force: no
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
-- name: update existing activemq-config.yaml
+- name: update existing arkcase-activemq.yaml
   become: yes
   become_user: arkcase
   replace:
     backup: yes
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     regexp: acm-arkcase
     replace: acm-activemq
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
