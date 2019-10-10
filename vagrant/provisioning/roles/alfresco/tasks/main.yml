@@ -636,7 +636,6 @@
   firewalld:
     port: "7070/tcp"
     permanent: true
-    zone: public
     state: enabled
   register: alfresco_port
 
