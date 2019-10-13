@@ -43,7 +43,7 @@
 - name: install artifacts
   become: yes
   become_user: pentaho
-  shell: echo -e "{{ item.installer_response }}" | java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
+  shell: LINES=32 echo -e "{{ item.installer_response }}" | LINES=32 java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
   args: 
     creates: "{{ item.creates }}"
   loop:

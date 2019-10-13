@@ -42,17 +42,16 @@
 - name: set hostname
   become: yes
   hostname:
-    name: "{{ arkcase_host_name }}"
+    name: "{{ internal_host }}"
     
-- name: add {{ arkcase_host_name }} to hosts file
+- name: add {{ internal_host }} to hosts file
   become: yes
   lineinfile:
     path: /etc/hosts
     line: "{{ item }}"
   loop:
-    - "127.0.0.1 {{ arkcase_host_name }}"
+    - "127.0.0.1 {{ internal_host }}"
     - "127.0.0.1 arkcase-host"
-    - "127.0.0.1 acm-activemq"
     
 - name: set timezone to UTC
   become: yes
