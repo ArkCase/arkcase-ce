@@ -78,9 +78,11 @@ Vagrant.configure("2") do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  config.vm.provision "shell", inline: <<-SHELL
+  $script = <<-SCRIPT 
     sudo yum -y install ansible
     cd /tmp/provisioning
-    ansible-playbook -i 'arkcase-ce.local,' -e @arkcase-ce-facts.yml arkcase-ce.yml
-  SHELL
+    ansible-playbook -e @arkcase-ce-facts.yml arkcase-ce.yml
+  SCRIPT
+
+  config.vm.provision "shell", inline: $script
 end

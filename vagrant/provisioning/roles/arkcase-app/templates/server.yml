@@ -1,6 +1,6 @@
 acm:
   driverClassName: "{{ database_mysql_jdbc_driver }}"
-  url: "jdbc:mysql://{{ arkcase_host_name }}:3306/arkcase?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_version }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
+  url: "jdbc:mysql://{{ internal_host }}:3306/arkcase?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_version }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
   password: "ENC({{ encrypted_default_database }})"
 elk:
   server:
@@ -16,10 +16,10 @@ report:
     PENTAHO_SERVER_URL: "https://{{ external_host }}"
     PENTAHO_SERVER_USER: "{{ arkcase_admin_user }}"
     PENTAHO_SERVER_PASSWORD: "ENC({{ encrypted_admin_user_password }})"
-    PENTAHO_SERVER_INTERNAL_URL: "https://{{ arkcase_host_name }}"
+    PENTAHO_SERVER_INTERNAL_URL: "https://{{ internal_host }}"
     PENTAHO_SERVER_INTERNAL_PORT: 2002
 solr:
-  host: "{{ arkcase_host_name }}"
+  host: "{{ internal_host }}"
   port: 443
 ecm:
   viewer.snowbound: "https://{{ external_host }}/arkcase/VirtualViewerJavaHTML5/index.html?documentId=ecmFileId=$[fileId]%26acm_ticket=$[ticket]%26userid=$[userid]"
@@ -57,13 +57,13 @@ application:
     issueCollectorFlag: false
 alfresco:
   admin:
-    baseurl: "https://{{ arkcase_host_name }}/alfresco/s/admin/admin-sync"
+    baseurl: "https://{{ external_host }}/alfresco/s/admin/admin-sync"
   sync:
-    host: "{{ arkcase_host_name }}"
+    host: "{{ external_host }}"
     port: 443
     enabled: {{ enable_alfresco_sync | lower }}
 ################### Alfresco RMA Plugin Configuration (alfrescoRmaPlugin.properties) ####################
-alfresco_host: "{{ arkcase_host_name }}"
+alfresco_host: "{{ external_host }}"
 alfresco_port: 443
 email:
   should-delete-messages: false
@@ -100,8 +100,9 @@ ocr:
   tempPath: "{{ root_folder }}/tmp/arkcase/"
 ark.activemq:
   #URL of the ActiveMQ broker.
-  transportConnectorURI: "ssl://acm-activemq:61616"
+  transportConnectorURI: "ssl://{{ internal_host }}:61616"
 acm.websockets:
+  stomp_broker_relay.relay_host: "{{ internal_host }}"
   stomp_broker_relay.keystore: "{{ java_key_store }}"
   stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
   stomp_broker_relay.truststore: "{{ java_trust_store }}"

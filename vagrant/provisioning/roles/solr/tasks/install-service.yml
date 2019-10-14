@@ -24,7 +24,7 @@
       SOLR_DATA_HOME={{ root_folder }}/data/solr
       SOLR_LOGS_DIR={{ root_folder }}/log/solr
       SOLR_LOG_LEVEL=INFO
-      SOLR_HOST={{ arkcase_host_name }}
+      SOLR_HOST={{ internal_host }}
 
 - name: update environment file - jmx enabled
   become: yes
@@ -34,7 +34,7 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - JMX"
     block: |
-      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file={{ root_folder }}/app/solr/access.file -Dcom.sun.management.jmxremote.password.file={{ root_folder }}/app/solr/password.file -Djava.rmi.server.hostname={{ arkcase_host_name }}"
+      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file={{ root_folder }}/app/solr/access.file -Dcom.sun.management.jmxremote.password.file={{ root_folder }}/app/solr/password.file -Djava.rmi.server.hostname={{ internal_host }}"
   when: solr_jmx_enabled|bool
 
 - name: update environment file - TLS

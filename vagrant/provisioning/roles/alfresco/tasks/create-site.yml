@@ -1,5 +1,5 @@
 - name: create {{ s_name }} share site
-  command: curl -k -sS --user admin:admin -H 'Content-Type{{ ":" }} application/json' -H 'Accept{{ ":" }} */*' -H 'Alfresco-CSRFToken{{ ":" }} {{ s_csrftoken }}' --cookie cookie.txt --cookie-jar cookie.txt -X POST 'https://{{ arkcase_host_name }}{{ ":" }}7070/share/service/modules/create-site' --data '{ "title"{{ ":" }} "{{ s_title }}","shortName"{{ ":" }} "{{ s_name }}","description"{{ ":" }} "{{ s_description }}","sitePreset"{{ ":" }} "{{ s_preset }}", "type"{{ ":" }} "{{ s_type }}","visibility"{{ ":" }} "PUBLIC","compliance"{{ ":" }} "{{ s_compliance }}" }' --compressed
+  command: curl -k -sS --user admin:admin -H 'Content-Type{{ ":" }} application/json' -H 'Accept{{ ":" }} */*' -H 'Alfresco-CSRFToken{{ ":" }} {{ s_csrftoken }}' --cookie cookie.txt --cookie-jar cookie.txt -X POST 'https://{{ internal_host }}{{ ":" }}7070/share/service/modules/create-site' --data '{ "title"{{ ":" }} "{{ s_title }}","shortName"{{ ":" }} "{{ s_name }}","description"{{ ":" }} "{{ s_description }}","sitePreset"{{ ":" }} "{{ s_preset }}", "type"{{ ":" }} "{{ s_type }}","visibility"{{ ":" }} "PUBLIC","compliance"{{ ":" }} "{{ s_compliance }}" }' --compressed
   args:
     warn: false
   register: acm_site_out
