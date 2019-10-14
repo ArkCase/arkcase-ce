@@ -7,6 +7,8 @@
     state: link
 
 - name: LDAP application context
+  become: yes
+  become_user: pentaho
   template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
