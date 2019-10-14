@@ -1,24 +1,22 @@
 ---
 - hosts: localhost
   roles:
-#    - common
-#    - pki
-#    - pki_client
-#    - samba
-#    - ldap
-#    - mariadb
-#    - httpd
-#    - alfresco
-#    - activemq
-#    - solr
-#    - pentaho-setup
-    - pentaho-ee
+    - common
+    - pki
+    - pki_client
+    - samba
+    - ldap
+    - mariadb
+    - httpd
+    - alfresco
+    - activemq
+    - solr
+    - pentaho-setup
+    - pentaho-ce
     - pentaho-configuration
     - snowbound
     - arkcase-prerequisites
     - arkcase-app
     - tesseract
-    - pentaho-license
-
 
     
