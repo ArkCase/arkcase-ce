@@ -34,7 +34,7 @@
 - name: deploy report "{{ r }}"
   become: yes
   become_user: arkcase
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ arkcase_host_name }}:2002/pentaho --username={{ arkcase_admin_user }} --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ report_path }} --file-path='{{ root_folder }}/install/arkcase/report-definitions/foia/{{ r }}' --logfile={{ root_folder }}/log/arkcase/upload-foia-report.log --permission=true --overwrite=true --retainOwnership=true"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ report_path }} --file-path='{{ root_folder }}/install/arkcase/report-definitions/foia/{{ r }}' --logfile={{ root_folder }}/log/arkcase/upload-foia-report.log --permission=true --overwrite=true --retainOwnership=true"
   when: report_definition is changed
   register: import_results
   failed_when: "'Import was successful' not in import_results.stdout"

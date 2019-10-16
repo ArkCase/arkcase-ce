@@ -142,7 +142,7 @@
     backup: yes
     path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml"
     regexp: 'http://localhost:8080'
-    replace: 'https://{{ arkcase_host_name }}:{{ alfresco_tls_port }}'
+    replace: 'https://{{ internal_host }}:{{ alfresco_tls_port }}'
 
 - name: create alfresco database schema
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
@@ -239,11 +239,11 @@
       db.pool.max=50
       db.pool.validate.query=SELECT 1
       alfresco.context=alfresco
-      alfresco.host={{ arkcase_host_name }}
+      alfresco.host={{ internal_host }}
       alfresco.port={{ alfresco_tls_port }}
       alfresco.protocol=https
       share.context=share
-      share.host={{ arkcase_host_name }}
+      share.host={{ internal_host }}
       share.port={{ alfresco_tls_port }}
       share.protocol=https
       # audit app support
@@ -419,7 +419,7 @@
     
 # note, can't use get_uri here since we need to keep the cookie jar
 - name: login to Share
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://{{ arkcase_host_name }}:7070/share/page/dologin"
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://{{ internal_host }}:7070/share/page/dologin"
   args:
     warn: false
   changed_when: false
@@ -431,7 +431,7 @@
   changed_when: false
 
 - name: get the CSRFToken
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://{{ arkcase_host_name }}:7070/share/service/modules/authenticated?a=user"
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://{{ internal_host }}:7070/share/service/modules/authenticated?a=user"
   args:
     warn: false
   changed_when: false
@@ -443,7 +443,7 @@
   changed_when: false
 
 - name: parse the CSRFToken
-  shell: egrep ^{{ arkcase_host_name }} cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
+  shell: egrep ^{{ internal_host }} cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
   register: csrftoken_parsed
   changed_when: false
 
@@ -464,7 +464,7 @@
 
 - name: list the document library, so we can then add some folders
   uri:
-    url: https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
+    url: https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
     user: admin
     password: admin
     validate_certs: no
@@ -474,7 +474,7 @@
 
 - name: see what folders already exist
   uri:
-    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
+    url: "https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
     password: admin
     validate_certs: no
@@ -483,7 +483,7 @@
 
 - name: ensure the right folders are in the document library
   uri:
-    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/site/folder/acm/documentlibrary"
+    url: "https://{{ internal_host }}:7070/alfresco/s/api/site/folder/acm/documentlibrary"
     method: POST
     user: admin
     password: admin
@@ -511,7 +511,7 @@
 
 - name: fetch the RM container
   uri:
-    url: https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/containers/rm
+    url: https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/containers/rm
     validate_certs: false
     user: admin
     password: admin
@@ -534,7 +534,7 @@
 
 - name: get the RM site containers, so we can find the ACM noderef
   uri:
-    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
+    url: "https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
     password: admin
     validate_certs: no
@@ -555,7 +555,7 @@
 
 - name: add groups to acm site
   uri: 
-    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/sites/acm/memberships"
+    url: "https://{{ internal_host }}:7070/alfresco/s/api/sites/acm/memberships"
     method: POST
     user: admin
     password: admin
@@ -572,7 +572,7 @@
 
 - name: add groups to records management admin role
   uri: 
-    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name }}"
+    url: "https://{{ internal_host }}:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name | urlencode }}"
     method: POST
     user: admin
     password: admin
@@ -586,7 +586,7 @@
 
 - name: add groups to records management site
   uri: 
-    url: "https://{{ arkcase_host_name }}:7070/alfresco/s/api/sites/rm/memberships"
+    url: "https://{{ internal_host }}:7070/alfresco/s/api/sites/rm/memberships"
     method: POST
     user: admin
     password: admin
@@ -636,7 +636,6 @@
   firewalld:
     port: "7070/tcp"
     permanent: true
-    zone: public
     state: enabled
   register: alfresco_port
 

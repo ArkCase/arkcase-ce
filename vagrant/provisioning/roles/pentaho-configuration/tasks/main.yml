@@ -7,14 +7,16 @@
     state: link
 
 - name: LDAP application context
+  become: yes
+  become_user: pentaho
   template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   loop:
     - src: "applicationContext-security-ldap.properties"
-      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/applicationContext-security-ldap.properties"
     - src: "repository.spring.properties"
-      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/repository.spring.properties"
 
 - name: import arkcase keystore
   become: yes

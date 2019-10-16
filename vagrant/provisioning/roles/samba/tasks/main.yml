@@ -95,7 +95,7 @@
   register: samba_install
   when: samba_build is changed
 
-- name: provision {{ arkcase_host_name }} domain
+- name: provision {{ samba_domain }} domain
   become: yes
   command: "{{ root_folder }}/app/samba/bin/samba-tool domain provision --use-rfc2307 --domain={{ samba_domain }} --realm={{ samba_realm }} --dns-backend=SAMBA_INTERNAL --server-role={{ samba_server_role }} --host-ip={{ samba_host_ip }} --adminpass={{ samba_admin_password }}"
   args:

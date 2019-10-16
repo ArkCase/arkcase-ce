@@ -24,7 +24,7 @@
 - name: deploy report "{{ r.pentaho_path }}/{{ r.name }}"
   become: yes
   become_user: pentaho
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ arkcase_host_name }}:2002/pentaho --username={{ arkcase_admin_user }} --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ r.pentaho_path }} --file-path={{ root_folder }}/install/pentaho/report-definitions/extension/{{ r.pentaho_path }}/{{ r.name }} --logfile={{ root_folder }}/log/pentaho/upload.log --permission=true --overwrite=true --retainOwnership=true"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ r.pentaho_path }} --file-path={{ root_folder }}/install/pentaho/report-definitions/extension/{{ r.pentaho_path }}/{{ r.name }} --logfile={{ root_folder }}/log/pentaho/upload.log --permission=true --overwrite=true --retainOwnership=true"
   when: "'inflated' in report_definition.stdout"
   register: import_results
   failed_when: "'Import was successful' not in import_results.stdout"

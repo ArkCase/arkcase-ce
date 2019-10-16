@@ -16,6 +16,12 @@
 - name: decrypt the symmetric key (using private key)
   become: yes
   command: openssl rsautl -decrypt -inkey {{ ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
+  when: not client_ssl_key is defined
+
+- name: decrypt the symmetric key (using private key)
+  become: yes
+  command: openssl rsautl -decrypt -inkey {{ client_ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
+  when: client_ssl_key is defined
 
 - name: remove the trailing new line from the symmetric key file
   become: yes
@@ -151,10 +157,20 @@
     SSHPASS: "{{ sftp_extension_password }}"
   when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
 
+- name: set extension config file name (extension id)
+  set_fact:
+    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version }}.zip"
+  when: arkcase_extension_id is defined
+
+- name: set extension config file name (no extension id)
+  set_fact:
+    extension_config_file_name: "arkcase-config{{ arkcase_extension_version }}.zip"
+  when: not arkcase_extension_id is defined
+
 - name: download extension configuration (if configured)
   become: yes
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/arkcase-config{{ arkcase_extension_version }}.zip
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ extension_config_file_name }}
   args:
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
@@ -164,8 +180,8 @@
 - name: rename extension config zip to common file name
   become: yes
   become_user: arkcase
-  command: mv {{ root_folder }}/install/arkcase/arkcase-config{{ arkcase_extension_version }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not root_folder ~ "/install/arkcase/arkcase-config" ~ arkcase_extension_version ~ ".zip" == root_folder ~ "/install/arkcase/arkcase-config.zip"
+  command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
 
 - name: download configuration (if using sftp, and no extension is configured)
   become: yes
@@ -506,26 +522,26 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
 
-- name: see if activemq-config.yaml exists
+- name: see if arkcase-activemq.yaml exists
   become: yes
   become_user: arkcase
   stat:
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
-  register: activemq_config_xml
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
+  register: arkcase_activemq_xml
   
-- name: plaintext passwords (activemq-config.yaml)
+- name: plaintext passwords (arkcase-activemq.yaml)
   become: yes
   become_user: arkcase
   replace:
     backup: yes
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
       replace: "ENC({{ encrypted_activemq_guest }})"
-  when: activemq_config_xml.stat.exists
+  when: arkcase_activemq_xml.stat.exists
       
 - name: plaintext passwords (forms properties)
   become: yes
@@ -633,7 +649,7 @@
     backup: yes
     path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
     regexp: "acm-arkcase"
-    replace: "{{ arkcase_host_name }}"
+    replace: "{{ external_host }}"
 
 - name: see if we have an Alfresco sync service XML file
   become: yes
@@ -676,23 +692,23 @@
       replace: "ENC({{ encrypted_activemq_guest }})"
   when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
 
-- name: copy activemq-config.yaml if necessary
+- name: copy arkcase-activemq.yaml if necessary
   become: yes
   become_user: arkcase
   copy: 
-    src: activemq-config.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    src: arkcase-activemq.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     force: no
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
-- name: update existing activemq-config.yaml
+- name: update existing arkcase-activemq.yaml
   become: yes
   become_user: arkcase
   replace:
     backup: yes
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/activemq-config.yaml
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     regexp: acm-arkcase
-    replace: acm-activemq
+    replace: "{{ internal_host }}"
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
 - name: copy quartz.properties if necessary
@@ -703,7 +719,17 @@
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring/quartz.properties
     force: no
 
-- name: fix encryption properties
+- name: set private key alias (client ssl key)
+  set_fact:
+    private_key_alias: "arkcase_client"
+  when: client_ssl_key is defined
+
+- name: set private key alias (ssl key)
+  set_fact:
+    private_key_alias: "arkcase_server"
+  when: not client_ssl_key is defined
+
+- name: fix encryptionproperties
   become: yes
   become_user: arkcase
   replace:
@@ -719,9 +745,9 @@
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'
-      replace: 'value="arkcase_server"'
+      replace: 'value="{{ private_key_alias }}"'
     - regexp: 'value="arkcase"'
-      replace: 'value="arkcase_server"'
+      replace: 'value="{{ private_key_alias }}"'
 
 - name: proxy servlet
   become: yes

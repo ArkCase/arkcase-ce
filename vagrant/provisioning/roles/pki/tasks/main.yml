@@ -145,7 +145,7 @@
     organization_name: ArkCase
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
-    common_name: "{{ arkcase_host_name }}"
+    common_name: "{{ internal_host }}"
     subject_alt_name:
       - DNS:{{ external_host }}
       - DNS:{{ internal_host }}

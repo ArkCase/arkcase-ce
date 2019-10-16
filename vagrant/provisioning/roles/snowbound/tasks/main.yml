@@ -99,9 +99,9 @@
     replace: "{{ item.replace }}"
   loop:
     - regexp: "https://acm-snowbound:8443"
-      replace: "https://{{ arkcase_host_name }}"
+      replace: "https://{{ internal_host }}"
     - regexp: "https://acm-arkcase:8843"
-      replace: "https://{{ arkcase_host_name }}"
+      replace: "https://{{ arkcase_host_name }}:8843"
   register: web_xml
   when: snowbound_war is changed
 
