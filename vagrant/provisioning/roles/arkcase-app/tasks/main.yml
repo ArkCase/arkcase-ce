@@ -649,7 +649,7 @@
     backup: yes
     path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
     regexp: "acm-arkcase"
-    replace: "{{ external_host }}"
+    replace: "{{ internal_host }}"
 
 - name: see if we have an Alfresco sync service XML file
   become: yes

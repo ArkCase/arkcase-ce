@@ -8,7 +8,7 @@
         <property name="initParameters">
             <props>
                 <!-- TODO: parameterize the URLs -->
-                <prop key="targetUri">https://{{ external_host }}/</prop>
+                <prop key="targetUri">https://{{ internal_host }}/</prop>
                 <prop key="http.protocol.handle-redirects">true</prop>
                 <!-- resource names regex patterns separated with comma "," if multiple.
                 Will be processed and override urls inside the response-->
@@ -26,7 +26,7 @@
         <property name="initParameters">
             <props>
                 <!-- TODO: parameterize the URLs -->
-                <prop key="targetUri">https://{{ external_host }}:2002/</prop>
+                <prop key="targetUri">https://{{ internal_host }}:2002/</prop>
                 <prop key="http.protocol.handle-redirects">true</prop>
                 <!-- resource names regex patterns separated with comma "," if multiple.
                 Will be processed and override urls inside the response-->
@@ -57,7 +57,7 @@
         <property name="initParameters">
             <props>
                 <!-- TODO: parameterize the URLs -->
-                <prop key="targetUri">https://{{ external_host }}/</prop>
+                <prop key="targetUri">https://{{ internal_host }}/</prop>
                 <prop key="http.protocol.handle-redirects">true</prop>
                 <!-- resource names regex patterns separated with comma "," if multiple.
                 Will be processed and override urls inside the response-->
