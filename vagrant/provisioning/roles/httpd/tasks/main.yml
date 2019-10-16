@@ -55,6 +55,27 @@
   template:
     src: arkcase-httpd
     dest: /etc/logrotate.d/arkcase-httpd
+
+- name: see if mod_security.conf exists, possibly from an earlier installation of httpd
+  become: yes
+  stat:
+    path: "/etc/httpd/conf.d/mod_security.conf"
+  register: mod_security_conf
+
+- name: update mod_security.conf if necessary
+  become: yes
+  replace:
+    backup: yes
+    path: "/etc/httpd/conf.d/mod_security.conf"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "SecAuditLogParts ABIJDEFHZ"
+      replace: "SecAuditLogParts ABFZ"
+    - regexp: "\/var\/log\/httpd"
+      replace: "{{ root_folder }}/log/httpd"
+  when: mod_security_conf.stat.exists
+  register: mod_security_conf_updated
     
 - name: enable httpd to run at startup
   become: yes
@@ -68,7 +89,7 @@
   systemd:
     name: httpd
     state: restarted
-  when: tls_conf is changed
+  when: tls_conf is changed or mod_security_conf_updated is changed
 
 - name: see if httpd_can_network_connect is already enabled
   command: /usr/sbin/getsebool httpd_can_network_connect
