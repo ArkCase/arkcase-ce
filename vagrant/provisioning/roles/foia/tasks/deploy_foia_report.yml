@@ -11,7 +11,7 @@
 - name: get the FOIA jar file
   become: yes
   become_user: arkcase
-  shell: unzip -u -o -j -d "{{ root_folder }}/install/arkcase" "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version }}.war" WEB-INF/lib/acm-foia-*.jar
+  shell: unzip -u -o -j -d "{{ root_folder }}/install/arkcase" "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war" WEB-INF/lib/acm-foia-*.jar
   args:
     warn: no
 
