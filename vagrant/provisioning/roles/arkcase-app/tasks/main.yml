@@ -81,7 +81,7 @@
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: ArkCase war file
-      dest: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version }}.war"
+      dest: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
       owner: arkcase
       url: https://github.com/ArkCase/ArkCase/releases/download/arkcase-{{ arkcase_version }}/acm-law-enforcement-{{ arkcase_version }}.war
     - name: ArkCase configuration
@@ -97,7 +97,7 @@
 - name: download arkcase war file (if using sftp)
   become: yes
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase{{ arkcase_version }}.war
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase{{ arkcase_version_formatted }}.war
   args:
     chdir: "{{ root_folder }}/tmp/arkcase"
   environment:
@@ -109,8 +109,8 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/tmp/arkcase/arkcase{{ arkcase_version }}.war"
-    dest: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version }}.war"
+    src: "{{ root_folder }}/tmp/arkcase/arkcase{{ arkcase_version_formatted }}.war"
+    dest: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
   register: arkcase_war
   when: arkcase_retrieve_strategy == "sftp"
 
@@ -280,7 +280,7 @@
 - name: unarchive ArkCase search service jar
   become: yes
   become_user: arkcase
-  shell: unzip -o arkcase{{ arkcase_version }}.war WEB-INF/lib/acm-service-search-*.jar
+  shell: unzip -o arkcase{{ arkcase_version_formatted }}.war WEB-INF/lib/acm-service-search-*.jar
   args:
     chdir: "{{ root_folder }}/install/arkcase"
     warn: false
@@ -309,7 +309,7 @@
 - name: update arkcase.war with updated search service jar
   become: yes
   become_user: arkcase
-  command: zip -r -m arkcase{{ arkcase_version}}.war WEB-INF
+  command: zip -r -m arkcase{{ arkcase_version_formatted}}.war WEB-INF
   args:
     chdir: "{{ root_folder }}/install/arkcase"
     warn: false
@@ -661,6 +661,21 @@
     state: absent
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
+- name: update activemq properties
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/arkcase-activemq.properties
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "acm-arkcase"
+      replace: "{{ internal_host }}"
+    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
+      replace: "ENC({{ encrypted_activemq_guest }})"
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
+
 - name: copy activemq-config.yaml if necessary
   become: yes
   become_user: arkcase
@@ -751,6 +766,6 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version }}.war"
+    src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
 
