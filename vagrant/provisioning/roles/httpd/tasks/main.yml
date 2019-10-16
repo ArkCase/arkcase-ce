@@ -72,7 +72,7 @@
   loop:
     - regexp: "SecAuditLogParts ABIJDEFHZ"
       replace: "SecAuditLogParts ABFZ"
-    - regexp: "\/var\/log\/httpd"
+    - regexp: "/var/log/httpd"
       replace: "{{ root_folder }}/log/httpd"
   when: mod_security_conf.stat.exists
   register: mod_security_conf_updated
