@@ -18,7 +18,10 @@
     - "2002/tcp"   # pentaho
     - "8983/tcp"   # solr
     - "8843/tcp"   # arkcase
-    - "8680/tcp"   # snowbound
+    - "2005/tcp"   # snowbound
+    - "3306/tcp"   # MariaDB
+    - "61616/tcp"  # ActiveMQ JMS
+    - "61613/tcp"  # ActiveMQ STOMP
 
 - name: Reload firewalld
   become: yes

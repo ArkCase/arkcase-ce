@@ -144,13 +144,14 @@
     regexp: 'http://localhost:8080'
     replace: 'https://{{ internal_host }}:{{ alfresco_tls_port }}'
 
+- include_tasks: csrf_filter.yml
+
 - name: create alfresco database schema
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
   args:
     apply:
       vars:
-        item: alfresco
-    
+        item: alfresco    
 
 - name: copy alfresco-mmt.jar
   become: yes
