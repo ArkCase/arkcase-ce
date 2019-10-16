@@ -1,4 +1,4 @@
-{{ root_folder }}/log/httpd/*_log {
+{{ root_folder }}/log/httpd/*log {
   copytruncate
   daily
   rotate 7
