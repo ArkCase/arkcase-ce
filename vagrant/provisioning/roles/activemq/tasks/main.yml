@@ -45,6 +45,14 @@
     creates: "{{ root_folder }}/app/activemq/LICENSE"
   register: activemq_unarchived
 
+- name: unarchive ActiveMQ fileserver webapp
+  become: yes
+  become_user: activemq
+  unarchive:
+    src: "fileserver.zip"
+    dest: "{{ root_folder }}/app/activemq/webapps"
+    creates: "{{ root_folder }}/app/activemq/webapps/fileserver/index.html"
+
 - name: update startup script
   become: yes
   become_user: activemq
