@@ -4,7 +4,12 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/alfresco -mtime +7 -delete
+  endscript
 }
 
 {{ root_folder }}/log/alfresco/*.out {
@@ -13,7 +18,12 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/alfresco -mtime +7 -delete
+  endscript
 }
 
 {{ root_folder }}/log/alfresco/*.txt {
@@ -22,5 +32,10 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/alfresco -mtime +7 -delete
+  endscript
 }

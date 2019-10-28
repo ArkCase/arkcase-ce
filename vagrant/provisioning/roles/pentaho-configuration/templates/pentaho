@@ -4,7 +4,12 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/pentaho -mtime +7 -delete
+  endscript
 }
 
 {{ root_folder }}/log/pentaho/*.out {
@@ -13,6 +18,11 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/pentaho -mtime +7 -delete
+  endscript
 }
 
