@@ -2,7 +2,7 @@
   become: yes
   become_user: pentaho
   copy:
-    src: "{{ role_path }}/../pentaho/files/quartz-create-db.sql"
+    src: "quartz-create-db.sql"
     dest: "{{ root_folder }}/install/pentaho/"
     
 - name: create hibernate schema (ansible will always report quartz as changed)
