@@ -129,7 +129,7 @@ email_convert_documents_to_pdf: false
 create_case_from_email_enabled: false
 create_complaint_from_email_enabled: false
 
-# retrieve arkcase from GitHub ("github") or Maven ("maven")
+# retrieve arkcase from GitHub ("github") or SFTP ("sftp")
 arkcase_retrieve_strategy: "github"
 
 # arkcase_webapp_supported_version is for github (i.e, CE) downloads.
@@ -148,6 +148,7 @@ arkcase_webapp_supported_versions:
 # or a github release version (for github downloads). 
 # Leave blank to get latest Maven snapshot from SFTP.
 arkcase_version: "3.3.1-r1"
+arkcase_version_formatted: "{{ '-' ~ arkcase_version if arkcase_version != '' else '' }}"
 
 # arkcase extension 
 arkcase_extension_install: no
@@ -227,7 +228,7 @@ arkcase_extra_artifacts:
 # leave blank to get the latest Maven snapshot from SFTP
 arkcase_config_server_version: "0.0.1"
 
-# retrieve snowbound from GitHub ("github") or Maven ("maven")
+# retrieve snowbound from GitHub ("github") or SFTP ("sftp")
 snowbound_retrieve_strategy: "github"
 snowbound_vendor_version: "4.10"
 snowbound_arkcase_version: "3.3.2"
@@ -256,13 +257,9 @@ ssl_cipher: "{{ ssl_version }}"
 ssl_key: "/etc/tls/private/arkcase-server.pem"
 ssl_ca: "/etc/tls/crt/arkcase-chain.crt"
 ssl_cert: "/etc/tls/crt/arkcase-server.crt"
-client_ssl_key: "/etc/tls/private/arkcase-client.pem"
-client_ssl_ca: "{{ ssl_ca }}"
-client_ssl_cert: "/etc/tls/crt/arkcase-client.crt"
 
 # these files will be created by the installer
 ssl_key_rsa: "/etc/tls/private/arkcase-server.rsa.key"
-client_ssl_key_rsa: "/etc/tls/private/arkcase-client.rsa.key"
 java_trust_store: "{{ root_folder }}/common/arkcase.ts"
 java_key_store: "{{ root_folder }}/common/arkcase.ks"
 java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"
@@ -275,7 +272,6 @@ samba_realm: "{{ internal_host }}"
 samba_host_ip: "127.0.0.1"
 samba_admin_password: "{{ default_user_password }}"
 samba_server_role: dc
-
 
 database_host_name: "{{ arkcase_host_name }}"
 database_server_ssl_cert: "{{ ssl_cert }}"
@@ -297,13 +293,13 @@ jmx_password: P@ssw0rd
 # for Pentaho EE you must have the Pentaho EE license files
 # (NOT included in this repository), and you must have downloaded
 # the installer artifacts from Pentaho's support portal and uploaded
-# them to a Maven repository.  Also, run the `pentaho_ee` role instead of
-# `pentaho`
-pentaho_ee_version: 8.3.0
-
-# below versions used only for pentaho CE
+# them to an SFTP repository.  Also, run the `pentaho_ee` role instead of
+# `pentaho_ce`
+pentaho_ee_license_year: 2019
 pentaho_major_version: 8.3
 pentaho_minor_version: 0.0-371
+
+# make sure to update this checksum if you change pentaho_major_version
 pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
 
 pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
