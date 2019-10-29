@@ -26,6 +26,7 @@ Create a text file named `Vagrantfile` (no file extension) in an empty folder.  
 Vagrant.configure("2") do |config|
   config.vm.box = "arkcase/arkcase-ce"
   config.vm.box_version = "3.3.1-r1-a"
+  config.vm.box_url = "https://app.vagrantup.com/arkcase/boxes/arkcase-ce"
   config.vm.network "private_network", type: "dhcp"
   config.vm.hostname = "arkcase-ce.local"
   # disable the default synced folder
