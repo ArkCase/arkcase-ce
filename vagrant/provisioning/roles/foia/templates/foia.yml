@@ -2,7 +2,7 @@ external.integration:
   enable: true
   userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
 gov.foia.broker:
-  url: "ssl://acm-activemq:61616"
+  url: "ssl://{{ internal_host }}:61616"
   keystore: "{{ java_key_store_jks }}"
   keystore.password: "{{ java_key_store_pass }}"
   truststore: "{{ java_trust_store }}"

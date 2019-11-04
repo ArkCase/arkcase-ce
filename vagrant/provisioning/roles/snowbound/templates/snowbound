@@ -4,7 +4,9 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
 }
 
 {{ root_folder }}/log/snowbound/*.out {
@@ -13,7 +15,9 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
 }
 
 {{ root_folder }}/log/snowbound/*.txt {
@@ -22,5 +26,7 @@
   rotate 7
   compress
   missingok
-  size 5M
+  size 10k
+  dateext
+  dateyesterday
 }

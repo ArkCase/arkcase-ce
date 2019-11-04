@@ -850,8 +850,13 @@
   replace:
     backup: yes
     path: /home/arkcase/.arkcase/acm/log4j2.xml
-    regexp: 'fileName="\$\{sys\:catalina.base\}/logs'
-    replace: 'fileName="{{ root_folder}}/log/arkcase'
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: 'fileName="\$\{sys\:catalina.base\}/logs'
+      replace: 'fileName="{{ root_folder}}/log/arkcase'
+    - regexp: 'filePattern="\$\{sys\:catalina.base\}/logs'
+      replace: 'filePattern="{{ root_folder}}/log/arkcase'
 
 ### prepare for starting arkcase and config server
 - name: copy extension jar

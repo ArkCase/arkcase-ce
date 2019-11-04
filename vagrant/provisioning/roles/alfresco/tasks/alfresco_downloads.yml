@@ -3,7 +3,7 @@
     - name: Alfresco Content Services CE
       dest: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip"
       owner: alfresco
-      url: https://sourceforge.net/projects/alfresco/files/Alfresco%20{{ alfresco_release_name }}%20Community/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip/download
+      url: https://download.alfresco.com/cloudfront/release/community/{{ alfresco_release_name }}{{ alfresco_build_number }}/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip
     - name: Alfresco Records Management CE
       dest: "{{ root_folder }}/install/alfresco/alfresco-rm-community-{{ alfresco_records_management_version }}.zip"
       owner: alfresco

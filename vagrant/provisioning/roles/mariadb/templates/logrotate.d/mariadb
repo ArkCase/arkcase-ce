@@ -26,6 +26,9 @@
      rotate 3
      missingok
      compress
+     size 10k
+     dateext
+     dateyesterday
  postrotate
     # just if mysqld is really running
      if test -x /usr/bin/mysqladmin && \
