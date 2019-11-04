@@ -593,72 +593,6 @@
       replace: "ENC({{ encrypted_default_alfresco }})"
   when: open_cmis_properties.stat.exists
   
-- name: see if we have a camel alfresco cmis properties file
-  become: yes
-  become_user: arkcase
-  stat:
-    path: /home/arkcase/.arkcase/acm/cmis/camel-config-alfresco-cmis.properties
-  register: camel_alfresco_cmis_properties
-      
-- name: plaintext passwords (camel alfresco cmis properties)
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/cmis/camel-config-alfresco-cmis.properties
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  loop:
-# note, using dot to match regexp special chars
-    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
-    - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
-    - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
-      replace: "ENC({{ encrypted_old_default_user }})"
-    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
-    - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
-      replace: "ENC({{ encrypted_default_database }})"
-    - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
-      replace: "ENC({{ encrypted_snowbound_key }})"
-    - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
-  when: camel_alfresco_cmis_properties.stat.exists
-
-- name: see if we have a camel opencmis cmis properties file
-  become: yes
-  become_user: arkcase
-  stat:
-    path: /home/arkcase/.arkcase/acm/cmis/camel-config-opencmis-cmis.properties
-  register: camel_open_cmis_properties
-  
-- name: plaintext passwords (camel opencmis cmis properties)
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/cmis/camel-config-opencmis-cmis.properties
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  loop:
-# note, using dot to match regexp special chars
-    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
-    - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
-    - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
-      replace: "ENC({{ encrypted_old_default_user }})"
-    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
-    - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
-      replace: "ENC({{ encrypted_default_database }})"
-    - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
-      replace: "ENC({{ encrypted_snowbound_key }})"
-    - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
-  when: camel_open_cmis_properties.stat.exists
-
 # this template includes encrypted passwords
 # so it must be run after we encrypt the passwords
 - name: server-specific configuration
@@ -675,15 +609,6 @@
   replace:
     backup: yes
     path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
-    regexp: "acm-arkcase"
-    replace: "{{ arkcase_host_name }}"
-
-- name: camel cmis host name
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/cmis/camel-config-alfresco-cmis.properties
     regexp: "acm-arkcase"
     replace: "{{ arkcase_host_name }}"
     
