@@ -1,10 +1,6 @@
 - name: define bean name
   set_fact:
-    ldap_user_domain_bean_name: "{{ ldap_user_domain | replace('.', '_') }}"
-
-- name: log bean name
-  debug:
-    msg: "ldap bean name: {{ ldap_user_domain_bean_name }}"
+    ldap_user_domain_bean: "{{ ldap_user_domain | replace('.', '_') }}"
 
 - name: install any extra artifacts
   include_tasks: extra_artifacts.yml
@@ -417,6 +413,7 @@
     old_config_id: armedia
     new_config_id: "{{ ldap_user_domain_bean_name }}"
     autogenerate_user_id: false
+    ldap_user_domain_bean_name: "{{ ldap_user_domain_bean }}"
 
 - name: read current config server configuration
   become: yes

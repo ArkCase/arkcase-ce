@@ -77,6 +77,14 @@
     src: application.properties
     dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api"
 
+- name: ensure no acm-activemq in application.properties
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.external-portal-api/application.properties"
+    regexp: "acm-activemq"
+    replace: "{{ internal_host }}"
+
 - name: configure LDAP
   include_role: 
     name: arkcase-ldap-config
@@ -84,6 +92,7 @@
     old_config_id: foiaportal
     new_config_id: "foiaportal"
     autogenerate_user_id: true
+    ldap_user_domain_bean_name: "foiaportal"
   when: encrypted_ldap_bind_password is defined
 
 - name: copy key store and trust store
