@@ -77,12 +77,13 @@
     src: application.properties
     dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api"
 
-- name: ldap properties
-  become: yes
-  become_user: arkcase
-  template:
-    src: spring-config-foia-portal-ldap.properties
-    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/spring/spring-config-foia-portal-ldap.properties"
+- name: configure LDAP
+  include_role: 
+    name: arkcase-ldap-config
+  vars:
+    old_config_id: foiaportal
+    new_config_id: "foiaportal"
+    autogenerate_user_id: true
   when: encrypted_ldap_bind_password is defined
 
 - name: copy key store and trust store

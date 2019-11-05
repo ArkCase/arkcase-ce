@@ -1,0 +1,33 @@
+- name: remove OpenLDAP files
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ old_config_id }}-openldap.xml"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ old_config_id }}-openldap.properties"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ old_config_id }}-openldap.xml"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ old_config_id }}-openldap.properties"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-{{ old_config_id }}-ldap.properties"
+    - "/home/arkcase/.arkcase/acm/spring/spring-config-{{ old_config_id }}-ldap.xml"
+
+- name: ArkCase LDAP configuration
+  become: yes
+  become_user: arkcase
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "spring-config-ldap.properties"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ new_config_id }}-ldap.properties"
+    - src: "spring-config-ldap.xml"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ new_config_id }}-ldap.xml"
+    - src: "spring-config-group-ad.properties"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ new_config_id }}-ad.properties"
+    - src: "spring-config-group-ad.xml"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ new_config_id }}-ad.xml"
+    - src: "spring-config-user-ad.properties"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ new_config_id }}-ad.properties"
+    - src: "spring-config-user-ad.xml"
+      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ new_config_id }}-ad.xml"

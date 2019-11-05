@@ -410,39 +410,13 @@
     group: arkcase
     mode: 0600
 
-- name: remove OpenLDAP files
-  become: yes
-  become_user: arkcase
-  file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - "/home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.xml"
-    - "/home/arkcase/.arkcase/acm/spring/spring-config-group-armedia-openldap.properties"
-    - "/home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.xml"
-    - "/home/arkcase/.arkcase/acm/spring/spring-config-user-armedia-openldap.properties"
-    - "/home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.properties"
-    - "/home/arkcase/.arkcase/acm/spring/spring-config-armedia-ldap.xml"
-
-- name: ArkCase LDAP configuration
-  become: yes
-  become_user: arkcase
-  template:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-  loop:
-    - src: "spring-config-ldap.properties"
-      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ ldap_user_domain_bean_name }}-ldap.properties"
-    - src: "spring-config-ldap.xml"
-      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ ldap_user_domain_bean_name }}-ldap.xml"
-    - src: "spring-config-group-ad.properties"
-      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ ldap_user_domain_bean_name }}-ad.properties"
-    - src: "spring-config-group-ad.xml"
-      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ ldap_user_domain_bean_name }}-ad.xml"
-    - src: "spring-config-user-ad.properties"
-      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ ldap_user_domain_bean_name }}-ad.properties"
-    - src: "spring-config-user-ad.xml"
-      dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ ldap_user_domain_bean_name }}-ad.xml"
+- name: configure LDAP
+  include_role: 
+    name: arkcase-ldap-config
+  vars:
+    old_config_id: armedia
+    new_config_id: "{{ ldap_user_domain_bean_name }}"
+    autogenerate_user_id: false
 
 - name: read current config server configuration
   become: yes
@@ -492,6 +466,14 @@
     src: fixGroups.py
     dest: "{{ root_folder }}/install/arkcase/fixGroups.py"
     mode: "u+rwx,g+rx,o+rx"
+
+- name: fix script line endings
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/install/arkcase/fixGroups.py"
+    regexp: "\r\n"
+    replace: "\n"
 
 - name: update rules spreadsheets
   include_tasks: update_rules_spreadsheets.yml
@@ -641,6 +623,7 @@
     path: /home/arkcase/.arkcase/acm/cmis/camel-config-alfresco-cmis.properties
     regexp: "acm-arkcase"
     replace: "{{ arkcase_host_name }}"
+  when: camel_alfresco_cmis_properties.stat.exists
 
 - name: see if we have an alfresco cmis properties file
   become: yes
