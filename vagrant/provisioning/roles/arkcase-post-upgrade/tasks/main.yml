@@ -3,11 +3,20 @@
   become_user: arkcase
   command: cp {{ config_backup_folder_path }}/acm/acm-config-server-repo/arkcase-runtime.yaml {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-runtime.yaml
 
-- name: start arkcase and config server
+- name: start config server
   become: yes
   systemd:
-    name: "{{ item }}"
+    name: "config-server"
     state: started
-  loop:
-    - config-server
-    - arkcase
+
+- name: wait for config server
+  wait_for:
+    connect_timeout: 15
+    delay: 5
+    port: 9999
+
+- name: start arkcase
+  become: yes
+  systemd:
+    name: "arkcase"
+    state: started

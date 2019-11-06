@@ -68,6 +68,8 @@
         <beans:property name="referral" value="follow"/>
         <beans:property name="directoryName" value='${ldapConfig.id}'/>
         <beans:property name="directoryType" value='${ldapConfig.directoryType}'/>
+        <!-- used for activedirectory only, in case of usernames are longer than 20 characters, for example portal registered users -->
+        <beans:property name="generateUsernameEnabled" value='${ldapConfig.autoGenerateUserId}'/>
     </beans:bean>
 
     <beans:bean id="{{ ldap_user_domain_bean_name }}_sync" class="com.armedia.acm.services.users.model.ldap.AcmLdapSyncConfig" parent="{{ ldap_user_domain_bean_name }}_ldap_config">

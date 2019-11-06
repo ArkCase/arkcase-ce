@@ -7,3 +7,4 @@ gov.foia.broker:
   keystore.password: "{{ java_key_store_pass }}"
   truststore: "{{ java_trust_store }}"
   truststore.password: "{{ java_trust_store_pass }}"
+  file_upload_url: "http://{{ internal_host }}:8161/fileserver/"
