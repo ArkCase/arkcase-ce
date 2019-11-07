@@ -414,6 +414,8 @@
     new_config_id: "{{ ldap_user_domain_bean_name }}"
     autogenerate_user_id: false
     ldap_user_domain_bean_name: "{{ ldap_user_domain_bean }}"
+    ldap_authentication_service_class: "com.armedia.acm.services.users.service.ldap.LdapAuthenticateService"
+    portal_prefix: ""
 
 - name: read current config server configuration
   become: yes

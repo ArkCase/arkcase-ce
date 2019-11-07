@@ -179,7 +179,7 @@
         Authenticates a user id and password against LDAP directory.  To support multiple LDAP configurations, create multiple Spring 
         beans, each with its own LdapAuthenticateService.
         -->
-        <beans:bean id="{{ ldap_user_domain_bean_name }}_ldapAuthenticateService" class="com.armedia.acm.services.users.service.ldap.LdapAuthenticateService">
+        <beans:bean id="{{ ldap_user_domain_bean_name }}_ldapAuthenticateService" class="{{ ldap_authentication_service_class }}">
             <!-- ldapAuthenticateConfig: ref must match an AcmLdapAuthenticateConfig bean -->
             <beans:property name="ldapAuthenticateConfig" ref="{{ ldap_user_domain_bean_name }}_authenticate"/>
             <!-- ldapSyncConfig: ref must match an AcmLdapSyncConfig bean -->
