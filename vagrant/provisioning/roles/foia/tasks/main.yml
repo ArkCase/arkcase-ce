@@ -93,6 +93,8 @@
     new_config_id: "foiaportal"
     autogenerate_user_id: true
     ldap_user_domain_bean_name: "foiaportal"
+    ldap_authentication_service_class: "gov.foia.service.FOIALdapAuthenticationService"
+    portal_prefix: "portal."
   when: encrypted_ldap_bind_password is defined
 
 - name: copy key store and trust store
