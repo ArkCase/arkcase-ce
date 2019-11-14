@@ -44,7 +44,7 @@ wopi.plugin:
     port: 443
 application:
   rolesToGroups:
-    {{ roles_to_groups | to_nice_yaml | indent(4) }}
+    {{ roles_to_groups_yaml | to_nice_yaml | indent(4) }}
   properties:
     idleLimit: 600000
     idlePull: 5000
