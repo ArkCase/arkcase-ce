@@ -699,7 +699,7 @@
     backup: yes
     src: server-v3.3.2.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-  when: arkcase_version is version('3.3.2', '>=') and arkcase_version is version('3.3.3', '<')
+  when: arkcase_version != "" and arkcase_version is version('3.3.2', '>=') and arkcase_version is version('3.3.3', '<')
     
 # this template includes encrypted passwords
 # so it must be run after we encrypt the passwords
