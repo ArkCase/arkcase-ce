@@ -43,8 +43,7 @@ wopi.plugin:
     domain: "{{ external_host }}"
     port: 443
 application:
-  rolesToGroups:
-    {{ roles_to_groups_yaml | to_nice_yaml | indent(4) }}
+  rolesToGroups: "{{ roles_to_groups }}"
   properties:
     idleLimit: 600000
     idlePull: 5000
