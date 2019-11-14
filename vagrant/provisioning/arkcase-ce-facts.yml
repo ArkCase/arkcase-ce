@@ -54,10 +54,25 @@ ldap_prefix: ""
 # otherwise, will set the password only if the user is created (user did not already exist)
 ldap_force_password_reset: yes
 
-# it takes some work to get Ansible to output the rolesToGroups value in the format 
-# needed by ArkCase.  Each role name and each group name have to be surrounded by \\\", 
-# and separated by a colon, and everything has to be one long line
-roles_to_groups: "{\\\"ROLE_ENTITY_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_CONSUMER\\\": \\\"{{ ldap_prefix }}ARKCASE_CONSUMER@ARKCASE.ORG\\\", \\\"ROLE_SUPERVISOR\\\": \\\"{{ ldap_prefix }}ARKCASE_SUPERVISOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_EXTERNAL\\\": \\\"{{ ldap_prefix }}ARKCASE_EXTERNAL@ARKCASE.ORG\\\", \\\"ROLE_CONTRIBUTOR\\\": \\\"{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@ARKCASE.ORG\\\"}"
+roles_to_groups:
+  ROLE_ENTITY_ADMINISTRATOR:
+  - "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  ROLE_CONSUMER:
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  ROLE_SUPERVISOR:
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  ROLE_ADMINISTRATOR:
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  ROLE_EXTERNAL:
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_BILLING_QUEUE:
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
 
 ldap_groups:
   - description: Entity administrators
