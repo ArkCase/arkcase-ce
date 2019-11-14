@@ -692,6 +692,17 @@
 
 # this template includes encrypted passwords
 # so it must be run after we encrypt the passwords
+- name: server-specific configuration for version 3.3.2
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: server-v3.3.2.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
+  when: arkcase_version is version('3.3.2', '>=') and arkcase_version is version('3.3.3', '<')
+    
+# this template includes encrypted passwords
+# so it must be run after we encrypt the passwords
 - name: server-specific configuration
   become: yes
   become_user: arkcase
@@ -699,7 +710,8 @@
     backup: yes
     src: server.yml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-  
+  when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
+    
 - name: cmis host name
   become: yes
   become_user: arkcase
