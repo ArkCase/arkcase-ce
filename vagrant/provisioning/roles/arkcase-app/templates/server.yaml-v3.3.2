@@ -1,0 +1,117 @@
+acm:
+  driverClassName: "{{ database_mysql_jdbc_driver }}"
+  url: "jdbc:mysql://{{ internal_host }}:3306/arkcase?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_version }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
+  password: "ENC({{ encrypted_default_database }})"
+elk:
+  server:
+    url: "https://{{ external_host }}/arkcase/acm-elastic"
+slk.server:
+  external.url: "https://{{ external_host }}/arkcase"
+frevvo:
+  service.external.baseUrl: "https://{{ external_host }}/arkcase"
+  browser.redirect.baseUrl: "https://{{ external_host }}/arkcase"
+  host: "{{ external_host }}"
+report:
+  plugin:
+    PENTAHO_SERVER_URL: "https://{{ external_host }}"
+    PENTAHO_SERVER_USER: "{{ arkcase_admin_user }}"
+    PENTAHO_SERVER_PASSWORD: "ENC({{ encrypted_admin_user_password }})"
+    PENTAHO_SERVER_INTERNAL_URL: "https://{{ internal_host }}"
+    PENTAHO_SERVER_INTERNAL_PORT: 2002
+solr:
+  host: "{{ internal_host }}"
+  port: 443
+ecm:
+  viewer.snowbound: "https://{{ external_host }}/arkcase/VirtualViewerJavaHTML5/index.html?documentId=ecmFileId=$[fileId]%26acm_ticket=$[ticket]%26userid=$[userid]"
+  viewer.snowbound.encryptionKey: "{{ snowbound_symmetric_key }}"
+  viewer.snowbound.readonly:
+    url: "https://{{ external_host }}/arkcase/VirtualViewerJavaHTML5/index-read-only.html?documentId=ecmFileId=$[fileId]%26acm_ticket=$[ticket]%26userid=$[userid]"
+outlook.exchange.integration:
+  enabled: yes
+  system_user_email: "{{ email_service_account }}"
+  system_user_email_password: "ENC({{ encrypted_email_service_password }})"
+  system_user_id: "{{ email_service_account }}"
+################### Notification Plugin Configuration (notification.properties) ####################  
+notification:
+  arkcase.url: "https://{{ external_host }}"
+  arkcase.url.base: "https://{{ external_host }}/arkcase"
+onlyoffice.plugin:
+  #base url used for sending to onlyoffice to be able to perform callbacks
+  arkcase.baseurl: "https://{{ external_host }}/arkcase"
+wopi.plugin:
+  tenant:
+    domain: "{{ external_host }}"
+    port: 443
+application:
+  rolesToGroups: "{{ roles_to_groups }}"
+  properties:
+    idleLimit: 600000
+    idlePull: 5000
+    idleConfirm: 15000
+    displayUserName: "userName"
+    historyDays: 30
+    baseUrl: "https://{{ external_host }}/arkcase"
+    applicationName: "arkcase"
+    helpUrl: "https://support.arkcase.com/hc/en-us/sections/360001477151-User-Guide"
+    alfrescoUserIdLdapAttribute: "samAccountName"
+    issueCollectorFlag: false
+alfresco:
+  admin:
+    baseurl: "https://{{ external_host }}/alfresco/s/admin/admin-sync"
+  sync:
+    host: "{{ external_host }}"
+    port: 443
+    enabled: {{ enable_alfresco_sync | lower }}
+################### Alfresco RMA Plugin Configuration (alfrescoRmaPlugin.properties) ####################
+alfresco_host: "{{ external_host }}"
+alfresco_port: 443
+email:
+  should-delete-messages: false
+  should-mark-messages-as-read: true
+  max-messages-per-poll: 1
+  fixed-rate: 120000
+  #set some existing email here for testing 
+  CASE_FILE.user: "{{ email_service_account_escaped }}"
+  CASE_FILE.password: "ENC({{ encrypted_email_service_password }})"
+  COMPLAINT.user: "{{ email_service_account_escaped }}"
+  COMPLAINT.password: "ENC({{ encrypted_email_service_password }})"
+  protocol: "imap"
+  fetch.folder: "Inbox"
+  host: "{{ email_host_imap }}"
+  port: {{ email_port_imap|int }}
+  debug: true
+  userId: "mail-service"
+  create:
+    case.enabled: {{ create_case_from_email_enabled | lower }}
+    complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
+  sender:
+    type: "{{ email_sender_protocol }}"
+    encryption: "{{ email_sender_encryption }}"
+    allowAttachments: {{ email_allow_attachments | lower }}
+    allowDocuments: {{ email_allow_documents | lower }}
+    host: "{{ email_smtp_host }}"
+    allowHyperlinks: {{ email_allow_hyperlinks | lower }}
+    userFrom: "{{ email_user_from }}"
+    port: {{ email_sender_port|int }}
+    username: "{{ email_smtp_username }}"
+    password: "ENC({{ encrypted_email_smtp_password }})"
+    convertDocumentsToPdf: {{ email_convert_documents_to_pdf | lower }}
+ocr:
+  tempPath: "{{ root_folder }}/tmp/arkcase/"
+ark.activemq:
+  #URL of the ActiveMQ broker.
+  transportConnectorURI: "ssl://{{ internal_host }}:61616"
+acm.websockets:
+  stomp_broker_relay.relay_host: "{{ internal_host }}"
+  stomp_broker_relay.keystore: "{{ java_key_store }}"
+  stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
+  stomp_broker_relay.truststore: "{{ java_trust_store }}"
+  stomp_broker_relay.truststore_pass: "ENC({{ encrypted_java_trust_store_pass }})"
+  stomp_broker_relay.truststore_type: "PKCS12"
+################### Calendar Configured Object Types (calendarConfiguredObjectTypes.properties) ####################
+calendar:
+  configuration: "{\"CASE_FILE\":{\"integrationEnabled\":{{ calendar_enabled_for_case_files | lower }},\"systemEmail\"\
+  :\"{{ email_service_account }}\",\"password\":\"ENC({{ encrypted_email_service_password }})\"\
+  ,\"purgeOptions\":\"{{ calendar_purge_option }}\",\"daysClosed\":null},\"COMPLAINT\":{\"\
+  integrationEnabled\":{{ calendar_enabled_for_complaints | lower }},\"systemEmail\":\"{{ email_service_account }}\",\"password\":\"ENC({{ encrypted_email_service_password }})\",\"purgeOptions\"\
+  :\"{{ calendar_purge_option }}\",\"daysClosed\":null}}"
