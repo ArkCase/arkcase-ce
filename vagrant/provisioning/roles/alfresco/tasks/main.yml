@@ -7,7 +7,8 @@
     state: installed
     name:
       - libreoffice
-
+      - ImageMagick
+      - ImageMagick-devel
 
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later
   set_fact:
@@ -227,6 +228,14 @@
     dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/audit"
   when: enable_alfresco_sync | bool
 
+- name: get the ImageMagick home folder
+  shell: rpm -ql ImageMagick | grep /usr/lib64/ImageMagick | awk -F / '{ print $4 }' | sort -u
+  register: imagemagick_home
+
+- name: get the ImageMagic modules folder
+  shell: rpm -ql ImageMagick | grep modules | grep coders | awk -F / '{ print $5 }' | sort -u
+  register: imagemagick_modules
+
 - name: populate alfresco-global.properties
   become: yes
   become_user: alfresco
@@ -261,6 +270,12 @@
       jodconverter.enabled=true
       jodconverter.officeHome=/usr/lib64/libreoffice
       ooo.enabled=false
+      # imagemagick, for image manipulation
+      img.root=/usr/lib64/{{ imagemagick_home.stdout }}
+      img.dyn=/usr/lib64
+      img.exe=/usr/bin/convert
+      img.coders=${img.root}/{{ imagemagick_modules.stdout }}/coders
+      img.config=${img.root}/config
       external.authentication.proxyUserName=
       external.authentication.enabled=true
       external.authentication.defaultAdministratorUserNames=admin
