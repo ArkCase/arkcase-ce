@@ -228,11 +228,15 @@
     dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/audit"
   when: enable_alfresco_sync | bool
 
+# a version number is included in the path, e.g. /usr/lib64/ImageMagick-6.7.8
+# so we use this shell command to find the right folder path.
 - name: get the ImageMagick home folder
   shell: rpm -ql ImageMagick | grep /usr/lib64/ImageMagick | awk -F / '{ print $4 }' | sort -u
   register: imagemagick_home
 
-- name: get the ImageMagic modules folder
+# some token is included in the module path, e.g. /usr/lib64/ImageMagic-6.7.8/modules-Q16
+# so we use this shell command to find the right module path.
+- name: get the ImageMagick modules folder
   shell: rpm -ql ImageMagick | grep modules | grep coders | awk -F / '{ print $5 }' | sort -u
   register: imagemagick_modules
 
