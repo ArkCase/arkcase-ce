@@ -18,7 +18,8 @@
     - "{{ root_folder }}/data/alfresco"
     - "{{ root_folder }}/data/alfresco/alf_data"
     - "{{ root_folder }}/log/alfresco"
-    - "{{ root_folder }}/app/alfresco"
+    - "{{ root_folder }}/app/alfresco"    
+    - "{{ root_folder }}/app/alfresco/alfresco-pdf-renderer"
     - "{{ root_folder }}/install/alfresco"
     - "{{ root_folder }}/tmp/alfresco"
   register: alfresco_folder_structure
