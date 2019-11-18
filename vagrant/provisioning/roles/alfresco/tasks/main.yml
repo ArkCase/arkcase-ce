@@ -1,6 +1,14 @@
 - include_tasks: alfresco_user_and_folders.yml
 - include_tasks: alfresco_downloads.yml
 
+- name: Alfresco packages
+  become: yes
+  yum:
+    state: installed
+    name:
+      - libreoffice
+
+
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later
   set_fact:
     alfresco_tls_port: 7070
@@ -249,7 +257,9 @@
       share.protocol=https
       # audit app support
       audit.enabled=true
-      jodconverter.enabled=false
+      # libreoffice, for file format conversions
+      jodconverter.enabled=true
+      jodconverter.officeHome=/usr/lib64/libreoffice
       ooo.enabled=false
       external.authentication.proxyUserName=
       external.authentication.enabled=true

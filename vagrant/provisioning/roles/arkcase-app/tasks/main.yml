@@ -289,6 +289,13 @@
   when: tls_default_file.stat.exists == false
   register: default_file_copied
 
+- name: remove old WEB-INF folder
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ root_folder }}/install/arkcase/WEB-INF"
+    state: absent
+
 - name: unarchive ArkCase search service jar
   become: yes
   become_user: arkcase
@@ -697,19 +704,32 @@
   become_user: arkcase
   template:
     backup: yes
-    src: server-v3.3.2.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-  when: arkcase_version != "" and arkcase_version is version('3.3.2', '>=') and arkcase_version is version('3.3.3', '<')
-    
-# this template includes encrypted passwords
-# so it must be run after we encrypt the passwords
-- name: server-specific configuration
-  become: yes
-  become_user: arkcase
-  template:
-    backup: yes
     src: server.yml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
+
+# the rolesToGroups format changed during the 3.3.3 release cycle, so we need 
+# one format for pre-3.3.3 versions, and another format for 3.3.3+
+- name: roles to groups mapping (3.3.2 and below)
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - ROLES TO GROUPS"
+    block: |
+      application.roles_to_groups: "{{ roles_to_groups }}"
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
+
+# the rolesToGroups format changed during the 3.3.3 release cycle, so we need 
+# one format for pre-3.3.3 versions, and another format for 3.3.3+
+- name: roles to groups mapping (3.3.3 and above)
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - ROLES TO GROUPS"
+    block: |
+      application.rolesToGroups:
+        {{ roles_to_groups_yaml | to_nice_yaml | indent(2) }}
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
     
 - name: cmis host name
