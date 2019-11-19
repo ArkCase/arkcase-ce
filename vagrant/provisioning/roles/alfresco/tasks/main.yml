@@ -1,6 +1,15 @@
 - include_tasks: alfresco_user_and_folders.yml
 - include_tasks: alfresco_downloads.yml
 
+- name: Alfresco packages
+  become: yes
+  yum:
+    state: installed
+    name:
+      - libreoffice
+      - ImageMagick
+      - ImageMagick-devel
+
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later
   set_fact:
     alfresco_tls_port: 7070
@@ -219,6 +228,26 @@
     dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/audit"
   when: enable_alfresco_sync | bool
 
+- name: unarchive alfresco-pdf-renderer
+  become: yes
+  become_user: alfresco
+  unarchive: 
+    remote_src: yes
+    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/alfresco-pdf-renderer/alfresco-pdf-renderer-1.1-linux.tgz"
+    dest: "{{ root_folder }}/app/alfresco/alfresco-pdf-renderer/"
+
+# a version number is included in the path, e.g. /usr/lib64/ImageMagick-6.7.8
+# so we use this shell command to find the right folder path.
+- name: get the ImageMagick home folder
+  shell: rpm -ql ImageMagick | grep /usr/lib64/ImageMagick | awk -F / '{ print $4 }' | sort -u
+  register: imagemagick_home
+
+# some token is included in the module path, e.g. /usr/lib64/ImageMagic-6.7.8/modules-Q16
+# so we use this shell command to find the right module path.
+- name: get the ImageMagick modules folder
+  shell: rpm -ql ImageMagick | grep modules | grep coders | awk -F / '{ print $5 }' | sort -u
+  register: imagemagick_modules
+
 - name: populate alfresco-global.properties
   become: yes
   become_user: alfresco
@@ -249,8 +278,19 @@
       share.protocol=https
       # audit app support
       audit.enabled=true
-      jodconverter.enabled=false
+      # libreoffice, for file format conversions, per https://docs.alfresco.com/6.1/tasks/lo-install.html
+      jodconverter.enabled=true
+      jodconverter.officeHome=/usr/lib64/libreoffice
       ooo.enabled=false
+      # imagemagick, for image manipulation, per https://docs.alfresco.com/6.1/tasks/imagemagick-config.html
+      img.root=/usr/lib64/{{ imagemagick_home.stdout }}
+      img.dyn=/usr/lib64
+      img.exe=/usr/bin/convert
+      img.coders=${img.root}/{{ imagemagick_modules.stdout }}/coders
+      img.config=${img.root}/config
+      # PDF renderer, for thumbnails, per https://docs.alfresco.com/6.1/tasks/pdf-renderer-install.html
+      alfresco-pdf-renderer.root={{ root_folder }}/app/alfresco/alfresco-pdf-renderer
+      alfresco-pdf-renderer.exe=${alfresco-pdf-renderer.root}/alfresco-pdf-renderer
       external.authentication.proxyUserName=
       external.authentication.enabled=true
       external.authentication.defaultAdministratorUserNames=admin
