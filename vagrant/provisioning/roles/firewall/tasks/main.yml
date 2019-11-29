@@ -14,6 +14,7 @@
   register: arkcase_ports
   loop:
     - "7070/tcp"   # alfresco
+    - "8443/tcp"   # alfresco alternate
     - "443/tcp"    # httpd
     - "2002/tcp"   # pentaho
     - "8983/tcp"   # solr
