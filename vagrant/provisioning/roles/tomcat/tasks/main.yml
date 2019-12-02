@@ -146,6 +146,17 @@
           monitorRole readonly
           controlRole readwrite
         mode: 0644
+    - name: set JAVA_HOME
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/bin/setenv.sh"
+        create: yes
+        mode: u+x
+        insertbefore: EOF
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_HOME"
+        block: |
+          export JAVA_HOME="{{ tc.java_home }}"
     - name: set JAVA_OPTS
       become: yes
       become_user: "{{ tc.user }}"

@@ -15,6 +15,16 @@ external_host: arkcase-ce.local
 base_domain: arkcase-ce.local
 internal_host: "{{ base_domain }}"
 
+activemq_host: "{{ internal_host }}"
+alfresco_host: "{{ internal_host }}"
+arkcase_host: "{{ internal_host }}"
+database_host: "{{ internal_host }}"
+mariadb_host: "{{ internal_host }}"
+pentaho_host: "{{ internal_host }}"
+snowbound_host: "{{ internal_host }}"
+solr_host: "{{ internal_host }}"
+
+
 ### ensure samba domain is based on the internal_host
 samba_domain: "DC.ARKCASE-CE"
 
@@ -216,6 +226,8 @@ sftp_arkcase_user: "arkcase"
 sftp_arkcase_folder: "/from-arkcase"
 sftp_pentaho_user: "pentaho-ee"
 sftp_pentaho_folder: "/from-pentaho-ee"
+sftp_alfresco_ee_user: "alfresco-ee"
+sftp_alfresco_ee_folder: "/from-alfresco-ee"
 sftp_extension_user: ""
 sftp_extension_folder: ""
 sftp_user: "{{ sftp_extension_user }}"
@@ -258,8 +270,7 @@ snowbound_symmetric_key: ""
 
 
 ### default values that shouldn't have to change
-
-arkcase_host_name: "{{ internal_host }}"
+arkcase_host_name: "{{ arkcase_host }}"
 
 root_folder: "/opt/arkcase"
 
@@ -295,7 +306,7 @@ samba_host_ip: "127.0.0.1"
 samba_admin_password: "{{ default_user_password }}"
 samba_server_role: dc
 
-database_host_name: "{{ arkcase_host_name }}"
+database_host_name: "{{ database_host }}"
 database_server_ssl_cert: "{{ ssl_cert }}"
 
 database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
@@ -342,10 +353,21 @@ default_database_password: "@rKc@3S!"
 tomcat_major_version: 9
 tomcat_version: 9.0.22
 
+# Alfresco Community Edition
 alfresco_release_name: 201806-GA
 alfresco_build_number: "-build-00113"
 alfresco_content_services_version: 6.0.7-ga
 alfresco_records_management_version: 3.0.a
+
+# Alfresco Enterprise Edition
+# for Alfresco EE you must have an Alfresco EE license file
+# (NOT included in this repository), and you must have downloaded
+# the installer artifacts from Alfresco's support portal and uploaded
+# them to an SFTP repository.  Also, run the `alfresco_ee` role instead of
+# `alfresco_ce`
+alfresco_ee_version: 6.1.1.1
+alfresco_install_governance_services: no
+alfresco_governance_services_version: 3.2.0
 
 # whether to enable sync from alfresco to arkcase
 enable_alfresco_sync: true

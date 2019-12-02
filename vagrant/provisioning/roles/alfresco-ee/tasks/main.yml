@@ -1,0 +1,49 @@
+
+# no real way to extract a task or block here since we need to know 
+# specifically whether the content services zip was just now 
+# downloaded.  However, since we are downloading a specific version,
+# we can just check whether the file already exists before downloading it
+
+- name: see if Alfresco EE content services already downloaded
+  become: yes
+  become_user: alfresco
+  stat:
+    path: "{{ root_folder }}/install/alfresco/alfresco-content-services-distribution-{{ alfresco_ee_version}}.zip"
+  register: content_services_download  
+
+- name: retrieve Alfresco EE ACS distribution zip file
+  become: yes
+  become_user: alfresco
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_alfresco_ee_user }}@{{ sftp_service_base_url }}:{{ sftp_alfresco_ee_folder }}/alfresco-content-services-distribution-{{ alfresco_ee_version}}.zip
+  args:
+    chdir: "{{ root_folder }}/install/alfresco"
+  environment:
+    SSHPASS: "{{ sftp_alfresco_ee_password }}"
+  when: content_services_download.stat.exists == false
+  register: alfresco_content_services_download
+
+- name: see if Alfresco EE governance services already downloaded
+  become: yes
+  become_user: alfresco
+  stat:
+    path: "{{ root_folder }}/install/alfresco/alfresco-governance-services-enterprise-{{ alfresco_governance_services_version }}.zip"
+  register: governance_services_download  
+
+- name: retrieve Alfresco EE AGS distribution zip file
+  become: yes
+  become_user: alfresco
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_alfresco_ee_user }}@{{ sftp_service_base_url }}:{{ sftp_alfresco_ee_folder }}/alfresco-governance-services-enterprise-{{ alfresco_governance_services_version }}.zip
+  args:
+    chdir: "{{ root_folder }}/install/alfresco"
+  environment:
+    SSHPASS: "{{ sftp_alfresco_ee_password }}"
+  when: governance_services_download.stat.exists == false
+  register: alfresco_governance_services_download
+
+- name: set path to Alfresco distribution
+  set_fact:
+    alfresco_zip_path: "{{ root_folder }}/install/alfresco/alfresco-content-services-distribution-{{ alfresco_ee_version}}.zip"
+    alfresco_zip_parent_folder: ""
+    alfresco_rma_zip_path: "{{ root_folder }}/install/alfresco/alfresco-governance-services-enterprise-{{ alfresco_governance_services_version }}.zip"
+    alfresco_rma_repo_amp: "{{ root_folder }}/install/alfresco/alfresco-governance-services-enterprise-repo-{{ alfresco_governance_services_version }}.amp"
+    alfresco_rma_share_amp: "{{ root_folder }}/install/alfresco/alfresco-governance-services-enterprise-share-{{ alfresco_governance_services_version }}.amp"

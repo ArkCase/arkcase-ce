@@ -1,6 +1,3 @@
-- include_tasks: alfresco_user_and_folders.yml
-- include_tasks: alfresco_downloads.yml
-
 - name: Alfresco packages
   become: yes
   yum:
@@ -32,6 +29,7 @@
           catalina_out: "{{ root_folder }}/log/alfresco/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/alfresco"
           log_folder: "{{ root_folder }}/log/alfresco"
+          java_home: "/usr/lib/jvm/java-11-openjdk"
   register: tomcat_unarchived
   
 - name: remove all files under /webapp, if needed
@@ -60,7 +58,7 @@
   replace:
     path: "{{ root_folder }}/app/alfresco/conf/catalina.properties"
     regexp: '^shared.loader=$'
-    replace: 'shared.loader=${catalina.base}/shared/classes'
+    replace: 'shared.loader=${catalina.base}/shared/classes,${catalina.base}/shared/lib/*.jar'
 
 - name: link JDBC driver
   become: yes
@@ -74,11 +72,10 @@
   become: yes
   become_user: alfresco
   unarchive:
-    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}.zip"
+    src: "{{ alfresco_zip_path }}"
     remote_src: true
     dest: "{{ root_folder }}/install/alfresco"
-    creates: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/README.txt"
-
+    creates: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/README.txt"
 
 - name: copy alfresco war files
   become: yes
@@ -86,13 +83,30 @@
   copy:
     remote_src: yes
     force: no
-    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/webapps/{{ item }}"
+    src: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/web-server/webapps/{{ item }}"
     dest: "{{ root_folder }}/app/alfresco/webapps/{{ item }}"
   register: war_file_copy
   loop:
     - alfresco.war
     - ROOT.war
     - share.war
+
+- name: see if the distribution has a _vti_bin.war
+  become: yes
+  become_user: alfresco
+  stat:
+    path: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/web-server/webapps/_vti_bin.war"
+  register: vti_bin_stat
+
+- name: copy _vti_bin war if it exists
+  become: yes
+  become_user: alfresco
+  copy:
+    remote_src: yes
+    force: no
+    src: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/web-server/webapps/_vti_bin.war"
+    dest: "{{ root_folder }}/app/alfresco/webapps/_vti_bin.war"
+  when: vti_bin_stat.stat.exists
 
 - name: copy alfresco.xml and share.xml conf files
   block:
@@ -113,7 +127,7 @@
       become_user: alfresco
       copy:
         remote_src: yes
-        src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/conf/Catalina/localhost/{{item}}"
+        src: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/web-server/conf/Catalina/localhost/{{item}}"
         dest: "{{ root_folder }}/app/alfresco/conf/Catalina/localhost/{{ item }}"
       loop:
         - alfresco.xml
@@ -141,7 +155,7 @@
     - name: copy shared resources if needed
       become: yes
       become_user: alfresco
-      shell: cp -a {{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/web-server/shared/classes/* {{ root_folder }}/app/alfresco/shared/classes/
+      shell: cp -a {{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/web-server/shared/classes/* {{ root_folder }}/app/alfresco/shared/classes/
       when: share_config_custom_xml.stat.exists == False
 
 - name: fix alfresco location in share-config-custom.xml
@@ -151,7 +165,7 @@
     backup: yes
     path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/web-extension/share-config-custom.xml"
     regexp: 'http://localhost:8080'
-    replace: 'https://{{ internal_host }}:{{ alfresco_tls_port }}'
+    replace: 'https://{{ alfresco_host }}:{{ alfresco_tls_port }}'
 
 - include_tasks: csrf_filter.yml
 
@@ -167,29 +181,29 @@
   become_user: alfresco
   copy:
     remote_src: true
-    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/bin/alfresco-mmt.jar"
+    src: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/bin/alfresco-mmt.jar"
     dest: "{{ root_folder }}/app/alfresco/bin/alfresco-mmt.jar"
 
 - name: unzip RMA zip file if needed
   become: yes
   become_user: alfresco
   unarchive:
-    src: "{{ root_folder }}/install/alfresco/alfresco-rm-community-{{ alfresco_records_management_version }}.zip"
+    src: "{{ alfresco_rma_zip_path }}"
     remote_src: yes
     dest: "{{ root_folder }}/install/alfresco"
-    creates: "{{ root_folder }}/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp"
+    creates: "{{ alfresco_rma_repo_amp }}"
     
 - name: apply alfresco modules
   include_tasks: "apply-amp.yml"
   loop:
     - title: Alfresco Share Services AMP
-      amp_path: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/amps/alfresco-share-services.amp"
+      amp_path: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/amps/alfresco-share-services.amp"
       target_war: alfresco.war
     - title: Governance Services
-      amp_path: "{{ root_folder }}/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp"
+      amp_path: "{{ alfresco_rma_repo_amp }}"
       target_war: alfresco.war
     - title: AGS Share
-      amp_path: "{{ root_folder }}/install/alfresco/alfresco-rm-community-share-{{ alfresco_records_management_version }}.amp"
+      amp_path: "{{ alfresco_rma_share_amp}}"
       target_war: share.war
   loop_control:
     loop_var: amp
@@ -233,7 +247,7 @@
   become_user: alfresco
   unarchive: 
     remote_src: yes
-    src: "{{ root_folder }}/install/alfresco/alfresco-content-services-community-distribution-{{ alfresco_content_services_version }}/alfresco-pdf-renderer/alfresco-pdf-renderer-1.1-linux.tgz"
+    src: "{{ root_folder }}/install/alfresco/{{ alfresco_zip_parent_folder }}/alfresco-pdf-renderer/alfresco-pdf-renderer-1.1-linux.tgz"
     dest: "{{ root_folder }}/app/alfresco/alfresco-pdf-renderer/"
 
 # a version number is included in the path, e.g. /usr/lib64/ImageMagick-6.7.8
@@ -255,6 +269,10 @@
     path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
     insertbefore: BOF
     block: |
+      # Alfresco 6+ uses ActiveMQ
+      messaging.broker.url=ssl://{{ activemq_host }}:61616
+      # Set this property unless you have explicitly chosen to expose some repository APIs without authentication
+      solr.secureComms=https
       synchronization.syncOnStartup=true
       synchronization.syncWhenMissingPeopleLogIn=true
       synchronization.autoCreatePeopleOnLogin=false
@@ -269,11 +287,11 @@
       db.pool.max=50
       db.pool.validate.query=SELECT 1
       alfresco.context=alfresco
-      alfresco.host={{ internal_host }}
+      alfresco.host={{ alfresco_host }}
       alfresco.port={{ alfresco_tls_port }}
       alfresco.protocol=https
       share.context=share
-      share.host={{ internal_host }}
+      share.host={{ alfresco_host }}
       share.port={{ alfresco_tls_port }}
       share.protocol=https
       # audit app support
@@ -353,7 +371,6 @@
       opencmis.servletpath.value=
       opencmis.server.override=true
       opencmis.server.value=https://{{ external_host }}/alfresco/api
-
 
 - name: configure alfresco.log location
   block:
@@ -460,7 +477,7 @@
     
 # note, can't use get_uri here since we need to keep the cookie jar
 - name: login to Share
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://{{ internal_host }}:7070/share/page/dologin"
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "https://{{ alfresco_host }}:7070/share/page/dologin"
   args:
     warn: false
   changed_when: false
@@ -472,7 +489,7 @@
   changed_when: false
 
 - name: get the CSRFToken
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://{{ internal_host }}:7070/share/service/modules/authenticated?a=user"
+  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "https://{{ alfresco_host }}:7070/share/service/modules/authenticated?a=user"
   args:
     warn: false
   changed_when: false
@@ -484,7 +501,7 @@
   changed_when: false
 
 - name: parse the CSRFToken
-  shell: egrep ^{{ internal_host }} cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
+  shell: egrep ^{{ alfresco_host }} cookie.txt | grep Alfresco-CSRFToken | awk '{ print $7 }'
   register: csrftoken_parsed
   changed_when: false
 
@@ -505,7 +522,7 @@
 
 - name: list the document library, so we can then add some folders
   uri:
-    url: https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
+    url: https://{{ alfresco_host }}:7070/alfresco/s/slingshot/doclib/container/acm/documentlibrary
     user: admin
     password: admin
     validate_certs: no
@@ -515,7 +532,7 @@
 
 - name: see what folders already exist
   uri:
-    url: "https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
+    url: "https://{{ alfresco_host }}:7070/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
     password: admin
     validate_certs: no
@@ -524,7 +541,7 @@
 
 - name: ensure the right folders are in the document library
   uri:
-    url: "https://{{ internal_host }}:7070/alfresco/s/api/site/folder/acm/documentlibrary"
+    url: "https://{{ alfresco_host }}:7070/alfresco/s/api/site/folder/acm/documentlibrary"
     method: POST
     user: admin
     password: admin
@@ -552,7 +569,7 @@
 
 - name: fetch the RM container
   uri:
-    url: https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/containers/rm
+    url: https://{{ alfresco_host }}:7070/alfresco/s/slingshot/doclib/containers/rm
     validate_certs: false
     user: admin
     password: admin
@@ -575,7 +592,7 @@
 
 - name: get the RM site containers, so we can find the ACM noderef
   uri:
-    url: "https://{{ internal_host }}:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
+    url: "https://{{ alfresco_host }}:7070/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
     password: admin
     validate_certs: no
@@ -596,7 +613,7 @@
 
 - name: add groups to acm site
   uri: 
-    url: "https://{{ internal_host }}:7070/alfresco/s/api/sites/acm/memberships"
+    url: "https://{{ alfresco_host }}:7070/alfresco/s/api/sites/acm/memberships"
     method: POST
     user: admin
     password: admin
@@ -613,7 +630,7 @@
 
 - name: add groups to records management admin role
   uri: 
-    url: "https://{{ internal_host }}:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name | urlencode }}"
+    url: "https://{{ alfresco_host }}:7070/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name | urlencode }}"
     method: POST
     user: admin
     password: admin
@@ -627,7 +644,7 @@
 
 - name: add groups to records management site
   uri: 
-    url: "https://{{ internal_host }}:7070/alfresco/s/api/sites/rm/memberships"
+    url: "https://{{ alfresco_host }}:7070/alfresco/s/api/sites/rm/memberships"
     method: POST
     user: admin
     password: admin

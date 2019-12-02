@@ -8,8 +8,10 @@
     - ldap
     - mariadb
     - httpd
-    - alfresco
     - activemq
+    - alfresco-setup
+    - alfresco-ce
+    - alfresco
     - solr
     - pentaho-setup
     - pentaho-ce

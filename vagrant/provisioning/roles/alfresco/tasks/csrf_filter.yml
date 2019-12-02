@@ -70,10 +70,10 @@
                 <path>/proxy/alfresco/api/publishing/channels/.+</path>
               </request>
               <action name="assertReferer">
-                <param name="referer">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="referer">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
               <action name="assertOrigin">
-                <param name="origin">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="origin">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
           </rule>
           <!--
@@ -86,10 +86,10 @@
                 <path>/page/caches/dependency/clear|/page/index|/page/surfBugStatus|/page/modules/deploy|/page/modules/module|/page/api/javascript/debugger|/page/console</path>
               </request>
               <action name="assertReferer">
-                <param name="referer">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="referer">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
               <action name="assertOrigin">
-                <param name="origin">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="origin">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
           </rule>
           <!-- Certain Share POST requests does NOT require a token -->
@@ -99,10 +99,10 @@
                 <path>/page/dologin(\?.+)?|/page/site/[^/]+/start-workflow|/page/start-workflow|/page/context/[^/]+/start-workflow</path>
               </request>
               <action name="assertReferer">
-                <param name="referer">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="referer">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
               <action name="assertOrigin">
-                <param name="origin">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="origin">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
           </rule>
 
@@ -113,10 +113,10 @@
                 <path>/page/dologout(\?.+)?</path>
               </request>
               <action name="assertReferer">
-                <param name="referer">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="referer">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
               <action name="assertOrigin">
-                <param name="origin">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="origin">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
               <action name="clearToken">
                 <param name="session">{token}</param>
@@ -172,10 +172,10 @@
                 <param name="parameter">{token}</param>
               </action>
               <action name="assertReferer">
-                <param name="referer">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="referer">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
               <action name="assertOrigin">
-                <param name="origin">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="origin">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
           </rule>
 
@@ -197,10 +197,10 @@
                 <param name="header">{token}</param>
               </action>
               <action name="assertReferer">
-                <param name="referer">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="referer">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
               <action name="assertOrigin">
-                <param name="origin">https://{{ external_host }}/.*|https://{{ internal_host }}/.*</param>
+                <param name="origin">https://{{ external_host }}/.*|https://{{ alfresco_host }}/.*</param>
               </action>
           </rule>
         </filter>
