@@ -1,3 +1,10 @@
+- name: install expect
+  become: yes
+  yum:
+    state: installed
+    name:
+      - expect
+
 - name: download Pentaho EE artifacts
   become: yes
   become_user: pentaho
@@ -38,28 +45,55 @@
     - pir-plugin-ee
     - pentaho-server-ee
 
-# NOTE, the echo in the below commands is to provide the interactive
-# response expected by the Pentaho installer.jar
-- name: install artifacts
+- name: install pentaho-server-ee
   become: yes
   become_user: pentaho
-  shell: LINES=32 echo -e "{{ item.installer_response }}" | LINES=32 java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
-  args: 
-    creates: "{{ item.creates }}"
-  loop:
-    - name: pentaho-server-ee
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho\n1"
-    - name: paz-plugin-ee
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n1"
-    - name: pdd-plugin-ee
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\nY\n1"
-    - name: pir-plugin-ee
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\nY\n1"
-  
+  expect: 
+    command: java -jar {{ root_folder }}/tmp/pentaho/pentaho-server-ee/installer.jar -console
+    responses:
+      (^)--More--($)": " "
+      (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
+      (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho\n"
+      (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
+
+- name: install analyzer plugin
+  become: yes
+  become_user: pentaho
+  expect: 
+    command: java -jar {{ root_folder }}/tmp/pentaho/paz-plugin-ee/installer.jar -console
+    responses:
+      (^)--More--($)": " "
+      (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
+      (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
+      (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
+
+- name: install dashboard designer plugin
+  become: yes
+  become_user: pentaho
+  expect: 
+    command: java -jar {{ root_folder }}/tmp/pentaho/pdd-plugin-ee/installer.jar -console
+    responses:
+      (^)--More--($)": " "
+      (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
+      (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
+      (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
+
+- name: install interactive reporting plugin
+  become: yes
+  become_user: pentaho
+  expect: 
+    command: java -jar {{ root_folder }}/tmp/pentaho/pir-plugin-ee/installer.jar -console
+    responses:
+      (^)--More--($)": " "
+      (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
+      (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
+      (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
+
+ 
 #### pentaho-ee specific updates... all updates common
 #### to both pentaho-ce and pentaho-ee are in the
 #### pentaho-configuration role
