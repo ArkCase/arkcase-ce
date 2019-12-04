@@ -83,7 +83,7 @@
   replace:
     path: "{{ root_folder }}/data/arkcase-home/.external-portal-api/application.properties"
     regexp: "acm-activemq"
-    replace: "{{ internal_host }}"
+    replace: "{{ activemq_host }}"
 
 - name: configure LDAP
   include_role: 

@@ -83,6 +83,7 @@
           catalina_out: "{{ root_folder }}/log/arkcase/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/arkcase"
           log_folder: "{{ root_folder }}/log/arkcase"
+          java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
   register: tomcat_unarchived
 
 - name: add options to JAVA_OPTS

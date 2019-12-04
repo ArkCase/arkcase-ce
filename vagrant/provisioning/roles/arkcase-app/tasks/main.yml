@@ -628,7 +628,7 @@
     backup: yes
     path: /home/arkcase/.arkcase/acm/cmis/camel-config-alfresco-cmis.properties
     regexp: "acm-arkcase"
-    replace: "{{ arkcase_host_name }}"
+    replace: "{{ alfresco_host }}"
   when: camel_alfresco_cmis_properties.stat.exists
 
 - name: see if we have an alfresco cmis properties file
@@ -739,7 +739,7 @@
     backup: yes
     path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
     regexp: "acm-arkcase"
-    replace: "{{ internal_host }}"
+    replace: "{{ alfresco_host }}"
 
 - name: see if we have an Alfresco sync service XML file
   become: yes
@@ -777,7 +777,7 @@
     replace: "{{ item.replace }}"
   loop:
     - regexp: "acm-arkcase"
-      replace: "{{ internal_host }}"
+      replace: "{{ activemq_host }}"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
       replace: "ENC({{ encrypted_activemq_guest }})"
   when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
@@ -798,7 +798,7 @@
     backup: yes
     path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     regexp: acm-arkcase
-    replace: "{{ internal_host }}"
+    replace: "{{ activemq_host }}"
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
 - name: copy quartz.properties if necessary

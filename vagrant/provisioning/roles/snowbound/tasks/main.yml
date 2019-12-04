@@ -46,7 +46,8 @@
           ajp_port: 2009
           catalina_out: "{{ root_folder }}/log/snowbound/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/snowbound"
-          log_folder: "{{ root_folder }}/log/snowbound"
+          log_folder: "{{ root_folder }}/log/snowbound"          
+          java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
   register: snowbound_tomcat_unarchived
 
 - name: download VirtualViewer war file (if using GitHub)
@@ -99,7 +100,7 @@
     replace: "{{ item.replace }}"
   loop:
     - regexp: "https://acm-snowbound:8443"
-      replace: "https://{{ internal_host }}"
+      replace: "https://{{ snowbound_host }}"
     - regexp: "https://acm-arkcase:8843"
       replace: "https://{{ arkcase_host_name }}:8843"
   register: web_xml

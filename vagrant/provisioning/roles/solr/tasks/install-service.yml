@@ -24,7 +24,7 @@
       SOLR_DATA_HOME={{ root_folder }}/data/solr
       SOLR_LOGS_DIR={{ root_folder }}/log/solr
       SOLR_LOG_LEVEL=INFO
-      SOLR_HOST={{ internal_host }}
+      SOLR_HOST={{ solr_host }}
 
 - name: update environment file - jmx enabled
   become: yes
