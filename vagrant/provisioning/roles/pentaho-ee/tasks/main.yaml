@@ -45,53 +45,40 @@
     - pir-plugin-ee
     - pentaho-server-ee
 
-- name: install pentaho-server-ee
+- name: install {{ item.name }}
   become: yes
   become_user: pentaho
-  expect: 
-    command: java -jar {{ root_folder }}/tmp/pentaho/pentaho-server-ee/installer.jar -console
-    responses:
-      "--More--": " "
-      "Press 1 to accept, 2 to reject, 3 to redisplay": "1\n"
-      "Select the installation path": "{{ root_folder }}/app/pentaho\n"
-      "Press 1 to continue, 2 to quit, 3 to redisplay": "1\n"
-    creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
+  shell: |
+    set timeout 300
 
-- name: install analyzer plugin
-  become: yes
-  become_user: pentaho
-  expect: 
-    command: java -jar {{ root_folder }}/tmp/pentaho/paz-plugin-ee/installer.jar -console
-    responses:
-      "--More--": " "
-      "Press 1 to accept, 2 to reject, 3 to redisplay": "1\n"
-      "Select the installation path": "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
-      "Press 1 to continue, 2 to quit, 3 to redisplay": "1\n"
-    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
+    spawn java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
 
-- name: install dashboard designer plugin
-  become: yes
-  become_user: pentaho
-  expect: 
-    command: java -jar {{ root_folder }}/tmp/pentaho/pdd-plugin-ee/installer.jar -console
-    responses:
-      "--More--": " "
-      "Press 1 to accept, 2 to reject, 3 to redisplay": "1\n"
-      "Select the installation path": "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
-      "Press 1 to continue, 2 to quit, 3 to redisplay": "1\n"
-    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
+    expect "--More--"
+    send " "
+    expect "Press 1 to accept, 2 to reject, 3 to redisplay"
+    send "1\n"
+    expect "Select the installation path"
+    send "{{ item.path }}\n"
+    expect  "Press 1 to continue, 2 to quit, 3 to redisplay"
+    send "1\n"
 
-- name: install interactive reporting plugin
-  become: yes
-  become_user: pentaho
-  expect: 
-    command: java -jar {{ root_folder }}/tmp/pentaho/pir-plugin-ee/installer.jar -console
-    responses:
-      "--More--": " "
-      "Press 1 to accept, 2 to reject, 3 to redisplay": "1\n"
-      "Select the installation path": "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
-      "Press 1 to continue, 2 to quit, 3 to redisplay": "1\n"
-    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
+    exit 0
+  args:
+    executable: /usr/bin/expect
+    creates: "{{ item.creates }}"
+  loop:
+    - name: "pentaho-server-ee"
+      path: "{{ root_folder }}/app/pentaho"
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
+    - name: "paz-plugin-ee"
+      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
+    - name: "pdd-plugin-ee"
+      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
+    - name: "pir-plugin-ee"
+      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
+      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
 
  
 #### pentaho-ee specific updates... all updates common
