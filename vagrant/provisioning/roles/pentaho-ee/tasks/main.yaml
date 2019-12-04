@@ -51,7 +51,7 @@
   expect: 
     command: java -jar {{ root_folder }}/tmp/pentaho/pentaho-server-ee/installer.jar -console
     responses:
-      (^)--More--($)": " "
+      (^)--More--($): " "
       (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
       (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho\n"
       (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
@@ -63,7 +63,7 @@
   expect: 
     command: java -jar {{ root_folder }}/tmp/pentaho/paz-plugin-ee/installer.jar -console
     responses:
-      (^)--More--($)": " "
+      (^)--More--($): " "
       (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
       (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
       (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
@@ -75,7 +75,7 @@
   expect: 
     command: java -jar {{ root_folder }}/tmp/pentaho/pdd-plugin-ee/installer.jar -console
     responses:
-      (^)--More--($)": " "
+      (^)--More--($): " "
       (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
       (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
       (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
@@ -87,7 +87,7 @@
   expect: 
     command: java -jar {{ root_folder }}/tmp/pentaho/pir-plugin-ee/installer.jar -console
     responses:
-      (^)--More--($)": " "
+      (^)--More--($): " "
       (^)Press 1 to Accept, 2 to reject, 3 to redisplay($): "1\n"
       (^)Select the installation path(.*): "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n"
       (^)Press 1 to continue, 2 to quit, 3 to redisplay($): "1\n"
