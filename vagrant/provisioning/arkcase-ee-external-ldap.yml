@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  roles:
+    - common
+    - pki_client
+    - ldap
+    - mariadb
+    - httpd
+    - activemq
+    - alfresco-setup
+    - alfresco-ee
+    - alfresco
+    - solr
+    - pentaho-setup
+    - pentaho-ee
+    - pentaho-configuration
+    - snowbound
+    - pentaho-license
+    - arkcase-prerequisites
+    - arkcase-app
+    - tesseract
+
+    
