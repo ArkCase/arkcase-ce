@@ -19,6 +19,7 @@
       - bzip2
       - tar
       - wget
+      - sshpass
 
 - name: remove python2-passlib since it breaks solr password setting
   become: yes
