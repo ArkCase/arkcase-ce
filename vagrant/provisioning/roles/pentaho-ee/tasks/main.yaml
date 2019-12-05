@@ -1,3 +1,10 @@
+- name: install expect
+  become: yes
+  yum:
+    state: installed
+    name:
+      - expect
+
 - name: download Pentaho EE artifacts
   become: yes
   become_user: pentaho
@@ -38,28 +45,21 @@
     - pir-plugin-ee
     - pentaho-server-ee
 
-# NOTE, the echo in the below commands is to provide the interactive
-# response expected by the Pentaho installer.jar
-- name: install artifacts
-  become: yes
-  become_user: pentaho
-  shell: LINES=32 echo -e "{{ item.installer_response }}" | LINES=32 java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
-  args: 
-    creates: "{{ item.creates }}"
+- include_tasks: pentaho-install-module.yml
   loop:
     - name: pentaho-server-ee
+      path: "{{ root_folder }}/app/pentaho"
       creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho\n1"
     - name: paz-plugin-ee
+      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
       creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\n1"
     - name: pdd-plugin-ee
+      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
       creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\nY\n1"
     - name: pir-plugin-ee
+      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
       creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
-      installer_response: "               1\n{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system\nY\n1"
-  
+
 #### pentaho-ee specific updates... all updates common
 #### to both pentaho-ce and pentaho-ee are in the
 #### pentaho-configuration role
