@@ -53,16 +53,12 @@
 
     spawn java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
 
-    expect "--More--"
-    send " "
-    expect "Press 1 to accept, 2 to reject, 3 to redisplay"
-    send "1\n"
-    expect "Select the installation path"
-    send "{{ item.path }}\n"
-    expect  "Press 1 to continue, 2 to quit, 3 to redisplay"
-    send "1\n"
+    expect "More--"  { send "\n" ; exp_continue }
+    expect -ex "Press 1 to accept, 2 to reject, 3 to redisplay" { send "1\n" ; exp_continue }
+    expect -ex "Select the installation path" { send "{{ item.path }}\n" ; exp_continue }
+    expect -ex "Press 1 to continue, 2 to quit, 3 to redisplay" { send "1\n" ; exp_continue }
 
-    exit 0
+    wait
   args:
     executable: /usr/bin/expect
     creates: "{{ item.creates }}"
