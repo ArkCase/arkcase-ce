@@ -45,38 +45,82 @@
     - pir-plugin-ee
     - pentaho-server-ee
 
-- name: install {{ item.name }}
+- name: facts for pentaho-server-ee
+  set_fact:
+    item_name: pentaho-server-ee
+    item_path: "{{ root_folder }}/app/pentaho"
+
+- name: write expect script for pentaho-server-ee
   become: yes
   become_user: pentaho
-  shell: |
-    set timeout 300
+  template:
+    src: expect-script.txt
+    dest: /home/pentaho/expect-script
 
-    spawn java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
-
-    expect "More--"  { send "\n" ; exp_continue }
-    expect -ex "Press 1 to accept, 2 to reject, 3 to redisplay" { send "1\n" ; exp_continue }
-    expect -ex "Select the installation path" { send "{{ item.path }}\n" ; exp_continue }
-    expect -ex "Press 1 to continue, 2 to quit, 3 to redisplay" { send "1\n" ; exp_continue }
-
-    wait
+- name: install pentaho-server-ee
+  become: yes
+  become_user: pentaho
+  shell: expect -f /home/pentaho/expect-script
   args:
-    executable: /usr/bin/expect
-    creates: "{{ item.creates }}"
-  loop:
-    - name: "pentaho-server-ee"
-      path: "{{ root_folder }}/app/pentaho"
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
-    - name: "paz-plugin-ee"
-      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
-    - name: "pdd-plugin-ee"
-      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
-    - name: "pir-plugin-ee"
-      path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
-      creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
 
- 
+- name: facts for paz-plugin-ee
+  set_fact:
+    item_name: paz-plugin-ee
+    item_path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
+
+- name: write expect script for paz-plugin-ee
+  become: yes
+  become_user: pentaho
+  template:
+    src: expect-script.txt
+    dest: /home/pentaho/expect-script
+
+- name: install paz-plugin-ee
+  become: yes
+  become_user: pentaho
+  shell: expect -f /home/pentaho/expect-script
+  args:
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/analyzer/analyzer.properties"
+
+- name: facts for pdd-plugin-ee
+  set_fact:
+    item_name: pdd-plugin-ee
+    item_path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
+
+- name: write expect script for pdd-plugin-ee
+  become: yes
+  become_user: pentaho
+  template:
+    src: expect-script.txt
+    dest: /home/pentaho/expect-script
+
+- name: install pdd-plugin-ee
+  become: yes
+  become_user: pentaho
+  shell: expect -f /home/pentaho/expect-script
+  args:
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dashboards/plugin.xml"
+
+- name: facts for pir-plugin-ee
+  set_fact:
+    item_name: pir-plugin-ee
+    item_path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system"
+
+- name: write expect script for pir-plugin-ee
+  become: yes
+  become_user: pentaho
+  template:
+    src: expect-script.txt
+    dest: /home/pentaho/expect-script
+
+- name: install pir-plugin-ee
+  become: yes
+  become_user: pentaho
+  shell: expect -f /home/pentaho/expect-script
+  args:
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/pentaho-interactive-reporting/plugin.xml"
+
 #### pentaho-ee specific updates... all updates common
 #### to both pentaho-ce and pentaho-ee are in the
 #### pentaho-configuration role
