@@ -56,9 +56,9 @@ application:
     issueCollectorFlag: false
 alfresco:
   admin:
-    baseurl: "https://{{ external_host }}/alfresco/s/admin/admin-sync"
+    baseurl: "https://{{ alfresco_host }}/alfresco/s/admin/admin-sync"
   sync:
-    host: "{{ external_host }}"
+    host: "{{ alfresco_host }}"
     port: 443
     enabled: {{ enable_alfresco_sync | lower }}
 ################### Alfresco RMA Plugin Configuration (alfrescoRmaPlugin.properties) ####################
