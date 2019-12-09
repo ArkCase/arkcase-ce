@@ -46,5 +46,4 @@
   loop:
     - "{{ root_folder }}/tmp/arkcase/"
     - "{{ root_folder }}/app/arkcase/work/Catalina/localhost/arkcase"
-    - "{{ root_folder }}/app/arkcase/webapps/arkcase"
 
