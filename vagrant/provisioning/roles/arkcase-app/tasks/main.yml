@@ -273,6 +273,7 @@
   file:
     path: /home/arkcase/.arkcase/custom/WEB-INF/classes
     state: directory
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
 
 - name: see if tls-default.conf already exists
   become: yes
@@ -280,6 +281,7 @@
   stat:
     path: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
   register: tls_default_file
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')  
 
 - name: copy fixed tls-default.conf file
   become: yes
@@ -289,6 +291,7 @@
     dest: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
   when: tls_default_file.stat.exists == false
   register: default_file_copied
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')  
 
 - name: remove old WEB-INF folder
   become: yes
@@ -741,6 +744,7 @@
     path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
     regexp: "acm-arkcase"
     replace: "{{ alfresco_host }}"
+  when: alfresco_cmis_properties.stat.exists
 
 - name: see if we have an Alfresco sync service XML file
   become: yes
