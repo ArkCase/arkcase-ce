@@ -95,6 +95,7 @@
     ldap_user_domain_bean_name: "foiaportal"
     ldap_authentication_service_class: "gov.foia.service.FOIALdapAuthenticationService"
     portal_prefix: "portal."
+    ldap_template_name: "spring-config-foiaportal-ldap.xml"
   when: encrypted_ldap_bind_password is defined
 
 - name: copy key store and trust store
