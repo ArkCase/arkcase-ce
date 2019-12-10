@@ -114,3 +114,5 @@ calendar:
   ,\"purgeOptions\":\"{{ calendar_purge_option }}\",\"daysClosed\":null},\"COMPLAINT\":{\"\
   integrationEnabled\":{{ calendar_enabled_for_complaints | lower }},\"systemEmail\":\"{{ email_service_account }}\",\"password\":\"ENC({{ encrypted_email_service_password }})\",\"purgeOptions\"\
   :\"{{ calendar_purge_option }}\",\"daysClosed\":null}}"
+acm.hazelcast:
+  log.folder: "{{ root_folder }}/log/arkcase"
