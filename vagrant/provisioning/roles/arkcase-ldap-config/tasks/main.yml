@@ -21,7 +21,7 @@
   loop:
     - src: "spring-config-ldap.properties"
       dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ new_config_id }}-ldap.properties"
-    - src: "spring-config-ldap.xml"
+    - src: "{{ ldap_template_name }}"
       dest: "/home/arkcase/.arkcase/acm/spring/spring-config-{{ new_config_id }}-ldap.xml"
     - src: "spring-config-group-ad.properties"
       dest: "/home/arkcase/.arkcase/acm/spring/spring-config-group-{{ new_config_id }}-ad.properties"
