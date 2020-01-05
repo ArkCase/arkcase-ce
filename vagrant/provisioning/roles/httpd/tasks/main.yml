@@ -42,6 +42,24 @@
     dest: /etc/httpd/conf.d/ssl.conf
   register: tls_conf
 
+- name: FOIA context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOIA CONTEXT"
+    insertbefore: "</VirtualHost>"
+    path: "/etc/httpd/conf.d/ssl.conf"
+    block: |
+      <Directory "{{ root_folder }}/data/httpd/htdocs/{{ foia_portal_context }}">
+        RewriteEngine On
+        RewriteBase "/{{ foia_portal_context }}/"
+        RewriteRule ^index\.html$ - [L]
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule . /{{ foia_portal_context }}/index.html [L]
+      </Directory>
+  when: foia_portal_context is defined
+
 - name: ArkCase Alfresco redirector
   become: yes
   template:
