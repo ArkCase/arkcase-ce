@@ -5,7 +5,11 @@
     name: 
       - openldap-clients
       - python-ldap
-      - pyOpenSSL
+
+- name: install pyOpenSSL
+  become: yes
+  pip:
+    name: pyOpenSSL
 
 - name: list certs in the key store
   become: yes
