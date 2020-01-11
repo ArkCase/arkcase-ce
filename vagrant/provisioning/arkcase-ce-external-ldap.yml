@@ -2,6 +2,7 @@
 - hosts: all
   roles:
     - common
+    - pki
     - pki_client
     - ldap
     - mariadb
