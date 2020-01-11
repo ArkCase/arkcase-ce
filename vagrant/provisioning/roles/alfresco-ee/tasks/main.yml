@@ -47,3 +47,4 @@
     alfresco_rma_zip_path: "{{ root_folder }}/install/alfresco/alfresco-governance-services-enterprise-{{ alfresco_governance_services_version }}.zip"
     alfresco_rma_repo_amp: "{{ root_folder }}/install/alfresco/alfresco-governance-services-enterprise-repo-{{ alfresco_governance_services_version }}.amp"
     alfresco_rma_share_amp: "{{ root_folder }}/install/alfresco/alfresco-governance-services-enterprise-share-{{ alfresco_governance_services_version }}.amp"
+    alfresco_java_home: "/usr/lib/jvm/java-11-openjdk"

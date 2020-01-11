@@ -17,9 +17,8 @@
     - pentaho-ce
     - pentaho-configuration
     - snowbound
-    - arkcase-prerequisites
-    - arkcase-app
     - tesseract
     - firewall
+    - arkcase-developer
 
     

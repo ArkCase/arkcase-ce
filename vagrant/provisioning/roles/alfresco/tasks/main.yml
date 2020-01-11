@@ -29,7 +29,7 @@
           catalina_out: "{{ root_folder }}/log/alfresco/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/alfresco"
           log_folder: "{{ root_folder }}/log/alfresco"
-          java_home: "/usr/lib/jvm/java-11-openjdk"
+          java_home: "{{ alfresco_java_home }}"
   register: tomcat_unarchived
   
 - name: remove all files under /webapp, if needed

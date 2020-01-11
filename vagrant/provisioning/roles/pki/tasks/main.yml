@@ -149,6 +149,14 @@
     subject_alt_name:
       - DNS:{{ external_host }}
       - DNS:{{ internal_host }}
+      - DNS:{{ activemq_host }}
+      - DNS:{{ alfresco_host }}
+      - DNS:{{ arkcase_host }}
+      - DNS:{{ database_host }}
+      - DNS:{{ mariadb_host }}
+      - DNS:{{ pentaho_host }}
+      - DNS:{{ snowbound_host }}
+      - DNS:{{ solr_host }}
   register: server_csr
 
 # the server cert is signed with the intermediate key

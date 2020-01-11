@@ -1,0 +1,321 @@
+#################################
+## host-specific settings
+#################################
+email_service_account: "nosuchmailbox@arkcase.com"
+email_service_account_escaped: "{{ email_service_account | replace('@', '%40') }}"
+email_service_password: "not-a-real-password"
+
+calendar_enabled_for_case_files: false
+calendar_purge_option: "RETAIN_INDEFINITELY"
+calendar_enabled_for_complaints: false
+
+# external_host: the host name a browser will use
+external_host: acm-arkcase
+# internal host: the actual host name of the VM
+base_domain: acm-arkcase
+internal_host: "{{ base_domain }}"
+
+activemq_host: "{{ internal_host }}"
+alfresco_host: "{{ internal_host }}"
+arkcase_host: "arkcase-host"
+database_host: "{{ internal_host }}"
+mariadb_host: "{{ internal_host }}"
+pentaho_host: "{{ internal_host }}"
+snowbound_host: "{{ internal_host }}"
+solr_host: "{{ internal_host }}"
+
+
+### ensure samba domain is based on the internal_host
+samba_domain: "DC.ARKCASE-CE"
+
+# server_admin goes in the httpd conf file, and is the email
+# address of the arkcase-admin user
+server_admin: "david.miller@arkcase.com"
+
+default_user_password: "AcMd3v$"
+
+# This LDAP information is for the local Samba instance
+ldap_host: "{{ internal_host }}"
+ldap_protocol: ldaps
+ldap_port: 636
+ldap_url: "{{ ldap_protocol }}://{{ ldap_host }}:{{ ldap_port }}"
+ldap_base: "DC=arkcase-ce"
+ldap_bind_user: "CN=Administrator,CN=Users,{{ ldap_base }}"
+ldap_bind_password: "{{ default_user_password }}"
+
+# ldap_user_domain is how people will log into
+# ArkCase; at the ArkCase login they will login as
+# "user@{{ ldap_user_domain }}"
+ldap_user_domain: "armedia.com"
+# active_directory_domain is of course the AD domain
+active_directory_domain: "arkcase-ce"
+
+# The group and user base will be created if necessary
+ldap_ancestor_ous:
+  - "{{ ldap_base }}"
+  - "OU=ArkCase, {{ ldap_base }}"
+ldap_group_no_base: "OU=Groups,OU=ArkCase"
+ldap_group_base: "{{ ldap_group_no_base }},{{ ldap_base }}"
+ldap_user_no_base: "OU=Users,OU=ArkCase"
+ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
+ldap_prefix: ""
+
+# if yes, will reset the password unconditionally.  
+# otherwise, will set the password only if the user is created (user did not already exist)
+ldap_force_password_reset: yes
+
+# used in versions 3.3.3 and up
+roles_to_groups_yaml:
+  ROLE_ENTITY_ADMINISTRATOR:
+  - "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  ROLE_CONSUMER:
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  ROLE_SUPERVISOR:
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  ROLE_ADMINISTRATOR:
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  ROLE_EXTERNAL:
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_BILLING_QUEUE:
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+
+ldap_groups:
+  - description: Entity administrators
+    name: "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Consumers
+    name: "{{ ldap_prefix }}ARKCASE_CONSUMER"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Supervisors
+    name: "{{ ldap_prefix }}ARKCASE_SUPERVISOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Administrators
+    name: "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: External users
+    name: "{{ ldap_prefix }}ARKCASE_EXTERNAL"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Contributors
+    name: "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+        
+arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
+arkcase_admin_password: "{{ default_user_password }}"
+arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
+
+ldap_users:
+  - user_id: "{{ arkcase_admin_user }}"
+    description: ArkCase administrator
+    name: ArkCase Administrator
+    mail: "{{ server_admin }}"
+    firstName: ArkCase
+    lastName: Administrator
+    password: "{{ arkcase_admin_password }}"
+    groups:
+      - "{{ arkcase_admin_group }}"
+    nonexpiring_password: yes
+
+# for each spreadsheet to be udpated, first give the path WITHOUT the .xlsx extension, then give a list of pairs of "string to be replaced", "replacement string"
+rules_spreadsheet_updates: []
+
+
+########################################
+### email settings
+#######################################
+email_host_imap: "relay.armedia.com"
+email_port_imap: 143
+email_sender_protocol: "smtp"
+email_sender_encryption: "none"
+email_sender_port: 25
+email_allow_attachments: true
+email_allow_documents: true
+email_allow_hyperlinks: true
+email_smtp_host: "relay.armedia.com"
+email_user_from: "{{ email_service_account }}"
+email_smtp_username: "{{ email_service_account }}"
+email_smtp_password: "{{ email_service_password }}"
+email_convert_documents_to_pdf: false
+create_case_from_email_enabled: false
+create_complaint_from_email_enabled: false
+
+# core reports, these are always deployed
+arkcase_core_reports:
+  - path: "arkcase"
+    definition: "ComplaintReport.prpt"
+  - path: "arkcase"
+    definition: "ComplaintDispositionCount.prpt"
+  - path: "arkcase"
+    definition: "caseSummary.prpt"
+  - path: "arkcase-audit"
+    definition: "AuditReportWithUrl.prpt"
+  - path: "arkcase-audit"
+    definition: "AuditReport.prpt"
+
+# extension reports... each different extension may or may not have its own path 
+# in the jar file where report definitions are stored
+arkcase_extension_install_reports: no
+arkcase_extension_reports:
+  - name: ""
+    jar_path: ""
+    pentaho_path: ""
+
+# sftp_arkcase_password, sftp_pentaho_password, 
+# and sftp_extension_password must be specified as 
+# extra arguments.
+sftp_service_base_url: "fileshare.armedia.com"
+sftp_arkcase_user: "arkcase"
+sftp_arkcase_folder: "/from-arkcase"
+sftp_pentaho_user: "pentaho-ee"
+sftp_pentaho_folder: "/from-pentaho-ee"
+sftp_alfresco_ee_user: "alfresco-ee"
+sftp_alfresco_ee_folder: "/from-alfresco-ee"
+sftp_extension_user: ""
+sftp_extension_folder: ""
+sftp_user: "{{ sftp_extension_user }}"
+
+# retrieve snowbound from GitHub ("github") or SFTP ("sftp")
+snowbound_retrieve_strategy: "sftp"
+snowbound_vendor_version: "4.10"
+snowbound_arkcase_version: "3.3.3-SNAPSHOT"
+snowbound_symmetric_key: ""
+
+### default values that shouldn't have to change
+arkcase_host_name: "{{ arkcase_host }}"
+
+root_folder: "/opt/arkcase"
+
+mariadb_data_folder: "{{ root_folder }}/data/mariadb"
+mariadb_log_folder: "{{ root_folder }}/log/mariadb"
+
+ssl_version: "TLSv1.2"
+
+# ssl_cipher only for backward compatibility
+ssl_cipher: "{{ ssl_version }}"
+
+# for the pki role (used by CE installer to create a self-hosted
+# PKI), these facts are prescriptive, and the pki role will
+# create these files.  For the pki_client role (which creates
+# the Java key stores and the ArkCase symmetric key, these
+# files are descriptive, and the files must exist.
+ssl_key: "/etc/tls/private/arkcase-server.pem"
+ssl_ca: "/etc/tls/crt/arkcase-chain.crt"
+ssl_cert: "/etc/tls/crt/arkcase-server.crt"
+
+# these files will be created by the installer
+ssl_key_rsa: "/etc/tls/private/arkcase-server.rsa.key"
+java_trust_store: "{{ root_folder }}/common/arkcase.ts"
+java_key_store: "{{ root_folder }}/common/arkcase.ks"
+java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"
+java_trust_store_pass: "{{ default_user_password }}"
+java_key_store_pass: "{{ default_user_password }}"
+java_p12_store: "{{ root_folder }}/common/arkcase-client.p12"
+
+samba_version: 4.10.8
+samba_realm: "arkcase-ce"
+samba_host_ip: "127.0.0.1"
+samba_admin_password: "{{ default_user_password }}"
+samba_server_role: dc
+
+database_host_name: "{{ database_host }}"
+database_server_ssl_cert: "{{ ssl_cert }}"
+
+database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
+database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites={{ ssl_cipher }}&amp;trustServerCertificate=false&amp;serverSslCert={{ database_server_ssl_cert }}"
+database_arkcase_schema: arkcase
+database_arkcase_user: arkcase
+
+database_pentaho_hibernate_schema: hibernate
+database_pentaho_hibernate_user: hibuser
+database_pentaho_quartz_schema: quartz
+database_pentaho_quartz_user: pentaho_user
+database_pentaho_jackrabbit_schema: jackrabbit
+database_pentaho_jackrabbit_user: jcr_user
+
+jmx_password: P@ssw0rd
+
+# for Pentaho EE you must have the Pentaho EE license files
+# (NOT included in this repository), and you must have downloaded
+# the installer artifacts from Pentaho's support portal and uploaded
+# them to an SFTP repository.  Also, run the `pentaho_ee` role instead of
+# `pentaho_ce`
+pentaho_ee_license_year: 2019
+pentaho_major_version: 8.3
+pentaho_minor_version: 0.0-371
+
+# make sure to update this checksum if you change pentaho_major_version
+pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
+
+pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
+
+solr_version: 7.7.2
+solr_jmx_enabled: true
+solr_cores:
+  - "acmAdvancedSearch"
+  - "acmQuickSearch"
+
+# NOTE: Alfresco CE 2018-06 does NOT work with
+# higher versions of Maria JDBC; specifically it does NOT
+# work with 2.4.2.  Is known to work with 2.2.6.
+mariadb_jdbc_version: 2.2.6
+default_database_password: "@rM3d1A!"
+
+# tomcat_major_version needed to build download URL
+tomcat_major_version: 9
+tomcat_version: 9.0.22
+
+# Alfresco Community Edition
+alfresco_release_name: 201806-GA
+alfresco_build_number: "-build-00113"
+alfresco_content_services_version: 6.0.7-ga
+alfresco_records_management_version: 3.0.a
+
+# Alfresco Enterprise Edition
+# for Alfresco EE you must have an Alfresco EE license file
+# (NOT included in this repository), and you must have downloaded
+# the installer artifacts from Alfresco's support portal and uploaded
+# them to an SFTP repository.  Also, run the `alfresco_ee` role instead of
+# `alfresco_ce`
+alfresco_ee_version: 6.1.1.1
+alfresco_install_governance_services: no
+alfresco_governance_services_version: 3.2.0
+
+# whether to enable sync from alfresco to arkcase
+enable_alfresco_sync: true
+
+records_management_categories:
+  - "Case Files"
+  - "Complaints"
+  - "Document Repositories"
+  - "Requests"
+  - "Tasks"
+content_management_folders:
+  - "Case Files"
+  - "Complaints"
+  - "Document Repositories"
+  - "Expenses"
+  - "People"
+  - "Recycle Bin"
+  - "Tasks"
+  - "Timesheets"
+  - "User Profile"
+  - "Business Processes"   
+
+# we don't use this value yet, but maybe it could be used to
+# set non-expiring passwords on AD users
+# from https://social.technet.microsoft.com/wiki/contents/articles/29480.active-directory-fun-with-maximum-password-age.aspx... just under 30,000 years from now
+active_directory_non_expiring_password_age: -9223372036854775808
+
+activemq_version: 5.15.9
+    

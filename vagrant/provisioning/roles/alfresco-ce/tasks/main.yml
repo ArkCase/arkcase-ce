@@ -7,3 +7,4 @@
     alfresco_rma_zip_path: "{{ root_folder }}/install/alfresco/alfresco-rm-community-{{ alfresco_records_management_version }}.zip"
     alfresco_rma_repo_amp: "{{ root_folder }}/install/alfresco/alfresco-rm-community-repo-{{ alfresco_records_management_version }}.amp"
     alfresco_rma_share_amp: "{{ root_folder }}/install/alfresco/alfresco-rm-community-share-{{ alfresco_records_management_version }}.amp"
+    alfresco_java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
