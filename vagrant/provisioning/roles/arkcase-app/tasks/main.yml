@@ -116,10 +116,14 @@
   register: arkcase_war
   when: arkcase_retrieve_strategy == "sftp"
 
+- name: format config server version
+  set_fact:
+    arkcase_config_server_version_formatted: "{{ '-' ~ arkcase_config_server_version if arkcase_config_server_version != '' else '' }}"
+
 - name: download config server jar file (if using sftp)
   become: yes
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/config-server{{ arkcase_config_server_version }}.jar
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/config-server{{ arkcase_config_server_version_formatted }}.jar
   args:
     chdir: "{{ root_folder }}/tmp/config-server"
   environment:
@@ -131,8 +135,8 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/tmp/config-server/config-server{{ arkcase_config_server_version }}.jar"
-    dest: "{{ root_folder }}/app/config-server/config-server{{ arkcase_config_server_version }}.jar"
+    src: "{{ root_folder }}/tmp/config-server/config-server{{ arkcase_config_server_version_formatted }}.jar"
+    dest: "{{ root_folder }}/app/config-server/config-server.jar"
   register: config_server_jar
   when: arkcase_retrieve_strategy == "sftp"
 
