@@ -116,10 +116,14 @@
   register: arkcase_war
   when: arkcase_retrieve_strategy == "sftp"
 
+- name: format config server version
+  set_fact:
+    arkcase_config_server_version_formatted: "{{ '-' ~ arkcase_config_server_version if arkcase_config_server_version != '' else '' }}"
+
 - name: download config server jar file (if using sftp)
   become: yes
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/config-server{{ arkcase_config_server_version }}.jar
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/config-server{{ arkcase_config_server_version_formatted }}.jar
   args:
     chdir: "{{ root_folder }}/tmp/config-server"
   environment:
@@ -131,8 +135,8 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/tmp/config-server/config-server{{ arkcase_config_server_version }}.jar"
-    dest: "{{ root_folder }}/app/config-server/config-server{{ arkcase_config_server_version }}.jar"
+    src: "{{ root_folder }}/tmp/config-server/config-server{{ arkcase_config_server_version_formatted }}.jar"
+    dest: "{{ root_folder }}/app/config-server/config-server.jar"
   register: config_server_jar
   when: arkcase_retrieve_strategy == "sftp"
 
@@ -179,10 +183,15 @@
   command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
   when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
 
+
+- name: format config version
+  set_fact:
+    arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
+
 - name: download configuration (if using sftp, and no extension is configured)
   become: yes
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version}}.zip
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip
   args:
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
@@ -192,7 +201,7 @@
 - name: rename core config zip to common file name
   become: yes
   become_user: arkcase
-  command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
+  command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
   when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool 
 
 - name: unzip the configuration files
@@ -427,7 +436,7 @@
     ldap_user_domain_bean_name: "{{ ldap_user_domain_bean }}"
     ldap_authentication_service_class: "com.armedia.acm.services.users.service.ldap.LdapAuthenticateService"
     portal_prefix: ""
-    ldap_template_name: "spring-config-ldap.xml"
+    ldap_template_name: "{{ arkcase_version == '' or arkcase_version is version('3.3.3', '>=') | ternary('spring-config-ldap.xml', 'spring-config-ldap-pre-3.3.3.xml') }}"
 
 - name: read current config server configuration
   become: yes
