@@ -51,7 +51,6 @@ application:
     historyDays: 30
     baseUrl: "https://{{ external_host }}/arkcase"
     applicationName: "arkcase"
-    helpUrl: "https://support.arkcase.com/hc/en-us/sections/360001477151-User-Guide"
     alfrescoUserIdLdapAttribute: "samAccountName"
     issueCollectorFlag: false
 alfresco:
