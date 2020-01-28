@@ -15,14 +15,14 @@ external_host: acm-arkcase
 base_domain: acm-arkcase
 internal_host: "{{ base_domain }}"
 
-activemq_host: "{{ internal_host }}"
-alfresco_host: "{{ internal_host }}"
+activemq_host: "acm-activemq"
+alfresco_host: "acm-alfresco"
 arkcase_host: "arkcase-host"
-database_host: "{{ internal_host }}"
-mariadb_host: "{{ internal_host }}"
-pentaho_host: "{{ internal_host }}"
-snowbound_host: "{{ internal_host }}"
-solr_host: "{{ internal_host }}"
+database_host: "acm-mysql"
+mariadb_host: "acm-mysql"
+pentaho_host: "acm-pentaho"
+snowbound_host: "acm-snowbound"
+solr_host: "acm-solr"
 
 
 ### ensure samba domain is based on the internal_host
