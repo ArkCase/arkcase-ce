@@ -17,7 +17,7 @@ internal_host: "{{ base_domain }}"
 
 activemq_host: "{{ internal_host }}"
 alfresco_host: "{{ internal_host }}"
-arkcase_host: "{{ internal_host }}"
+arkcase_host: "arkcase-host"
 database_host: "{{ internal_host }}"
 mariadb_host: "{{ internal_host }}"
 pentaho_host: "{{ internal_host }}"
