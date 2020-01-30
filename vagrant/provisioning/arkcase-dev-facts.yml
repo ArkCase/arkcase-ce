@@ -72,18 +72,83 @@ roles_to_groups_yaml:
   - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
   ROLE_SUPERVISOR:
   - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   ROLE_ADMINISTRATOR:
   - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   ROLE_EXTERNAL:
   - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
   ROLE_BILLING_QUEUE:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
   - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_GENERALCOUNSEL_QUEUE:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_RELEASE_QUEUE:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_APPROVE_QUEUE:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_INTAKE_QUEUE:
+  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain | upper}}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_HOLD_QUEUE:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_APPEAL_QUEUE:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_FULFILL_QUEUE:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_QUEUE_MASS_ASSIGNMENT:
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
+  ROLE_APPROVER:
+  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper }}"
+  ROLE_CONTRIBUTOR:
+  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
+  ROLE_OFFICER:
+  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain | upper }}"
+  ROLE_PORTAL_ADMINISTRATOR:
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  ROLE_PORTAL_USER:
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
 
 ldap_groups:
   - description: Entity administrators
@@ -110,6 +175,14 @@ ldap_groups:
     name: "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR"
     alfresco_role: SiteManager
     alfresco_rma_role: Administrator
+  - description: Approvers
+    name: "{{ ldap_prefix }}APPROVERS"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+  - description: Officers
+    name: "{{ ldap_prefix }}OFFICERS"
+    alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
         
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
 arkcase_admin_password: "{{ default_user_password }}"
@@ -125,6 +198,78 @@ ldap_users:
     password: "{{ arkcase_admin_password }}"
     groups:
       - "{{ arkcase_admin_group }}"
+      - "CN={{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR,{{ldap_group_base}}"
+    nonexpiring_password: yes
+  - user_id: "{{ ldap_prefix }}ann-acm"
+    description: Ann Smith
+    name: Ann Smith
+    mail: "ann-acm@armedia.com"
+    firstName: Ann
+    lastName: Smith
+    password: "{{ default_user_password }}"
+    groups:
+      - "{{ arkcase_admin_group }}"
+      - "CN={{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR,{{ldap_group_base}}"
+    nonexpiring_password: yes
+  - user_id: "{{ ldap_prefix }}david.miller"
+    description: David Miller
+    name: David Miller
+    mail: "david.miller@arkcase.com"
+    firstName: David
+    lastName: Miller
+    password: "{{ default_user_password }}"
+    groups:
+      - "{{ arkcase_admin_group }}"
+    nonexpiring_password: yes
+  - user_id: "{{ ldap_prefix }}matthew.maines"
+    description: Matthew Maines
+    name: Matthew Maines
+    mail: "mmaines@armedia.com"
+    firstName: Matthew
+    lastName: Maines
+    password: "{{ default_user_password }}"
+    groups:
+      - "{{ arkcase_admin_group }}"
+    nonexpiring_password: yes
+  - user_id: "{{ ldap_prefix }}sally-acm"
+    description: Sally Supervisor
+    name: Sally Supervisor
+    mail: "sally-acm@armedia.com"
+    firstName: Sally
+    lastName: Supervisor
+    password: "{{ default_user_password }}"
+    groups:
+      - "CN={{ ldap_prefix }}ARKCASE_SUPERVISOR,{{ldap_group_base}}"
+    nonexpiring_password: yes
+  - user_id: "{{ ldap_prefix }}samuel-acm"
+    description: Samuel Supervisor
+    name: Samuel Supervisor
+    mail: "samuel-acm@armedia.com"
+    firstName: Samuel
+    lastName: Supervisor
+    password: "{{ default_user_password }}"
+    groups:
+      - "CN={{ ldap_prefix }}ARKCASE_SUPERVISOR,{{ldap_group_base}}"
+    nonexpiring_password: yes
+  - user_id: "{{ ldap_prefix }}owen.officer"
+    description: Owen Officer
+    name: Owen Officer
+    mail: "owen.officer@armedia.com"
+    firstName: Owen
+    lastName: Officer
+    password: "{{ default_user_password }}"
+    groups:
+      - "CN={{ ldap_prefix }}OFFICERS,{{ldap_group_base}}"
+    nonexpiring_password: yes
+  - user_id: "{{ ldap_prefix }}andy.approver"
+    description: Andy Approver
+    name: Andy Approver
+    mail: "andy.approver@armedia.com"
+    firstName: Andy
+    lastName: Approver
+    password: "{{ default_user_password }}"
+    groups:
+      - "CN={{ ldap_prefix }}APPROVERS,{{ldap_group_base}}"
     nonexpiring_password: yes
 
 # for each spreadsheet to be udpated, first give the path WITHOUT the .xlsx extension, then give a list of pairs of "string to be replaced", "replacement string"
