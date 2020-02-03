@@ -10,9 +10,9 @@ calendar_purge_option: "RETAIN_INDEFINITELY"
 calendar_enabled_for_complaints: false
 
 # external_host: the host name a browser will use
-external_host: acm-arkcase
+external_host: arkcase-ce.local
 # internal host: the actual host name of the VM
-base_domain: acm-arkcase
+base_domain: arkcase-ce.local
 internal_host: "{{ base_domain }}"
 
 activemq_host: "{{ internal_host }}"
