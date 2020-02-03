@@ -436,7 +436,7 @@
     ldap_user_domain_bean_name: "{{ ldap_user_domain_bean }}"
     ldap_authentication_service_class: "com.armedia.acm.services.users.service.ldap.LdapAuthenticateService"
     portal_prefix: ""
-    ldap_template_name: "{{ arkcase_version == '' or arkcase_version is version('3.3.3', '>=') | ternary('spring-config-ldap.xml', 'spring-config-ldap-pre-3.3.3.xml') }}"
+    ldap_template_name: "spring-config-ldap.xml"
 
 - name: read current config server configuration
   become: yes
