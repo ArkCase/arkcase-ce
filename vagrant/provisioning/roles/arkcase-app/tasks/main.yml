@@ -147,10 +147,14 @@
     path: "{{ root_folder }}/app/config-server/config-server.jar"
     mode: "u=rwx,g=r,o=r"
 
+- name: format extension version
+  set_fact:
+    arkcase_extension_version_formatted: "{{ '-' ~ arkcase_extension_version if arkcase_extension_version != '' else '' }}"
+
 - name: download extension (if configured)
   become: yes
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ arkcase_extension_id }}{{ arkcase_extension_version }}.jar
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.jar
   args:
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
@@ -159,7 +163,7 @@
 
 - name: set extension config file name (extension id)
   set_fact:
-    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version }}.zip"
+    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.zip"
   when: arkcase_extension_id is defined
 
 - name: set extension config file name (no extension id)
