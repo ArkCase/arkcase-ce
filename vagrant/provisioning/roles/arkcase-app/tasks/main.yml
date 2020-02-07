@@ -399,6 +399,36 @@
     state: absent
   when: symkey_stat.stat.exists and not symkey_stat.stat.islnk
 
+- name: check whether arkcase.ks a symlink
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/private/arkcase.ks
+  register: arkcaseks_stat
+
+- name: remove the default arkcase.ks
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/private/arkcase.ks
+    state: absent
+  when: arkcaseks_stat.stat.exists and not arkcaseks_stat.stat.islnk
+
+- name: check whether arkcase.ts a symlink
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/private/arkcase.ts
+  register: arkcasets_stat
+
+- name: remove the default arkcase.ts
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/private/arkcase.ts
+    state: absent
+  when: arkcasets_stat.stat.exists and not arkcasets_stat.stat.islnk
+  
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
 - name: link certs and keys to .arkcase folder
