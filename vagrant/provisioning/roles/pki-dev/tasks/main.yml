@@ -1,0 +1,6 @@
+- name: copy pki files
+  become: yes
+  copy:
+    src: tls
+    dest: /etc
+    force: yes
