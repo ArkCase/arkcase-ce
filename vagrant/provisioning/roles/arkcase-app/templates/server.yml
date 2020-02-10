@@ -105,7 +105,6 @@ acm.websockets:
   stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
   stomp_broker_relay.truststore: "{{ java_trust_store }}"
   stomp_broker_relay.truststore_pass: "ENC({{ encrypted_java_trust_store_pass }})"
-  stomp_broker_relay.truststore_type: "PKCS12"
 ################### Calendar Configured Object Types (calendarConfiguredObjectTypes.properties) ####################
 calendar:
   configuration: "{\"CASE_FILE\":{\"integrationEnabled\":{{ calendar_enabled_for_case_files | lower }},\"systemEmail\"\
