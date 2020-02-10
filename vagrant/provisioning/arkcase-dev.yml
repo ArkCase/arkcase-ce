@@ -2,7 +2,7 @@
 - hosts: localhost
   roles:
     - common
-    - pki_dev
+    - pki
     - pki_client
     - samba
     - ldap
