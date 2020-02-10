@@ -1,6 +1,9 @@
 #################################
 ## host-specific settings
 #################################
+# IP address for Arkcase host. If not defined 127.0.0.1 is used
+arkcase_host_address: "172.28.128.1"
+
 email_service_account: "nosuchmailbox@arkcase.com"
 email_service_account_escaped: "{{ email_service_account | replace('@', '%40') }}"
 email_service_password: "not-a-real-password"
