@@ -927,7 +927,7 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/install/arkcase/{{ arkcase_extension_id }}.jar"
+    src: "{{ root_folder }}/install/arkcase/{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.jar"
     dest: "/home/arkcase/.arkcase/custom/WEB-INF/lib/{{ arkcase_extension_id }}.jar"
   when: arkcase_extension_install
 
