@@ -879,7 +879,7 @@
   loop:
     - regexp: JKS
       replace: PKCS12
-    - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
+    - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/encryption-keystore"
       replace: "{{ java_key_store }}"
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
