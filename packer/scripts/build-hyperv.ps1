@@ -12,4 +12,6 @@ else {
     '"ExternalSwitch" for dynamic IP configuration already exists; skipping'
 }
 
+vagrant plugin install vagrant-reload
+
 packer build centos7-hyper-v.json
