@@ -1,0 +1,12 @@
+- name: deploy core reports
+  include_tasks: deploy_report.yml
+  loop: "{{ arkcase_core_reports|flatten }}"
+  loop_control:
+    loop_var: r
+   
+- name: deploy extension reports
+  include_tasks: deploy_extension_report.yml
+  loop: "{{ arkcase_extension_reports|flatten }}"
+  when: arkcase_extension_install_reports|bool
+  loop_control:
+    loop_var: r
