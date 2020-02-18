@@ -32,7 +32,7 @@
       "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
       "vm_name": "arkcase-centos-7-x86_64",
       "cpus": 2,
-	  "memory": 4096,
+	  "memory": 6144,
 	  "enable_dynamic_memory": true,
 	  "generation": 2,
 	  "switch_name": "ExternalSwitch"
