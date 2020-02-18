@@ -34,7 +34,8 @@
       "cpus": 2,
 	  "memory": 4096,
 	  "enable_dynamic_memory": true,
-	  "generation": 2
+	  "generation": 2,
+	  "switch_name": "ExternalSwitch"
     }
   ],
   "post-processors": [
