@@ -428,6 +428,36 @@
     path: /home/arkcase/.arkcase/acm/private/arkcase.ts
     state: absent
   when: arkcasets_stat.stat.exists and not arkcasets_stat.stat.islnk
+
+- name: check whether arkcase-ca.crt a symlink
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/private/arkcase-ca.crt
+  register: arkcase_ca_stat
+
+- name: remove the default arkcase-ca.crt
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/private/arkcase-ca.crt
+    state: absent
+  when: arkcase_ca_stat.stat.exists and not arkcase_ca_stat.stat.islnk
+  
+  - name: check whether acm-arkcase.crt a symlink
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/private/acm-arkcase.crt
+  register: acmarkcase_stat
+
+- name: remove the default acm-arkcase.crt
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/private/acm-arkcase.crt
+    state: absent
+  when: acmarkcase_stat.stat.exists and not acmarkcase_stat.stat.islnk
   
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
