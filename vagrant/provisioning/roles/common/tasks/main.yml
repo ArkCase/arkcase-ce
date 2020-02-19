@@ -60,8 +60,8 @@
     line: "{{ item }}"
   loop:
     - "127.0.0.1 {{ internal_host }}"
-    - "{{ '127.0.0.1' if not arkcase_host_address else arkcase_host_address }} arkcase-host"
-    
+    - "{{ arkcase_host_address | default('127.0.0.1') }} arkcase-host"
+
 - name: set timezone to UTC
   become: yes
   timezone:
