@@ -444,7 +444,7 @@
     state: absent
   when: arkcase_ca_stat.stat.exists and not arkcase_ca_stat.stat.islnk
   
-  - name: check whether acm-arkcase.crt a symlink
+- name: check whether acm-arkcase.crt a symlink
   become: yes
   become_user: arkcase
   stat:
