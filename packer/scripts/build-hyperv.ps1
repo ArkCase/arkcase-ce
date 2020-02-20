@@ -12,6 +12,11 @@ else {
     '"ExternalSwitch" for dynamic IP configuration already exists; skipping'
 }
 
+Set-NetFirewallProfile -Name domain -DisabledInterfaceAliases "vEthernet (ExternalSwitch)"
+Set-NetFirewallProfile -Name private -DisabledInterfaceAliases "vEthernet (ExternalSwitch)"
+Set-NetFirewallProfile -Name public -DisabledInterfaceAliases "vEthernet (ExternalSwitch)"
+
+
 vagrant plugin install vagrant-reload
 
 packer build centos7-hyper-v.json
