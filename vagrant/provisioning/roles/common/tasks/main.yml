@@ -26,6 +26,7 @@
       - tar
       - wget
       - sshpass
+      - firewalld
 
 - name: remove python2-passlib since it breaks solr password setting
   become: yes
