@@ -20,6 +20,11 @@
   set_fact:
     config_backup_folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase-backup-{{ ansible_date_time.iso8601 }}"
 
+- name: Delete all but last 5 backups
+  become: yes
+  become_user: arkcase
+  shell: ls -atp | grep ".arkcase-backup*"| tail -n +6 | xargs -d '\n' -r rm -rf
+  
 - name: backup config folder
   become: yes
   become_user: arkcase
