@@ -58,6 +58,7 @@
       - python-ldap
       - python36u
       - python36u-devel
+      - python-firewall
 
 - name: link python3 executable
   become: yes
