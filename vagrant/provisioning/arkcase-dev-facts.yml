@@ -370,7 +370,8 @@ sftp_user: "{{ sftp_extension_user }}"
 # retrieve snowbound from GitHub ("github") or SFTP ("sftp")
 snowbound_retrieve_strategy: "sftp"
 snowbound_vendor_version: "4.10"
-snowbound_arkcase_version: "3.3.3-SNAPSHOT"
+snowbound_arkcase_version: ""
+snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
 
 ### default values that shouldn't have to change

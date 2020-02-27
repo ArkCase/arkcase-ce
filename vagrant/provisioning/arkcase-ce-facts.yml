@@ -266,6 +266,7 @@ arkcase_config_server_version: "0.0.1"
 snowbound_retrieve_strategy: "github"
 snowbound_vendor_version: "4.10"
 snowbound_arkcase_version: "3.3.2"
+snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
 
 
