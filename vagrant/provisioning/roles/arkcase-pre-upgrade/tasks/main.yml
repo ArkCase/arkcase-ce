@@ -23,7 +23,10 @@
 - name: Delete all but last 5 backups
   become: yes
   become_user: arkcase
-  shell: ls -atp | grep ".arkcase-backup*"| tail -n +6 | xargs -d '\n' -r rm -rf
+  shell: |
+         cd {{ root_folder }}/data/arkcase-home
+         ls -atp | grep ".arkcase-backup*"| tail -n +6 | xargs -d '\n' -r rm -rf
+  when: arkcase_config_path.stat.exists
   
 - name: backup config folder
   become: yes
