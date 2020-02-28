@@ -345,8 +345,10 @@ solr_cores:
 
 # NOTE: Alfresco CE 2018-06 does NOT work with
 # higher versions of Maria JDBC; specifically it does NOT
-# work with 2.4.2.  Is known to work with 2.2.6.
-mariadb_jdbc_version: 2.2.6
+# work with 2.4.2.  
+# Also, Alfresco 6.1 EE is certified with 2.2.5... n
+# it doesn't work with 2.2.6.
+mariadb_jdbc_version: 2.2.5
 default_database_password: "@rKc@3S!"
 
 # tomcat_major_version needed to build download URL
