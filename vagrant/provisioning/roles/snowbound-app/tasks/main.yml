@@ -1,15 +1,16 @@
-- name: stop snowbound
-  become: yes
-  systemd:
-    name: snowbound
-    state: stopped
-
 - name: see if war files exist
   become: yes
   become_user: snowbound
   stat:
     path: "{{ root_folder }}/app/snowbound/webapps/VirtualViewerJavaHTML5.war"
   register: war_file
+
+- name: stop snowbound
+  become: yes
+  systemd:
+    name: snowbound
+    state: stopped
+  when: war_file.stat.exists
 
 - name: Delete all but last 5 backups
   become: yes

@@ -15,6 +15,7 @@
     - pentaho-ee
     - pentaho-configuration
     - snowbound
+    - snowbound-app
     - pentaho-license
     - arkcase-prerequisites
     - arkcase-app
