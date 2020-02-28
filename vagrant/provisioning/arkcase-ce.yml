@@ -17,6 +17,7 @@
     - pentaho-ce
     - pentaho-configuration
     - snowbound
+    - snowbound-app
     - arkcase-prerequisites
     - arkcase-app
     - tesseract

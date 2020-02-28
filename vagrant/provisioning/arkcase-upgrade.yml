@@ -6,5 +6,4 @@
     - arkcase-prerequisites
     - arkcase-app
     - arkcase-post-upgrade
-    - snowbound-upgrade
-
+    - snowbound-app
