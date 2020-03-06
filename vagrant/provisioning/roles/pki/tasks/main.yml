@@ -19,9 +19,15 @@
 - name: generate root ca private key
   become: yes
   openssl_privatekey:
-    path: "/etc/tls/private/arkcase-root.pem"
+    path: "/etc/tls/private/arkcase-root-passphrase.pem"
     type: RSA
     size: 4096
+    cipher: "AES-256-ECB"
+    passphrase: "m0rn1ngD$w"
+
+- name: remove passphrase from private key
+  become: yes
+  command: openssl rsa -in "/etc/tls/private/arkcase-root-passphrase.pem" -out "/etc/tls/private/arkcase-root.pem" -passin pass:'m0rn1ngD$w'
 
 - name: generate root ca certificate signing request
   become: yes
@@ -60,10 +66,16 @@
 - name: generate intermediate private key
   become: yes
   openssl_privatekey:
-    path: "/etc/tls/private/arkcase-intermediate.pem"
+    path: "/etc/tls/private/arkcase-intermediate-pp.pem"
     type: RSA
     size: 4096
+    cipher: "AES-256-ECB"
+    passphrase: "m0rn1ngD$w"
   register: intermediate_private_key
+
+- name: remove passphrase from intermediate key
+  become: yes
+  command: openssl rsa -in "/etc/tls/private/arkcase-intermediate-pp.pem" -out "/etc/tls/private/arkcase-intermediate.pem" -passin pass:'m0rn1ngD$w'
 
 # NOTE the intermediate CSR is signed with the intermediate key
 - name: generate intermediate csr
@@ -117,11 +129,17 @@
 - name: generate server private key
   become: yes
   openssl_privatekey:
-    path: "{{ ssl_key }}"
+    path: "/etc/tls/private/ssl-key-pp.pem"
     type: RSA
     size: 2048
     mode: 0644
+    cipher: "AES-256-ECB"
+    passphrase: "m0rn1ngD$w"
   register: server_private_key
+
+- name: remove passphrase from server key
+  become: yes
+  command: openssl rsa -in "/etc/tls/private/ssl-key-pp.pem" -out "{{ ssl_key }}" -passin pass:'m0rn1ngD$w'
 
 - name: generate server csr
   become: yes

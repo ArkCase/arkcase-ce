@@ -1,7 +1,10 @@
-- name: restore arkcase-runtime.yml
+- name: restore config files 
   become: yes
   become_user: arkcase
-  command: cp {{ config_backup_folder_path }}/acm/acm-config-server-repo/arkcase-runtime.yaml {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-runtime.yaml
+  command: cp {{ config_backup_folder_path }}/acm/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/{{ item }}
+  loop:
+    - "acm-config-server-repo/arkcase-runtime.yaml"
+    - "acmSequenceConfiguration.json"
 
 - name: start config server
   become: yes

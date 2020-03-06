@@ -18,6 +18,8 @@
     - "{{ root_folder }}/data/arkcase"
     - "{{ root_folder }}/data/arkcase-home"
     - "{{ root_folder }}/data/arkcase-home/.arkcase"
+    - "{{ root_folder }}/data/arkcase-home/.yarn"
+    - "{{ root_folder }}/data/arkcase-home/.cache"
     - "{{ root_folder }}/log/arkcase"
     - "{{ root_folder }}/app/arkcase"
     - "{{ root_folder }}/install/arkcase"
@@ -27,13 +29,12 @@
     - "{{ root_folder }}/tmp/config-server"
   register: arkcase_folder_structure
 
-- name: link .arkcase folder
-  become: yes
-  become_user: arkcase
-  file:
-    src: "{{ root_folder }}/data/arkcase-home/.arkcase"
-    dest: /home/arkcase/.arkcase
-    state: link
+- name: link folders if they don't already exist
+  include_tasks: link_folder.yml
+  loop:
+    - ".yarn"
+    - ".cache"
+    - ".arkcase"
 
 - name: enable logrotate for arkcase log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
