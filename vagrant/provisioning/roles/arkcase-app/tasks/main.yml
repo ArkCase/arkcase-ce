@@ -500,7 +500,8 @@
     ldap_user_domain_bean_name: "{{ ldap_user_domain_bean }}"
     ldap_authentication_service_class: "com.armedia.acm.services.users.service.ldap.LdapAuthenticateService"
     portal_prefix: ""
-    ldap_template_name: "spring-config-ldap.xml"
+    # until our Active Directory authenticator works with AD 2016 we will stick with our old LDAP authenticator
+    ldap_template_name: "spring-config-ldap-pre-3.3.3.xml"
 
 - name: read current config server configuration
   become: yes
