@@ -12,7 +12,7 @@
     - "/home/arkcase/.arkcase/acm/spring/spring-config-{{ old_config_id }}-ldap.properties"
     - "/home/arkcase/.arkcase/acm/spring/spring-config-{{ old_config_id }}-ldap.xml"
 
-- name: ArkCase LDAP configuration
+- name: ArkCase LDAP configuration (v3.3.6 and bellow)
   become: yes
   become_user: arkcase
   template:
@@ -31,3 +31,21 @@
       dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ new_config_id }}-ad.properties"
     - src: "spring-config-user-ad.xml"
       dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ new_config_id }}-ad.xml"
+  when: arkcase_version != "" and arkcase_version is version('3.3.7', '<')
+
+- name: ensure config server ldap folder exists
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/ldap
+    state: directory
+  when: arkcase_version != "" and arkcase_version is version('3.3.7', '>=')
+
+- name: ArkCase LDAP configuration (3.3.7 and above)
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: ldap.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/ldap/ldap-server.yaml
+  when: arkcase_version != "" and arkcase_version is version('3.3.7', '>=')
