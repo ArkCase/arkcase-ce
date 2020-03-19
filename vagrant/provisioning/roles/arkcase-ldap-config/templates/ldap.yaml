@@ -1,0 +1,98 @@
+springConfigLdapProperties:
+  ldapAddGroupConfig:
+    {{ ldap_user_domain_bean_name }}:
+      cn: cn
+      sAMAccountName: sAMAccountName
+      objectClass: top,group
+  ldapAddUserConfig:
+    {{ ldap_user_domain_bean_name }}:
+      id: {{ ldap_user_domain_bean_name }}
+      cn: cn
+      sAMAccountName: sAMAccountName
+      userPrincipalName: userPrincipalName
+      givenName: givenName
+      sn: sn
+      mail: mail
+      userAccountControl: 512
+      unicodePwd: unicodePwd
+      homeDirectory: homeDirectory
+      objectClass: top,person,user,organizationalPerson
+  ldapEditUserProperties:
+    givenName: firstName
+    sn: lastName
+    mail: mail
+  ldapAddUserProperties:
+    cn: userId
+    givenName: firstName
+    sn: lastName
+    uid: userId
+    mail: mail
+    memberOf: memberOf
+    userAccountControl: userAccountControl
+    userPassword: password
+    unicodePwd: unicodePassword
+    uidNumber: uidNumber
+    gidNumber: gidNumber
+    homeDirectory: homeDirectory
+    objectClass: objectClass
+    shadowWarning: shadowWarning
+    shadowLastChange: shadowLastChange
+    shadowMax: shadowMax
+    sAMAccountName: userId
+    userPrincipalName: userId
+  ldapAddGroupProperties:
+    cn: fullName
+    member: member
+    gidNumber: gidNumber
+    objectClass: objectClass
+    sAMAccountName: fullName
+    memberOf: memberOf
+
+
+#Active directory sample configuration
+  # ldapAddGroupConfig:
+  #   arkcase:
+  #     cn: cn
+  #     sAMAccountName: sAMAccountName
+  #     objectClass: top,group
+  # ldapAddUserConfig:
+  #   arkcase:
+  #     id: arkcase
+  #     cn: cn
+  #     sAMAccountName: sAMAccountName
+  #     userPrincipalName: userPrincipalName
+  #     givenName: givenName
+  #     sn: sn
+  #     mail: mail
+  #     userAccountControl: 512
+  #     unicodePwd: unicodePwd
+  #     homeDirectory: homeDirectory
+  #     objectClass: top,person,user,organizationalPerson
+
+
+
+#   springConfigLdapProperties:
+#     ldapAddUserConfig:
+#       arkcase:
+#         userPassword: userPassword
+#         homeDirectory: homeDirectory
+#         mail: mail
+#         givenName: givenName
+#         objectClass: top,person,inetOrgPerson,organizationalPerson,posixAccount,uacPerson,shadowAccount
+#         shadowMax: 99999
+#         shadowWarning: 7
+#         cn: cn
+#         shadowLastChange: 12994
+#         uid: uid
+#         uidNumber: uidNumber
+#         id: arkcase
+#         sn: sn
+#         gidNumber: gidNumber
+#         userAccountControl: userAccountControl
+#   springConfigLdapProperties:
+#     ldapAddGroupConfig:
+#       arkcase:
+#         member: member
+#         objectClass: top,groupOfNames,sortableGroupofnames
+#         cn: cn
+#         gidNumber: gidNumber
