@@ -21,7 +21,7 @@
     - arkcase-prerequisites
     - arkcase-app
     - tesseract
-    - firewall
+    - role: firewall
       when: enable_firewall is undefined or enable_firewall
 
     
