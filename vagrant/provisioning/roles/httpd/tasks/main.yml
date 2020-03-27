@@ -137,6 +137,7 @@
   loop:
     - "443/tcp"
     - "8443/tcp"
+  when: enable_firewall is undefined or enable_firewall
 
 
 

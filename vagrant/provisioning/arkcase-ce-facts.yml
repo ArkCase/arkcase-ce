@@ -15,6 +15,12 @@ external_host: arkcase-ce.local
 base_domain: arkcase-ce.local
 internal_host: "{{ base_domain }}"
 
+# Whether to enable or disable the local firewall.
+#
+# If this variable is not set, or set to `true`, the firewall will be
+# enabled. To disable the firewall, set this variable to `false`.
+enable_firewall: false
+
 activemq_host: "{{ internal_host }}"
 alfresco_host: "{{ internal_host }}"
 arkcase_host: "{{ internal_host }}"

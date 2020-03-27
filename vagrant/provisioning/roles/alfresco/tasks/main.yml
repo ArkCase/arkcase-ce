@@ -697,11 +697,12 @@
     permanent: true
     state: enabled
   register: alfresco_port
+  when: enable_firewall is undefined or enable_firewall
 
 - name: Reload firewalld
   become: yes
   command: firewall-cmd --reload
-  when: alfresco_port is changed
+  when: (enable_firewall is undefined or enable_firewall) and alfresco_port is changed
 
 # Alfresco CE 6.1 download... but, there is no compatible RMA yet,
 # so we can't use it

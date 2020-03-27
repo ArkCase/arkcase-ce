@@ -26,7 +26,13 @@
       - tar
       - wget
       - sshpass
-      - firewalld
+
+- name: install firewalld
+  become: yes
+  yum:
+    state: installed
+    name: firewalld
+  when: enable_firewall is undefined or enable_firewall
 
 - name: remove python2-passlib since it breaks solr password setting
   become: yes

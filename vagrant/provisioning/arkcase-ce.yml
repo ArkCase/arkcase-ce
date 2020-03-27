@@ -22,5 +22,6 @@
     - arkcase-app
     - tesseract
     - firewall
+      when: enable_firewall is undefined or enable_firewall
 
     
