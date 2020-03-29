@@ -86,3 +86,7 @@
   become: yes
   timezone:
     name: UTC
+
+- name: Set default locale to en_US.utf8
+  become: yes
+  command: localectl set-locale LANG=en_US.utf8
