@@ -117,15 +117,21 @@
     state: restarted
   when: tls_conf is changed or mod_security_conf_updated is changed or alfresco_redirect_conf is changed
 
+- name: Check whether I am inside a Docker container
+  stat:
+    path: /.dockerenv
+  register: stat_dockerenv_result
+
 - name: see if httpd_can_network_connect is already enabled
   command: /usr/sbin/getsebool httpd_can_network_connect
   register: httpd_network_enabled
   changed_when: false
+  when: not stat_dockerenv_result.stat.exists
   
 - name: tell SELinux that httpd can proxy to other local services
   become: yes
   command: setsebool -P httpd_can_network_connect 1
-  when: "httpd_network_enabled.stdout is search('off$')"
+  when: "not stat_dockerenv_result.stat.exists and httpd_network_enabled.stdout is search('off$')"
 
 - name: open firewall port
   become: yes
