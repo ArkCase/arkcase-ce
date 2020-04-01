@@ -1,11 +1,12 @@
 - name: Get folders in a folder
   find:
     paths: "{{ root_folder }}/data/arkcase-home/.arkcase-backup*"
+    file_type: directory
   register: found_folders
 
 - name: Get latest folder
   set_fact:
-    latest_config_backup_folder_path: "{{ found_folders.folders | sort(attribute='mtime',reverse=true) | first }}"
+    latest_config_backup_folder_path: "{{ found_folders.files | sort(attribute='mtime',reverse=true) | first }}"
   ignore_errors: true
     
 - name: restore config files 
