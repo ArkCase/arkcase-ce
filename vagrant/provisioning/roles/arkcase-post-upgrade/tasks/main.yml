@@ -1,6 +1,7 @@
 - name: Get folders in a folder
   find:
-    paths: "{{ root_folder }}/data/arkcase-home/.arkcase-backup*"
+    paths: "{{ root_folder }}/data/arkcase-home"
+    patterns: '.arkcase-backup*'
     file_type: directory
   register: found_folders
 
