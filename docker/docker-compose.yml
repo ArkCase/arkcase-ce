@@ -1,0 +1,21 @@
+version: "3.7"
+
+# NB: You must have manually installed ArkCase inside a Docker
+# container and then committed in into an image like so:
+# `$ docker commit MYCONTAINER arkcase-ce-core:3.3.5`
+#
+# For more details, check
+# [this](https://arkcase.atlassian.net/wiki/spaces/DO/pages/6422529/Notes+about+Dockerizing+ArkCase).
+
+services:
+  arkcase:
+    image: arkcase-ce-core:3.3.5
+    command: /sbin/init
+    environment:
+      LANG: en_US.utf8
+    ports:
+      - 443:443
+    hostname: arkcase-ce.local
+    extra_hosts:
+      - arkcase-host:127.0.0.1
+    privileged: true
