@@ -1,27 +1,59 @@
 springConfigLdapProperties:
-  ldapAddGroupConfig:
+  ldapDirectoryConfig:
     {{ ldap_user_domain_bean_name }}:
-      cn: cn
-      sAMAccountName: sAMAccountName
-      objectClass: top,group
-  ldapAddUserConfig:
-    {{ ldap_user_domain_bean_name }}:
-      id: {{ ldap_user_domain_bean_name }}
-      cn: cn
-      sAMAccountName: sAMAccountName
-      userPrincipalName: userPrincipalName
-      givenName: givenName
-      sn: sn
-      mail: mail
-      userAccountControl: 512
-      unicodePwd: unicodePwd
-      homeDirectory: homeDirectory
-      objectClass: top,person,user,organizationalPerson
-  ldapEditUserProperties:
+      base: {{ ldap_base }}
+      authUserDn: {{ ldap_bind_user }}
+      authUserPassword: ENC({{ encrypted_ldap_bind_password }})
+      userSearchBase: {{ ldap_user_no_base }}
+      groupSearchBase: {{ ldap_group_no_base }}
+      ldapUrl: {{ ldap_url }}
+      userAttributes: cn,userAccountControl,sn,givenName,dn,distinguishedname,memberOf,sAMAccountName,userPrincipalName,uid,uidNumber,c,co,company,department,title,shadowMax,shadowLastChange,msDS-UserPasswordExpiryTimeComputed,modifyTimestamp,description,member
+      userDomain: {{ ldap_user_domain }}
+      syncPageSize: 500
+      enableEditingLdapUsers: true
+      directoryType: activedirectory
+      userSearchFilter: (&(objectClass=user)(sAMAccountName=%s))
+      allUsersFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))
+      allChangedUsersFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))(modifyTimestamp>=%s))
+      allUsersPageFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))(sAMAccountName>=%s))
+      allChangedUsersPageFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))(sAMAccountName>=%s)(modifyTimestamp>=%s))
+      allUsersSortingAttribute: sAMAccountName
+      groupSearchFilterForUser: (&(objectClass=group)(member=%s))
+      userIdAttributeName: sAMAccountName
+      groupSearchFilter: (objectclass=group)
+      changedGroupSearchFilter: (&(objectclass=group)(modifyTimestamp>=%s))
+      groupSearchPageFilter: (&(objectclass=group)(cn>=%s))
+      changedGroupSearchPageFilter: (&(objectclass=group)(cn>=%s)(modifyTimestamp>=%s))
+      groupsSortingAttribute: cn
+      userPrefix: {{ ldap_prefix }}{{ portal_prefix }}
+      groupPrefix: {{ ldap_prefix }}
+      userControlGroup: 
+      groupControlGroup: 
+      syncEnabled: true
+      partialSyncCron: 0 0/30 * 1/1 * ? *
+      fullSyncCron: 0 5 0 1/1 * ? *
+      status: new
+      ldapAddUserConfig:
+        homeDirectory: homeDirectory
+        mail: mail
+        sAMAccountName: sAMAccountName
+        unicodePwd: unicodePwd
+        givenName: givenName
+        objectClass: top,person,user,organizationalPerson
+        id: arkcase
+        cn: cn
+        sn: sn
+        userPrincipalName: userPrincipalName
+        userAccountControl: userAccountControl
+      ldapAddGroupConfig:
+        sAMAccountName: sAMAccountName
+        objectClass: top,group
+        cn: cn
+  ldapEditUserValuesTransformation:
     givenName: firstName
     sn: lastName
     mail: mail
-  ldapAddUserProperties:
+  ldapAddUserValuesTransformations:
     cn: userId
     givenName: firstName
     sn: lastName
@@ -40,7 +72,7 @@ springConfigLdapProperties:
     shadowMax: shadowMax
     sAMAccountName: userId
     userPrincipalName: userId
-  ldapAddGroupProperties:
+  ldapAddGroupValuesTransformations:
     cn: fullName
     member: member
     gidNumber: gidNumber
@@ -48,51 +80,7 @@ springConfigLdapProperties:
     sAMAccountName: fullName
     memberOf: memberOf
 
-
-#Active directory sample configuration
-  # ldapAddGroupConfig:
-  #   arkcase:
-  #     cn: cn
-  #     sAMAccountName: sAMAccountName
-  #     objectClass: top,group
-  # ldapAddUserConfig:
-  #   arkcase:
-  #     id: arkcase
-  #     cn: cn
-  #     sAMAccountName: sAMAccountName
-  #     userPrincipalName: userPrincipalName
-  #     givenName: givenName
-  #     sn: sn
-  #     mail: mail
-  #     userAccountControl: 512
-  #     unicodePwd: unicodePwd
-  #     homeDirectory: homeDirectory
-  #     objectClass: top,person,user,organizationalPerson
-
-
-
-#   springConfigLdapProperties:
-#     ldapAddUserConfig:
-#       arkcase:
-#         userPassword: userPassword
-#         homeDirectory: homeDirectory
-#         mail: mail
-#         givenName: givenName
-#         objectClass: top,person,inetOrgPerson,organizationalPerson,posixAccount,uacPerson,shadowAccount
-#         shadowMax: 99999
-#         shadowWarning: 7
-#         cn: cn
-#         shadowLastChange: 12994
-#         uid: uid
-#         uidNumber: uidNumber
-#         id: arkcase
-#         sn: sn
-#         gidNumber: gidNumber
-#         userAccountControl: userAccountControl
-#   springConfigLdapProperties:
-#     ldapAddGroupConfig:
-#       arkcase:
-#         member: member
-#         objectClass: top,groupOfNames,sortableGroupofnames
-#         cn: cn
-#         gidNumber: gidNumber
+#TODO:
+# whether to auto-generate the user id; true for 
+# external portal, false for ArkCase
+ldapConfig.autoGenerateUserId={{ autogenerate_user_id | lower }}
