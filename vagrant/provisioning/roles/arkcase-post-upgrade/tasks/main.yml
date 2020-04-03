@@ -2,6 +2,7 @@
   find:
     paths: "{{ root_folder }}/data/arkcase-home"
     patterns: '.arkcase-backup*'
+    hidden: yes
     file_type: directory
   register: found_folders
 
