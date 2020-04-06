@@ -1,5 +1,3 @@
-springConfigLdapProperties:
-  ldapDirectoryConfig:
     {{ ldap_user_domain_bean_name }}:
       base: {{ ldap_base }}
       authUserDn: {{ ldap_bind_user }}
