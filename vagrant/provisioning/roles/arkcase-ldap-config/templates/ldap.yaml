@@ -49,33 +49,3 @@ springConfigLdapProperties:
         sAMAccountName: sAMAccountName
         objectClass: top,group
         cn: cn
-  ldapEditUserValuesTransformation:
-    givenName: firstName
-    sn: lastName
-    mail: mail
-  ldapAddUserValuesTransformations:
-    cn: userId
-    givenName: firstName
-    sn: lastName
-    uid: userId
-    mail: mail
-    memberOf: memberOf
-    userAccountControl: userAccountControl
-    userPassword: password
-    unicodePwd: unicodePassword
-    uidNumber: uidNumber
-    gidNumber: gidNumber
-    homeDirectory: homeDirectory
-    objectClass: objectClass
-    shadowWarning: shadowWarning
-    shadowLastChange: shadowLastChange
-    shadowMax: shadowMax
-    sAMAccountName: userId
-    userPrincipalName: userId
-  ldapAddGroupValuesTransformations:
-    cn: fullName
-    member: member
-    gidNumber: gidNumber
-    objectClass: objectClass
-    sAMAccountName: fullName
-    memberOf: memberOf
