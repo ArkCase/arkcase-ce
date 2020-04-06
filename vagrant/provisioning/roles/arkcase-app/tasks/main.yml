@@ -490,6 +490,10 @@
     group: arkcase
     mode: 0600
 
+- name: Set autogenerate_user_id if undefined
+  set_fact:
+    autogenerate_user_id: "{{ autogenerate_user_id | default('false') }}"
+
 - name: configure LDAP
   include_role: 
     name: arkcase-ldap-config
