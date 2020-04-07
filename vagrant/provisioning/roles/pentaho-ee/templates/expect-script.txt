@@ -1,8 +1,0 @@
-spawn java -jar {{ root_folder }}/tmp/pentaho/{{ item.name }}/installer.jar -console
-
-expect "More--"  { send "\n" ; exp_continue }
-expect -ex "Press 1 to accept, 2 to reject, 3 to redisplay" { send "1\n" ; exp_continue }
-expect -ex "Select the installation path" { send "{{ item.path }}\n" ; exp_continue }
-expect -ex "Press 1 to continue, 2 to quit, 3 to redisplay" { send "1\n" ; exp_continue }
-
-wait

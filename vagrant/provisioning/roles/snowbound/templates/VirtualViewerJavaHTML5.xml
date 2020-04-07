@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Context>
-    <!-- These parameters are used in web.xml (their replacement happens in ArkCaseServletContextListener.setInitParameters()) -->
-    <Parameter name="snowbound.base" value="https://{{ snowbound_host }}" override="false"/>
-    <Parameter name="arkcase.base" value="https://{{ arkcase_host_name }}:8843" override="false"/>
-    <Parameter name="secret.key" value="{{ snowbound_symmetric_key }}" override="false"/>
-</Context>

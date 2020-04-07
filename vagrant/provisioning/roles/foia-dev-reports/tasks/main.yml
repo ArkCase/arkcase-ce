@@ -1,5 +1,0 @@
-- name: deploy foia reports
-  include_tasks: deploy_report.yml
-  loop: "{{ arkcase_foia_reports|flatten }}"
-  loop_control:
-    loop_var: r
