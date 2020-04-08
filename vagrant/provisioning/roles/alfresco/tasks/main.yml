@@ -6,6 +6,7 @@
       - libreoffice
       - ImageMagick
       - ImageMagick-devel
+      - python2-jmespath
 
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later
   set_fact:

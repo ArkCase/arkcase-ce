@@ -12,7 +12,7 @@
     - "/home/arkcase/.arkcase/acm/spring/spring-config-{{ old_config_id }}-ldap.properties"
     - "/home/arkcase/.arkcase/acm/spring/spring-config-{{ old_config_id }}-ldap.xml"
 
-- name: ArkCase LDAP configuration
+- name: ArkCase LDAP configuration (v3.3.6 and below)
   become: yes
   become_user: arkcase
   template:
@@ -31,3 +31,39 @@
       dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ new_config_id }}-ad.properties"
     - src: "spring-config-user-ad.xml"
       dest: "/home/arkcase/.arkcase/acm/spring/spring-config-user-{{ new_config_id }}-ad.xml"
+  when: arkcase_version != "" and arkcase_version is version('3.3.7', '<')
+
+- name: ensure config server ldap folder exists
+  become: yes
+  become_user: arkcase
+  file:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/ldap
+    state: directory
+  when: arkcase_version == "" or arkcase_version is version('3.3.7', '>=')
+
+- name: Check ldap-server.yaml exists
+  become: yes
+  become_user: arkcase
+  stat: path=/home/arkcase/.arkcase/acm/acm-config-server-repo/ldap/ldap-server.yaml
+  register: ldap_server_file
+
+- name: ArkCase LDAP configuration (3.3.7 and above)
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: ldap-server.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/ldap/ldap-server.yaml
+  when: not ldap_server_file.stat.exists and (arkcase_version == "" or arkcase_version is version('3.3.7', '>='))
+
+- set_fact:
+    ldap_server_configuration: "{{ lookup('template', 'templates/ldap.yaml') }}"
+
+- name: Server ldap configuration {{ ldap_user_domain_bean_name }}
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/ldap/ldap-server.yaml
+    block: "{{ ldap_server_configuration }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK {{ ldap_user_domain_bean_name }}"
+  when: arkcase_version == "" or arkcase_version is version('3.3.7', '>=')

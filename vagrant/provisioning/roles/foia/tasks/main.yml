@@ -13,7 +13,7 @@
 - name: download foia UI portal 
   become: yes
   become_user: apache
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/foia{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.zip
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/foia{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.zip
   args:
     chdir: "{{ root_folder }}/tmp/httpd"
   environment:
@@ -25,8 +25,8 @@
   become_user: apache
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/tmp/httpd/foia{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.zip"
-    dest: "{{ root_folder }}/install/httpd/foia{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.zip"
+    src: "{{ root_folder }}/tmp/httpd/foia{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/httpd/foia{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.zip"
   register: foia_zip
 
 - name: see if foia web folder exists
@@ -54,7 +54,7 @@
   become_user: apache
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/install/httpd/foia{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.zip"
+    src: "{{ root_folder }}/install/httpd/foia{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.zip"
     dest: "{{ root_folder }}/data/httpd/htdocs/{{ foia_portal_context }}/"
   when: foia_zip is changed
 
@@ -114,7 +114,7 @@
 - name: download the FOIA REST portal webapp
   become: yes
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/external-portal{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.war
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/external-portal{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.war
   args:
     chdir: "{{ root_folder }}/tmp/arkcase"
   environment:
@@ -126,8 +126,8 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/tmp/arkcase/external-portal{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.war"
-    dest: "{{ root_folder }}/install/arkcase/external-portal{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.war"
+    src: "{{ root_folder }}/tmp/arkcase/external-portal{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.war"
+    dest: "{{ root_folder }}/install/arkcase/external-portal{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.war"
   register: rest_portal_war
 
 - name: copy foia REST portal to ArkCase webapps folder
@@ -135,7 +135,7 @@
   become_user: arkcase
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/install/arkcase/external-portal{{ arkcase_version_formatted }}{{ foia_extension_formatted }}.war"
+    src: "{{ root_folder }}/install/arkcase/external-portal{{ foia_extension_formatted }}{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase#external-portal.war"
 
 - name: FOIA server-specific configuration

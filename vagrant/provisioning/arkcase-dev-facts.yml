@@ -433,7 +433,7 @@ jmx_password: P@ssw0rd
 # the installer artifacts from Pentaho's support portal and uploaded
 # them to an SFTP repository.  Also, run the `pentaho_ee` role instead of
 # `pentaho_ce`
-pentaho_ee_license_year: 2019
+pentaho_ee_license_year: 2020
 pentaho_major_version: 8.3
 pentaho_minor_version: 0.0-371
 
