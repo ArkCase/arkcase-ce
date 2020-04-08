@@ -123,6 +123,11 @@
     mode: 0644
   register: server_private_key
 
+- name: set public_host if needed
+  set_fact:
+    public_host: "{{ external_host }}"
+  when: public_host is not defined
+
 - name: generate server csr
   become: yes
   openssl_csr:
@@ -157,6 +162,7 @@
       - DNS:{{ pentaho_host }}
       - DNS:{{ snowbound_host }}
       - DNS:{{ solr_host }}
+      - DNS:{{ public_host }}
   register: server_csr
 
 # the server cert is signed with the intermediate key

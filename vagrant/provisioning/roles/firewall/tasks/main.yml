@@ -1,3 +1,13 @@
+- name: set solr port if necessary
+  set_fact:
+    solr_port: 8983
+  when: solr_port is not defined
+
+- name: set alfresco port if necessary
+  set_fact:
+    alfresco_port: 7070
+  when: alfresco_port is not defined
+
 - name: enable firewall
   become: yes
   service:
@@ -13,11 +23,11 @@
     immediate: yes
   register: arkcase_ports
   loop:
-    - "7070/tcp"   # alfresco
+    - "{{ alfresco_port }}/tcp"   # alfresco
     - "8443/tcp"   # alfresco alternate
     - "443/tcp"    # httpd
     - "2002/tcp"   # pentaho
-    - "8983/tcp"   # solr
+    - "{{ solr_port }}/tcp"   # solr
     - "8843/tcp"   # arkcase
     - "2005/tcp"   # snowbound
     - "3306/tcp"   # MariaDB
