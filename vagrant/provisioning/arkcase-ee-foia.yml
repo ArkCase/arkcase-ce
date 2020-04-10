@@ -21,6 +21,7 @@
     - pentaho-license
     - arkcase-prerequisites
     - arkcase-app
+    - start-arkcase
     - foia
     - tesseract
     - firewall

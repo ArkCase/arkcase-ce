@@ -13,5 +13,7 @@
       tags: [foia]
     - role: arkcase-post-upgrade
       tags: [core]
+    - role: start-arkcase
+      tags: [core]
     - role: snowbound-app
       tags: [core]
