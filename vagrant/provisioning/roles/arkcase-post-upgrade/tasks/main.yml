@@ -31,3 +31,21 @@
     - "custom-runtime.css"
   when: latest_config_backup_folder is defined
   ignore_errors: true
+  
+- name: start config server
+  become: yes
+  systemd:
+    name: "config-server"
+    state: started
+
+- name: wait for config server
+  wait_for:
+    connect_timeout: 15
+    delay: 5
+    port: 9999
+
+- name: start arkcase
+  become: yes
+  systemd:
+    name: "arkcase"
+    state: started
