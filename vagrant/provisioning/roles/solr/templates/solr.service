@@ -19,6 +19,7 @@ StandardError=syslog
 SyslogIdentifier=solr
 LimitNOFILE=65000
 LimitNPROC=65000
+Environment="SOLR_PORT={{ solr_port }}"
 
 [Install]
 WantedBy=multi-user.target
