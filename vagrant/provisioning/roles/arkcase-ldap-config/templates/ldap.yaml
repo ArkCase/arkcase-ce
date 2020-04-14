@@ -41,7 +41,7 @@
         cn: cn
         sn: sn
         userPrincipalName: userPrincipalName
-        userAccountControl: userAccountControl
+        userAccountControl: 512 
       ldapAddGroupConfig:
         sAMAccountName: sAMAccountName
         objectClass: top,group
