@@ -11,15 +11,15 @@
 - name: Install Confluent Platform public key
   rpm_key:
     state: present
-    key: https://packages.confluent.io/rpm/5.4/archive.key
+    key: https://packages.confluent.io/rpm/{{ confluent_major_version }}/archive.key
 
 - name: Create Confluent repo (1/2)
   yum_repository:
     name: Confluent.dist
     description: Confluent repository (dist)
-    baseurl: https://packages.confluent.io/rpm/5.4/7
+    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version }}/{{ confluent_minor_version }}
     gpgcheck: yes
-    gpgkey: https://packages.confluent.io/rpm/5.4/archive.key
+    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version }}/archive.key
     enabled: yes
     file: confluent
 
@@ -27,9 +27,9 @@
   yum_repository:
     name: Confluent
     description: Confluent repository
-    baseurl: https://packages.confluent.io/rpm/5.4
+    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version }}
     gpgcheck: yes
-    gpgkey: https://packages.confluent.io/rpm/5.4/archive.key
+    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version }}/archive.key
     enabled: yes
     file: confluent
 
@@ -41,6 +41,6 @@
 
 - name: Install Confluent Platform
   yum:
-    name: confluent-platform-2.12
+    name: confluent-platform-{{ confluent_scala_version }}
     state: present
   
