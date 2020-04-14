@@ -23,8 +23,8 @@
       groupSearchPageFilter: (&(objectclass=group)(cn>=%s))
       changedGroupSearchPageFilter: (&(objectclass=group)(cn>=%s)(modifyTimestamp>=%s))
       groupsSortingAttribute: cn
-      userPrefix: {{ ldap_prefix }}{{ portal_prefix }}
-      groupPrefix: {{ ldap_prefix }}
+      userPrefix: "{{ ldap_prefix }}{{ portal_prefix }}"
+      groupPrefix: "{{ ldap_prefix }}"
       userControlGroup: 
       groupControlGroup: 
       syncEnabled: true
@@ -38,7 +38,6 @@
         unicodePwd: unicodePwd
         givenName: givenName
         objectClass: top,person,user,organizationalPerson
-        id: arkcase
         cn: cn
         sn: sn
         userPrincipalName: userPrincipalName
