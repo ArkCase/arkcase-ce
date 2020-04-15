@@ -43,4 +43,33 @@
   yum:
     name: confluent-platform-{{ confluent_scala_version }}
     state: present
-  
+
+- name: Kafka folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-kafka
+  loop:
+    - "{{ root_folder }}/data/kafka"
+    - "{{ root_folder }}/log/kafka"
+
+- name: Kafka systemd unit file
+  become: yes
+  template:
+    src: confluent-kafka.service
+    dest: /etc/systemd/system/confluent-kafka.service
+  register: systemd_kafka_updated
+
+- name: Reload daemon files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: systemd_kafka_updated is changed
+
+- name: Enable kafka to start on boot
+  become: yes
+  systemd:
+    name: confluent-kafka
+    enabled: yes
+    masked: no
