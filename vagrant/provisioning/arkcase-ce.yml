@@ -12,6 +12,7 @@
     - alfresco-setup
     - alfresco-ce
     - alfresco
+    - alfresco-site
     - solr
     - pentaho-setup
     - pentaho-ce

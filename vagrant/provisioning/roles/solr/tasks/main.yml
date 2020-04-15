@@ -1,3 +1,8 @@
+- name: set solr port if necessary
+  set_fact:
+    solr_port: 8983
+  when: solr_port is not defined
+
 - name: solr required packages
   become: yes
   yum:
@@ -76,7 +81,7 @@
 
 - name: wait for solr to finish starting
   wait_for:
-    port: 8983
+    port: "{{ solr_port }}"
     delay: 5
     timeout: 60
 

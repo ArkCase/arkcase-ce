@@ -10,6 +10,7 @@
     - alfresco-setup
     - alfresco-ee
     - alfresco
+    - alfresco-site
     - solr
     - pentaho-setup
     - pentaho-ee
@@ -22,5 +23,5 @@
     - foia
     - tesseract
     - firewall
-
+    - start-arkcase
     
