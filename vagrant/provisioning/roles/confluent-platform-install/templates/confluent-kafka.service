@@ -7,7 +7,7 @@ After=network.target confluent-zookeeper.target
 Type=simple
 User=cp-kafka
 Group=confluent
-Environment="LOG_DIR=/opt/arkcase/log/kafka"
+Environment="LOG_DIR={{ root_folder }}/log/kafka"
 ExecStart=/usr/bin/kafka-server-start /etc/kafka/server.properties
 ExecStop=/opt/kafka/bin/kafka-server-stop.sh
 LimitNOFILE=1000000
