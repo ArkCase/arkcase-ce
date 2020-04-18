@@ -470,6 +470,11 @@
     delay: 3
     timeout: 180
 
+- name: now wait for Alfresco to really become available
+  wait_for:
+    path: "{{ root_folder }}/app/alfresco/webapps/alfresco/WEB-INF/web.xml"
+    delay: 5
+    timeout: 180
 
 # make it so the filter URL pattern for the sync service
 # is not the actual sync service URL, this disables
