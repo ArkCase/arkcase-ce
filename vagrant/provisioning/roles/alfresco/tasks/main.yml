@@ -501,19 +501,6 @@
     chdir: "{{ root_folder }}/app/alfresco/webapps/alfresco"
   when: web_xml_one is changed or web_xml_two is changed
 
-- name: Expose alfresco app port
-  become: yes
-  firewalld:
-    port: "7070/tcp"
-    permanent: true
-    state: enabled
-  register: alfresco_port
-
-- name: Reload firewalld
-  become: yes
-  command: firewall-cmd --reload
-  when: alfresco_port is changed
-
 # Alfresco CE 6.1 download... but, there is no compatible RMA yet,
 # so we can't use it
 #https://download.alfresco.com/cloudfront/release/community/201901-GA-build-205/alfresco-content-services-community-distribution-6.1.2-ga.zip
