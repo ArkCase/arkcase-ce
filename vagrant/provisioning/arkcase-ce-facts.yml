@@ -224,6 +224,12 @@ arkcase_extension_reports:
 arkcase_configuration_classifier: "core"
 arkcase_configuration_version: ""
 
+# portal_version is either a maven version (for SFTP download) 
+# or a github release version (for github downloads). 
+# Leave blank to get latest Maven snapshot from SFTP.
+# Used only with foia extensions
+portal_version: ""
+
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
 # extra arguments.
