@@ -61,12 +61,14 @@
     src: server.properties
     dest: /etc/kafka/
     force: yes
+    backup: yes
 
 - name: Kafka systemd unit file
   become: yes
   template:
     src: confluent-kafka.service
     dest: /etc/systemd/system/confluent-kafka.service
+    backup: yes
   register: systemd_kafka_updated
 
 - name: Reload daemon files if needed

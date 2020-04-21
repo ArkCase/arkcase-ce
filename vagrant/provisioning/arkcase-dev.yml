@@ -37,6 +37,7 @@
       tags: [core, snowbound]
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
+    - role: confluent-platform-install
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
