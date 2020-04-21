@@ -37,6 +37,9 @@
           replace: unicodePwd
           unicodePwd:: {{ base64_password.stdout }}
         dest: "{{ root_folder }}/install/password_change.ldif"
+    - name: wait a few seconds
+      pause:
+        seconds: 15
     - name: execute password change
       shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/password_change.ldif
   when: ldap_force_password_reset or new_user is changed

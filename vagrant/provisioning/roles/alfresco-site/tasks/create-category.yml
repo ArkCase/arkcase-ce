@@ -1,6 +1,6 @@
 - name: create the {{ c_name }} category
   uri:
-    url: https://{{ alfresco_host }}:7070/alfresco/s/api/type/rma{{ ":" }}recordCategory/formprocessor
+    url: '{{ alfresco_url }}/alfresco/s/api/type/rma{{ ":" }}recordCategory/formprocessor'
     method: POST
     user: admin
     password: admin
