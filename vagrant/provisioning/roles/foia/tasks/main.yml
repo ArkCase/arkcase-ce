@@ -9,7 +9,7 @@
       export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=extension-foia,ldap"
 
 - name: Set portal version if not defined
-  set fact:
+  set_fact:
     portal_version: "{{ portal_version | default(arkcase_version) }}"
   
 - name: Set portal version formated
