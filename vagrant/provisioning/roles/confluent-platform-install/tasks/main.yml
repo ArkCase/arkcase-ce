@@ -55,6 +55,13 @@
     - "{{ root_folder }}/data/kafka"
     - "{{ root_folder }}/log/kafka"
 
+- name: Change kafka data location
+  become: yes
+  template:
+    src: server.properties
+    dest: /etc/kafka/
+    force: yes
+
 - name: Kafka systemd unit file
   become: yes
   template:
