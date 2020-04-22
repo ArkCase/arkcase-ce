@@ -83,6 +83,7 @@
     enabled: yes
     masked: no
     state: started
+  when: enable_kafka is defined and enable_kafka == "yes"
 
 - name: Enable kafka to start on boot
   become: yes
@@ -91,3 +92,4 @@
     enabled: yes
     masked: no
     state: started
+  when: enable_kafka is defined and enable_kafka == "yes"
