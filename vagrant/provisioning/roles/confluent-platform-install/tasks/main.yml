@@ -76,9 +76,18 @@
   command: systemctl daemon-reload
   when: systemd_kafka_updated is changed
 
+- name: Enable zookeeper to start on boot
+  become: yes
+  systemd:
+    name: confluent-zookeeper
+    enabled: yes
+    masked: no
+    state: started
+
 - name: Enable kafka to start on boot
   become: yes
   systemd:
     name: confluent-kafka
     enabled: yes
     masked: no
+    state: started
