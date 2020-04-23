@@ -1,0 +1,95 @@
+---
+# tasks file for confluent-install
+- name: Install curl and which
+  yum:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - curl
+    - which
+
+- name: Install Confluent Platform public key
+  rpm_key:
+    state: present
+    key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
+
+- name: Create Confluent repo (1/2)
+  yum_repository:
+    name: Confluent.dist
+    description: Confluent repository (dist)
+    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/{{ confluent_minor_version | default(7) }}
+    gpgcheck: yes
+    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
+    enabled: yes
+    file: confluent
+
+- name: Create Confluent repo (2/2)
+  yum_repository:
+    name: Confluent
+    description: Confluent repository
+    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}
+    gpgcheck: yes
+    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
+    enabled: yes
+    file: confluent
+
+# The yum module does not support clearing yum cache in an idempotent way!
+- name: Clean the yum caches
+  command: yum clean all
+  args:
+    warn: False
+
+- name: Install Confluent Platform
+  yum:
+    name: confluent-platform-{{ confluent_scala_version | default(2.12) }}
+    state: present
+
+- name: Kafka folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-kafka
+  loop:
+    - "{{ root_folder }}/data/kafka"
+    - "{{ root_folder }}/log/kafka"
+
+- name: Change kafka data location
+  become: yes
+  template:
+    src: server.properties
+    dest: /etc/kafka/
+    force: yes
+    backup: yes
+
+- name: Kafka systemd unit file
+  become: yes
+  template:
+    src: confluent-kafka.service
+    dest: /etc/systemd/system/confluent-kafka.service
+    backup: yes
+  register: systemd_kafka_updated
+
+- name: Reload daemon files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: systemd_kafka_updated is changed
+
+- name: Enable zookeeper to start on boot
+  become: yes
+  systemd:
+    name: confluent-zookeeper
+    enabled: yes
+    masked: no
+    state: started
+  when: enable_kafka is defined and enable_kafka == "yes"
+
+- name: Enable kafka to start on boot
+  become: yes
+  systemd:
+    name: confluent-kafka
+    enabled: yes
+    masked: no
+    state: started
+  when: enable_kafka is defined and enable_kafka == "yes"

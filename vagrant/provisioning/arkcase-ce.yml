@@ -37,6 +37,7 @@
       tags: [core, snowbound]
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
+    - role: confluent-platform-intall
     - role: arkcase-prerequisites
       tags: [core, arkcase]
     - role: arkcase-app
