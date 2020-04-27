@@ -1,5 +1,5 @@
-cluster.name: acm-cluster
-node.name: acm-node01
+cluster.name: {{ cluster_name | default('acm-cluster') }}
+node.name: {{ node_name | default('acm-node01') }}
 path.data: {{ root_folder }}/data/elasticsearch
 path.logs: {{ root_folder }}/log/elasticsearch
 #path.conf: /etc/elasticsearch
