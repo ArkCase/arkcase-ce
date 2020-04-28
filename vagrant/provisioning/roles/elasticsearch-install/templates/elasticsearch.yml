@@ -4,7 +4,7 @@ path.data: {{ root_folder }}/data/elasticsearch
 path.logs: {{ root_folder }}/log/elasticsearch
 #path.conf: /etc/elasticsearch
 network.host: localhost
-http.port: {{ ES_PORT | default(9200) }}
+http.port: {{ elasticsearch_port | default(9200) }}
 
 #xpack.ssl.key:                     /opt/elasticsearch/private/acm-elasticsearch.key.pem
 #xpack.ssl.certificate:             /opt/elasticsearch/certs/acm-elasticsearch.cert.pem 
