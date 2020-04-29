@@ -33,22 +33,14 @@
         dest: /etc/elasticsearch
         backup: yes
     
-    - name: Adding services to auto start for CentOS 6
-      service:
-        name: elasticsearch
-        enabled: yes
-        state: started
-      when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '6'and enable_elasticsearch is defined and enable_elasticsearch == "yes"
-
-    - name: Adding services to auto start for CentOS 7
+    - name: Adding services to auto start
       systemd:
         name: elasticsearch
         enabled: yes
         daemon_reload: yes
         masked: no
         state: started
-      when: ansible_distribution == 'CentOS' and ansible_distribution_major_version == '7' and enable_elasticsearch is defined and enable_elasticsearch == "yes"
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
  
-    - name: Wait for 20 seconds for elasticsearch to become responsive...
-      wait_for: timeout=20
-      delegate_to: localhost
+    - name: Wait for 30 seconds for elasticsearch to become responsive...
+      wait_for: timeout=30
