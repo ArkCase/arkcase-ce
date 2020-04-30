@@ -9,8 +9,6 @@
     ssl_version: "TLSv1.2"
     database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
     database_server_ssl_cert: /opt/app/common/rds-ca-2019-root.pem
-    database_host_name: "erv76ibnkrtd2u.cqt84webh1aw.us-east-1.rds.amazonaws.com"
-    root_folder: /opt/app
 
 - name: set other JDBC facts
   set_fact:
