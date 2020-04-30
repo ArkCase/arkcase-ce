@@ -1,0 +1,34 @@
+- name: configure MariaDB v10 repository
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mariadb.repo
+    force: no
+    content: |
+      # MariaDB 10.4 CentOS repository list - created 2019-01-09 21:49 UTC
+      # http://downloads.mariadb.org/mariadb/repositories/
+      [mariadb]
+      name = MariaDB
+      baseurl = http://yum.mariadb.org/10.4/centos7-amd64
+      gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgcheck=1
+
+- name: install MariaDB packages
+  become: yes
+  yum:
+    state: installed
+    disable_gpg_check: yes
+    name:
+      - MariaDB-client
+      - MySQL-python
+  register: mariadb_install
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "MariaDB JDBC Driver"
+      dest: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+      owner: "root"
+      url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    - name: "AWS RDS CA"
+      dest: "{{ root_folder }}/common/rds-ca-2019-root.pem"
+      owner: "root"
+      url: "https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem"

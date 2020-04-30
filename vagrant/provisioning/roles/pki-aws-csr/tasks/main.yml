@@ -1,0 +1,88 @@
+- name: install epel (needed first)
+  become: yes
+  yum:
+    state: installed
+    name:
+      - epel-release
+
+- name: install required packages
+  become: yes
+  yum:
+    state: installed
+    name:
+      - python-pip
+
+- name: install Python crypto library
+  become: yes
+  pip:
+    name: cryptography
+    extra_args: --upgrade
+
+- name: create pki folder structure
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "/etc/pki/tls"
+    - "/etc/pki/tls/private"
+    - "/etc/pki/tls/csr"
+    - "/etc/pki/tls/certs"
+
+
+# the passphrase and specific cipher are required 
+# on CentOS FIPS mode; then we can remove the 
+# passphrase and proceed as usual.
+- name: generate server private key
+  become: yes
+  openssl_privatekey:
+    path: "/etc/pki/tls/private/{{ ansible_facts.hostname }}-pp.pem"
+    type: RSA
+    size: 4096
+    cipher: "auto"
+    passphrase: "{{ ansible_hostname }}"
+    select_crypto_backend: cryptography
+  register: server_private_key
+
+- name: remove passphrase from server key
+  become: yes
+  command: openssl rsa -in "/etc/pki/tls/private/{{ ansible_facts.hostname }}-pp.pem" -out "/etc/pki/tls/private/{{ ansible_facts.hostname }}.pem" -passin pass:'{{ ansible_facts.hostname }}'
+  when: server_private_key is changed
+
+- name: generate server csr
+  become: yes
+  openssl_csr:
+    basic_constraints_critical: no
+    basic_constraints:
+      - CA:FALSE
+    key_usage_critical: yes
+    key_usage:
+      - Digital Signature
+      - keyEncipherment
+    extended_key_usage_critical: no
+    extended_key_usage:
+      - serverAuth
+    digest: sha256
+    path: "/etc/pki/tls/csr/{{ ansible_facts.hostname }}.csr"
+    privatekey_path: "/etc/pki/tls/private/{{ ansible_facts.hostname }}.pem"
+    country_name: US
+    state_or_province_name: VA
+    locality_name: Vienna
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: "{{ ansible_facts.fqdn }}"
+    subject_alt_name:
+      - DNS:{{ ansible_facts.hostname }}
+      - DNS:{{ ansible_facts.fqdn }}
+
+- name: show next steps
+  debug:
+    msg:  
+      - 'You must now copy the file /etc/pki/tls/csr/{{ ansible_facts.hostname }}.csr file '
+      - 'to the Active Directory Certificate Services VM; start an elevated command prompt '
+      - 'on that VM; and run the command: certreq -submit -attrib "CertificateTemplate:WebServerV2" '
+      - '$(path to the csr file) $(path where the pem file will be created)". '
+      - ''
+      - 'Then you must copy the generated PEM file onto this VM in the location' 
+      - '/etc/pki/tls/certs/{{ ansible_facts.hostname }}.pem. '

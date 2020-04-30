@@ -1,0 +1,364 @@
+- name: set ActiveMQ facts
+  set_fact:
+    activemq_version: "5.15.12"
+    java_key_store: /opt/app/common/arkcase.ks
+    java_trust_store: /opt/app/common/arkcase.ts
+    java_key_store_pass: "{{ ansible_facts.fqdn }}"
+    java_trust_store_pass: "{{ ansible_facts.fqdn }}"
+    mariadb_jdbc_version: "2.2.5"
+    ssl_version: "TLSv1.2"
+    database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
+    database_server_ssl_cert: /opt/app/common/rds-ca-2019-root.pem
+    database_host_name: "erv76ibnkrtd2u.cqt84webh1aw.us-east-1.rds.amazonaws.com"
+    rds_password: "4rfv$RFV6yhn^YHN"
+    root_folder: /opt/app
+
+- name: set other JDBC facts
+  set_fact:
+    database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites={{ ssl_version }}&amp;trustServerCertificate=false&amp;serverSslCert={{ database_server_ssl_cert }}"
+    default_database_password: "{{ rds_password }}"
+
+- name: install required packages
+  become: yes
+  yum:
+    state: installed
+    name:
+      - java-11-openjdk
+      - java-11-openjdk-devel
+      - zip
+      - unzip
+
+- name: folder structure for app, data and logs
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ root_folder }}"
+    - "{{ root_folder }}/app"
+    - "{{ root_folder }}/data"
+    - "{{ root_folder }}/log"
+    - "{{ root_folder }}/install"
+    - "{{ root_folder }}/common"
+    - "{{ root_folder }}/tmp"
+
+- name: set timezone to UTC
+  become: yes
+  timezone:
+    name: UTC
+
+- name: Set default locale to en_US.utf8
+  become: yes
+  command: localectl set-locale LANG=en_US.utf8
+
+- name: activemq user
+  become: yes
+  user:
+    name: activemq
+    shell: /bin/false
+    state: present
+    create_home: yes
+    home: /home/activemq
+
+- name: ActiveMQ folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: activemq
+    owner: activemq
+  loop:
+    - "{{ root_folder }}/data/activemq"
+    - "{{ root_folder }}/log/activemq"
+    - "{{ root_folder }}/app/activemq"
+    - "{{ root_folder }}/install/activemq"
+  register: activemq_folder_structure
+
+- name: enable logrotate for activemq log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  loop:
+    - activemq
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "ActiveMQ"
+      dest: "{{ root_folder }}/install/activemq/apache-activemq-{{ activemq_version }}-bin.tar.gz"
+      owner: "activemq"
+      url: "https://archive.apache.org/dist/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz"
+
+- name: unarchive ActiveMQ distribution
+  become: yes
+  become_user: activemq
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/activemq/apache-activemq-{{ activemq_version }}-bin.tar.gz"
+    dest: "{{ root_folder }}/app/activemq"
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ root_folder }}/app/activemq/LICENSE"
+  register: activemq_unarchived
+
+- name: unarchive ActiveMQ fileserver webapp
+  become: yes
+  become_user: activemq
+  unarchive:
+    src: "fileserver.zip"
+    dest: "{{ root_folder }}/app/activemq/webapps"
+    creates: "{{ root_folder }}/app/activemq/webapps/fileserver/index.html"
+
+- name: update startup script
+  become: yes
+  become_user: activemq
+  lineinfile:
+    path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/activemq"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: "^ACTIVEMQ_HOME=", line: "ACTIVEMQ_HOME={{ root_folder }}/app/activemq" }
+    - { regexp: "^#RUN_AS_USER=$", line: "RUN_AS_USER=activemq" }
+  when: activemq_unarchived is changed
+
+- name: set data folder and wrapper log location
+  become: yes
+  become_user: activemq
+  replace:
+    path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.line }}"
+  loop:
+    - regexp: "^wrapper\\.java\\.additional\\.11=\\-Dactivemq.data=%ACTIVEMQ_DATA%"
+      line: "wrapper.java.additional.11=-Dactivemq.data={{ root_folder }}/data/activemq"
+    - regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log"
+      line: "wrapper.logfile={{ root_folder }}/log/activemq/wrapper.log"
+    - regexp: "^wrapper\\.java\\.additional\\.3=\\-Djavax\\.net\\.ssl\\.keyStorePassword=password"
+      line: "# wrapper.java.additional.3=-Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
+    - regexp: "^wrapper\\.java\\.additional\\.4=\\-Djavax\\.net\\.ssl\\.trustStorePassword=password"
+      line: "wrapper.java.additional.4=-Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }}"
+    - regexp: "^wrapper\\.java\\.additional\\.5=\\-Djavax\\.net\\.ssl\\.keyStore=%ACTIVEMQ_CONF%/broker.ks"
+      line: "# wrapper.java.additional.5=-Djavax.net.ssl.keyStore={{ java_key_store }}"
+    - regexp: "^wrapper\\.java\\.additional\\.6=\\-Djavax\\.net\\.ssl\\.trustStore=%ACTIVEMQ_CONF%/broker.ts"
+      line: "wrapper.java.additional.6=-Djavax.net.ssl.trustStore={{ java_trust_store }}"
+      
+
+- name: set activemq.log location
+  become: yes
+  become_user: activemq
+  replace:
+    path: "{{ root_folder }}/app/activemq/conf/log4j.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: "^log4j\\.appender\\.logfile\\.file=\\$\\{activemq\\.data\\}\\/activemq\\.log", replace: "log4j.appender.logfile.file={{ root_folder }}/log/activemq/activemq.log" }
+    - { regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log", replace: "log4j.appender.audit.file={{ root_folder }}/log/activemq/audit.log" }
+
+- name: update wrapper.conf
+  become: yes
+  become_user: activemq
+  lineinfile:
+    path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf"
+    insertafter: "{{ item.after }}"
+    line: "{{ item.line }}"
+  loop:
+    - { after: "^wrapper\\.java\\.additional\\.12.*", line: "wrapper.java.additional.13=-Dcom.sun.management.jmxremote.port=1616" }
+    - { after: "^wrapper\\.java\\.additional\\.13.*", line: "wrapper.java.additional.14=-Dcom.sun.management.jmxremote.authenticate=false" }
+    - { after: "^wrapper\\.java\\.additional\\.14.*", line: "wrapper.java.additional.15=-Dcom.sun.management.jmxremote.ssl=false" }
+    - { after: "^wrapper\\.java\\.additional\\.15.*", line: "wrapper.java.additional.16=-Xdebug -Xnoagent -Djava.compiler=NONE" }
+    - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
+  when: activemq_unarchived is changed
+
+- name: create activemq database schema
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema_rds.yml"
+  loop:
+    - activemq
+    
+- name: jdbc support and dead letter queue policy
+  block:
+    - name: read activemq.xml
+      shell: cat "{{ root_folder }}/app/activemq/conf/activemq.xml"
+      register: activemq_xml
+      changed_when: false
+    - name: add jdbc data source, if not already added
+      become: yes
+      become_user: activemq
+      blockinfile:
+        path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
+        insertbefore: "</beans>"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: DATASOURCE -->"
+        block: |
+              <bean id="mysql-ds" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
+                  <property name="driverClassName" value="org.mariadb.jdbc.Driver"/>
+                  <property name="url" value="jdbc:mysql://{{ database_host_name }}:3306/activemq?{{ database_mysql_jdbc_url_option_xml_string }}"/>
+                  <property name="username" value="activemq"/>
+                  <property name="password" value="{{ default_database_password }}"/>
+                  <property name="initialSize" value="5"/>
+                  <property name="maxTotal" value="20"/>
+                  <property name="maxIdle" value="5"/>
+                  <property name="validationQuery" value="select 1"/>
+                  <property name="testWhileIdle" value="true"/>
+                  <property name="timeBetweenEvictionRunsMillis" value="3000"/>
+              </bean>
+      when: activemq_xml.stdout.find('bean id="mysql_ds"') == -1
+    - name: set dead letter queue policy, if not already set
+      become: yes
+      become_user: activemq
+      blockinfile:
+        path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
+        insertbefore: "</policyEntries>"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: DEAD LETTER QUEUE POLICY -->"
+        block: |
+          <policyEntry queue=">">
+            <deadLetterStrategy>
+              <!--
+                Use the prefix 'DLQ.' for the destination name, and make the DLQ a queue rather than a        topic
+              -->
+              <individualDeadLetterStrategy queuePrefix="DLQ." useQueueForQueueMessages="true"     processNonPersistent="true" />
+              </deadLetterStrategy>
+          </policyEntry>
+      when: activemq_xml.stdout.find('individualDeadLetterStrategy') == -1
+    - name: set persistence adapter, if not already set
+      become: yes
+      become_user: activemq
+      lineinfile:
+        path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
+        regexp: '^.*kahaDB directory.*$'
+        line: '<jdbcPersistenceAdapter dataDirectory="activemq-data" dataSource="#mysql-ds" lockKeepAlivePeriod="5000" createTablesOnStartup="true"/>'
+      when: activemq_xml.stdout.find('jdbcPersistenceAdapter') == -1
+    - name: link jdbc driver
+      become: yes
+      become_user: activemq
+      file:
+        src: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+        dest: "{{ root_folder }}/app/activemq/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+        state: link
+
+
+- name: sslContext in activemq.xml
+  become: yes
+  become_user: activemq
+  blockinfile:
+    path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
+    insertbefore: "^.*\\<destinationPolicy\\>$"
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: SSLCONTEXT -->"
+    block: |
+      <sslContext>
+          <sslContext keyStore="file://{{ java_key_store }}" keyStorePassword="{{ java_key_store_pass }}" trustStore="file://{{ java_trust_store }}" trustStorePassword="{{ java_trust_store_pass }}"/>
+      </sslContext>
+  when: activemq_xml.stdout.find('sslContext keyStore="file://' ~ java_key_store) == -1 
+      
+- name: first time start, to create the tables
+  block:
+    - name: check whether the ActiveMQ tables were already created
+      become: yes
+      command: "mysql -u{{ rds_user | default('arkcase_root') }} -p'{{ rds_password }}' -h {{ database_host_name }} activemq -Ns -e 'show tables;'"
+      register: show_tables
+      changed_when: false
+    - name: start ActiveMQ, to create the tables
+      become: yes
+      become_user: activemq
+      command: "{{ root_folder }}/app/activemq/bin/linux-x86-64/activemq start"
+      when: show_tables.stdout == ""
+      register: activemq_first_start
+    - name: wait for startup to finish
+      wait_for:
+        port: 61616
+        delay: 10
+        timeout: 60
+      when: activemq_first_start is changed
+    - name: stop ActiveMQ
+      become: yes
+      become_user: activemq
+      command: "{{ root_folder }}/app/activemq/bin/linux-x86-64/activemq stop"
+      when: activemq_first_start is changed
+
+- name: set activemq_msgs.msg column to be 'longblob' instead of 'blob'
+  block:
+    - name: find current datatype for activemq_msgs.msg
+      become: yes
+      command: mysql -u{{ rds_user | default('arkcase_root') }} -p'{{ rds_password }}' -h {{ database_host_name }} activemq -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = 'activemq' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
+      register: find_data_type
+      changed_when: false
+    - name: update data type, if necessary
+      become: yes
+      command: mysql -u{{ rds_user | default('arkcase_root') }} -p'{{ rds_password }}' -h {{ database_host_name }} activemq -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
+      when: "'blob' == find_data_type.stdout"
+
+- name: activemq.xml updates
+  become: yes
+  become_user: activemq
+  replace:
+    path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: 'createTablesOnStartup="true"', replace: 'createTablesOnStartup="false"' }
+    - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
+    - { regexp: 'uri="tcp', replace: 'uri="ssl' }
+    - { regexp: 'uri="stomp://', replace: 'uri="stomp+ssl://' }
+
+- name: jetty.xml file/blob support
+  become: yes
+  become_user: activemq
+  blockinfile:
+    path: "{{ root_folder }}/app/activemq/conf/jetty.xml"
+    insertafter: '^.*bean="rewriteHandler".*$'
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: BLOB SUPPORT -->"
+    block: |
+      <bean class="org.eclipse.jetty.webapp.WebAppContext">
+        <property name="contextPath" value="/fileserver" />
+        <property name="resourceBase" value="${activemq.home}/webapps/fileserver" />
+        <property name="logUrlOnStart" value="true" />
+        <property name="parentLoaderPriority" value="true" />
+      </bean>
+
+- name: JMX config
+  block:
+    - name: ActiveMQ jmx.password
+      become: yes
+      become_user: activemq
+      blockinfile:
+        path: "{{ root_folder }}/app/activemq/conf/jmx.password"
+        block: |
+          monitorRole P@ssw0rd
+          controlRole P@ssw0rd
+    - name: ActiveMQ jmx.access
+      become: yes
+      become_user: activemq
+      blockinfile:
+        path: "{{ root_folder }}/app/activemq/conf/jmx.access"
+        block: |
+          monitorRole readonly
+          controlRole readwrite
+    
+- name: ActiveMQ systemd unit file
+  become: yes
+  template:
+    src: "activemq.service"
+    dest: /etc/systemd/system/activemq.service
+  register: activemq_unit
+    
+- name: activemq logrotate
+  become: yes
+  template:
+    src: "activemq"
+    dest: /etc/logrotate.d/activemq
+
+- name: enable ActiveMQ to start on boot
+  become: yes
+  systemd:
+    name: activemq
+    enabled: yes
+    masked: no
+
+- name: reload systemctl files
+  become: yes
+  command: systemctl daemon-reload
+  when: activemq_unit is changed
+
+- name: start ActiveMQ
+  become: yes
+  systemd:
+    name: activemq
+    state: started
+
+    
+    
