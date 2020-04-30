@@ -98,7 +98,7 @@
               path: "{{ ssl_ca }}"
         - name: add JDK certs to Java trust store
           become: yes
-          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
       when: "arkcase_ks_stat.stat.exists == False"
 
 - name: write encrypted symmetric key file for use in ArkCase webapp
