@@ -69,6 +69,7 @@
     - "{{ root_folder }}/log/activemq"
     - "{{ root_folder }}/app/activemq"
     - "{{ root_folder }}/install/activemq"
+    - /data/logs_s3/{{ ansible_facts.hostname }}
   register: activemq_folder_structure
 
 - name: enable logrotate for activemq log folder if necessary

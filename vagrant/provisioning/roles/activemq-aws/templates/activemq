@@ -7,4 +7,7 @@
   size 10k
   dateext
   dateyesterday
+  lastaction
+    find {{ root_folder }}/log/activemq -mtime +7 -exec mv {} /data/logs_s3/{{ ansible_facts.hostname }}/ \;
+  endscript
 }
