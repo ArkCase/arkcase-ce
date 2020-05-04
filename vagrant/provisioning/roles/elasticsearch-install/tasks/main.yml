@@ -44,10 +44,12 @@
  
     - name: Wait for elasticsearch to become responsive...
       uri:
-        url: "{{ external_host | default('http://localhost') }}:{{ elasticsearch_port | default(9200) }}"
+        url: "http://localhost:{{ elasticsearch_port | default(9200) }}"
         method: GET
         status_code: 200
+        validate_certs: no
       register: result
       until: result.status == 200
       retries: 60
       delay: 2
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
