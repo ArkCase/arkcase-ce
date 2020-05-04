@@ -3,7 +3,7 @@ node.name: {{ elasticsearch_node_name | default('acm-node01') }}
 path.data: {{ root_folder }}/data/elasticsearch
 path.logs: {{ root_folder }}/log/elasticsearch
 #path.conf: /etc/elasticsearch
-network.host: localhost
+network.host: {{ external_host | default('localhost') }}
 http.port: {{ elasticsearch_port | default(9200) }}
 
 #xpack.ssl.key:                     /opt/elasticsearch/private/acm-elasticsearch.key.pem
