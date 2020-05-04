@@ -359,4 +359,27 @@
     state: started
 
     
+- name: enable firewall
+  become: yes
+  service:
+    name: firewalld
+    state: started
+
+- name: Expose ActiveMQ app port
+  become: yes
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  register: activemq_ports
+  loop:
+    - "61616/tcp"  # ActiveMQ JMS
+    - "61613/tcp"  # ActiveMQ STOMP
+    - "8161/tcp"   # ActiveMQ manager
+
+- name: Reload firewalld
+  become: yes
+  command: firewall-cmd --reload
+  when: activemq_ports is changed
     
