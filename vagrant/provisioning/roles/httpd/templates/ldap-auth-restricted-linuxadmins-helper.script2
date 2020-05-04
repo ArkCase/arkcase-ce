@@ -1,0 +1,14 @@
+AuthType Basic
+AuthName "Restricted applications"
+AuthBasicProvider ldap
+RewriteEngine On
+#LDAPReferrals Off
+# Perform LDAP lookup for user to check group membership
+AuthLDAPUrl "ldaps://ldap-hostname:3269/DC=sharecarepp,DC=internal?sAMAccountName?sub?(objectClass=*)"
+AuthLDAPBindDN "CN=LDAP Bind,OU=LDAP,OU=Service Accounts,DC=sharecarepp,DC=internal"
+AuthLDAPBindPassword "password"
+AuthzLDAPAuthoritative off
+#AuthLDAPInitialBindAsUser off
+AuthLDAPRemoteUserAttribute sAMAccountName
+Require ldap-filter &(objectClass=person)(objectClass=user)(memberOf=CN=linuxadmins,OU=Admins,DC=sharecarepp,DC=internal)((userAccountControl:1.2.840.113556.1.4.803:=2))
+require valid-user
