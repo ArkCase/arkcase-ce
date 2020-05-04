@@ -7,6 +7,9 @@
   size 10k
   dateext
   dateyesterday
+  lastaction
+    [ -d "/data/logs_s3/{{ ansible_facts.hostname }}" ] && find {{ root_folder }}/log/snowbound -mtime +7 -exec mv {} /data/logs_s3/{{ ansible_facts.hostname }}/ \;
+  endscript
 }
 
 {{ root_folder }}/log/snowbound/*.out {

@@ -1,3 +1,7 @@
+- name: set default facts
+  set_fact:
+    snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
+
 - name: see if war files exist
   become: yes
   become_user: snowbound
@@ -76,9 +80,9 @@
     replace: "{{ item.replace }}"
   loop:
     - regexp: "https://acm-snowbound:8443"
-      replace: "https://{{ snowbound_host }}"
+      replace: "https://{{ snowbound_host }}:2005"
     - regexp: "https://acm-arkcase:8843"
-      replace: "https://{{ arkcase_host_name }}:8843"
+      replace: "https://{{ arkcase_host_name }}:443"
   register: web_xml
   when: snowbound_war is changed
 

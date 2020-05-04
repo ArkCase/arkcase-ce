@@ -47,7 +47,7 @@
           catalina_out: "{{ root_folder }}/log/snowbound/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/snowbound"
           log_folder: "{{ root_folder }}/log/snowbound"          
-          java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
+          java_home: "/usr/lib/jvm/java-11-openjdk"
   register: snowbound_tomcat_unarchived
 
 - name: conf/Catalina/localhost folder
@@ -133,3 +133,26 @@
   become: yes
   command: systemctl daemon-reload
   when: snowbound_systemd is changed
+
+- name: enable firewall
+  become: yes
+  service:
+    name: firewalld
+    state: started
+
+- name: Expose Snowbound app port
+  become: yes
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  register: snowbound_ports
+  loop:
+    - "2005/tcp"   # snowbound
+
+- name: Reload firewalld
+  become: yes
+  command: firewall-cmd --reload
+  when: snowbound_ports is changed
+

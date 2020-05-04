@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  roles:
+    - pki-aws-client
+    - snowbound
+    - snowbound-app
