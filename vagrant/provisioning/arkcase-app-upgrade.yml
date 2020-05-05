@@ -17,3 +17,5 @@
       tags: [core]
     - role: snowbound-app
       tags: [core]
+    - role: start-arkcase
+      tags: [core]

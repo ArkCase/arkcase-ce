@@ -1,6 +1,7 @@
 ---
 - hosts: all
   roles:
+<<<<<<< HEAD
     - common
     - pki_client
     - ldap
@@ -22,5 +23,51 @@
     - start-arkcase
     - tesseract
     - firewall
+=======
+    - role: common
+      tags: [core, common]
+    - role: pki_client
+      tags: [core, pki_client]
+    - role: ldap
+      tags: [core, ldap]
+    - role: mariadb
+      tags: [core, mariadb]
+    - role: httpd
+      tags: [core, httpd]
+    - role: activemq
+      tags: [core, activemq]
+    - role: alfresco-setup
+      tags: [core, alfresco, alfresco-setup]
+    - role: alfresco-ee
+      tags: [core, alfresco, alfresco-ee]
+    - role: alfresco
+      tags: [core, alfresco]
+    - role: alfresco-site
+      tags: [core, alfresco, alfresco-site]
+    - role: solr
+      tags: [core, solr]
+    - role: pentaho-setup
+      tags: [core, pentaho, pentaho-setup]
+    - role: pentaho-ee
+      tags: [core, pentaho, pentaho-ee]
+    - role: pentaho-configuration
+      tags: [core, pentaho, pentaho-configuration]
+    - role: snowbound
+      tags: [core, snowbound]
+    - role: snowbound-app
+      tags: [core, snowbound, snowbound-app]
+    - role: pentaho-license
+      tags: [core, pentaho, pentaho-license]
+    - role: arkcase-prerequisites
+      tags: [core, arkcase]
+    - role: arkcase-app
+      tags: [core, arkcase]
+    - role: tesseract
+      tags: [core, arkcase, tesseract]
+    - role: firewall
+      tags: [core, firewall]
+    - role: start-arkcase
+      tags: [core, arkcase]
+>>>>>>> a3add646cf942bd47a12c8542ff6fd7c86c06f14
 
     

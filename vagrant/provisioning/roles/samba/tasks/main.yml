@@ -165,11 +165,12 @@
     permanent: yes
     state: enabled
   register: samba_firewall
+  when: enable_firewall is undefined or enable_firewall
 
 - name: reload firewall if necessary
   become: yes
   command: firewall-cmd --reload
-  when: samba_firewall is changed
+  when: (enable_firewall is undefined or enable_firewall) and samba_firewall is changed
 
 - name: see if administrator password is non-expiring already
   become: yes
