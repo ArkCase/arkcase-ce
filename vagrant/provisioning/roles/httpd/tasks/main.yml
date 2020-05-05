@@ -34,7 +34,7 @@
     group: apache
     mode: 0600
 
-- name: Include LDAP authenticated users to have access to Solr
+- name: Allow only LDAP authenticated users to have access to Solr
   become: yes
   template:
     backup: yes
