@@ -1,0 +1,55 @@
+---
+    # tasks file for /etc/ansible/roles/elastic
+    - name: Copy the ElasticSearch repo
+      template:
+        src: elasticsearch.repo
+        dest: /etc/yum.repos.d/
+        backup: yes
+    
+    - name: Import GPG key for ElasticSearch   
+      rpm_key:
+        state: present
+        key: https://artifacts.elastic.co/GPG-KEY-elasticsearch      
+
+    - name: Install ElasticSearch
+      yum:
+        name: elasticsearch
+        state: present
+
+    - name: Elasticsearch folders
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: directory
+        group: elasticsearch
+        owner: elasticsearch
+      loop:
+        - "{{ root_folder }}/data/elasticsearch"
+        - "{{ root_folder }}/log/elasticsearch"
+
+    - name: Copying ElasticSearch configuration files
+      template:
+        src: elasticsearch.yml
+        dest: /etc/elasticsearch
+        backup: yes
+    
+    - name: Adding services to auto start
+      systemd:
+        name: elasticsearch
+        enabled: yes
+        daemon_reload: yes
+        masked: no
+        state: started
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
+ 
+    - name: Wait for elasticsearch to become responsive...
+      uri:
+        url: "http://localhost:{{ elasticsearch_port | default(9200) }}"
+        method: GET
+        status_code: 200
+        validate_certs: no
+      register: result
+      until: result.status == 200
+      retries: 60
+      delay: 2
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
