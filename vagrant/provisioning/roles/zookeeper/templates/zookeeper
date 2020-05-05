@@ -1,0 +1,42 @@
+{{ root_folder }}/log/zookeeper/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/zookeeper -mtime +7 -delete
+  endscript
+}
+
+{{ root_folder }}/log/zookeeper/*.out {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/zookeeper -mtime +7 -delete
+  endscript
+}
+
+{{ root_folder }}/log/zookeeper/zookeeper_gc.log.* {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/zookeeper -mtime +7 -delete
+  endscript
+}
+

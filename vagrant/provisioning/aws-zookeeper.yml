@@ -1,0 +1,41 @@
+---
+- hosts: localhost
+  roles:
+    - pki-aws-client
+    - zookeeper
+
+  vars_prompt:
+    - name: root_folder
+      prompt: Root folder
+      private: no
+      default: /opt/app
+
+    - name: ssl_ca
+      prompt: Full path to root cert
+      private: no
+
+    - name: ssl_intermediate_cert
+      prompt: Full path to intermediate cert
+      private: no 
+
+    - name: zookeeper_version
+      prompt: Zookeeper version
+      private: no
+      default: 3.4.13
+
+    - name: solr_node_1
+      prompt: IP or host name of Solr Node 1
+      private: no
+
+    - name: solr_node_2
+      prompt: IP or host name of Solr Node 2
+      private: no
+
+    - name: solr_node_3
+      prompt: IP or host name of Solr Node 3
+      private: no
+
+    - name: solr_node_id
+      prompt: node id of this particular node (1, 2, or 3)
+      private: no
+
