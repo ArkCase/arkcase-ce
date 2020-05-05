@@ -15,6 +15,12 @@ external_host: arkcase-ce.local
 base_domain: arkcase-ce.local
 internal_host: "{{ base_domain }}"
 
+# Whether to enable or disable the local firewall.
+#
+# If this variable is not set, or set to `true`, the firewall will be
+# enabled. To disable the firewall, set this variable to `false`.
+enable_firewall: false
+
 activemq_host: "{{ internal_host }}"
 alfresco_host: "{{ internal_host }}"
 arkcase_host: "{{ internal_host }}"
@@ -218,6 +224,12 @@ arkcase_extension_reports:
 arkcase_configuration_classifier: "core"
 arkcase_configuration_version: ""
 
+# portal_version is either a maven version (for SFTP download) 
+# or a github release version (for github downloads). 
+# Leave blank to get latest Maven snapshot from SFTP.
+# Used only with foia extensions
+portal_version: ""
+
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
 # extra arguments.
@@ -401,4 +413,9 @@ content_management_folders:
 active_directory_non_expiring_password_age: -9223372036854775808
 
 activemq_version: 5.15.9
-    
+   
+# Confluent platform (with default version)
+confluent_major_version: 5.4
+confluent_minor_version: 7
+confluent_scala_version: 2.12
+

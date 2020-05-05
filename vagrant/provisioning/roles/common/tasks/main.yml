@@ -26,7 +26,13 @@
       - tar
       - wget
       - sshpass
-      - firewalld
+
+- name: install firewalld
+  become: yes
+  yum:
+    state: installed
+    name: firewalld
+  when: enable_firewall is undefined or enable_firewall
 
 - name: remove python2-passlib since it breaks solr password setting
   become: yes
@@ -49,10 +55,19 @@
     - "{{ root_folder }}/common"
     - "{{ root_folder }}/tmp"
 
+- name: Check whether I am inside a Docker container
+  stat:
+    path: /.dockerenv
+  register: stat_dockerenv_result
+
 - name: set hostname
   become: yes
   hostname:
     name: "{{ internal_host }}"
+  # Don't try to set the hostname when running inside Docker, this is
+  # not possible. Instead, use `--hostname` on the `docker run`
+  # command line.
+  when: not stat_dockerenv_result.stat.exists
     
 - name: add {{ internal_host }} to hosts file
   become: yes
@@ -62,8 +77,16 @@
   loop:
     - "127.0.0.1 {{ internal_host }}"
     - "{{ arkcase_host_address | default('127.0.0.1') }} arkcase-host"
+  # Don't try to modify the `/etc/hosts` file when running inside
+  # Docker, this is not possible. Instead, use `--add-host` on the
+  # `docker run` command line.
+  when: not stat_dockerenv_result.stat.exists
 
 - name: set timezone to UTC
   become: yes
   timezone:
     name: UTC
+
+- name: Set default locale to en_US.utf8
+  become: yes
+  command: localectl set-locale LANG=en_US.utf8

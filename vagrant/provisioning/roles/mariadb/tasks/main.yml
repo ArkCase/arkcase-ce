@@ -164,5 +164,3 @@
   systemd:
     name: mariadb
     state: restarted
-  when: server_cnf_tls is changed or server_cnf_packet is changed or client_cnf is changed or mariadb_install is changed or server_cnf_network is changed
-    
