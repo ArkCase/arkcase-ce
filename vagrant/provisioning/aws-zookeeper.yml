@@ -21,7 +21,7 @@
     - name: zookeeper_version
       prompt: Zookeeper version
       private: no
-      default: 3.4.13
+      default: 3.4.14
 
     - name: solr_node_1
       prompt: IP or host name of Solr Node 1
