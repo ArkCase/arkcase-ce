@@ -5,8 +5,8 @@ RewriteEngine On
 #LDAPReferrals Off
 # Perform LDAP lookup for user to check group membership
 AuthLDAPUrl "ldaps://ldap-hostname:3269/DC=sharecarepp,DC=internal?sAMAccountName?sub?(objectClass=*)"
-AuthLDAPBindDN "CN=LDAP Bind,OU=LDAP,OU=Service Accounts,DC=sharecarepp,DC=internal"
-AuthLDAPBindPassword "password"
+AuthLDAPBindDN "{{ ldap_base }}"
+AuthLDAPBindPassword "{{ ldap_bind_password }}"
 AuthzLDAPAuthoritative off
 #AuthLDAPInitialBindAsUser off
 AuthLDAPRemoteUserAttribute sAMAccountName
