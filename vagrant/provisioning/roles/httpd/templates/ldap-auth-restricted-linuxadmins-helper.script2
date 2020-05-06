@@ -10,5 +10,5 @@ AuthLDAPBindPassword "{{ ldap_bind_password }}"
 AuthzLDAPAuthoritative off
 #AuthLDAPInitialBindAsUser off
 AuthLDAPRemoteUserAttribute "{{ ldap_remote_user_attribute | default('sAMAccountName') }}"
-Require ldap-filter &(objectClass=person)(objectClass=user)(memberOf=CN="{{ ldap_CN | default ('linuxadmins') }}","{{ ldap_base }}")((userAccountControl:1.2.840.113556.1.4.803:=2))
+Require ldap-filter &(objectClass=person)(objectClass=user)(memberOf=CN="{{ solr_web_console_access_group_name | default ('linuxadmins') }}","{{ ldap_base }}")
 require valid-user
