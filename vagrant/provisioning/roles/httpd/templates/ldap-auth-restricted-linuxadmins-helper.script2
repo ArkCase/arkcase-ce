@@ -1,0 +1,14 @@
+AuthType Basic
+AuthName "Authentication Required"
+AuthBasicProvider ldap
+RewriteEngine On
+#LDAPReferrals Off
+# Perform LDAP lookup for user to check group membership
+AuthLDAPUrl "{{ ldap_url }}/{{ ldap_base }}?{{ ldap_remote_user_attribute | default('sAMAccountName') }}?sub?(objectClass=*)"
+AuthLDAPBindDN "{{ ldap_base }}"
+AuthLDAPBindPassword "{{ ldap_bind_password }}"
+AuthzLDAPAuthoritative off
+#AuthLDAPInitialBindAsUser off
+AuthLDAPRemoteUserAttribute "{{ ldap_remote_user_attribute | default('sAMAccountName') }}"
+Require ldap-filter &(objectClass=person)(objectClass=user)(memberOf=CN="{{ solr_web_console_access_group_name | default ('linuxadmins') }}","{{ ldap_base }}")
+require valid-user

@@ -34,6 +34,13 @@
     group: apache
     mode: 0600
 
+- name: Allow only LDAP authenticated users to have access to Solr
+  become: yes
+  template:
+    backup: yes
+    src: ldap-auth-restricted-linuxadmins-helper.script2
+    dest: /etc/httpd/conf.d/    
+    
 - name: ArkCase TLS configuration
   become: yes
   template:
