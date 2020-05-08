@@ -212,7 +212,6 @@
   become: yes
   become_user: pentaho
   replace:
-    backup: yes
     path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/security.properties"
     regexp: jackrabbit
     replace: ldap
@@ -236,6 +235,7 @@
   become: yes
   become_user: pentaho
   replace:
-    path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-app.js
+    backup: yes
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-app.js"
     regexp: 'l\&\&l.className\&\&l'
     replace: 'l\&\&l'
