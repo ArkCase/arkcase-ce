@@ -217,19 +217,6 @@
     replace: ldap
   register: security_provider_updated
 
-- name: restart pentaho, if needed
-  become: yes
-  systemd:
-    name: pentaho
-    state: restarted
-  when: security_provider_updated is changed
-  
-- name: wait for pentaho to come back, if it was restarted
-  wait_for:
-    port: 2002
-    delay: 5
-    timeout: 300
-  when: security_provider_updated is changed
     
 - name: Fix loader not closing issue
   become: yes
@@ -239,3 +226,15 @@
     path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-app.js"
     regexp: 'l\&\&l.className\&\&l'
     replace: 'l&&l'
+    
+- name: restart pentaho
+  become: yes
+  systemd:
+    name: pentaho
+    state: restarted
+  
+- name: wait for pentaho to come back, if it was restarted
+  wait_for:
+    port: 2002
+    delay: 5
+    timeout: 300
