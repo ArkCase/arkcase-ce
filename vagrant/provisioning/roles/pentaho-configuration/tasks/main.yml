@@ -212,7 +212,6 @@
   become: yes
   become_user: pentaho
   replace:
-    backup: yes
     path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/security.properties"
     regexp: jackrabbit
     replace: ldap
@@ -231,4 +230,12 @@
     delay: 5
     timeout: 300
   when: security_provider_updated is changed
-
+    
+- name: Fix loader not closing issue
+  become: yes
+  become_user: pentaho
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-app.js"
+    regexp: 'l\&\&l.className\&\&l'
+    replace: 'l&&l'
