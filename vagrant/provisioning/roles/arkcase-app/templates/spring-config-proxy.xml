@@ -45,7 +45,7 @@
                 <!-- comma delimited pair of pattern which match url, and header values that need to be added. Use var(VARIABLE_NAME) to use runtime variables for values. 
                      Currently implemented variables are: MDC_PENTAHO_USER_ID -->
                 <prop key="setAdditionalHeaders">
-                    ^.*prpt/viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpt/report$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpti/prpti.view$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID)
+                    ^.*prpt/viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpt/report$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpti/prpti.view$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*xanalyzer/viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID)
                 </prop>
             </props>
         </property>
