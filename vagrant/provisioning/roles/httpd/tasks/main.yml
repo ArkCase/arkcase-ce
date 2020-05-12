@@ -5,6 +5,7 @@
     name:
       - httpd
       - mod_ssl
+      - mod_ldap
 
 - name: httpd folders
   become: yes
