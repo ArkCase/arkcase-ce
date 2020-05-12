@@ -39,7 +39,7 @@
   become: yes
   template:
     backup: yes
-    src: ldap-auth-restricted-linuxadmins-helper.script2
+    src: ldap-auth-restricted-solr
     dest: /etc/httpd/conf.d/    
     
 - name: ArkCase TLS configuration
