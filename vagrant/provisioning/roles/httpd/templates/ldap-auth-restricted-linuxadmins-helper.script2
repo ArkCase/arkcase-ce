@@ -7,8 +7,8 @@ RewriteEngine On
 AuthLDAPUrl "{{ ldap_url }}/{{ ldap_base }}?{{ ldap_remote_user_attribute | default('sAMAccountName') }}?sub?(objectClass=*)"
 AuthLDAPBindDN "{{ ldap_base }}"
 AuthLDAPBindPassword "{{ ldap_bind_password }}"
-AuthzLDAPAuthoritative off
+#AuthzLDAPAuthoritative off
 #AuthLDAPInitialBindAsUser off
 AuthLDAPRemoteUserAttribute "{{ ldap_remote_user_attribute | default('sAMAccountName') }}"
-Require ldap-filter &(objectClass=person)(objectClass=user)(memberOf=CN="{{ solr_web_console_access_group_name | default ('linuxadmins') }}","{{ ldap_base }}")
+Require ldap-filter &(objectClass=person)(objectClass=user)(memberOf=CN="{{ solr_web_console_access_group_name | default ('linuxadmins') }},{{ ldap_base }}")
 require valid-user
