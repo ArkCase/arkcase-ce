@@ -470,6 +470,11 @@
     delay: 3
     timeout: 180
 
+- name: Wait for URI
+  uri:
+    url: https://localhost:7070/share/page/
+  retries: 10
+  delay: 10
 
 # make it so the filter URL pattern for the sync service
 # is not the actual sync service URL, this disables
