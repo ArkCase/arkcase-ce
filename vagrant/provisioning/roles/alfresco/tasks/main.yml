@@ -473,6 +473,7 @@
 - name: Wait for URI
   uri:
     url: https://localhost:7070/share/page/
+    validate_certs: false
   retries: 10
   delay: 10
 
