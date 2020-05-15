@@ -476,7 +476,7 @@
     validate_certs: false
     follow_redirects: all
   retries: 10
-  delay: 10
+  delay: 100
 
 # make it so the filter URL pattern for the sync service
 # is not the actual sync service URL, this disables
