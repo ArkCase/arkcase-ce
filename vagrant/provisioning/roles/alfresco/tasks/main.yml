@@ -474,6 +474,7 @@
   uri:
     url: https://localhost:7070/share/page/
     validate_certs: false
+    follow_redirects: all
   retries: 10
   delay: 10
 
