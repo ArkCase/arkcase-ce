@@ -2,13 +2,6 @@
   set_fact:
     ldap_user_domain_bean: "{{ ldap_user_domain | replace('.', '_') }}"
 
-- name: install any extra artifacts
-  include_tasks: extra_artifacts.yml
-  loop: "{{ arkcase_extra_artifacts }}"
-  loop_control:
-    loop_var: e
-  when: arkcase_deploy_extra_artifacts | bool
-
 - name: decrypt the symmetric key (using private key)
   become: yes
   command: openssl rsautl -decrypt -inkey {{ ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
@@ -958,6 +951,13 @@
     - regexp: 'filePattern="\$\{sys\:catalina.base\}/logs'
       replace: 'filePattern="{{ root_folder}}/log/arkcase'
 
+- name: install any extra artifacts
+  include_tasks: extra_artifacts.yml
+  loop: "{{ arkcase_extra_artifacts }}"
+  loop_control:
+    loop_var: e
+  when: arkcase_deploy_extra_artifacts | bool
+    
 ### prepare for starting arkcase and config server
 - name: copy extension jar
   become: yes
