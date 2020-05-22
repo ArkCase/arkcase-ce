@@ -1,5 +1,5 @@
 ---
-- hosts: localhost
+- hosts: all
   roles:
     - role: common
       tags: [core, common]
