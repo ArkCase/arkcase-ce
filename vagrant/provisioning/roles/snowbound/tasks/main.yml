@@ -47,7 +47,7 @@
           catalina_out: "{{ root_folder }}/log/snowbound/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/snowbound"
           log_folder: "{{ root_folder }}/log/snowbound"          
-          java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
+          java_home: "{{ '/usr/lib/jvm/java-1.8.0-openjdk' if snowbound_vendor_version == '4.1' else '/usr/lib/jvm/java-11-openjdk' }}"
   register: snowbound_tomcat_unarchived
 
 - name: conf/Catalina/localhost folder
