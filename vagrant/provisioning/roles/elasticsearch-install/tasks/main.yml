@@ -33,15 +33,21 @@
         dest: /etc/elasticsearch
         backup: yes
     
-    - name: Adding services to auto start
+    - name: ElasticSearch systemd unit file
+      become: yes
+      template:
+        src: "elasticsearch.service"
+        dest: /etc/systemd/system/elasticsearch.service
+      register: elasticsearch_systemd
+
+    - name: enable ElasticSearch to start on boot
+      become: yes
       systemd:
         name: elasticsearch
         enabled: yes
-        daemon_reload: yes
         masked: no
-        state: started
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
- 
+
     - name: Wait for elasticsearch to become responsive...
       uri:
         url: "http://localhost:{{ elasticsearch_port | default(9200) }}"

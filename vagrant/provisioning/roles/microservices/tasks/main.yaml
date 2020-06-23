@@ -1,0 +1,26 @@
+- name: Expose Microservices ports
+  become: yes
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  register: microservices_ports
+  loop:
+    - "9092/tcp"   # Kafka
+
+- name: Reload firewalld
+  become: yes
+  command: firewall-cmd --reload
+  when: microservices_ports is changed
+
+- set_fact:
+    microservices_httpd_proxy_settings: "{{ lookup('template', 'templates/ssl.conf') }}"
+
+- name: Add HTTPD proxy settings for microservices
+  become: yes
+  blockinfile:
+    path: /etc/httpd/conf.d/ssl.conf
+    block: "{{ microservices_httpd_proxy_settings }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK for microservices"
+    insertbefore: "BrowserMatch"
