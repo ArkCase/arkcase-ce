@@ -63,6 +63,22 @@
     force: yes
     backup: yes
 
+- name: Change logrotation policy for Kafka app logs
+  become: yes
+  template:
+    src: log4j.properties
+    dest: /etc/kafka/
+    force: yes
+    backup: yes
+
+- name: Change logrotation policy for Connect logs
+  become: yes
+  template:
+    src: connect-log4j.properties
+    dest: /etc/kafka
+    force: yes
+    backup: yes
+
 - name: Kafka systemd unit file
   become: yes
   template:
@@ -71,10 +87,18 @@
     backup: yes
   register: systemd_kafka_updated
 
+- name: Zookeeper systemd unit file
+  become: yes
+  template:
+    src: confluent-zookeeper.service
+    dest: /etc/systemd/system/confluent-zookeeper.service
+    backup: yes
+  register: systemd_zookeeper_updated
+
 - name: Reload daemon files if needed
   become: yes
   command: systemctl daemon-reload
-  when: systemd_kafka_updated is changed
+  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed
 
 - name: Enable zookeeper to start on boot
   become: yes
