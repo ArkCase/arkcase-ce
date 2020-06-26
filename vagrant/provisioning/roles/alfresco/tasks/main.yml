@@ -277,6 +277,7 @@
       synchronization.syncOnStartup=true
       synchronization.syncWhenMissingPeopleLogIn=true
       synchronization.autoCreatePeopleOnLogin=false
+      synchronization.import.cron=* */5 * * * ? *
       csrf.filter.enabled=false
       dir.root={{ root_folder }}/data/alfresco/alf_data
       db.name=alfresco
