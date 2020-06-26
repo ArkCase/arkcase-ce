@@ -25,8 +25,6 @@
     state: installed
     name:
       - python-pip
-      - java-11-openjdk
-      - java-11-openjdk-devel
 
 - name: install Python crypto library
   become: yes
@@ -34,28 +32,15 @@
     name: cryptography
     extra_args: --upgrade
 
-- name: pki facts
-  set_fact:
-    ssl_key: "/etc/pki/tls/private/{{ ansible_facts.hostname }}.pem"
-    ssl_cert: "/etc/pki/tls/certs/{{ ansible_facts.hostname }}.pem"
-    ssl_chain_cert: "/etc/pki/tls/certs/arkcase-chain.pem"
-    java_key_store: "{{ root_folder }}/common/arkcase.ks"
-    java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"
-    java_trust_store: "{{ root_folder }}/common/arkcase.ts"
-    java_key_store_pass: "{{ ansible_facts.fqdn }}"
-    java_trust_store_pass: "{{ ansible_facts.fqdn }}"
-    java_p12_store: "{{ root_folder }}/common/arkcase.p12"
-
 - name: ensure secure permissions on private keys
   become: yes
   file: 
     path: "{{ ssl_key }}"
     mode: 0600
 
-
 - name: generate the chain cert file
   become: yes
-  shell: cat {{ ssl_intermediate_cert }} {{ ssl_ca }} > {{ ssl_chain_cert }}
+  shell: cat {{ ssl_intermediate_cert }} {{ ssl_root_cert }} > {{ ssl_chain_cert }}
 
 - name: Java keystore and trust store
   block:
@@ -75,13 +60,13 @@
       block:
         - name: write arkcase.p12 (used by Pentaho)
           become: yes
-          command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key }} -out "{{ java_p12_store }}" -name arkcase_server -chain -CAfile {{ ssl_chain_cert }} -passout 'pass:{{ java_key_store_pass }}'
+          command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key }} -out "{{ java_p12_store }}" -name {{ ansible_facts.fqdn }} -chain -CAfile {{ ssl_chain_cert }} -passout 'pass:{{ java_key_store_pass }}'
         - name: copy arkcase.p12 to key store format (PKCS12 format)
           become: yes
-          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_server -noprompt
+          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias {{ ansible_facts.fqdn }} -noprompt
         - name: copy arkcase.p12 to key store format (JKS format)
           become: yes
-          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass '{{ java_key_store_pass }}' -alias arkcase_server -noprompt
+          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass '{{ java_key_store_pass }}' -alias {{ ansible_facts.fqdn }} -noprompt
         - name: add ArkCase certs to Java truststore
           become: yes
           java_cert:
@@ -92,7 +77,7 @@
             keystore_create: yes
             state: present
           loop:
-            - alias: "arkcase-server"
+            - alias: "{{ ansible_facts.fqdn }}"
               path: "{{ ssl_cert }}"
             - alias: "arkcase-chain"
               path: "{{ ssl_ca }}"
@@ -101,49 +86,44 @@
           command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
       when: "arkcase_ks_stat.stat.exists == False"
 
-- name: write encrypted symmetric key file for use in ArkCase webapp
-  block:
-    - name: check if symmetric key file exists
-      become: yes
-      stat:
-        path: "{{ root_folder }}/common/symmetricKey.encrypted"
-      register: sym_key_enc
-      changed_when: false
-    - name: write plaintext key file, this will have a new line
-      become: yes
-      copy:
-        dest: "{{ root_folder }}/common/symmetricKeyWithNewline.txt"
-        content: |
-          {{ 9999999999999999999999 | random | to_uuid }}
-      when: sym_key_enc.stat.exists == False
-      register: plaintext_with_newline
-    - name: remove the trailing new line from the symmetric key file
-      become: yes
-      shell: tr -d '\n' <{{ root_folder }}/common/symmetricKeyWithNewline.txt > {{ root_folder }}/common/symmetricKey.txt
-      when: plaintext_with_newline is changed
-      register: trim_plaintext
-    - name: remove the original plaintext that had the newline
-      become: yes
-      file:
-        path: "{{ root_folder }}/common/symmetricKeyWithNewline.txt"
-        state: absent
-      when: trim_plaintext is changed
-    - name: extract public key from server cert
-      become: yes
-      command: openssl x509 -pubkey -noout -in {{ ssl_cert }} -noout
-      register: pub_key
-      when: sym_key_enc.stat.exists == False
-      changed_when: false
-    - name: write public key to file
-      become: yes
-      copy:
-        dest: "{{ root_folder }}/common/arkcase-server.pub"
-        content: |
-          {{ pub_key.stdout }}
-      when: sym_key_enc.stat.exists == False
-    - name: write encrypted plaintext
-      become: yes
-      command: openssl rsautl -encrypt -pubin -inkey "{{ root_folder }}/common/arkcase-server.pub" -in "{{ root_folder }}/common/symmetricKey.txt" -out "{{ root_folder }}/common/symmetricKey.encrypted"
-      when: sym_key_enc.stat.exists == False
+# zookeeper requires certain extensions to tell what kind of keystore and trust store it is
+- name: special keystore extension
+  become: yes
+  file:
+    src: "{{ root_folder }}/common/arkcase.ks"
+    dest: "{{ root_folder }}/common/arkcase-key-store.p12"
+    state: link
+
+- name: special truststore extension
+  become: yes
+  file:
+    src: "{{ root_folder }}/common/arkcase.ts"
+    dest: "{{ root_folder }}/common/arkcase-trust-store.p12"
+    state: link
+
+- name: copy server cert to shared folder
+  become: yes
+  copy: 
+    remote_src: yes
+    src: "/etc/pki/tls/certs/{{ ansible_facts.hostname }}.pem"
+    dest: /data/shared/certificates/{{ ansible_facts.hostname }}.pem
+
+- name: find server certs copied so far
+  find:
+    paths: /data/shared/certificates
+  register: existing_certs
+
+- name: import certs into Java trust store, as needed
+  become: yes
+  java_cert:
+    cert_alias: "{{ item.path | basename }}"
+    cert_path: "{{ item.path }}"
+    keystore_pass: "{{ java_trust_store_pass }}"
+    keystore_path: "{{ root_folder }}/common/arkcase.ts"
+    keystore_type: JKS
+    state: present
+  loop: "{{ existing_certs.files }}"
+
+
 
 

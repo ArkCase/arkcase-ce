@@ -29,7 +29,6 @@
     - "/etc/pki/tls/csr"
     - "/etc/pki/tls/certs"
 
-
 # the passphrase and specific cipher are required 
 # on CentOS FIPS mode; then we can remove the 
 # passphrase and proceed as usual.
@@ -75,14 +74,15 @@
     subject_alt_name:
       - DNS:{{ ansible_facts.hostname }}
       - DNS:{{ ansible_facts.fqdn }}
+      - IP:{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
 
 - name: show next steps
   debug:
     msg:  
-      - 'You must now copy the file /etc/pki/tls/csr/{{ ansible_facts.hostname }}.csr file '
-      - 'to the Active Directory Certificate Services VM; start an elevated command prompt '
-      - 'on that VM; and run the command: certreq -submit -attrib "CertificateTemplate:WebServerV2" '
-      - '$(path to the csr file) $(path where the pem file will be created)". '
+      - 'You must now authenticate as a domain admin using the "kinit" command, '
+      - 'and then invoke the submit_csr shell script: '
+      - '   sh submit_csr.sh /etc/pki/tls/csr/{{ ansible_facts.hostname }}.csr {{ ansible_facts.hostname }}.html {{ ansible_facts.hostname }}.p7b {{ ansible_facts.hostname }}.pem WebServerV2 https://URL_OF_THE_SUBORDINATE_CA/certsrv'
+      - 'Then copy the file {{ ansible_facts.hostname }}.pem to the folder /etc/pki/tls/certs'
       - ''
-      - 'Then you must copy the generated PEM file onto this VM in the location' 
-      - '/etc/pki/tls/certs/{{ ansible_facts.hostname }}.pem. '
+      - 'NOTE due to the requirement to authenticate as a domain admin, this step MUST'
+      - 'be done by you manually, and will not be automated in these Ansible roles.'

@@ -1,13 +1,18 @@
+- name: see if solr cloud is enabled
+  set_fact:
+    solr_cloud: "{{ enable_solr_cloud | default(false) }}"
+
 - name: see if {{ item }} core already created
   become: yes
   become_user: solr
   stat:
     path: "{{ root_folder }}/data/solr/{{ item }}"
   register: core_stat
+  when: not solr_cloud 
 
-- name: Create {{ item }} core
+- name: Create {{ item }} core (standalone solr)
   become: yes
   become_user: solr
   shell: "{{ root_folder }}/app/solr/bin/solr create -c {{ item }} -d {{ root_folder }}/app/solr/server/solr/configsets/arkcase"
-  when: core_stat.stat.exists == False
+  when: not solr_cloud and core_stat.stat.exists == False
     

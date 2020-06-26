@@ -4,9 +4,19 @@
   copy:
     src: "quartz-create-db.sql"
     dest: "{{ root_folder }}/install/pentaho/"
+
+- name: set flag for local db, if local
+  set_fact:
+    schema_task_name: create_schema_specific_user
+  when: not rds_password is defined
+
+- name: set flag for RDS, if RDS
+  set_fact:
+    schema_task_name: create_schema_specific_user_rds
+  when: rds_password is defined
     
 - name: create hibernate schema (ansible will always report quartz as changed)
-  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema_specific_user.yml"
+  include_tasks: "{{ role_path }}/../mariadb/tasks/{{ schema_task_name }}.yml"
   loop:
     - schema: "hibernate"
       user: "hibuser"

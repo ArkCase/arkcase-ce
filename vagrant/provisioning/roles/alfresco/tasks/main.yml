@@ -170,12 +170,22 @@
 
 - include_tasks: csrf_filter.yml
 
+- name: set flag for local db, if local
+  set_fact:
+    schema_task_name: create_schema
+  when: not rds_password is defined
+
+- name: set flag for RDS, if RDS
+  set_fact:
+    schema_task_name: create_schema_rds
+  when: rds_password is defined
+
 - name: create alfresco database schema
-  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
+  include_tasks: "{{ role_path }}/../mariadb/tasks/{{ schema_task_name }}.yml"
   args:
     apply:
       vars:
-        item: alfresco    
+        item: alfresco
 
 - name: copy alfresco-mmt.jar
   become: yes
@@ -283,7 +293,7 @@
       db.username=alfresco
       db.password={{ default_database_password }}
       db.driver=org.mariadb.jdbc.Driver
-      db.url=jdbc:mariadb://{{ database_host_name }}:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&requireSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=false&serverSslCert={{ ssl_cert }}
+      db.url=jdbc:mariadb://{{ database_host_name }}:3306/alfresco?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSSL=true&requireSSL=true&enabledSslProtocolSuites=TLSv1.2&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert | default(ssl_cert) }}
       db.schema.update=true
       db.pool.max=50
       db.pool.validate.query=SELECT 1
@@ -351,7 +361,7 @@
       ldap.synchronization.userIdAttributeName=samAccountName
       #### LDAP host-specific settings
       ldap.authentication.java.naming.provider.url={{ ldap_url }}
-      ldap.synchronization.java.naming.security.principal={{ ldap_bind_user }}
+      ldap.synchronization.java.naming.security.principal={{ ldap_bind_user | replace('-', ' ') }}
       ldap.synchronization.java.naming.security.credentials={{ ldap_bind_password }}
       ldap.synchronization.groupSearchBase={{ ldap_group_base }}
       ldap.synchronization.userSearchBase={{ ldap_user_base }}
@@ -438,11 +448,19 @@
       when: share_log4j_updated is changed
       
       
-- name: Alfresco systemd unit file
+- name: Alfresco systemd unit file (local db)
   become: yes
   template:
     src: "alfresco.service"
     dest: /etc/systemd/system/alfresco.service
+  when: not rds_password is defined
+
+- name: Alfresco systemd unit file (rds)
+  become: yes
+  template:
+    src: "alfresco-remote-db.service"
+    dest: /etc/systemd/system/alfresco.service
+  when: rds_password is defined
     
 - name: alfresco logrotate
   become: yes
@@ -500,6 +518,14 @@
   args:
     chdir: "{{ root_folder }}/app/alfresco/webapps/alfresco"
   when: web_xml_one is changed or web_xml_two is changed
+
+- name: Expose Alfresco app port
+  become: yes
+  firewalld:
+    port: "7070/tcp"
+    permanent: true
+    state: enabled
+    immediate: yes
 
 # Alfresco CE 6.1 download... but, there is no compatible RMA yet,
 # so we can't use it

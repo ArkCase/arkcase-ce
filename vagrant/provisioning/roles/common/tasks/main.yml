@@ -77,6 +77,7 @@
   loop:
     - "127.0.0.1 {{ internal_host }}"
     - "{{ arkcase_host_address | default('127.0.0.1') }} arkcase-host"
+    - "{{ external_host_entry | default('') }}"
   # Don't try to modify the `/etc/hosts` file when running inside
   # Docker, this is not possible. Instead, use `--add-host` on the
   # `docker run` command line.

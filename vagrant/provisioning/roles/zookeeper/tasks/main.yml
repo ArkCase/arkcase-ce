@@ -7,7 +7,7 @@
     create_home: yes
     home: /home/zookeeper
 
-- name: Zookeeper  folders
+- name: Zookeeper folders
   become: yes
   file:
     path: "{{ item }}"
@@ -29,19 +29,23 @@
       vars:
         item: zookeeper
 
+- name: set downloadable archive name
+  set_fact:
+    zk_archive_name: zookeeper-{{ zookeeper_version }}.tar.gz
+
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: "Zookeeper"
-      dest: "{{ root_folder }}/install/zookeeper/zookeeper-{{ zookeeper_version }}.tar.gz"
+      dest: "{{ root_folder }}/install/zookeeper/{{ zk_archive_name }}"
       owner: "zookeeper"
-      url: "https://downloads.apache.org/zookeeper/zookeeper-{{ zookeeper_version }}/zookeeper-{{ zookeeper_version }}.tar.gz"
+      url: "https://archive.apache.org/dist/zookeeper/zookeeper-{{ zookeeper_version }}/{{ zk_archive_name }}"
 
 - name: unarchive Zookeeper distribution
   become: yes
   become_user: zookeeper
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/install/zookeeper/zookeeper-{{ zookeeper_version }}.tar.gz"
+    src: "{{ root_folder }}/install/zookeeper/{{ zk_archive_name }}"
     dest: "{{ root_folder }}/app/zookeeper"
     extra_opts:
       - --strip-components=1
@@ -135,6 +139,7 @@
   register: zookeeper_ports
   loop:
     - "2181/tcp"
+    - "2281/tcp"
     - "2888/tcp"
     - "3888/tcp"
 

@@ -1,0 +1,13 @@
+- name: write expect script for {{ item.name }}
+  become: yes
+  become_user: pentaho-pdi
+  template:
+    src: expect-script.txt
+    dest: /home/pentaho-pdi/expect-script
+
+- name: install {{ item.name }}
+  become: yes
+  become_user: pentaho-pdi
+  shell: expect -f /home/pentaho-pdi/expect-script
+  args:
+    creates: "{{ item.creates }}"

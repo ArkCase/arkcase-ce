@@ -50,6 +50,7 @@
     - "Pentaho BI Platform Enterprise Edition.lic"
     - "Pentaho Dashboard Designer.lic"
     - "Pentaho Reporting Enterprise Edition.lic"
+    - "Pentaho PDI Enterprise Edition.lic"
   failed_when: "'The license has been successfully processed' not in pentaho_license_script_out.stdout"
 
 - name: restart Pentaho to install new licenses, if necessary

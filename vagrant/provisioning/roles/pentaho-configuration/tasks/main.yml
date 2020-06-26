@@ -22,8 +22,8 @@
   become: yes
   become_user: pentaho
   java_cert:
-    pkcs12_alias: arkcase_server
-    pkcs12_path: "{{ root_folder }}/common/arkcase-client.p12"
+    pkcs12_alias: "{{ keystore_alias | default('arkcase_server') }}"
+    pkcs12_path: "{{ java_p12_store }}"
     pkcs12_password: "{{ java_key_store_pass }}"
     keystore_create: yes
     keystore_pass: password
@@ -177,11 +177,20 @@
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
 
 # Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
-- name: Pentaho systemd unit file
+- name: Pentaho systemd unit file (local MariaDB)
   become: yes
   template:
     src: "pentaho.service"
     dest: /etc/systemd/system/pentaho.service
+  when: not rds_password is defined
+  register: pentaho_systemd
+
+- name: Pentaho systemd unit file (RDS)
+  become: yes
+  template:
+    src: "pentaho-rds.service"
+    dest: /etc/systemd/system/pentaho.service
+  when: rds_password is defined
   register: pentaho_systemd
 
 - name: reload daemon-files if needed
@@ -202,11 +211,25 @@
     name: pentaho
     state: started
 
-- name: wait for Pentaho to start
+- name: wait for Pentaho port to be available
   wait_for:
     port: 2002
     delay: 5
     timeout: 300
+
+## pentaho will redirect to the external host which 
+## probably isn't working yet, so we will not follow 
+## redirects, and count success when we get a 302
+- name: wait for Pentaho webapp to really be available
+  uri:
+    url: https://localhost:2002/pentaho
+    validate_certs: false
+    follow_redirects: none
+    status_code: [ 200, 302, 404 ]
+  register: _result
+  until: _result.status == 302
+  retries: 100
+  delay: 5
 
 - name: ensure ldap security is being used
   become: yes
@@ -231,4 +254,32 @@
     delay: 5
     timeout: 300
   when: security_provider_updated is changed
+
+## pentaho will redirect to the external host which 
+## probably isn't working yet, so we will not follow 
+## redirects, and count success when we get a 302
+- name: wait for Pentaho webapp to really be available
+  uri:
+    url: https://localhost:2002/pentaho
+    validate_certs: false
+    follow_redirects: none
+    status_code: [ 200, 302, 404 ]
+  register: _result
+  until: _result.status == 302
+  retries: 100
+  delay: 5
+  when: security_provider_updated is changed
+
+- name: Expose pentaho app port
+  become: yes
+  firewalld:
+    port: "2002/tcp"
+    permanent: true
+    state: enabled
+  register: pentaho_port_fw
+
+- name: Reload firewalld
+  become: yes
+  command: firewall-cmd --reload
+  when: pentaho_port_fw is changed 
 
