@@ -20,6 +20,7 @@
       givenName: "{{ u.firstName }}"
       sn: "{{ u.lastName }}"
       cn: "{{ u.user_id }}"
+      userPrincipalName: "{{ u.userPrincipalName | default(u.mail) }}"
   register: new_user 
 
 - name: set {{ u.user_id }} password
@@ -60,7 +61,7 @@
         dest: "{{ root_folder }}/install/activate_user.ldif"
     - name: enable user
       shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/activate_user.ldif
- # when: new_user is changed
+  when: new_user is changed
       
 - name: store user id
   set_fact: 
