@@ -1,0 +1,16 @@
+[Unit]
+Description=Apache Kafka - ZooKeeper
+Documentation=http://docs.confluent.io/
+After=network.target
+
+[Service]
+Type=simple
+User=cp-kafka
+Group=confluent
+Environment="LOG_DIR={{ root_folder }}/log/kafka"
+ExecStart=/usr/bin/zookeeper-server-start /etc/kafka/zookeeper.properties
+TimeoutStopSec=180
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
