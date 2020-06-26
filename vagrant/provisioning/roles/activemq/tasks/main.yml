@@ -45,14 +45,6 @@
     creates: "{{ root_folder }}/app/activemq/LICENSE"
   register: activemq_unarchived
 
-- name: unarchive ActiveMQ fileserver webapp
-  become: yes
-  become_user: activemq
-  unarchive:
-    src: "fileserver.zip"
-    dest: "{{ root_folder }}/app/activemq/webapps"
-    creates: "{{ root_folder }}/app/activemq/webapps/fileserver/index.html"
-
 - name: update startup script
   become: yes
   become_user: activemq
@@ -241,21 +233,6 @@
     - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
     - { regexp: 'uri="tcp', replace: 'uri="ssl' }
     - { regexp: 'uri="stomp://', replace: 'uri="stomp+ssl://' }
-
-- name: jetty.xml file/blob support
-  become: yes
-  become_user: activemq
-  blockinfile:
-    path: "{{ root_folder }}/app/activemq/conf/jetty.xml"
-    insertafter: '^.*bean="rewriteHandler".*$'
-    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: BLOB SUPPORT -->"
-    block: |
-      <bean class="org.eclipse.jetty.webapp.WebAppContext">
-        <property name="contextPath" value="/fileserver" />
-        <property name="resourceBase" value="${activemq.home}/webapps/fileserver" />
-        <property name="logUrlOnStart" value="true" />
-        <property name="parentLoaderPriority" value="true" />
-      </bean>
 
 - name: JMX config
   block:

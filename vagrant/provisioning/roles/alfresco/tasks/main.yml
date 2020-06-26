@@ -277,6 +277,7 @@
       synchronization.syncOnStartup=true
       synchronization.syncWhenMissingPeopleLogIn=true
       synchronization.autoCreatePeopleOnLogin=false
+      synchronization.import.cron=* */5 * * * ? *
       csrf.filter.enabled=false
       dir.root={{ root_folder }}/data/alfresco/alf_data
       db.name=alfresco
@@ -475,8 +476,10 @@
     url: https://localhost:7070/share/page/
     validate_certs: false
     follow_redirects: all
-  retries: 10
-  delay: 100
+  register: _result
+  until: _result.status == 200
+  retries: 100
+  delay: 5
 
 # make it so the filter URL pattern for the sync service
 # is not the actual sync service URL, this disables
