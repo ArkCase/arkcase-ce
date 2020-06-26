@@ -5,6 +5,7 @@
     name:
       - httpd
       - mod_ssl
+      - mod_ldap
 
 - name: httpd folders
   become: yes
@@ -34,6 +35,13 @@
     group: apache
     mode: 0600
 
+- name: Allow only LDAP authenticated users to have access to Solr
+  become: yes
+  template:
+    backup: yes
+    src: ldap-auth-restricted-solr
+    dest: /etc/httpd/conf.d/    
+    
 - name: ArkCase TLS configuration
   become: yes
   template:

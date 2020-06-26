@@ -369,7 +369,7 @@ sftp_user: "{{ sftp_extension_user }}"
 
 # retrieve snowbound from GitHub ("github") or SFTP ("sftp")
 snowbound_retrieve_strategy: "sftp"
-snowbound_vendor_version: "4.10"
+snowbound_vendor_version: "5.2"
 snowbound_arkcase_version: ""
 snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
@@ -485,6 +485,7 @@ records_management_categories:
   - "Document Repositories"
   - "Requests"
   - "Tasks"
+  - "Consultations"
 content_management_folders:
   - "Case Files"
   - "Complaints"
@@ -495,7 +496,8 @@ content_management_folders:
   - "Tasks"
   - "Timesheets"
   - "User Profile"
-  - "Business Processes"   
+  - "Business Processes"
+  - "Consultations" 
 
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users

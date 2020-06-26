@@ -235,18 +235,25 @@
   become: yes
   become_user: pentaho
   replace:
-    backup: yes
     path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/security.properties"
     regexp: jackrabbit
     replace: ldap
   register: security_provider_updated
-
-- name: restart pentaho, if needed
+    
+- name: Fix loader not closing issue
+  become: yes
+  become_user: pentaho
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-app.js"
+    regexp: 'l\&\&l.className\&\&l'
+    replace: 'l&&l'
+    
+- name: restart pentaho
   become: yes
   systemd:
     name: pentaho
     state: restarted
-  when: security_provider_updated is changed
   
 - name: wait for pentaho to come back, if it was restarted
   wait_for:
@@ -274,12 +281,8 @@
   become: yes
   firewalld:
     port: "2002/tcp"
-    permanent: true
+    permanent: yes
+    immediate: yes
     state: enabled
-  register: pentaho_port_fw
 
-- name: Reload firewalld
-  become: yes
-  command: firewall-cmd --reload
-  when: pentaho_port_fw is changed 
 

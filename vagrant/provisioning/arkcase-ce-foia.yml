@@ -7,6 +7,8 @@
       tags: [core, pki]
     - role: pki_client
       tags: [core, pki_client]
+    - role: samba
+      tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
     - role: mariadb
@@ -27,25 +29,27 @@
       tags: [core, solr]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
-    - role: pentaho-ee
-      tags: [core, pentaho, pentaho-ee]
+    - role: pentaho-ce
+      tags: [core, pentaho, pentaho-ce]
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
-    - role: pentaho-license
-      tags: [core, pentaho, pentaho-license]
+    - role: confluent-platform-install
+      tags: [confluent]
     - role: arkcase-prerequisites
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
+    - role: foia
+      tags: [core, foia]
     - role: tesseract
-      tags: [core, arkcase]
+      tags: [core, arkcase, tesseract]
     - role: firewall
-      tags: [core, firewall]
+      when: enable_firewall is undefined or enable_firewall
+      tags: [core]
     - role: start-arkcase
       tags: [core, arkcase]
-
     

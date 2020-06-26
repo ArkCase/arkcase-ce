@@ -38,6 +38,7 @@
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
     - role: confluent-platform-install
+      tags: [confluent]
     - role: arkcase-prerequisites
       tags: [core, arkcase]
     - role: arkcase-app
@@ -47,5 +48,3 @@
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
       tags: [core]
-
-    

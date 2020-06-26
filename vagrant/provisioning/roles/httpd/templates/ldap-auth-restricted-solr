@@ -1,0 +1,16 @@
+AuthType Basic
+AuthName "Authentication Required"
+AuthBasicProvider ldap
+RewriteEngine On
+#LDAPReferrals Off
+# Perform LDAP lookup for user to check group membership
+AuthLDAPUrl "{{ ldap_url }}/{{ ldap_base }}?{{ ldap_remote_user_attribute | default('sAMAccountName') }}?sub?(objectClass=*)"
+AuthLDAPBindDN "{{ ldap_bind_user | regex_search('(?<=\CN=)(.*?)(?=\,)') }}@{{ ldap_user_domain }}"
+AuthLDAPBindPassword "{{ ldap_bind_password }}"
+#AuthzLDAPAuthoritative off
+#AuthLDAPInitialBindAsUser off
+AuthLDAPRemoteUserAttribute "{{ ldap_remote_user_attribute | default('sAMAccountName') }}"
+<RequireAny>
+   Require ip "{{ arkcase_host_address | default('127.0.0.1') }}"
+   Require ldap-group "{{ arkcase_admin_group }}" 
+</RequireAny>

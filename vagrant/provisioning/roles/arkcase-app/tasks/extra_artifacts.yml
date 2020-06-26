@@ -6,6 +6,7 @@
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
     SSHPASS: "{{ sftp_password }}"
+  when: e.sftp_base_url is defined
 
 - name: copy {{ e.name }} artifact to install folder (this will tell us if it actually changed)
   become: yes
@@ -15,6 +16,7 @@
     src: "{{ root_folder }}/install/arkcase/{{ e.sftp_artifact }}"
     dest: "{{ e.deploy_path }}/{{ e.deploy_filename }}"
   register: extra_artifact
+  when: e.sftp_base_url is defined
 
 - name: create {{ e.name }} file folder
   become: yes
