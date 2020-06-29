@@ -46,6 +46,7 @@
         name: elasticsearch
         enabled: yes
         masked: no
+        state: started
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
 
     - name: Wait for elasticsearch to become responsive...
