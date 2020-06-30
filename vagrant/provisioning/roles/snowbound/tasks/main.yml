@@ -1,3 +1,13 @@
+- name: install Java 8 if necessary
+  become: yes
+  yum:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - java-1.8.0-openjdk
+    - java-1.8.0-openjdk-devel
+  when: snowbound_vendor_version == '4.10'
+
 - name: snowbound user
   become: yes
   user:

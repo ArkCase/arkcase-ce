@@ -60,13 +60,13 @@
       block:
         - name: write arkcase.p12 (used by Pentaho)
           become: yes
-          command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key }} -out "{{ java_p12_store }}" -name {{ ansible_facts.fqdn }} -chain -CAfile {{ ssl_chain_cert }} -passout 'pass:{{ java_key_store_pass }}'
+          command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key }} -out "{{ java_p12_store }}" -name {{ internal_host }} -chain -CAfile {{ ssl_chain_cert }} -passout 'pass:{{ java_key_store_pass }}'
         - name: copy arkcase.p12 to key store format (PKCS12 format)
           become: yes
-          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias {{ ansible_facts.fqdn }} -noprompt
+          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias {{ internal_host }} -noprompt
         - name: copy arkcase.p12 to key store format (JKS format)
           become: yes
-          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass '{{ java_key_store_pass }}' -alias {{ ansible_facts.fqdn }} -noprompt
+          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass '{{ java_key_store_pass }}' -alias {{ internal_host }} -noprompt
         - name: add ArkCase certs to Java truststore
           become: yes
           java_cert:
@@ -77,7 +77,7 @@
             keystore_create: yes
             state: present
           loop:
-            - alias: "{{ ansible_facts.fqdn }}"
+            - alias: "{{ internal_host }}"
               path: "{{ ssl_cert }}"
             - alias: "arkcase-chain"
               path: "{{ ssl_ca }}"
@@ -105,8 +105,8 @@
   become: yes
   copy: 
     remote_src: yes
-    src: "/etc/pki/tls/certs/{{ ansible_facts.hostname }}.pem"
-    dest: /data/shared/certificates/{{ ansible_facts.hostname }}.pem
+    src: "/etc/pki/tls/certs/{{ internal_host_base }}.pem"
+    dest: /data/shared/certificates/{{ internal_host_base }}.pem
 
 - name: find server certs copied so far
   find:

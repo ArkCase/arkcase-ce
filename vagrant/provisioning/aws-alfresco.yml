@@ -5,8 +5,10 @@
     - mariadb-client
     - alfresco-setup
     - alfresco-ce
-#    - ldap
+    - ldap
     - alfresco
+    - role: alfresco-site
+      tags: [ alfresco-site ]
 
   vars_prompt:
     - name: root_folder

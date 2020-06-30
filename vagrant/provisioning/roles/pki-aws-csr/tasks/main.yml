@@ -74,6 +74,7 @@
     subject_alt_name:
       - DNS:{{ ansible_facts.hostname }}
       - DNS:{{ ansible_facts.fqdn }}
+      - DNS:{{ external_host }}
       - IP:{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
 
 - name: show next steps

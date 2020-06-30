@@ -23,5 +23,5 @@
         state: present 
     - name: grant privileges to {{ item }}
       become: yes
-      command: mysql -u{{ rds_user | default('arkcase_root') }} -p'{{ rds_password }}' -h {{ database_host_name }} -Ns -e "grant select, insert, update, delete, create, drop, index, alter, lock tables, create view, trigger on {{ item }}.* to '{{ item }}'@'%'"
+      command: mysql -u{{ rds_user | default('arkcase_root') }} -p'{{ rds_password }}' -h {{ database_host_name }} -Ns -e "grant select, insert, update, delete, create, drop, index, alter, lock tables, create view, trigger, create routine, alter routine, execute on {{ item }}.* to '{{ item }}'@'%'"
       changed_when: false

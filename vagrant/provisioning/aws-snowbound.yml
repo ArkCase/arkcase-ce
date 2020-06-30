@@ -2,5 +2,7 @@
 - hosts: localhost
   roles:
     - pki-aws-client
-    - snowbound
-    - snowbound-app
+    - role: snowbound
+      tags: [ snowbound ]
+    - role: snowbound-app
+      tags: [ snowbound, snowbound-app ]

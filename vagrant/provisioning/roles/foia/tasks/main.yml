@@ -1,3 +1,52 @@
+- name: install required packages
+  become: yes
+  yum:
+    name: 
+      - httpd
+      - mod_ssl
+    state: present
+
+- name: httpd log folder
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: apache
+    group: apache
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "httpd_log_t"
+    selevel: "s0"
+  loop:
+    - "{{ root_folder }}/log/httpd"
+
+- name: httpd data folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: apache
+    group: apache
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "httpd_sys_content_t"
+    selevel: "s0"
+  loop:
+    - "{{ root_folder }}/data/httpd"
+    - "{{ root_folder }}/data/httpd/htdocs"
+    - "{{ root_folder }}/tmp/httpd"
+    - "{{ root_folder }}/install/httpd"
+
+- name: copy private key for httpd
+  become: yes
+  copy:
+    remote_src: yes
+    src: "{{ ssl_key }}"
+    dest: "{{ root_folder }}/data/httpd/httpd.key"
+    owner: apache
+    group: apache
+    mode: 0600
+
 - name: add foia extension to JAVA_OPTS
   become: yes
   become_user: arkcase
@@ -12,7 +61,7 @@
   set_fact:
     portal_version: "{{ portal_version | default(arkcase_version) }}"
   
-- name: Set portal version formated
+- name: Set portal version formatted
   set_fact:
     portal_version_formatted: "{{ '-' ~ portal_version if portal_version != '' else '' }}"
     

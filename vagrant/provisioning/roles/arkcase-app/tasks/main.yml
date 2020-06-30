@@ -886,16 +886,6 @@
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring/quartz.properties
     force: no
 
-- name: set private key alias (client ssl key)
-  set_fact:
-    private_key_alias: "arkcase_client"
-  when: client_ssl_key is defined
-
-- name: set private key alias (ssl key)
-  set_fact:
-    private_key_alias: "arkcase_server"
-  when: not client_ssl_key is defined
-
 - name: fix encryptionproperties
   become: yes
   become_user: arkcase
@@ -975,4 +965,12 @@
     remote_src: yes
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
+
+- name: Expose ArkCase app port
+  become: yes
+  firewalld:
+    port: "8843/tcp"
+    permanent: true
+    state: enabled
+    immediate: yes
 
