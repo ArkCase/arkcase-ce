@@ -1,0 +1,106 @@
+- name: create install folder
+  become: yes
+  become_user: pentaho
+  file:
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}"
+    state: directory  
+
+- name: download FOIA analytical reports repository
+  become: yes
+  become_user: pentaho
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ item }}
+  args:
+    chdir: "{{ root_folder }}/install/pentaho"
+    creates: "{{ root_folder }}/install/pentaho/{{ item }}"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  loop:
+    - foia-reports-dw-{{ foia_analytical_reports_version }}.zip
+
+- name: unzip repository
+  become: yes
+  become_user: pentaho
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}.zip"
+    dest: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}"
+    creates: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb"
+
+- name: get the encrypted password for the kettle job
+  become: yes
+  become_user: pentaho-pdi
+  shell: "{{ root_folder }}/app/pentaho-pdi/data-integration/encr.sh -kettle '{{ rds_password | default(default_database_password) }}' | grep Encrypted"
+  register: encr_password
+  changed_when: false
+
+- name: get the encrypted password for the target server
+  become: yes
+  become_user: pentaho-pdi
+  shell: "{{ root_folder }}/app/pentaho-pdi/data-integration/encr.sh -kettle '{{ carte_server_password }}' | grep Encrypted"
+  register: target_server_encr_password
+  changed_when: false
+
+- name: find project files
+  become: yes
+  become_user: pentaho
+  find: 
+    paths: 
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/dimensions"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/stages"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/misc"
+    file_type: file
+    recurse: no
+    excludes: 
+      - "*~"
+      - .zip
+  register: foia_dw_files
+
+- name: update database configurations
+  include_tasks: update_db_config.yml
+  loop: "{{ foia_dw_files.files | map(attribute='path') | list }}"
+  loop_control:
+    loop_var: f
+
+- name: target server configuration
+  become: yes
+  become_user: pentaho
+  blockinfile:
+    backup: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb"
+    insertafter: "<slaveservers>"
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - target server -->"
+    block: | 
+            <slaveserver>
+              <name>{{ carte_server_name }}</name>
+              <hostname>{{ ansible_facts.fqdn }}</hostname>
+              <port>{{ carte_server_port }}</port>
+              <webAppName/>
+              <username>{{ carte_server_name }}</username>
+              <password>{{ target_server_encr_password.stdout }}</password>
+              <proxy_hostname/>
+              <proxy_port/>
+              <non_proxy_hosts/>
+              <master>N</master>
+              <sslMode>N</sslMode>
+            </slaveserver>
+          
+- name: target runtime config
+  become: yes
+  become_user: pentaho
+  blockinfile:
+    backup: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb"
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - runtime config -->"
+    insertafter: "</group>"
+    block: | 
+      <group>
+        <name>{"_":"Embedded MetaStore Elements","namespace":"pentaho","type":"Default Run Configuration"}</name>
+        <attribute>
+          <key>{{ carte_server_name }}</key>
+          <value>{"children":[{"children":[],"id":"server","value":"{{ carte_server_name }}"},{"children":[],"id":"clustered","value":"N"},{"children":[],"id":"name","value":"{{ carte_server_name }}"},{"children":[],"id":"description","value":null},{"children":[],"id":"pentaho","value":"N"},{"children":[],"id":"readOnly","value":"N"},{"children":[],"id":"sendResources","value":"Y"},{"children":[],"id":"logRemoteExecutionLocally","value":"N"},{"children":[],"id":"remote","value":"Y"},{"children":[],"id":"local","value":"N"},{"children":[],"id":"showTransformations","value":"N"}],"id":"{{ carte_server_name }}","value":null,"name":"{{ carte_server_name }}","owner":null,"ownerPermissionsList":[]}</value>
+        </attribute>
+      </group>
+
+

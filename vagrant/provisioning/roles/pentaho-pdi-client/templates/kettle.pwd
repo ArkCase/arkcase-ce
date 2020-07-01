@@ -1,0 +1,5 @@
+# Please note that the default password (cluster) is obfuscated using the Encr script provided in this release
+# Passwords can also be entered in plain text as before
+# 
+cluster: OBF:1v8w1uh21z7k1ym71z7i1ugo1v9q
+{{ carte_server_name }}: {{ kettle_encr_password.stdout }}

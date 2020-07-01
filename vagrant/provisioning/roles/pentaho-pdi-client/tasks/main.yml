@@ -136,4 +136,45 @@
     dest: "{{ root_folder}}/app/pentaho-pdi/data-integration/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
     state: link
 
+- name: create carte config file
+  become: yes
+  become_user: pentaho-pdi
+  template:
+    backup: yes
+    src: carte-config-master-8822.xml
+    dest: "{{ root_folder}}/app/pentaho-pdi/data-integration/pwd/carte-config-master-8822.xml"
+
+- name: get the encrypted password for the carte server
+  become: yes
+  become_user: pentaho-pdi
+  shell: "{{ root_folder }}/app/pentaho-pdi/data-integration/encr.sh -carte '{{ carte_server_password }}' | grep OBF"
+  register: kettle_encr_password
+  changed_when: false
+
+- name: create kettle user file
+  become: yes
+  become_user: pentaho-pdi
+  template:
+    backup: yes
+    src: kettle.pwd
+    dest: "{{ root_folder }}/app/pentaho-pdi/data-integration/pwd/kettle.pwd"
+
+- name: create the carte service file
+  become: yes
+  template:
+    src: carte.service
+    dest: /etc/systemd/system/carte.service
+  register: carte_systemd
+
+- name: enable carte to start on boot
+  become: yes
+  systemd:
+    name: carte
+    daemon-reload: yes
+    enabled: yes
+    masked: no
+    state: started
+  when: carte_systemd is changed
+
+
 

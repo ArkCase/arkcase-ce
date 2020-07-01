@@ -1,0 +1,19 @@
+[Unit]
+Description=carte service
+
+[Service]
+Type=simple
+ExecStart={{ root_folder }}/app/pentaho-pdi/data-integration/carte.sh {{ root_folder }}/app/pentaho-pdi/data-integration/pwd/carte-config-master-8822.xml 
+ExecStop={{ root_folder }}/app/pentaho-pdi/data-integration/carte.sh --stop
+User=pentaho-pdi
+Group=pentaho-pdi
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=pentaho-pdi
+Environment="PENTAHO_INSTALLED_LICENSE_PATH=/home/pentaho-pdi/.pentaho/.installedLicenses.xml"
+Environment="JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk"
+
+[Install]
+WantedBy=multi-user.target
