@@ -20,6 +20,7 @@
       givenName: "{{ u.firstName }}"
       sn: "{{ u.lastName }}"
       cn: "{{ u.user_id }}"
+      userPrincipalName: "{{ u.userPrincipalName | default(u.mail) }}"
   register: new_user 
 
 - name: set {{ u.user_id }} password
@@ -42,6 +43,9 @@
         seconds: 15
     - name: execute password change
       shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/password_change.ldif
+    - name: wait a few more seconds
+      pause:
+        seconds: 15
   when: ldap_force_password_reset or new_user is changed
 
 - name: enable {{ u.user_id }} account
@@ -57,7 +61,7 @@
         dest: "{{ root_folder }}/install/activate_user.ldif"
     - name: enable user
       shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/activate_user.ldif
- # when: new_user is changed
+  when: new_user is changed
       
 - name: store user id
   set_fact: 
