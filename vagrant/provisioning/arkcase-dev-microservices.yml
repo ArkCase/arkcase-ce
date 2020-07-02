@@ -1,0 +1,57 @@
+---
+- hosts: localhost
+  roles: 
+    - role: common
+      tags: [core, common]
+    - role: pki-dev
+      tags: [core, pki-dev]
+    - role: pki_client
+      tags: [core, pki_client]
+    - role: samba
+      tags: [core, samba]
+    - role: ldap
+      tags: [core, ldap]
+    - role: mariadb
+      tags: [core, mariadb]
+    - role: httpd
+      tags: [core, httpd]
+    - role: activemq
+      tags: [core, activemq]
+    - role: alfresco-setup
+      tags: [core, alfresco, alfresco-setup]
+    - role: alfresco-ce
+      tags: [core, alfresco, alfresco-ce]
+    - role: alfresco
+      tags: [core, alfresco]
+    - role: alfresco-site
+      tags: [core, alfresco, alfresco-site]
+    - role: solr
+      tags: [core, solr]
+    - role: pentaho-setup
+      tags: [core, pentaho, pentaho-setup]
+    - role: pentaho-ce
+      tags: [core, pentaho, pentaho-ce]
+    - role: pentaho-configuration
+      tags: [core, pentaho, pentaho-configuration]
+    - role: snowbound
+      tags: [core, snowbound]
+    - role: snowbound-app
+      tags: [core, snowbound, snowbound-app]
+    - role: confluent-platform-install
+      tags: [confluent]
+    - role: elasticsearch-install
+      tags: [elasticsearch]
+    - role: microservices
+      tags: [microservices]
+    - role: tesseract
+      tags: [core, arkcase, tesseract]
+    - role: firewall
+      tags: [core, firewall]
+    - role: arkcase-dev-reports    
+      tags: [core, reports, arkcase-dev-reports]
+    - role: foia-dev-reports
+      tags: [core, foia, reports, foia-dev-reports]
+    - role: arkcase-developer
+      tags: [core, arkcase, arkcase-developer]
+
+    
