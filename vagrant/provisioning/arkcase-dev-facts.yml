@@ -509,5 +509,6 @@ confluent_major_version: 5.4
 confluent_minor_version: 7
 confluent_scala_version: 2.12
 
-enable_elasticsearch: true
-enable_kafka: true
+# Enable these for Arkcase.NEXT development
+enable_elasticsearch: false
+enable_kafka: false

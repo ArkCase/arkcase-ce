@@ -55,11 +55,29 @@
     - "{{ root_folder }}/data/kafka"
     - "{{ root_folder }}/log/kafka"
 
+- name: KSQL folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-ksql
+  loop:
+    - "{{ root_folder }}/log/ksql"
+
 - name: Change kafka data location
   become: yes
   template:
     src: server.properties
     dest: /etc/kafka/
+    force: yes
+    backup: yes
+
+- name: Change ksql data location
+  become: yes
+  template:
+    src: ksql-server.properties
+    dest: /etc/ksql/
     force: yes
     backup: yes
 

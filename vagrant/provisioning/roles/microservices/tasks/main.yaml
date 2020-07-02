@@ -16,3 +16,53 @@
     block: "{{ lookup('template', 'templates/ssl.conf') }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK for microservices"
     insertbefore: "BrowserMatch"
+
+# CentOS 7 ships with HTTPD version 2.4.6. We need at least version 2.4.11 for the SubstituteMaxLineLength directive
+- name: Copy the HTTPD CodeIT repo
+  template:
+    src: codeit.el7.repo
+    dest: /etc/yum.repos.d/
+    backup: yes
+
+- name: upgrade httpd
+  become: yes
+  yum:
+    state: latest
+    name:
+      - httpd
+
+- name: name restart HTTPD
+  become: yes
+  systemd:
+    name: "httpd"
+    state: restarted
+
+- name: copy Zipkin jar file
+  become: yes
+  become_user: arkcase
+  copy:
+    src: zipkin-server-2.21.4-exec.jar
+    dest: "{{ root_folder }}/app/zipkin/"
+
+- name: ensure Zipkin jar is executable
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ root_folder }}/app/zipkin/zipkin-server-2.21.4-exec.jar"
+    mode: "u=rwx,g=r,o=r"
+
+- name: copy Zipkin systemd unit file
+  become: yes
+  template:
+    src: "zipkin.service"
+    dest: "/etc/systemd/system/zipkin.service"
+
+- name: enable Zipkin
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: zipkin
+    enabled: yes
+    masked: no
+    state: started
+

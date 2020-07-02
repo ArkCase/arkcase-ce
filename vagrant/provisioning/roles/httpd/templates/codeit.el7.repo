@@ -1,0 +1,6 @@
+[CodeIT]
+name=CodeIT repo
+baseurl=https://repo.codeit.guru/packages/centos/7/$basearch
+enabled=1
+gpgkey=https://repo.codeit.guru/RPM-GPG-KEY-codeit
+gpgcheck=1
