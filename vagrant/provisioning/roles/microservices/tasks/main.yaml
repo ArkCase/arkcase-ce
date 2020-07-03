@@ -62,7 +62,7 @@
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: "Zipkin"
-      dest: "{{ root_folder }}/install/arkcase/zipkin-server-{{ zipkin_version }}.jar"
+      dest: "{{ root_folder }}/install/zipkin/zipkin-server-{{ zipkin_version }}.jar"
       owner: "zipkin"
       url: "https://search.maven.org/remote_content?g=io.zipkin&a=zipkin-server&v={{ zipkin_version }}&c=exec"
 
@@ -70,7 +70,7 @@
   become: yes
   become_user: zipkin
   copy:
-    src: "{{ root_folder }}/install/arkcase/zipkin-server-{{ zipkin_version }}.jar"
+    src: "{{ root_folder }}/install/zipkin/zipkin-server-{{ zipkin_version }}.jar"
     dest: "{{ root_folder }}/app/zipkin/"
 
 - name: ensure Zipkin jar is executable
