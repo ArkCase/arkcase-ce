@@ -7,7 +7,6 @@ ExecStart={{ root_folder }}/app/zipkin/zipkin-server-{{ zipkin_version }}.jar
 SuccessExitStatus=143
 Environment=KAFKA_ZOOKEEPER=localhost:2181 KAFKA_GROUP_ID=zipkin STORAGE_TYPE=elasticsearch ES_HOSTS=localhost:{{ elasticsearch_port | default(9200) }}
 WorkingDirectory={{ root_folder }}/app/zipkin
-WorkingDirectory={{ root_folder }}/app/zipkin
 User=zipkin
 Group=zipkin
 Restart=always

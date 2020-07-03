@@ -77,7 +77,7 @@
   become: yes
   become_user: zipkin
   file:
-    path: "{{ root_folder }}/app/zipkin/zipkin-server-2.21.4-exec.jar"
+    path: "{{ root_folder }}/app/zipkin/zipkin-server-{{ zipkin_version }}.jar"
     mode: "u=rwx,g=r,o=r"
 
 - name: copy Zipkin systemd unit file
