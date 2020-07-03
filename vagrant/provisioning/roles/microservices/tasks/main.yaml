@@ -40,7 +40,7 @@
 - name: Create arkcase install directory
   become: yes
   file:
-    path: {{ root_folder }}/install/arkcase
+    path: "{{ root_folder }}/install/arkcase"
     owner: arkcase
     state: directory
 
