@@ -37,6 +37,13 @@
     name: "httpd"
     state: restarted
 
+- name: Create arkcase install directory
+  become: yes
+  file:
+    path: {{ root_folder }}/install/arkcase
+    owner: arkcase
+    state: directory
+
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: "Zipkin"
