@@ -37,30 +37,45 @@
     name: "httpd"
     state: restarted
 
-- name: Create arkcase install directory
+- name: Create zipkin user
+  become: yes
+  user:
+    name: zipkin
+    shell: /bin/false
+    state: present
+    create_home: yes
+    home: /home/zipkin
+
+- name: Create zipkin directories
   become: yes
   file:
-    path: "{{ root_folder }}/install/arkcase"
-    owner: arkcase
+    path: "{{ item }}"
     state: directory
+    group: zipkin
+    owner: zipkin
+  loop:
+
+    - "{{ root_folder }}/app/zipkin"
+    - "{{ root_folder }}/install/zipkin"
+  register: zipkin_folder_structure
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: "Zipkin"
       dest: "{{ root_folder }}/install/arkcase/zipkin-server-{{ zipkin_version }}.jar"
-      owner: "arkcase"
+      owner: "zipkin"
       url: "https://search.maven.org/remote_content?g=io.zipkin&a=zipkin-server&v={{ zipkin_version }}&c=exec"
 
 - name: copy Zipkin jar file
   become: yes
-  become_user: arkcase
+  become_user: zipkin
   copy:
-    src: "{{ root_folder }}/install//arkcase/zipkin-server-{{ zipkin_version }}.jar"
+    src: "{{ root_folder }}/install/arkcase/zipkin-server-{{ zipkin_version }}.jar"
     dest: "{{ root_folder }}/app/zipkin/"
 
 - name: ensure Zipkin jar is executable
   become: yes
-  become_user: arkcase
+  become_user: zipkin
   file:
     path: "{{ root_folder }}/app/zipkin/zipkin-server-2.21.4-exec.jar"
     mode: "u=rwx,g=r,o=r"
