@@ -37,17 +37,10 @@
     name: "httpd"
     state: restarted
 
-- name: copy Zipkin jar file
-  become: yes
-  become_user: arkcase
-  copy:
-    src: zipkin-server-2.21.4-exec.jar
-    dest: "{{ root_folder }}/app/zipkin/"
-
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: "Zipkin"
-      dest: "{{ root_folder }}/install//arkcase/zipkin-server-{{ zipkin_version }}.jar"
+      dest: "{{ root_folder }}/install/arkcase/zipkin-server-{{ zipkin_version }}.jar"
       owner: "arkcase"
       url: "https://search.maven.org/remote_content?g=io.zipkin&a=zipkin-server&v={{ zipkin_version }}&c=exec"
 
