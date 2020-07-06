@@ -33,11 +33,11 @@
   register: encr_password
   changed_when: false
 
-- name: get the encrypted password for the target server
+- name: get the encrypted password for the cache clean jobs
   become: yes
   become_user: pentaho-pdi
-  shell: "{{ root_folder }}/app/pentaho-pdi/data-integration/encr.sh -kettle '{{ carte_server_password }}' | grep Encrypted"
-  register: target_server_encr_password
+  shell: "{{ root_folder }}/app/pentaho-pdi/data-integration/encr.sh -kettle '{{ arkcase_admin_password }}' | grep Encrypted"
+  register: arkcase_admin_encr_password
   changed_when: false
 
 - name: find project files
@@ -54,7 +54,7 @@
     recurse: no
     excludes: 
       - "*~"
-      - .zip
+      - "*.zip"
   register: foia_dw_files
 
 - name: update database configurations
@@ -63,44 +63,37 @@
   loop_control:
     loop_var: f
 
-- name: target server configuration
+- name: update pentaho URLs to clear report cache
   become: yes
   become_user: pentaho
-  blockinfile:
+  lineinfile:
     backup: yes
-    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb"
-    insertafter: "<slaveservers>"
-    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - target server -->"
-    block: | 
-            <slaveserver>
-              <name>{{ carte_server_name }}</name>
-              <hostname>{{ ansible_facts.fqdn }}</hostname>
-              <port>{{ carte_server_port }}</port>
-              <webAppName/>
-              <username>{{ carte_server_name }}</username>
-              <password>{{ target_server_encr_password.stdout }}</password>
-              <proxy_hostname/>
-              <proxy_port/>
-              <non_proxy_hosts/>
-              <master>N</master>
-              <sslMode>N</sslMode>
-            </slaveserver>
-          
-- name: target runtime config
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/misc/FOIA_CDA_CLEAR_CACHE.ktr"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/plugin/cda/api/clearCache</nullif>"
+      line: "<nullif>https://{{ ansible_facts.fqdn }}:2002/pentaho/plugin/cda/api/clearCache</nullif>"
+    - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
+      line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
+    - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
+      line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
+
+- name: update pentaho URLs to clear Mondrian cache
   become: yes
   become_user: pentaho
-  blockinfile:
+  lineinfile:
     backup: yes
-    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb"
-    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - runtime config -->"
-    insertafter: "</group>"
-    block: | 
-      <group>
-        <name>{"_":"Embedded MetaStore Elements","namespace":"pentaho","type":"Default Run Configuration"}</name>
-        <attribute>
-          <key>{{ carte_server_name }}</key>
-          <value>{"children":[{"children":[],"id":"server","value":"{{ carte_server_name }}"},{"children":[],"id":"clustered","value":"N"},{"children":[],"id":"name","value":"{{ carte_server_name }}"},{"children":[],"id":"description","value":null},{"children":[],"id":"pentaho","value":"N"},{"children":[],"id":"readOnly","value":"N"},{"children":[],"id":"sendResources","value":"Y"},{"children":[],"id":"logRemoteExecutionLocally","value":"N"},{"children":[],"id":"remote","value":"Y"},{"children":[],"id":"local","value":"N"},{"children":[],"id":"showTransformations","value":"N"}],"id":"{{ carte_server_name }}","value":null,"name":"{{ carte_server_name }}","owner":null,"ownerPermissionsList":[]}</value>
-        </attribute>
-      </group>
-
-
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/misc/FOIA_MONDRIAN_CLEAR_CACHE.ktr"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
+      line: "<nullif>https://{{ ansible_facts.fqdn }}:2002/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
+    - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
+      line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
+    - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
+      line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
+      
