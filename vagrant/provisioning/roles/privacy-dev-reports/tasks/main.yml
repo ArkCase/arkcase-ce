@@ -1,0 +1,5 @@
+- name: deploy privacy reports
+  include_tasks: deploy_report.yml
+  loop: "{{ arkcase_privacy_reports|flatten }}"
+  loop_control:
+    loop_var: r

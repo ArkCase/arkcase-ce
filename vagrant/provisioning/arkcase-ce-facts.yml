@@ -220,14 +220,14 @@ arkcase_extension_reports:
     pentaho_path: ""
 
 # if arkcase_extension_install is "no", arkcase_configuration_classifier 
-# must be either "core" or "foia".  
+# must be either "core" or "foia" or "privacy".  
 arkcase_configuration_classifier: "core"
 arkcase_configuration_version: ""
 
 # portal_version is either a maven version (for SFTP download) 
 # or a github release version (for github downloads). 
 # Leave blank to get latest Maven snapshot from SFTP.
-# Used only with foia extensions
+# Used only with foia and privacy extensions
 portal_version: ""
 
 # sftp_arkcase_password, sftp_pentaho_password, 
@@ -394,6 +394,7 @@ records_management_categories:
   - "Requests"
   - "Tasks"
   - "Consultations"
+  - "SAR"
 content_management_folders:
   - "Case Files"
   - "Complaints"
@@ -406,9 +407,9 @@ content_management_folders:
   - "User Profile"
   - "Business Processes"
   - "Consultations"
-    
-
-
+  - "SAR"
+  - "Requests" 
+  
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
 # from https://social.technet.microsoft.com/wiki/contents/articles/29480.active-directory-fun-with-maximum-password-age.aspx... just under 30,000 years from now
