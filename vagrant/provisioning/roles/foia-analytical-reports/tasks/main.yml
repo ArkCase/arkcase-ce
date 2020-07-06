@@ -96,4 +96,49 @@
       line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
-      
+
+- name: run the job to create and populate the mondrian cubes
+  become: yes
+  become_user: pentaho-pdi
+  command: 
+    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb
+    chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
+
+- name: list the data sources that already exist
+  become: yes
+  become_user: pentaho
+  command: 
+    cmd: 'wget -O {{ root_folder }}/install/pentaho/datasources-list.json --user={{ ldap_user_prefix }}arkcase-admin --password "{{ arkcase_admin_password }}" https://{{ ansible_facts.fqdn }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
+    warn: no
+  changed_when: false
+
+- name: read the list of data sources
+  become: yes
+  become_user: pentaho
+  command: cat {{ root_folder }}/install/pentaho/datasources-list.json
+  register: data_source_list
+  changed_when: false
+
+- name: file to post to Pentaho to create the data source
+  become: yes
+  become_user: pentaho
+  template:
+    src: put_connection.json
+    dest: "{{ root_folder }}/install/pentaho/put_connection.json"
+  when: not '"MariaDB Local"' in data_source_list.stdout
+
+# the ansible uri module causes a timeout for some reason but wget works fine
+- name: create the ArkCase JDBC data source for analytical reports
+  command: 
+    cmd: 'wget --user={{ ldap_user_prefix }}arkcase-admin --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ ansible_facts.fqdn }}:2002/pentaho/plugin/data-access/api/connection/add'
+    warn: no
+  register: create_datasource_rest_call
+  when: not '"MariaDB Local"' in data_source_list.stdout
+
+- name: upload the Mondrian schema
+  become: yes
+  become_user: pentaho
+  command:
+    cmd: 'curl -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ ldap_user_prefix }}arkcase-admin:{{ arkcase_admin_password }} https://{{ ansible_facts.fqdn }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
+    warn: no
+
