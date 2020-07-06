@@ -1,3 +1,7 @@
+###################################################
+# Get the analytical reports project and unzip it
+###################################################
+
 - name: create install folder
   become: yes
   become_user: pentaho
@@ -25,6 +29,11 @@
     src: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}.zip"
     dest: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}"
     creates: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb"
+
+##########################################################
+# Configure the Kettle job files and run the Kettle job.
+# This will create and populate the OLAP tables.
+##########################################################
 
 - name: get the encrypted password for the kettle job
   become: yes
@@ -104,6 +113,10 @@
     cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/foia-dw1.kjb
     chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
 
+###################################################
+# Create the JDBC and the Mondrian data sources 
+###################################################
+
 - name: list the data sources that already exist
   become: yes
   become_user: pentaho
@@ -142,6 +155,10 @@
     cmd: 'curl -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ ldap_user_prefix }}arkcase-admin:{{ arkcase_admin_password }} https://{{ ansible_facts.fqdn }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
     warn: no
 
+#########################################################
+# Deploy the reports 
+#########################################################
+
 - name: unzip the report archive
   become: yes
   become_user: pentaho
@@ -165,3 +182,4 @@
 - name: import reports
   command: /opt/app/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ ansible_facts.fqdn }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/foia --file-path='{{ item }}' --permission=true --overwrite=true --retainOwnership=true
   loop: "{{ foia_report_files.files | map(attribute='path') | list }}"
+  
