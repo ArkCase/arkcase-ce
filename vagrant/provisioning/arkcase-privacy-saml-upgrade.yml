@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  roles:
+    - common
+    - arkcase-pre-upgrade
+    - arkcase-prerequisites
+    - arkcase-app
+    - privacy
+    - arkcase-post-upgrade
+    - snowbound-app
+    - saml-config
+    - start-arkcase

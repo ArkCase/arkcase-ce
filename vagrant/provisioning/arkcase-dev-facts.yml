@@ -352,6 +352,9 @@ arkcase_foia_reports:
   - path: "foia-audit"
     definition: "AuditReport.prpt"
 
+# privacy reports
+arkcase_foia_reports:
+  - TODO
 
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
@@ -486,6 +489,7 @@ records_management_categories:
   - "Requests"
   - "Tasks"
   - "Consultations"
+  - "SAR"
 content_management_folders:
   - "Case Files"
   - "Complaints"
@@ -497,7 +501,9 @@ content_management_folders:
   - "Timesheets"
   - "User Profile"
   - "Business Processes"
-  - "Consultations" 
+  - "Consultations"
+  - "Requests"
+  - "SAR"
 
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
