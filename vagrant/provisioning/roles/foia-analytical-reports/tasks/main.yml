@@ -142,3 +142,26 @@
     cmd: 'curl -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ ldap_user_prefix }}arkcase-admin:{{ arkcase_admin_password }} https://{{ ansible_facts.fqdn }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
     warn: no
 
+- name: unzip the report archive
+  become: yes
+  become_user: pentaho
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports/Marjan.zip"
+    dest: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports"
+    creates: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports/exportManifest.xml"
+
+- name: find report files
+  become: yes
+  become_user: pentaho
+  find: 
+    paths: 
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports"
+    file_type: file
+    recurse: yes
+    patterns: "*.xanalyzer"
+  register: foia_report_files
+
+- name: import reports
+  command: /opt/app/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ ansible_facts.fqdn }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/foia --file-path='{{ item }}' --permission=true --overwrite=true --retainOwnership=true
+  loop: "{{ foia_report_files.files | map(attribute='path') | list }}"
