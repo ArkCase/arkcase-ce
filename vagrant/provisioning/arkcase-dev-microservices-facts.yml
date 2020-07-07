@@ -485,7 +485,6 @@ records_management_categories:
   - "Document Repositories"
   - "Requests"
   - "Tasks"
-  - "Consultations"
 content_management_folders:
   - "Case Files"
   - "Complaints"
@@ -496,8 +495,7 @@ content_management_folders:
   - "Tasks"
   - "Timesheets"
   - "User Profile"
-  - "Business Processes"
-  - "Consultations" 
+  - "Business Processes"   
 
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
@@ -513,5 +511,5 @@ confluent_scala_version: 2.12
 
 zipkin_version: 2.21.4
 # Enable these for Arkcase.NEXT development
-enable_elasticsearch: false
-enable_kafka: false
+enable_elasticsearch: true
+enable_kafka: true
