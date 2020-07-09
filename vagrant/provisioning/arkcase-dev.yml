@@ -49,6 +49,8 @@
       tags: [core, reports, arkcase-dev-reports]
     - role: foia-dev-reports
       tags: [core, foia, reports, foia-dev-reports]
+    - role: privacy-dev-reports
+      tags: [core, privacy, reports, privacy-dev-reports]
     - role: arkcase-developer
       tags: [core, arkcase, arkcase-developer]
 

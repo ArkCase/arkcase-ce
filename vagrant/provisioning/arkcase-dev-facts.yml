@@ -353,8 +353,9 @@ arkcase_foia_reports:
     definition: "AuditReport.prpt"
 
 # privacy reports
-arkcase_foia_reports:
-  - TODO
+arkcase_privacy_reports:
+  - path: "privacy"
+  - definition: "SARs-Received Processed and Pending SARs.prpt"
 
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
