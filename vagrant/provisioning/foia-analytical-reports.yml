@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  roles:
+    - role: foia-analytical-reports
+      tags: [ foia-analytical-reports ]
