@@ -1,0 +1,20 @@
+[Unit]
+Description=Zipkin Server
+After=syslog.target
+
+[Service]
+ExecStart={{ root_folder }}/app/zipkin/zipkin-server-{{ zipkin_version }}.jar
+SuccessExitStatus=143
+Environment=KAFKA_ZOOKEEPER=localhost:2181 KAFKA_GROUP_ID=zipkin STORAGE_TYPE=elasticsearch ES_HOSTS=localhost:{{ elasticsearch_port | default(9200) }}
+WorkingDirectory={{ root_folder }}/app/zipkin
+User=zipkin
+Group=zipkin
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=zipkin
+
+
+[Install]
+WantedBy=multi-user.target
