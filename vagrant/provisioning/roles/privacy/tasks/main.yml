@@ -8,90 +8,90 @@
     block: |
       export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=extension-privacy,ldap"
 
-#- name: Set portal version if not defined
-#  set_fact:
-#    portal_version: "{{ portal_version | default(arkcase_version) }}"
-#  
-#- name: Set portal version formated
-#  set_fact:
-#    portal_version_formatted: "{{ '-' ~ portal_version if portal_version != '' else '' }}"
+- name: Set portal version if not defined
+  set_fact:
+    portal_version: "{{ portal_version | default(arkcase_version) }}"
+  
+- name: Set portal version formated
+  set_fact:
+    portal_version_formatted: "{{ '-' ~ portal_version if portal_version != '' else '' }}"
     
 ### External UI portal
 
-#- name: download privacy UI portal 
-#  become: yes
-#  become_user: apache
-#  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip
-#  args:
-#    chdir: "{{ root_folder }}/tmp/httpd"
-#  environment:
-#    SSHPASS: "{{ sftp_arkcase_password }}"
-#  changed_when: false
+- name: download privacy UI portal 
+  become: yes
+  become_user: apache
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip
+  args:
+    chdir: "{{ root_folder }}/tmp/httpd"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
 
-#- name: copy privacy UI portal to install folder (this will tell us if it actually changed)
-#  become: yes
-#  become_user: apache
-#  copy:
-#    remote_src: yes
-#    src: "{{ root_folder }}/tmp/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
-#    dest: "{{ root_folder }}/install/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
-#  register: privacy_zip
+- name: copy privacy UI portal to install folder (this will tell us if it actually changed)
+  become: yes
+  become_user: apache
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
+  register: privacy_zip
 
-#- name: see if privacy web folder exists
-#  become: yes
-#  become_user: apache
-#  stat: 
-#    path: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}"
-#  register: privacy_web_folder
+- name: see if privacy web folder exists
+  become: yes
+  become_user: apache
+  stat: 
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}"
+  register: privacy_web_folder
 
-#- name: backup existing folder if necessary
-#  become: yes
-#  become_user: apache
-#  command: mv "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}" "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}.{{ ansible_date_time.iso8601 }}"
-#  when: privacy_web_folder.stat.exists and privacy_zip is changed
+- name: backup existing folder if necessary
+  become: yes
+  become_user: apache
+  command: mv "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}" "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}.{{ ansible_date_time.iso8601 }}"
+  when: privacy_web_folder.stat.exists and privacy_zip is changed
 
-#- name: ensure privacy web folder exists
-#  become: yes
-#  become_user: apache
-#  file:
-#    path: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}"
-#    state: directory
+- name: ensure privacy web folder exists
+  become: yes
+  become_user: apache
+  file:
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}"
+    state: directory
 
-#- name: unzip privacy ui portal
-#  become: yes
-#  become_user: apache
-#  unarchive:
-#    remote_src: yes
-#    src: "{{ root_folder }}/install/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
-#    dest: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}/"
-#  when: privacy_zip is changed
+- name: unzip privacy ui portal
+  become: yes
+  become_user: apache
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}/"
+  when: privacy_zip is changed
 
 #### External REST Portal
-#- name: create config folder
-#  become: yes
-#  become_user: arkcase
-#  file:
-#    path: "{{ item }}"
-#    state: directory
-#  loop:
-#    - "{{ root_folder }}/data/arkcase-home/.external-portal-api"
-#    - "{{ root_folder }}/data/arkcase-home/.external-portal-api/files"
+- name: create config folder
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ root_folder }}/data/arkcase-home/.external-portal-api"
+    - "{{ root_folder }}/data/arkcase-home/.external-portal-api/files"
 
-#- name: application.properties
-#  become: yes
-#  become_user: arkcase
-#  template:
-#    force: no
-#    src: application.properties
-#    dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api"
+- name: application.properties
+  become: yes
+  become_user: arkcase
+  template:
+    force: no
+    src: application.properties
+    dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api"
 
-#- name: ensure no acm-activemq in application.properties
-#  become: yes
-#  become_user: arkcase
-#  replace:
-#    path: "{{ root_folder }}/data/arkcase-home/.external-portal-api/application.properties"
-#    regexp: "acm-activemq"
-#    replace: "{{ activemq_host }}"
+- name: ensure no acm-activemq in application.properties
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.external-portal-api/application.properties"
+    regexp: "acm-activemq"
+    replace: "{{ activemq_host }}"
 
 #- name: configure LDAP
 #  include_role: 
@@ -108,45 +108,45 @@
 #    user_base: "{{ ldap_portal_user_no_base | default(ldap_user_no_base) }}"
 #  when: encrypted_ldap_bind_password is defined
 
-#- name: copy key store and trust store
-#  become: yes
-#  become_user: arkcase
-#  copy:
-#    remote_src: yes
-#    src: "{{ item.src }}"
-#    dest: "{{ item.dest }}"
-#  loop:
-#    - src: "{{ java_key_store }}"
-#      dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ks"
-#    - src: "{{ java_trust_store }}"
-#      dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ts"
+- name: copy key store and trust store
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "{{ java_key_store }}"
+      dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ks"
+    - src: "{{ java_trust_store }}"
+      dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ts"
 
-#- name: download the PRIVACY REST portal webapp
-#  become: yes
-#  become_user: arkcase
-#  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/external-portal{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war
-#  args:
-#    chdir: "{{ root_folder }}/tmp/arkcase"
-#  environment:
-#    SSHPASS: "{{ sftp_arkcase_password }}"
-#  changed_when: false
+- name: download the PRIVACY REST portal webapp
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war
+  args:
+    chdir: "{{ root_folder }}/tmp/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
 
-#- name: copy privacy REST portal to install folder (this will tell us if it actually changed)
-#  become: yes
-#  become_user: arkcase
-#  copy:
-#    remote_src: yes
-#    src: "{{ root_folder }}/tmp/arkcase/external-portal{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
-#    dest: "{{ root_folder }}/install/arkcase/external-portal{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
-#  register: rest_portal_war
+- name: copy privacy REST portal to install folder (this will tell us if it actually changed)
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/arkcase/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
+    dest: "{{ root_folder }}/install/arkcase/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
+  register: rest_portal_war
 
-#- name: copy privacy REST portal to ArkCase webapps folder
-#  become: yes
-#  become_user: arkcase
-#  copy:
-#    remote_src: yes
-#    src: "{{ root_folder }}/install/arkcase/external-portal{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
-#    dest: "{{ root_folder }}/app/arkcase/webapps/arkcase#external-portal.war"
+- name: copy privacy REST portal to ArkCase webapps folder
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
+    dest: "{{ root_folder }}/app/arkcase/webapps/arkcase#external-portal.war"
 
 - name: PRIVACY server-specific configuration
   become: yes
