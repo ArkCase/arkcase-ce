@@ -511,5 +511,5 @@ confluent_scala_version: 2.12
 
 zipkin_version: 2.21.4
 # Enable these for Arkcase.NEXT development
-enable_elasticsearch: true
-enable_kafka: true
+enable_elasticsearch: "yes"
+enable_kafka: "yes"
