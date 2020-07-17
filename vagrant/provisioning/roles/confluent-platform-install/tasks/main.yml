@@ -63,6 +63,7 @@
     group: confluent
     owner: cp-ksql
   loop:
+    - "{{ root_folder }}/data/ksql"
     - "{{ root_folder }}/log/ksql"
 
 - name: Change kafka data location
@@ -80,6 +81,24 @@
     dest: /etc/ksql/
     force: yes
     backup: yes
+
+- name: read control-center-production.properties
+  shell: cat /etc/confluent-control-center/control-center-production.properties
+  register: control_center_production_properties_contents
+  changed_when: false
+
+- name: Enable Control Center to work with 1 broker
+  lineinfile:
+    path: /etc/confluent-control-center/control-center-production.properties
+    state: present
+    insertafter: EOF
+    line: "{{ item }}"
+  loop:
+    - "confluent.controlcenter.internal.topics.replication=1"
+    - "confluent.controlcenter.command.topic.replication=1"
+    - "confluent.monitoring.interceptor.topic.replication=1"
+    - "confluent.metrics.topic.replication=1"
+  when: not control_center_production_properties_contents.stdout  ('^' + item)
 
 - name: Change logrotation policy for Kafka app logs
   become: yes
