@@ -13,6 +13,8 @@ ExecStop=/opt/kafka/bin/kafka-server-stop.sh
 LimitNOFILE=1000000
 TimeoutStopSec=180
 Restart=no
+TimeoutStartSec=180
+ExecStartPost=/usr/bin/timeout 180 sh -c 'while ! ss -H -t -l -n sport = :{{ kafka_port | default(9092) }} | grep -q "{{ kafka_port | default(9092) }}"; do sleep 1; done'
 
 [Install]
 WantedBy=multi-user.target
