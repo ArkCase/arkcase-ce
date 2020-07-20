@@ -11,6 +11,8 @@
       tags: [core]
     - role: foia
       tags: [foia]
+    - role: privacy
+      tags: [privacy]
     - role: arkcase-post-upgrade
       tags: [core]
     - role: snowbound-app
