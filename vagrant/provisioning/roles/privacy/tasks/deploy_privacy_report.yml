@@ -1,0 +1,42 @@
+- name: create base privacy report folders
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ root_folder }}/install/arkcase/report-definitions/privacy"
+    - "{{ root_folder }}/install/arkcase/report-definitions/privacy-audit"
+
+- name: get the Privacy jar file
+  become: yes
+  become_user: arkcase
+  shell: unzip -u -o -j -d "{{ root_folder }}/install/arkcase" "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war" WEB-INF/lib/acm-privacy-*.jar
+  args:
+    warn: no
+
+- name: unzip report definition file "{{ r }}"
+  become: yes
+  become_user: arkcase
+  shell: unzip -u -o -j -d "{{ root_folder }}/tmp/arkcase/" "{{ root_folder }}/install/arkcase/acm-privacy-*.jar"  "reports/{{ r }}"
+  args:
+    warn: no
+
+- name: copy the report definition file "{{ r }}", this will tell us if it changed
+  become: yes
+  become_user: arkcase
+  copy: 
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/arkcase/{{ r }}"
+    dest: "{{ root_folder }}/install/arkcase/report-definitions/privacy" 
+  register: report_definition
+  
+- name: deploy report "{{ r }}"
+  become: yes
+  become_user: arkcase
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password={{ arkcase_admin_password }} --charset=UTF-8 --path=/public/{{ report_path }} --file-path='{{ root_folder }}/install/arkcase/report-definitions/privacy/{{ r }}' --logfile={{ root_folder }}/log/arkcase/upload-privacy-report.log --permission=true --overwrite=true --retainOwnership=true"
+  when: report_definition is changed
+  register: import_results
+  failed_when: "'Import was successful' not in import_results.stdout"
+
+  

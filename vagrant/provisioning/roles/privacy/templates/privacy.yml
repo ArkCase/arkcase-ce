@@ -1,0 +1,10 @@
+external.integration:
+  enable: true
+  userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+gov.privacy.broker:
+  url: "ssl://{{ activemq_host }}:61616"
+  keystore: "{{ java_key_store_jks }}"
+  keystore.password: "{{ java_key_store_pass }}"
+  truststore: "{{ java_trust_store }}"
+  truststore.password: "{{ java_trust_store_pass }}"
+  file_upload_url: "file:///${user.home}/fileserver/"

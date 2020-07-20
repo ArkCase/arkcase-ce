@@ -1,0 +1,97 @@
+- name: Expose Microservices ports
+  become: yes
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  register: microservices_ports
+  loop:
+    - "9092/tcp"   # Kafka
+
+- name: Add HTTPD proxy settings for microservices
+  become: yes
+  blockinfile:
+    path: /etc/httpd/conf.d/ssl.conf
+    block: "{{ lookup('template', 'templates/ssl.conf') }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK for microservices"
+    insertbefore: "BrowserMatch"
+
+# CentOS 7 ships with HTTPD version 2.4.6. We need at least version 2.4.11 for the SubstituteMaxLineLength directive
+- name: Copy the HTTPD CodeIT repo
+  template:
+    src: codeit.el7.repo
+    dest: /etc/yum.repos.d/
+    backup: yes
+
+- name: upgrade httpd
+  become: yes
+  yum:
+    state: latest
+    name:
+      - httpd
+
+- name: name restart HTTPD
+  become: yes
+  systemd:
+    name: "httpd"
+    state: restarted
+
+- name: Create zipkin user
+  become: yes
+  user:
+    name: zipkin
+    shell: /bin/false
+    state: present
+    create_home: yes
+    home: /home/zipkin
+
+- name: Create zipkin directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: zipkin
+    owner: zipkin
+  loop:
+
+    - "{{ root_folder }}/app/zipkin"
+    - "{{ root_folder }}/install/zipkin"
+  register: zipkin_folder_structure
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "Zipkin"
+      dest: "{{ root_folder }}/install/zipkin/zipkin-server-{{ zipkin_version }}.jar"
+      owner: "zipkin"
+      url: "https://search.maven.org/remote_content?g=io.zipkin&a=zipkin-server&v={{ zipkin_version }}&c=exec"
+
+- name: copy Zipkin jar file
+  become: yes
+  become_user: zipkin
+  copy:
+    src: "{{ root_folder }}/install/zipkin/zipkin-server-{{ zipkin_version }}.jar"
+    dest: "{{ root_folder }}/app/zipkin/"
+
+- name: ensure Zipkin jar is executable
+  become: yes
+  become_user: zipkin
+  file:
+    path: "{{ root_folder }}/app/zipkin/zipkin-server-{{ zipkin_version }}.jar"
+    mode: "u=rwx,g=r,o=r"
+
+- name: copy Zipkin systemd unit file
+  become: yes
+  template:
+    src: "zipkin.service"
+    dest: "/etc/systemd/system/zipkin.service"
+
+- name: enable Zipkin
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: zipkin
+    enabled: yes
+    masked: no
+    state: started
+
