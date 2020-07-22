@@ -1,0 +1,46 @@
+- name: read current /etc/resolv.conf
+  command: cat /etc/resolv.conf
+  register: resolv_contents
+  changed_when: false
+
+- name: get the network device
+  become: yes
+  shell: nmcli --fields NAME c show --active | grep -v NAME | sed 's/.$//'
+  register: netdevice
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: set name servers 
+  become: yes
+  command: nmcli con mod "{{ netdevice.stdout }}" ipv4.dns '{{ nameserver_ip_addresses }}'
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: set dns search order 
+  become: yes
+  command: nmcli con mod "{{ netdevice.stdout }}" ipv4.dns-search '{{ active_directory_domain }}'
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: ignore auto dns
+  become: yes
+  command: nmcli con mod "{{ netdevice.stdout }}" ipv4.ignore-auto-dns yes
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: restart network 
+  block:
+    - name: restart normally
+      become: yes
+      systemd:
+        name: network
+        state: restarted
+      when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+  rescue:
+    - name: delete ifcfg-etho0 
+      become: yes
+      file: 
+        path: /etc/sysconfig/network-scripts/ifcfg-eth0
+        state: absent
+    - name: restart after removing ifcfg-eth0
+      become: yes
+      systemd:
+        name: network
+        state: restarted
+      when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout

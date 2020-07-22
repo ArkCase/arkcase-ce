@@ -1,0 +1,9 @@
+- hosts: localhost
+  roles:
+    - role: haproxy
+      tags: [ haproxy ]
+    - role: dns_client
+      tags: [ dns_client ]
+    - role: lets_encrypt
+      tags: [ lets_encrypt ]
+
