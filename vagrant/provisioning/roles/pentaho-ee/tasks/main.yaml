@@ -1,9 +1,13 @@
-- name: install expect
+- name: install expect, zip/unzip, Java 8
   become: yes
   yum:
     state: installed
     name:
       - expect
+      - zip
+      - unzip
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-devel
 
 - name: download Pentaho EE artifacts
   become: yes

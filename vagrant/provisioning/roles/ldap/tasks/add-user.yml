@@ -20,7 +20,7 @@
       givenName: "{{ u.firstName }}"
       sn: "{{ u.lastName }}"
       cn: "{{ u.user_id }}"
-      userPrincipalName: "{{ u.userPrincipalName | default(u.mail) }}"
+      userPrincipalName: "{{ u.userPrincipalName | default(u.user_id) }}"
   register: new_user 
 
 - name: set {{ u.user_id }} password
@@ -40,12 +40,12 @@
         dest: "{{ root_folder }}/install/password_change.ldif"
     - name: wait a few seconds
       pause:
-        seconds: 15
+        seconds: 30
     - name: execute password change
       shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/password_change.ldif
     - name: wait a few more seconds
       pause:
-        seconds: 15
+        seconds: 30
   when: ldap_force_password_reset or new_user is changed
 
 - name: enable {{ u.user_id }} account

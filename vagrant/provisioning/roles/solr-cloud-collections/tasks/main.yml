@@ -1,0 +1,21 @@
+- name: check solr_cores
+  debug:
+    var: solr_cores
+
+- name: Create {{ item }} collection (Solr cloud), with one replica
+  become: yes
+  become_user: solr
+  shell: "{{ root_folder }}/app/solr/bin/solr create_collection -c {{ item }} -d {{ root_folder }}/app/solr/server/solr/configsets/arkcase -shards 1 -replicationFactor 1"
+  loop: "{{ solr_cores }}"
+
+- name: Create 2nd replica for {{ item }} collection
+  become: yes
+  become_user: solr
+  shell: curl https://{{ ansible_facts.hostname }}:8983/solr/admin/collections?action=ADDREPLICA\&collection={{ item }}\&shard=shard1
+  loop: "{{ solr_cores }}"
+
+- name: Create 3rd replica for {{ item }} collection
+  become: yes
+  become_user: solr
+  shell: curl https://{{ ansible_facts.hostname }}:8983/solr/admin/collections?action=ADDREPLICA\&collection={{ item }}\&shard=shard1
+  loop: "{{ solr_cores }}"

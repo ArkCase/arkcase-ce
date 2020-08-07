@@ -7,7 +7,7 @@
       - mod_ssl
       - mod_ldap
 
-- name: httpd folders
+- name: httpd log folder
   become: yes
   file:
     path: "{{ item }}"
@@ -20,6 +20,19 @@
     selevel: "s0"
   loop:
     - "{{ root_folder }}/log/httpd"
+
+- name: httpd data folder
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: apache
+    group: apache
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "httpd_sys_content_t"
+    selevel: "s0"
+  loop:
     - "{{ root_folder }}/data/httpd"
     - "{{ root_folder }}/data/httpd/htdocs"
     - "{{ root_folder }}/tmp/httpd"

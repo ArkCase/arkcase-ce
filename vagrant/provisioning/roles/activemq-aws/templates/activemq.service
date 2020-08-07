@@ -1,0 +1,18 @@
+[Unit]
+Description=ActiveMQ service
+
+[Service]
+Type=forking
+ExecStart={{ root_folder }}/app/activemq/bin/linux-x86-64/activemq start
+ExecStop={{ root_folder }}/app/activemq/bin/linux-x86-64/activemq stop
+User=activemq
+Group=activemq
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=activemq
+Environment="JAVA_HOME=/usr/lib/jvm/java-11-openjdk"
+
+[Install]
+WantedBy=multi-user.target

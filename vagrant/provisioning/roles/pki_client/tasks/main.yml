@@ -71,49 +71,6 @@
           command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
       when: "arkcase_ks_stat.stat.exists == False"
 
-- name: write encrypted symmetric key file for use in ArkCase webapp
-  block:
-    - name: check if symmetric key file exists
-      become: yes
-      stat:
-        path: "{{ root_folder }}/common/symmetricKey.encrypted"
-      register: sym_key_enc
-      changed_when: false
-    - name: write plaintext key file, this will have a new line
-      become: yes
-      copy:
-        dest: "{{ root_folder }}/common/symmetricKeyWithNewline.txt"
-        content: |
-          {{ 9999999999999999999999 | random | to_uuid }}
-      when: sym_key_enc.stat.exists == False
-      register: plaintext_with_newline
-    - name: remove the trailing new line from the symmetric key file
-      become: yes
-      shell: tr -d '\n' <{{ root_folder }}/common/symmetricKeyWithNewline.txt > {{ root_folder }}/common/symmetricKey.txt
-      when: plaintext_with_newline is changed
-      register: trim_plaintext
-    - name: remove the original plaintext that had the newline
-      become: yes
-      file:
-        path: "{{ root_folder }}/common/symmetricKeyWithNewline.txt"
-        state: absent
-      when: trim_plaintext is changed
-    - name: extract public key from server cert
-      become: yes
-      command: openssl x509 -pubkey -noout -in {{ ssl_cert }} -noout
-      register: pub_key
-      when: sym_key_enc.stat.exists == False
-      changed_when: false
-    - name: write public key to file
-      become: yes
-      copy:
-        dest: "{{ root_folder }}/common/arkcase-server.pub"
-        content: |
-          {{ pub_key.stdout }}
-      when: sym_key_enc.stat.exists == False
-    - name: write encrypted plaintext
-      become: yes
-      command: openssl rsautl -encrypt -pubin -inkey "{{ root_folder }}/common/arkcase-server.pub" -in "{{ root_folder }}/common/symmetricKey.txt" -out "{{ root_folder }}/common/symmetricKey.encrypted"
-      when: sym_key_enc.stat.exists == False
+
 
 

@@ -88,6 +88,7 @@
 - name: Create ArkCase cores
   include_tasks: cores.yml
   loop: "{{ solr_cores }}"
+  when: not initial_node is defined or initial_node
     
 - name: Expose required ports for solr
   include_tasks: firewall.yml

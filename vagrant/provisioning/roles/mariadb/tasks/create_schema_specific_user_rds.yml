@@ -1,0 +1,42 @@
+- name: create {{ s.schema }} database (empty schema)
+  become: yes
+  mysql_db:
+    ca_cert: "{{ root_folder }}/common/rds-ca-2019-root.pem"
+    login_host: "{{ database_host_name }}"
+    login_user: "{{ rds_user | default('arkcase_root') }}"
+    login_password: "{{ rds_password }}"
+    name: "{{ s.schema }}"
+    encoding: utf8
+    state: present
+  when: s.script | length == 0
+- name: create {{ s.schema }} database (with schema)
+  become: yes
+  mysql_db:
+    ca_cert: "{{ root_folder }}/common/rds-ca-2019-root.pem"
+    login_host: "{{ database_host_name }}"
+    login_user: "{{ rds_user | default('arkcase_root') }}"
+    login_password: "{{ rds_password }}"
+    name: "{{ s.schema }}"
+    encoding: utf8
+    state: import
+    target: "{{ root_folder }}/install/pentaho/{{ s.script }}"
+    single_transaction: yes
+  when: s.script | length > 0
+  
+- name: create {{ s.user }} MySQL user
+  become: yes
+  mysql_user:
+    ca_cert: "{{ root_folder }}/common/rds-ca-2019-root.pem"
+    login_host: "{{ database_host_name }}"
+    login_user: "{{ rds_user | default('arkcase_root') }}"
+    login_password: "{{ rds_password }}"
+    host: "%"
+    name: "{{ s.user }}"
+    password: "{{ default_database_password }}" 
+    state: present 
+
+- name: grant privileges to {{ item }}
+  become: yes
+  command: mysql -u{{ rds_user | default('arkcase_root') }} -p'{{ rds_password }}' -h {{ database_host_name }} -Ns -e "grant select, insert, update, delete, create, drop, index, alter, lock tables, create view, trigger on {{ s.schema }}.* to '{{ s.user }}'@'%'"
+  changed_when: false
+

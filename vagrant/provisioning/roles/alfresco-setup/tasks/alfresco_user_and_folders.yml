@@ -15,14 +15,49 @@
     group: alfresco
     owner: alfresco
   loop:
-    - "{{ root_folder }}/data/alfresco"
-    - "{{ root_folder }}/data/alfresco/alf_data"
     - "{{ root_folder }}/log/alfresco"
     - "{{ root_folder }}/app/alfresco"    
     - "{{ root_folder }}/app/alfresco/alfresco-pdf-renderer"
     - "{{ root_folder }}/install/alfresco"
     - "{{ root_folder }}/tmp/alfresco"
   register: alfresco_folder_structure
+
+- name: create shared data folder, if configured
+  become: yes
+  file:
+    path: "{{ shared_data_folder }}"
+    state: directory
+    owner: alfresco
+    group: alfresco
+  when: shared_data_folder is defined
+
+- name: link shared data folder, if configured
+  become: yes
+  file:
+    src: "{{ shared_data_folder }}"
+    dest: "{{ root_folder }}/data/alfresco"
+    owner: alfresco
+    group: alfresco
+    state: link
+    force: yes
+  when: shared_data_folder is defined
+
+- name: alfresco non-shared data folder (when no shared folder is configured)
+  become: yes
+  file:
+    path: "{{ root_folder }}/data/alfresco"
+    state: directory
+    group: alfresco
+    owner: alfresco
+  when: not shared_data_folder is defined
+
+- name: alf-data folder
+  become: yes
+  file:
+    path: "{{ root_folder }}/data/alfresco/alf_data"
+    state: directory
+    group: alfresco
+    owner: alfresco
 
 - name: enable logrotate for alfresco log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"

@@ -1,0 +1,25 @@
+- name: FOIA httpd configuration
+  become: yes
+  template:
+    backup: yes
+    src: ssl.conf
+    dest: /etc/httpd/conf.d/ssl.conf
+  register: tls_conf
+
+- name: restart httpd if needed
+  become: yes
+  systemd:
+    name: httpd
+    enabled: yes
+    daemon_reload: yes
+    state: restarted
+  when: tls_conf is changed
+
+- name: Expose FOIA app port
+  become: yes
+  firewalld:
+    port: "443/tcp"
+    permanent: true
+    state: enabled
+    immediate: yes
+

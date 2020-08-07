@@ -1,0 +1,100 @@
+- name: install needed packages
+  become: yes
+  yum:
+    name: "bind-utils"
+    state: present
+
+- name: getssl folder structure
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - /opt/app
+    - /opt/app/getssl
+    - /opt/app/getssl/.well-known
+    - /opt/app/getssl/.well-known/acme-challenge
+
+- name: download getssl
+  become: yes
+  uri:
+    dest: /opt/app/getssl/
+    url: https://raw.githubusercontent.com/srvrco/getssl/master/getssl
+    creates: /opt/app/getssl/getssl
+    mode: 0700
+
+- name: ensure port 80 is open
+  become: yes
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "80/tcp"
+    state: enabled
+
+- name: create default configuration
+  become: yes
+  command: 
+    cmd: /opt/app/getssl/getssl -c {{ external_host }}
+    creates: /root/.getssl/getssl.cfg
+
+- name: use offical letsencrypt server, versus testing
+  become: yes
+  lineinfile:
+    path: /root/.getssl/getssl.cfg
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: '^CA="https://acme-staging-v02.api.letsencrypt.org"'
+      line: '# CA="https://acme-staging-v02.api.letsencrypt.org"'
+    - regexp: '#CA="https://acme-v02.api.letsencrypt.org"'
+      line: 'CA="https://acme-v02.api.letsencrypt.org"'
+
+- name: set HTTP server restart command
+  become: yes
+  lineinfile:
+    path: /root/.getssl/getssl.cfg
+    backup: yes
+    line: 'RELOAD_CMD="systemctl restart haproxy"'
+    state: present
+
+- name: set {{ external_host }} options
+  become: yes
+  lineinfile: 
+    path: /root/.getssl/{{ external_host }}/getssl.cfg
+    backup: yes
+    line: "{{ item }}"
+  loop:
+    - ACL=('/opt/app/getssl/.well-known/acme-challenge')
+    - USE_SINGLE_ACL="true"
+    - DOMAIN_CERT_LOCATION="/etc/pki/tls/certs/{{ external_host }}.crt"
+    - DOMAIN_KEY_LOCATION="/etc/pki/tls/private/{{ external_host }}.key"
+    - CA_CERT_LOCATION="/etc/pki/tls/certs/chain.crt"
+
+- name: comment out SANS option
+  become: yes
+  lineinfile:
+    path: /root/.getssl/{{ external_host }}/getssl.cfg
+    backup: yes
+    regexp: '^SANS="www.{{ external_host }}"'
+    line: '# SANS="www.{{ external_host }}"'
+
+- name: start simple http server
+  become: yes
+  shell: cd /opt/app/getssl ; nohup python -m SimpleHTTPServer 8888 </dev/null >/dev/null 2>&1 &
+
+  #shell: cd /opt/app/getssl/.well-known/acme-challenge ; nohup python -m SimpleHTTPServer 8888 </dev/null >/dev/null 2>&1 &
+
+- name: run getssl
+  become: yes
+  command: /opt/app/getssl/getssl -u -a
+
+- name: stop simple http server
+  become: yes
+  shell: ps -ef | grep SimpleHTTPServer | grep -v grep | awk '{ print "kill "$2 }' | sh
+
+
+
+
+
+

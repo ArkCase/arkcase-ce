@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  roles:
+    - role: common
+      tags: [core, common]
+    - role: pki-aws-client
+      tags: [core, pki-aws-client]
+    - role: ldap
+      tags: [core, ldap]
+    - role: mariadb-client
+      tags: [core, mariadb-client]
+    - role: arkcase-prerequisites
+      tags: [core, arkcase, arkcase-prerequisites]
+    - role: arkcase-app
+      tags: [core, arkcase, arkcase-app]
+    - role: tesseract
+      tags: [core, arkcase, tesseract]
+    - role: foia
+      tags: [foia]
+    - role: foia-aws
+      tags: [foia]
+
+    

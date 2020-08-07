@@ -1,0 +1,134 @@
+---
+- hosts: localhost
+  roles:
+    - pentaho-pdi-client
+
+  vars_prompt:
+    - name: root_folder
+      prompt: Root folder
+      private: no
+      default: /opt/app
+
+    - name: ssl_ca
+      prompt: Full path to root cert
+      private: no
+
+    - name: ssl_intermediate_cert
+      prompt: Full path to intermediate cert
+      private: no
+
+    - name: mariadb_jdbc_version
+      prompt: MariaDB JDBC Driver version
+      private: no
+      default: 2.2.5
+
+    - name: database_host_name
+      prompt: Database host name
+      private: no
+
+    - name: rds_password
+      prompt: Database root user password
+      private: yes
+
+    - name: internal_host
+      prompt: internal host name, usually same as hostname command
+      private: no
+
+    - name: default_database_password
+      prompt: Password to use for the Pentaho database schema
+      private: yes
+
+    - name: ldap_url
+      prompt: URL to the LDAP server
+      private: no
+
+    - name: ldap_bind_user
+      prompt: distinguished name of the LDAP bind user
+      private: no
+
+    - name: ldap_bind_password
+      prompt: LDAP bind user's password
+      private: yes
+
+    - name: ldap_group_base
+      prompt: LDAP group base
+      private: no
+
+    - name: ldap_user_base
+      prompt: LDAP user base
+      private: no
+
+    - name: active_directory_domain
+      prompt: Active Directory domain name
+      private: no
+
+    - name: external_host
+      prompt: Host name to appear in the browser URL
+      private: no
+
+    - name: database_pentaho_hibernate_schema
+      prompt: Pentaho's hibernate schema name
+      private: no
+      default: hibernate
+
+    - name: database_pentaho_hibernate_user
+      prompt: Pentaho's hibernate username 
+      private: no
+      default: hibuser
+
+    - name: database_pentaho_quartz_schema
+      prompt: Pentaho's quartz schema name 
+      private: no
+      default: quartz
+
+    - name: database_pentaho_quartz_user
+      prompt: Pentaho's quartz user name 
+      private: no
+      default: pentaho_user
+
+    - name: database_pentaho_jackrabbit_schema
+      prompt: Pentaho's jackrabbit schema name
+      private: no
+      default: jackrabbit
+
+    - name: database_pentaho_jackrabbit_user
+      prompt: Pentaho's jackrabbit user name
+      private: no
+      default: jcr_user
+
+    - name: database_mysql_jdbc_driver
+      prompt: MySQL JDBC driver class
+      private: no
+      default: "org.mariadb.jdbc.Driver"
+
+    - name: ssl_cipher
+      prompt: Database allowed SSL protocols
+      private: no
+      default: TLSv1.2
+
+    - name: database_server_ssl_cert
+      prompt: SSL certificate to connect to the database
+      private: no
+      default: "/opt/app/common/rds-ca-2019-root.pem"
+      
+    - name: pentaho_major_version
+      prompt: Pentaho major version
+      private: no
+      default: "8.3"
+
+    - name: pentaho_minor_version
+      prompt: Pentaho minor version
+      private: no
+      default: "0.0-371"
+
+    - name: pentaho_ee_license_year
+      prompt: Pentaho license year 
+      private: no
+      default: 2020
+
+    - name: pentaho_server_url
+      prompt: External Pentaho URL
+      private: no
+      default: "https://eeoc.arkcase.com/pentaho"
+
+    
