@@ -11,7 +11,7 @@
 
 - name: server extension to drools files
   set_fact:
-    server_extension: "{{ '-server' if (arkcase_version == "" or arkcase_version is version('2020.13', '>=')) else '' }}'
+    server_extension: "{{ '-server' if (arkcase_version == '' or arkcase_version is version('2020.13', '>=')) else '' }}"
 
 - name: backup original file and replace with updatd file, if necessary
   become: yes
