@@ -1,0 +1,193 @@
+- name: ensure web and proxy ports
+  become: yes
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ item }}"
+    state: enabled
+  loop:
+    - "80/tcp"
+    - "443/tcp"
+    - "488/tcp"
+
+- name: install epel-release 
+  become: yes
+  yum:
+    name: epel-release
+    state: present
+
+- name: install software collections
+  become: yes
+  yum:
+    name: centos-release-scl
+    state: present
+
+- name: install haproxy 1.8
+  become: yes
+  yum: 
+    name: rh-haproxy18-haproxy
+    state: present
+
+- name: remove default TLS policies
+  become: yes
+  lineinfile:
+    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: '^    ssl-default-bind-ciphers PROFILE=SYSTEM'
+      line: '   # ssl-default-bind-ciphers PROFILE=SYSTEM'
+    - regexp: '^    ssl-default-server-ciphers PROFILE=SYSTEM'
+      line: '   # ssl-default-server-ciphers PROFILE=SYSTEM'
+  register: default_tls_options
+  
+- name: establish our preferred default policies
+  become: yes
+  lineinfile:
+    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+    backup: yes
+    line: "{{ item }}"
+    insertafter: stats socket /var/opt/rh/rh-haproxy18/lib/haproxy/stats
+  loop:
+    - "    ssl-default-server-options   force-tlsv12"
+    - "    ssl-default-bind-ciphers  ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS"
+    - "    tune.ssl.default-dh-param 2048"
+    - "    # ArkCase Default TLS Options"
+  register: good_tls_options
+  
+- name: read current config
+  become: yes
+  command: cat /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+  register: current_config
+  changed_when: false
+  
+- name: remove default frontend/backend configuration
+  become: yes
+  command: sed -i '/^# main frontend which proxys to the backends$/,$d' /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+  when: '"main frontend which proxys to the backends" in current_config.stdout'
+  register: remove_default_config
+  
+- name: generate cert/key file that haproxy can read
+  become: yes
+  shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/{{ internal_host }}.pem
+  
+- name: ArkCase configuration
+  become: yes
+  blockinfile:
+    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+    backup: yes
+    block: |
+      frontend stats
+        bind *:8404
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats admin if LOCALHOST
+        stats auth admin:{{ default_user_password }}
+      
+      frontend main
+        mode http
+        bind *:80
+        
+        bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/{{ internal_host }}.pem
+        redirect scheme https code 301 if !{ ssl_fc }
+        
+        # for URLs that should not be called from outside, 
+        # but only by services within our network.
+        acl only_localhost src 127.0.0.1
+        
+        acl acl_solr path_beg /solr
+        acl acl_pentaho path_beg /pentaho
+        acl acl_alfresco path_beg /alfresco
+        acl acl_share path_beg /share
+        acl acl_snowbound path_beg /VirtualViewerJavaHTML5
+        acl acl_foia path_beg /foia
+        acl acl_arkcase path_beg /arkcase
+        
+        # ensure internal sites only visible internally
+        http-request deny if acl_solr !only_localhost
+        
+        # backend uses
+        use_backend be_solr if acl_solr
+        use_backend be_pentaho if acl_pentaho
+        use_backend be_alfresco if acl_alfresco
+        use_backend be_share if acl_share
+        use_backend be_snowbound if acl_snowbound
+        use_backend be_foia if acl_foia
+        use_backend be_arkcase if acl_arkcase
+        
+      #backend servers  
+      backend be_solr
+        http-response add-header X-Solr-Node %s
+        mode http
+        balance roundrobin
+        option tcp-check
+        server solr0 {{ solr_host }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
+      backend be_pentaho
+        http-response add-header X-Pentaho-Node %s
+        mode http
+        option tcp-check
+        server pentaho0 {{ pentaho_host }}:2002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
+      backend be_alfresco
+        http-response add-header X-Afresco-Node %s
+        mode http
+        option tcp-check
+        server alfresco0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
+      backend be_share
+        http-response add-header X-Share-Node %s
+        mode http
+        option tcp-check
+        server share0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
+      backend be_snowbound
+        http-response add-header X-Snowbound-Node %s
+        mode http
+        option tcp-check
+        server snowbound0 {{ snowbound_host }}:2005 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
+      backend be_arkcase
+        http-response add-header X-ArkCase-Node %s
+        mode http
+        option tcp-check
+        server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  
+  register: arkcase_config
+  
+- name: FOIA context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOIA CONTEXT"
+    insertafter: "#backend servers"
+    path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    block: |
+       backend be_foia
+        http-response add-header X-FOIA-Node %s
+        mode http
+        option tcp-check
+        server foia0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  when: foia_portal_context is defined
+
+- name: enable haproxy to connect to any port
+  become: yes
+  seboolean:
+    name: haproxy_connect_any
+    state: yes
+    persistent: yes
+    
+- name: enable haproxy
+  become: yes
+  systemd:
+    name: rh-haproxy18-haproxy
+    enabled: yes
+    
+- name: restart haproxy if needed
+  become: yes
+  systemd:
+    name: rh-haproxy18-haproxy
+    state: restarted
+  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed
