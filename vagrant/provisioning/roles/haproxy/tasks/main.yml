@@ -88,7 +88,6 @@
       
       frontend main
         mode http
-        bind *:80
         
         bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/{{ internal_host }}.pem
         redirect scheme https code 301 if !{ ssl_fc }
