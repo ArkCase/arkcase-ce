@@ -8,7 +8,6 @@
   loop:
     - "80/tcp"
     - "443/tcp"
-    - "488/tcp"
 
 - name: install epel-release 
   become: yes
