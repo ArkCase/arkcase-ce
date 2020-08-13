@@ -68,14 +68,6 @@
       </Directory>
   when: foia_portal_context is defined
 
-- name: ArkCase Alfresco redirector
-  become: yes
-  template:
-    backup: yes
-    src: httpd-alfresco-redirect.conf
-    dest: /etc/httpd/conf.d/httpd-alfresco-redirect.conf
-  register: alfresco_redirect_conf
-
 - name: ArkCase index.html
   become: yes
   become_user: apache
