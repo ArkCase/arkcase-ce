@@ -313,7 +313,7 @@
       alfresco-pdf-renderer.exe=${alfresco-pdf-renderer.root}/alfresco-pdf-renderer
       external.authentication.proxyUserName=
       external.authentication.enabled=true
-      external.authentication.defaultAdministratorUserNames=admin
+      external.authentication.defaultAdministratorUserNames=
       external.authentication.proxyHeader=X-Alfresco-Remote-User
       synchronization.synchronizeChangesOnly=false
       ldap.authentication.active=true
