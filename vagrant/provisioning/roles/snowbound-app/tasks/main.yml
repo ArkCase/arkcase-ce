@@ -1,3 +1,12 @@
+- name: set JAVA_HOME
+  become: yes
+  become_user: "snowbound"
+  blockinfile:
+    path: "{{ root_folder }}/app/snowbound/bin/setenv.sh"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_HOME"
+    block: |
+      export JAVA_HOME="{{ '/usr/lib/jvm/java-1.8.0-openjdk' if snowbound_vendor_version == '4.10' else '/usr/lib/jvm/java-11-openjdk' }}"
+
 - name: see if war files exist
   become: yes
   become_user: snowbound
