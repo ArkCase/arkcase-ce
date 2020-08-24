@@ -213,7 +213,7 @@
     - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/images/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/images/
     - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/lib {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
     - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/css/browser.css {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/css/
-    - cp -pf {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -prf {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
 
 - name: Replace modernizr
   lineinfile:
