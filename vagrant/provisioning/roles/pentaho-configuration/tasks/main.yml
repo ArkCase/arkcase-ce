@@ -205,15 +205,15 @@
 - name: Update Pentaho to support report designer within ArkCase iframe
   command: "{{ item }}"
   with_items:
-    - cp -p "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties/* "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
-    - cp -rp "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
-    - cp -rp "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/content "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
-    - cp -rp "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/css "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
-    - cp -rp "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/js "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
-    - cp -p "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/images/* "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/images/
-    - cp -rp "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/lib "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
-    - cp -p "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/css/browser.css "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/css/
-    - cp -pf "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/* "{{ root_folder }}"/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/content {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/css {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/js {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/images/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/images/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/lib {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/css/browser.css {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/css/
+    - cp -pf {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
 
 - name: Replace modernizr
   lineinfile:
