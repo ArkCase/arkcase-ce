@@ -13,6 +13,8 @@
       tags: [core, mariadb]
     - role: httpd
       tags: [core, httpd]
+    - role: haproxy
+      tags: [core, haproxy]
     - role: activemq
       tags: [core, activemq]
     - role: alfresco-setup
