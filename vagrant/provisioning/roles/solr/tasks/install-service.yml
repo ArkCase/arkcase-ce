@@ -61,8 +61,9 @@
   lineinfile:
     path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
     backup: yes
-    regexp: '^.*SOLR_JAVA_MEM.*'
-    line: 'SOLR_JAVA_MEM="-Xms{{ solr_heap_mem | default("2048m") }} -Xmx{{ solr_heap_mem | default("2048m") }}"'
+    regexp: '^#SOLR_JAVA_MEM.*'
+    line: 'SOLR_JAVA_MEM="-Xms{{ solr_heap_mem | default("512m") }} -Xmx{{ solr_heap_mem | default("512m") }}"'
+  register: solr_heap_space_updated
 
 - name: Solr logrotate
   become: yes
@@ -89,3 +90,9 @@
     enabled: yes
     masked: no
 
+- name: restart Solr if needed
+  become: yes
+  systemd:
+    name: solr
+    state: restarted
+  when: solr_heap_space_updated is changed
