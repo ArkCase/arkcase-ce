@@ -74,8 +74,6 @@
                 <prop key="responseUrlMatchers">^.*$</prop>
                 <!-- given pairs for replacement pattern1:replacement1,pattern2:replacement2-->
                 <prop key="responseContentRewritePairs">/frevvo/:/arkcase/frevvo/,%2Ffrevvo%2F:%2Farkcase%2Ffrevvo%2F</prop>
-
-                </prop>
             </props>
         </property>
     </bean>
