@@ -352,6 +352,10 @@ arkcase_foia_reports:
   - path: "foia-audit"
     definition: "AuditReport.prpt"
 
+# privacy reports
+arkcase_privacy_reports:
+  - path: "privacy"
+    definition: "SARs-Received Processed and Pending SARs.prpt"
 
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
@@ -486,6 +490,7 @@ records_management_categories:
   - "Requests"
   - "Tasks"
   - "Consultations"
+  - "SAR"
 content_management_folders:
   - "Case Files"
   - "Complaints"
@@ -497,7 +502,9 @@ content_management_folders:
   - "Timesheets"
   - "User Profile"
   - "Business Processes"
-  - "Consultations" 
+  - "Consultations"
+  - "Requests"
+  - "SAR"
 
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
@@ -511,5 +518,7 @@ confluent_major_version: 5.4
 confluent_minor_version: 7
 confluent_scala_version: 2.12
 
-enable_elasticsearch: true
-enable_kafka: true
+zipkin_version: 2.21.4
+# Enable these for Arkcase.NEXT development
+enable_elasticsearch: "no"
+enable_kafka: "no"

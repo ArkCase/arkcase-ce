@@ -1,0 +1,190 @@
+- name: add privacy extension to JAVA_OPTS
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - PRIVACY EXTENSION"
+    block: |
+      export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=extension-privacy,ldap"
+
+- name: Set portal version if not defined
+  set_fact:
+    portal_version: "{{ portal_version | default(arkcase_version) }}"
+  
+- name: Set portal version formated
+  set_fact:
+    portal_version_formatted: "{{ '-' ~ portal_version if portal_version != '' else '' }}"
+    
+### External UI portal
+
+- name: download privacy UI portal 
+  become: yes
+  become_user: apache
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip
+  args:
+    chdir: "{{ root_folder }}/tmp/httpd"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
+
+- name: copy privacy UI portal to install folder (this will tell us if it actually changed)
+  become: yes
+  become_user: apache
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
+  register: privacy_zip
+
+- name: see if privacy web folder exists
+  become: yes
+  become_user: apache
+  stat: 
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}"
+  register: privacy_web_folder
+
+- name: backup existing folder if necessary
+  become: yes
+  become_user: apache
+  command: mv "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}" "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}.{{ ansible_date_time.iso8601 }}"
+  when: privacy_web_folder.stat.exists and privacy_zip is changed
+
+- name: ensure privacy web folder exists
+  become: yes
+  become_user: apache
+  file:
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}"
+    state: directory
+
+- name: unzip privacy ui portal
+  become: yes
+  become_user: apache
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/httpd/privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/data/httpd/htdocs/{{ privacy_portal_context }}/"
+  when: privacy_zip is changed
+
+#### External REST Portal
+- name: create config folder
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ root_folder }}/data/arkcase-home/.external-portal-api"
+    - "{{ root_folder }}/data/arkcase-home/.external-portal-api/files"
+
+- name: application.properties
+  become: yes
+  become_user: arkcase
+  template:
+    force: no
+    src: application.properties
+    dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api"
+
+- name: ensure no acm-activemq in application.properties
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.external-portal-api/application.properties"
+    regexp: "acm-activemq"
+    replace: "{{ activemq_host }}"
+
+- name: configure LDAP
+  include_role: 
+    name: arkcase-ldap-config
+  vars:
+    old_config_id: privacyportal
+    new_config_id: "privacyportal"
+    autogenerate_user_id: true
+    ldap_user_domain_bean_name: "privacyportal"
+    ldap_authentication_service_class: "gov.privacy.service.SARLdapAuthenticationService"
+    portal_prefix: "portal."
+    ldap_template_name: "spring-config-privacyportal-ldap.xml"
+    group_base: "{{ ldap_portal_group_no_base | default(ldap_group_no_base) }}"
+    user_base: "{{ ldap_portal_user_no_base | default(ldap_user_no_base) }}"
+  when: encrypted_ldap_bind_password is defined
+
+- name: copy key store and trust store
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: "{{ java_key_store }}"
+      dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ks"
+    - src: "{{ java_trust_store }}"
+      dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ts"
+
+- name: download the PRIVACY REST portal webapp
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war
+  args:
+    chdir: "{{ root_folder }}/tmp/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
+
+- name: copy privacy REST portal to install folder (this will tell us if it actually changed)
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/arkcase/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
+    dest: "{{ root_folder }}/install/arkcase/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
+  register: rest_portal_war
+
+- name: copy privacy REST portal to ArkCase webapps folder
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/external-portal-privacy{{ privacy_extension_formatted }}{{ portal_version_formatted }}.war"
+    dest: "{{ root_folder }}/app/arkcase/webapps/arkcase#external-portal.war"
+
+- name: PRIVACY server-specific configuration
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: privacy.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-PRIVACY_server.yaml
+
+- name: read current config server configuration
+  become: yes
+  become_user: arkcase
+  command: cat /home/arkcase/.arkcase/acm/conf.yml
+  register: privacy_conf_yml
+  changed_when: false
+
+- name: update config server configuration for PRIVACY
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "server,runtime"
+    replace: "PRIVACY_server,server,runtime"
+  when: "'PRIVACY_server,server,runtime' not in privacy_conf_yml.stdout"
+
+- name: deploy privacy reports
+  include_tasks: deploy_privacy_report.yml
+  loop: "{{ arkcase_privacy_reports }}"
+  loop_control:
+    loop_var: r
+  vars:
+    report_path: "privacy"
+
+- name: deploy privacy audit reports
+  include_tasks: deploy_privacy_report.yml
+  loop: "{{ arkcase_privacy_audit_reports }}"
+  loop_control:
+    loop_var: r
+  vars:
+    report_path: "privacy-audit"

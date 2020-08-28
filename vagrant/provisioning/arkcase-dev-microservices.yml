@@ -41,6 +41,8 @@
       tags: [confluent]
     - role: elasticsearch-install
       tags: [elasticsearch]
+    - role: microservices
+      tags: [microservices]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
@@ -49,8 +51,6 @@
       tags: [core, reports, arkcase-dev-reports]
     - role: foia-dev-reports
       tags: [core, foia, reports, foia-dev-reports]
-    - role: privacy-dev-reports
-      tags: [core, privacy, reports, privacy-dev-reports]
     - role: arkcase-developer
       tags: [core, arkcase, arkcase-developer]
 

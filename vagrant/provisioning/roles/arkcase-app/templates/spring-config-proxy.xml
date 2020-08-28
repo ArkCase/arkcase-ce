@@ -23,6 +23,7 @@
     <bean id="/pentaho/**" class="org.springframework.web.servlet.mvc.ServletWrappingController">
         <property name="servletClass" value="com.armedia.acm.proxy.http.ProxyServlet"/>
         <property name="servletName" value="pentaho"/>
+        <property name="supportedMethods" value="GET,POST,PUT,DELETE,HEAD"/> <!-- To run the Pentaho UI for Adhoc Reports, we need to support all request methods -->
         <property name="initParameters">
             <props>
                 <!-- TODO: parameterize the URLs -->
@@ -40,13 +41,39 @@
                 <prop key="skipResponseContentTypes">application/x-font-(woff|ttf).*$,
                     application/(pdf|excel|x-shockwave-flash|vnd\.ms-excel|vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet).*$, image/.*$
                 </prop>
+                <!-- Matches and updates the content of requests before they are sent to Pentaho -->
+                <prop key="requestUrlMatchers">.*gwtrpc.*</prop>
+                <prop key="requestContentRewritePairs">/arkcase/pentaho:/pentaho</prop>
                 <!-- comma delimited pair of pattern which match url, and parameter which need to be appended-->
                 <!--<prop key="appendUrlParams">^.*prpt/viewer$:userid=${PENTAHO_SERVER_USER}&amp;password=${PENTAHO_SERVER_PASSWORD}</prop>-->
                 <!-- comma delimited pair of pattern which match url, and header values that need to be added. Use var(VARIABLE_NAME) to use runtime variables for values. 
                      Currently implemented variables are: MDC_PENTAHO_USER_ID -->
+                <!-- These patterns match the report viewer pages for the different report types
                 <prop key="setAdditionalHeaders">
-                    ^.*prpt/viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpt/report$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpti/prpti.view$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*xanalyzer/viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID)
-                </prop>
+                    ^.*prpt/viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpt/report$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*prpti/prpti.view$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID),^.*xanalyzer/
+                    viewer$:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID)
+                </prop>-->
+                
+                <!-- This pattern matches all requests for the Pentaho UI (needed for Adhoc Reports Module) -->
+                <prop key="setAdditionalHeaders">^.*:X-ARKCASE-EXTERNAL-USER=var(MDC_PENTAHO_USER_ID)</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="/frevvo/**" class="org.springframework.web.servlet.mvc.ServletWrappingController">
+        <property name="servletClass" value="com.armedia.acm.proxy.http.ProxyServlet"/>
+        <property name="servletName" value="frevvo"/>
+        <property name="initParameters">
+            <props>
+                <!-- TODO: parameterize the URLs -->
+                <prop key="targetUri">https://acm-arkcase/</prop>
+                <prop key="http.protocol.handle-redirects">false</prop>
+                <prop key="skipResponseUrlMatchers">.*ttf$, .*woff$, .*png$</prop>
+                <!-- resource names regex patterns separated with comma "," if multiple.
+                Will be processed and override urls inside the response-->
+                <prop key="responseUrlMatchers">^.*$</prop>
+                <!-- given pairs for replacement pattern1:replacement1,pattern2:replacement2-->
+                <prop key="responseContentRewritePairs">/frevvo/:/arkcase/frevvo/,%2Ffrevvo%2F:%2Farkcase%2Ffrevvo%2F</prop>
             </props>
         </property>
     </bean>
@@ -81,3 +108,4 @@
         </property>
     </bean>
 </beans>
+

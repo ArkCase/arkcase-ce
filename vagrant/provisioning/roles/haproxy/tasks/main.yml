@@ -10,6 +10,7 @@
     - "443/tcp"
     - "61616/tcp"
     - "61613/tcp"
+    - "8404/tcp"
 
 - name: install epel-release 
   become: yes
@@ -36,12 +37,50 @@
     validate_certs: no
     url: "{{ root_certificate_url }}"
     creates: /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
+  when: root_certificate_url is defined
   register: root_cert
 
 - name: update ca trust
   become: yes
   command: update-ca-trust extract
-  when: root_cert is changed
+  when: root_certificate_url is defined and root_cert is changed
+
+- name: haproxy folders
+  become: yes
+  file:
+    path: "{{ root_folder }}/log/haproxy"
+    state: directory
+    owner: haproxy
+    group: haproxy
+
+- name: Change rsyslog.conf for allow haproxy logging
+  become: yes
+  lineinfile:
+    path: /etc/rsyslog.conf
+    backup: yes
+    regex: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: '^\#\$ModLoad\ imudp'
+      line: '$ModLoad imudp'
+    - regexp: '^\#\$UDPServerRun\ 514'
+      line: '$UDPServerRun 514'
+  register: rsyslog_configuration
+
+- name: Copy haproxy log configuration into rsyslog.d
+  become: yes
+  template:
+    src: haproxy-rsyslog.d
+    dest: /etc/rsyslog.d/haproxy.conf
+    backup: yes
+  register: haproxy_rsyslog
+
+- name: Restart rsyslog service if needed
+  become: yes
+  systemd:
+    name: rsyslog
+    state: restarted
+  when: rsyslog_configuration is changed or haproxy_rsyslog is changed 
 
 - name: remove default TLS policies
   become: yes
@@ -56,7 +95,7 @@
     - regexp: '^    ssl-default-server-ciphers PROFILE=SYSTEM'
       line: '   # ssl-default-server-ciphers PROFILE=SYSTEM'
   register: default_tls_options
-
+  
 - name: establish our preferred default policies
   become: yes
   lineinfile:
@@ -69,26 +108,43 @@
     - "    ssl-default-bind-ciphers  ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS"
     - "    tune.ssl.default-dh-param 2048"
     - "    # ArkCase Default TLS Options"
+    - "    log         127.0.0.1:514 local2" 
   register: good_tls_options
-
+  
 - name: read current config
   become: yes
   command: cat /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
   register: current_config
   changed_when: false
-
+  
 - name: remove default frontend/backend configuration
   become: yes
   command: sed -i '/^# main frontend which proxys to the backends$/,$d' /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
   when: '"main frontend which proxys to the backends" in current_config.stdout'
   register: remove_default_config
-
+  
+- name: generate cert/key file that haproxy can read
+  become: yes
+  shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/{{ internal_host }}.pem
+  
 - name: ArkCase configuration
   become: yes
   blockinfile:
     path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
     backup: yes
     block: |
+      frontend main
+        mode http
+        bind *:80
+
+      frontend stats
+        bind *:8404
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats admin if LOCALHOST
+        stats auth admin:{{ default_user_password }}
+      
       frontend main
         mode http
         bind *:80
@@ -101,10 +157,17 @@
         # certificate.  
         acl acl_letsencrypt path_beg /.well-known/acme-challenge/
 
+        bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/{{ internal_host }}.pem
+        redirect scheme https code 301 if !{ ssl_fc }
+        
         # for URLs that should not be called from outside, 
         # but only by services within our network.
-        acl only_internal src 10.0.0.0/8
+        acl only_localhost src 127.0.0.1
 
+        # for URLs that should not be called from outside, 
+        # but only by services within our network.
+        # acl only_internal src 10.0.0.0/8
+        
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho
         acl acl_alfresco path_beg /alfresco
@@ -114,10 +177,14 @@
         acl acl_arkcase path_beg /arkcase
 
         # ensure internal sites only visible internally
-        http-request deny if acl_solr !only_internal
+        # http-request deny if acl_solr !only_internal
 
-        # backend uses
         use_backend be_letsencrypt if acl_letsencrypt
+        
+        # ensure internal sites only visible internally
+        http-request deny if acl_solr !only_localhost
+        
+        # backend uses
         use_backend be_solr if acl_solr
         use_backend be_pentaho if acl_pentaho
         use_backend be_alfresco if acl_alfresco
@@ -125,6 +192,8 @@
         use_backend be_snowbound if acl_snowbound
         use_backend be_foia if acl_foia
         use_backend be_arkcase if acl_arkcase
+
+      #backend servers
 
       backend be_letsencrypt
         mode http
@@ -135,82 +204,97 @@
         mode http
         balance roundrobin
         option tcp-check
-        server solr0 {{ solr_node_1 }}:8983 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-        server solr1 {{ solr_node_2 }}:8983 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-        server solr2 {{ solr_node_3 }}:8983 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-
+        #server solr0 {{ solr_node_1 }}:8983 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
+        #server solr1 {{ solr_node_2 }}:8983 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
+        #server solr2 {{ solr_node_3 }}:8983 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
+        server solr0 {{ solr_host }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
       backend be_pentaho
         http-response add-header X-Pentaho-Node %s
         mode http
         option tcp-check
-        server pentaho0 {{ pentaho_node }}:2002 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-
+        server pentaho0 {{ pentaho_host }}:2002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
       backend be_alfresco
         http-response add-header X-Afresco-Node %s
         mode http
         option tcp-check
-        server alfresco0 {{ alfresco_node }}:7070 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-
+        server alfresco0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
       backend be_share
         http-response add-header X-Share-Node %s
         mode http
         option tcp-check
-        server share0 {{ alfresco_node }}:7070 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-
+        server share0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
       backend be_snowbound
         http-response add-header X-Snowbound-Node %s
         mode http
         option tcp-check
-        server snowbound0 {{ snowbound_node }}:2005 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-
-      backend be_foia
-        http-response add-header X-FOIA-Node %s
-        mode http
-        option tcp-check
-        server foia0 {{ foia_node }}:443 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
-
+        server snowbound0 {{ snowbound_host }}:2005 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        
       backend be_arkcase
         http-response add-header X-ArkCase-Node %s
         mode http
         option tcp-check
-        server arkcase0 {{ arkcase_node }}:8843 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/{{ root_certificate_url.split("/")[-1] }}
+        server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
       listen activemq_61613
         mode tcp
         bind :61613
-        acl network_allowed src 10.0.0.0/8
-        tcp-request connection reject if !network_allowed
         server activemq0 {{ activemq_node }}:61613
 
       listen activemq_61616
         mode tcp
         bind :61616
-        acl network_allowed src 10.0.0.0/8
-        tcp-request connection reject if !network_allowed
         server activemq0 {{ activemq_node }}:61616 check fall 3 rise 2 force-tlsv12
-
   register: arkcase_config
 
-- name: see if let's encrypt cert exists
-  stat:
-    path: /etc/pki/tls/certs/{{ external_host }}.crt
-  register: le_cert_file
-  changed_when: false
+# - name: see if let's encrypt cert exists
+#   stat:
+#     path: /etc/pki/tls/certs/{{ external_host }}.crt
+#   register: le_cert_file
+#   changed_when: false
 
-- name: generate cert/key file that haproxy can read
-  become: yes
-  shell: cat /etc/pki/tls/certs/{{ external_host }}.crt /etc/pki/tls/certs/chain.crt /etc/pki/tls/private/{{ external_host }}.key > /etc/pki/tls/certs/{{ external_host }}.pem
-  when: le_cert_file.stat.exists
+# - name: generate cert/key file that haproxy can read
+#   become: yes
+#   shell: cat /etc/pki/tls/certs/{{ external_host }}.crt /etc/pki/tls/certs/chain.crt /etc/pki/tls/private/{{ external_host }}.key > /etc/pki/tls/certs/{{ external_host }}.pem
+#   when: le_cert_file.stat.exists
 
-- name: enable https port if we have a cert file
+# - name: enable https port if we have a cert file
+#   become: yes
+#   lineinfile:
+#     path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+#     backup: yes
+#     line: "  bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/{{ external_host }}.pem"
+#     insertafter: "  # put https cert here"
+#   when: le_cert_file.stat.exists
+#   register: bind_https_port
+        
+
+  
+- name: FOIA context, if needed
   become: yes
-  lineinfile:
-    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+  blockinfile:
     backup: yes
-    line: "  bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/{{ external_host }}.pem"
-    insertafter: "  # put https cert here"
-  when: le_cert_file.stat.exists
-  register: bind_https_port
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOIA CONTEXT"
+    insertafter: "#backend servers"
+    path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    block: |
+       backend be_foia
+        http-response add-header X-FOIA-Node %s
+        mode http
+        option tcp-check
+        server foia0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  when: foia_portal_context is defined
+
+- name: haprxy logrotate
+  become: yes
+  template:
+    src: rh-haproxy18-haproxy.logrotate.d 
+    dest: "/etc/logrotate.d/rh-haproxy18-haproxy"
+    force: yes
+    backup: yes
 
 - name: enable haproxy to connect to any port
   become: yes
@@ -218,27 +302,21 @@
     name: haproxy_connect_any
     state: yes
     persistent: yes
-
+    
 - name: enable haproxy
   become: yes
   systemd:
     name: rh-haproxy18-haproxy
     enabled: yes
-
+    
 - name: restart haproxy if needed
   become: yes
   systemd:
     name: rh-haproxy18-haproxy
     state: restarted
-  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed or bind_https_port is changed
+  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed #or bind_https_port is changed
 
-- name: warn if no TLS cert is available yet
-  debug:
-    msg: "No TLS certificate available yet.  Please run the lets_encrypt role, then re-run this role."
-  when: not le_cert_file.stat.exists
-
-
-
-        
-
-    
+# - name: warn if no TLS cert is available yet
+#   debug:
+#     msg: "No TLS certificate available yet.  Please run the lets_encrypt role, then re-run this role."
+#   when: not le_cert_file.stat.exists

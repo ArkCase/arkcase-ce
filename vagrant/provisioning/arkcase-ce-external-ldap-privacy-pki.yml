@@ -1,14 +1,12 @@
 ---
-- hosts: localhost
-  roles: 
+- hosts: all
+  roles:
     - role: common
       tags: [core, common]
-    - role: pki-dev
-      tags: [core, pki-dev]
+    - role: pki
+      tags: [core, pki]
     - role: pki_client
       tags: [core, pki_client]
-    - role: samba
-      tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
     - role: mariadb
@@ -29,29 +27,25 @@
       tags: [core, solr]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
-    - role: pentaho-ce
-      tags: [core, pentaho, pentaho-ce]
+    - role: pentaho-ee
+      tags: [core, pentaho, pentaho-ee] 
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
-    - role: confluent-platform-install
-      tags: [confluent]
-    - role: elasticsearch-install
-      tags: [elasticsearch]
+    - role: pentaho-license
+      tags: [core, pentaho, pentaho-license]
+    - role: arkcase-prerequisites
+      tags: [core, arkcase]
+    - role: arkcase-app
+      tags: [core, arkcase]
+    - role: privacy
+      tags: [core, privacy]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
       tags: [core, firewall]
-    - role: arkcase-dev-reports    
-      tags: [core, reports, arkcase-dev-reports]
-    - role: foia-dev-reports
-      tags: [core, foia, reports, foia-dev-reports]
-    - role: privacy-dev-reports
-      tags: [core, privacy, reports, privacy-dev-reports]
-    - role: arkcase-developer
-      tags: [core, arkcase, arkcase-developer]
-
-    
+    - role: start-arkcase
+      tags: [core, arkcase]

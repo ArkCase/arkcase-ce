@@ -1,17 +1,6 @@
 {
-  "variables": {
-    "version": ""
-  },
-  "provisioners": [
-    {
-      "type": "shell",
-      "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}'",
-      "script": "scripts/vagrant-setup.sh"
-    }
-  ],
   "builders": [
     {
-      "type": "virtualbox-iso",
       "boot_command": [
         "<tab> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg<enter><wait>"
       ],
@@ -20,18 +9,17 @@
       "guest_os_type": "RedHat_64",
       "headless": true,
       "http_directory": "http",
+      "iso_checksum": "sha256:659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
       "iso_urls": [
-          "CentOS-7-x86_64-Minimal-1810.iso",
-          "http://mirror.vtti.vt.edu/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-Minimal-1908.iso"
+        "CentOS-7-x86_64-Minimal-2003.iso",
+        "http://mirror.vtti.vt.edu/centos/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
       ],
-      "iso_checksum_type": "sha256",
-      "iso_checksum": "9a2c47d97b9975452f7d582264e9fc16d108ed8252ac6816239a3b58cef5c53d",
-      "ssh_username": "root",
+      "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
       "ssh_password": "@rKc@3e",
       "ssh_port": 22,
-      "ssh_wait_timeout": "10000s",
-      "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
-      "vm_name": "arkcase-centos-7-x86_64",
+      "ssh_timeout": "10000s",
+      "ssh_username": "root",
+      "type": "virtualbox-iso",
       "vboxmanage": [
         [
           "modifyvm",
@@ -45,7 +33,8 @@
           "--cpus",
           "2"
         ]
-      ]
+      ],
+      "vm_name": "arkcase-centos-7-x86_64"
     }
   ],
   "post-processors": [
@@ -55,5 +44,16 @@
         "type": "vagrant"
       }
     ]
-  ]
+  ],
+  "provisioners": [
+    {
+      "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "script": "scripts/vagrant-setup.sh",
+      "type": "shell"
+    }
+  ],
+  "variables": {
+    "version": ""
+  }
 }
+
