@@ -76,6 +76,16 @@
   command: "{{ root_folder }}/app/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost localhost:2181 -cmd clusterprop -name urlScheme -val https"
   when: enable_solr_cloud is defined and enable_solr_cloud
 
+- name: updated environment file - Solr max heap space
+  become: yes
+  become_user: solr
+  lineinfile:
+    path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
+    backup: yes
+    regexp: '^#SOLR_JAVA_MEM.*'
+    line: 'SOLR_JAVA_MEM="-Xms{{ solr_heap_mem | default("512m") }} -Xmx{{ solr_heap_mem | default("512m") }}"'
+  register: solr_heap_space_updated
+
 - name: Solr logrotate
   become: yes
   template:
@@ -101,3 +111,9 @@
     enabled: yes
     masked: no
 
+- name: restart Solr if needed
+  become: yes
+  systemd:
+    name: solr
+    state: restarted
+  when: solr_heap_space_updated is changed

@@ -9,6 +9,14 @@
   register: rule_update
   changed_when: "'replacing' in rule_update.stdout"
 
+- name: server extension to drools files
+  set_fact:
+    server_extension: "{{ '-server' if (arkcase_version == '' or arkcase_version is version('2020.13', '>=')) else '' }}"
+    
+- name: server file name
+  set_fact:
+    output_file_name: "{{ s.output_path if (s.output_path is defined) else s.base_path_no_xlsx ~ server_extension ~ '.xlsx' }}"
+
 - name: backup original file and replace with updatd file, if necessary
   become: yes
   become_user: arkcase
@@ -16,4 +24,4 @@
   when: rule_update is changed 
   loop:
     - mv {{ s.base_path_no_xlsx }}.xlsx {{ s.base_path_no_xlsx }}-backup.xlsx
-    - mv {{ s.base_path_no_xlsx }}-updated.xlsx {{ s.base_path_no_xlsx }}.xlsx
+    - mv {{ s.base_path_no_xlsx }}-updated.xlsx {{ output_file_name }}

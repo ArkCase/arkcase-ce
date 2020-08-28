@@ -1,41 +1,30 @@
 {
-  "variables": {
-    "version": ""
-  },
-  "provisioners": [
-    {
-      "type": "shell",
-      "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}'",
-      "script": "scripts/vagrant-setup.sh"
-    }
-  ],
   "builders": [
     {
-      "type": "hyperv-iso",
-      "boot_command": [ 
-	      "c  setparams 'kickstart' <enter> linuxefi /images/pxeboot/vmlinuz text inst.stage2=hd:LABEL=CentOS\\x207\\x20x\\86_64 inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks-hyper-v.cfg<enter> initrdefi /images/pxeboot/initrd.img<enter> boot<enter>"
-	  ],
+      "boot_command": [
+        "c  setparams 'kickstart' <enter> linuxefi /images/pxeboot/vmlinuz text inst.stage2=hd:LABEL=CentOS\\x207\\x20x\\86_64 inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks-hyper-v.cfg<enter> initrdefi /images/pxeboot/initrd.img<enter> boot<enter>"
+      ],
       "boot_wait": "10s",
+      "cpus": 2,
       "disk_size": 131072,
+      "enable_dynamic_memory": true,
+      "generation": 2,
       "headless": true,
       "http_directory": "http",
+      "iso_checksum": "sha256:659691c28a0e672558b003d223f83938f254b39875ee7559d1a4a14c79173193",
       "iso_urls": [
-          "CentOS-7-x86_64-Minimal-1908.iso",
-		  "http://mirror.vcu.edu/pub/gnu_linux/centos/7.7.1908/isos/x86_64/CentOS-7-x86_64-Minimal-1908.iso"
+        "CentOS-7-x86_64-Minimal-2003.iso",
+        "http://mirror.vcu.edu/pub/gnu_linux/centos/7.8.2003/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"
       ],
-      "iso_checksum_type": "sha256",
-      "iso_checksum": "9a2c47d97b9975452f7d582264e9fc16d108ed8252ac6816239a3b58cef5c53d",
-      "ssh_username": "root",
+      "memory": 6144,
+      "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
       "ssh_password": "vagrant",
       "ssh_port": 22,
       "ssh_timeout": "10000s",
-      "shutdown_command": "echo 'vagrant'|sudo -S /sbin/halt -h -p",
-      "vm_name": "arkcase-centos-7-x86_64",
-      "cpus": 2,
-	  "memory": 6144,
-	  "enable_dynamic_memory": true,
-	  "generation": 2,
-	  "switch_name": "ExternalSwitch"
+      "ssh_username": "root",
+      "switch_name": "ExternalSwitch",
+      "type": "hyperv-iso",
+      "vm_name": "arkcase-centos-7-x86_64"
     }
   ],
   "post-processors": [
@@ -45,5 +34,16 @@
         "type": "vagrant"
       }
     ]
-  ]
+  ],
+  "provisioners": [
+    {
+      "execute_command": "{{.Vars}} sudo -S -E bash '{{.Path}}'",
+      "script": "scripts/vagrant-setup.sh",
+      "type": "shell"
+    }
+  ],
+  "variables": {
+    "version": ""
+  }
 }
+
