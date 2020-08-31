@@ -1,0 +1,139 @@
+- name: pentaho-pdi user
+  become: yes
+  user:
+    name: pentaho-pdi
+    shell: /bin/false
+    state: present
+    create_home: yes
+    home: /home/pentaho-pdi
+
+- name: pentaho-pdi folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: pentaho-pdi
+    owner: pentaho-pdi
+  loop:
+    - "{{ root_folder }}/data/pentaho-pdi"
+    - "{{ root_folder }}/log/pentaho-pdi"
+    - "{{ root_folder }}/app/pentaho-pdi"
+    - "{{ root_folder }}/install/pentaho-pdi"
+    - "{{ root_folder }}/tmp/pentaho-pdi"
+  register: pentaho_pdi_folder_structure
+
+- name: enable logrotate for pentaho-pdi log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  args:
+    apply:
+      vars:
+        item: pentaho-pdi
+
+- name: install expect, zip/unzip, Java 8
+  become: yes
+  yum:
+    state: installed
+    name:
+      - expect
+      - zip
+      - unzip
+      - java-1.8.0-openjdk
+      - java-1.8.0-openjdk-devel
+
+- name: download Pentaho PDI artifact
+  become: yes
+  become_user: pentaho-pdi
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_pentaho_user }}@{{ sftp_service_base_url }}:{{ sftp_pentaho_folder }}/{{ item }}
+  args:
+    chdir: "{{ root_folder }}/install/pentaho-pdi"
+    creates: "{{ root_folder }}/install/pentaho-pdi/{{ item }}"
+  environment:
+    SSHPASS: "{{ sftp_pentaho_password }}"
+  loop:
+    - pdi-ee-client-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip
+
+- name: create temp install folders
+  become: yes
+  become_user: pentaho-pdi
+  file:
+    path: "{{ root_folder }}/tmp/pentaho-pdi/{{ item }}"
+    state: directory
+  loop:
+    - pdi-ee-client
+
+- name: unzip artifacts
+  become: yes
+  become_user: pentaho-pdi
+  command: unzip -j -d "{{ root_folder }}/tmp/pentaho-pdi/{{ item }}" "{{ root_folder }}/install/pentaho-pdi/{{ item }}-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip"
+  args:
+    creates: "{{ root_folder }}/tmp/pentaho-pdi/{{ item }}/license.txt"
+    warn: no
+  loop:
+    - pdi-ee-client
+
+- include_tasks: pentaho-pdi-install-module.yml
+  loop:
+    - name: pdi-ee-client
+      path: "{{ root_folder }}/app/pentaho-pdi"
+      creates: "{{ root_folder }}/app/pentaho-pdi/pentaho_eula.txt"
+
+- name: download Pentaho EE licenses
+  become: yes
+  become_user: pentaho-pdi
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_pentaho_user }}@{{ sftp_service_base_url }}:{{ sftp_pentaho_folder }}/pentaho-server-licenses-{{ pentaho_ee_license_year }}.zip
+  args:
+    chdir: "{{ root_folder }}/install/pentaho-pdi"
+    creates: "{{ root_folder }}/install/pentaho-pdi/pentaho-server-licenses-{{ pentaho_ee_license_year }}.zip"
+  environment:
+    SSHPASS: "{{ sftp_pentaho_password }}"
+  register: pentaho_licenses
+
+- name: make folder for license version
+  become: yes
+  become_user: pentaho-pdi
+  file:
+    path: "{{ root_folder }}/install/pentaho-pdi/{{ pentaho_ee_license_year }}"
+    state: directory
+
+- name: unarchive licenses
+  become: yes
+  become_user: pentaho-pdi
+  unarchive:
+    remote_src: yes
+    keep_newer: yes
+    src: "{{ root_folder }}/install/pentaho-pdi/pentaho-server-licenses-{{ pentaho_ee_license_year }}.zip"
+    dest: "{{ root_folder }}/install/pentaho-pdi/{{ pentaho_ee_license_year }}"
+    creates: "{{ root_folder }}install/pentaho-pdi/{{ pentaho_ee_license_year }}/Pentaho Analysis Enterprise Edition.lic"
+  when: pentaho_licenses is changed
+  register: licenses_unzipped
+
+# note, the licenses only seem to be applied through the home
+# folder, so the path ~pentaho/.pentaho is mandatory.
+- name: create pentaho-pdi license folder
+  become: yes
+  become_user: pentaho-pdi
+  file: 
+    path: /home/pentaho-pdi/.pentaho
+    state: directory
+
+- name: install licenses, if necessary
+  become: yes
+  become_user: pentaho-pdi
+  shell: sh {{ root_folder }}/app/pentaho-pdi/license-installer/install_license.sh install -q "{{ root_folder }}/install/pentaho-pdi/{{ pentaho_ee_license_year }}/{{ item }}"
+  environment:
+    PENTAHO_INSTALLED_LICENSE_PATH: /home/pentaho-pdi/.pentaho/.installedLicenses.xml
+  when: licenses_unzipped is changed
+  register: pentaho_license_script_out
+  loop:
+    - "Pentaho PDI Enterprise Edition.lic"
+  failed_when: "'The license has been successfully processed' not in pentaho_license_script_out.stdout"
+
+- name: link MariaDB jar file
+  become: yes
+  become_user: pentaho-pdi
+  file:
+    src: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    dest: "{{ root_folder}}/app/pentaho-pdi/data-integration/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    state: link
+
+
