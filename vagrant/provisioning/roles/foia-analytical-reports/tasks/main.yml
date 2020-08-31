@@ -93,7 +93,7 @@
     line: "{{ item.line }}"
   loop:
     - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/plugin/cda/api/clearCache</nullif>"
-      line: "<nullif>https://{{ ansible_facts.fqdn }}:2002/pentaho/plugin/cda/api/clearCache</nullif>"
+      line: "<nullif>https://{{ internal_host }}:2002/pentaho/plugin/cda/api/clearCache</nullif>"
     - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
       line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
@@ -110,7 +110,7 @@
     line: "{{ item.line }}"
   loop:
     - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
-      line: "<nullif>https://{{ ansible_facts.fqdn }}:2002/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
+      line: "<nullif>https://{{ internal_host }}:2002/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
     - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
       line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"

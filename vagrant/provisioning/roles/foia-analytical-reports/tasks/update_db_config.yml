@@ -10,6 +10,12 @@
   loop:
     - regexp: "<server>localhost</server>"
       line: "    <server>{{ database_host }}</server>"
+    - regexp: "<server>acm-arkcase</server>"
+      line: "    <server>{{ database_host }}</server>"      
+    - regexp: "<server>acm_arkcase</server>"
+      line: "    <server>{{ database_host }}</server>"    
+    - regexp: "<code>EXTRA_OPTION_MARIADB.trustServerCertifiate</code>"
+      line: "    <code>EXTRA_OPTION_MARIADB.trustServerCertificate</code>"    
     - regexp: "<type>MYSQL</type>"
       line: "    <type>MARIADB</type>"
     - regexp: "<password>Encrypted 2be98afc86aa7f2e48b0b8573fec19c9b</password>"
@@ -22,3 +28,4 @@
       line: "    <attribute>3306</attribute>"
     - regexp: "<port>53306</port>"
       line: "    <port>3306</port>"
+
