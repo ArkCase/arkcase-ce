@@ -196,7 +196,7 @@
 # the ansible uri module causes a timeout for some reason but wget works fine
 - name: create the ArkCase JDBC data source for analytical reports
   command: 
-    cmd: 'wget --no-check-certificate --user={{ ldap_user_prefix }}arkcase-admin --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_Ohost }}:2002/pentaho/plugin/data-access/api/connection/add'
+    cmd: 'wget --no-check-certificate --user={{ ldap_user_prefix }}arkcase-admin --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
     warn: no
   register: create_datasource_rest_call
   when: not '"MariaDB Local"' in data_source_list.stdout
