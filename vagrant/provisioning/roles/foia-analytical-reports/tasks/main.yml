@@ -49,6 +49,21 @@
   register: arkcase_admin_encr_password
   changed_when: false
 
+- name: ensure shared database connection folder exists
+  become: yes
+  become_user: pentaho-pdi
+  file:
+    path: /home/pentaho-pdi/.kettle
+    state: directory
+
+- name: write shared database connection file
+  become: yes
+  become_user: pentaho-pdi
+  template:
+    backup: yes
+    src: shared.xml
+    dest: /home/pentaho-pdi/.kettle/shared.xml
+
 - name: ensure the job has no internal schedule (should be unscheduled)
   become: yes
   become_user: pentaho
