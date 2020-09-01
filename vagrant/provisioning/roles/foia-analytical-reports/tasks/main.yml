@@ -233,6 +233,6 @@
   register: foia_report_files
 
 - name: import reports
-  command: /opt/app/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/foia --file-path='{{ item }}' --permission=true --overwrite=true --retainOwnership=true
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/foia --file-path='{{ item }}' --permission=true --overwrite=true --retainOwnership=true"
   loop: "{{ foia_report_files.files | map(attribute='path') | list }}"
   
