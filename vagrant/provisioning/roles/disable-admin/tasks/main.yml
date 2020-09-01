@@ -1,0 +1,18 @@
+- name: Create disable admin user LDIF file
+  become: yes
+  copy:
+    content: |
+      dn: CN={{ arkcase_admin_user }},{{ ldap_user_base }}
+      changetype: modify
+      replace: userAccountControl
+      userAccountControl: 514
+    dest: "{{ root_folder }}/install/disable_user.ldif"
+
+- name: Disable admin user
+  shell: LDAPTLS_REQCERT=never ldapmodify -H {{ ldap_url }} -D "{{ ldap_bind_user }}" -w '{{ ldap_bind_password }}' -x -f {{ root_folder }}/install/disable_user.ldif
+
+- name: Delete LDIF file
+  become: yes
+  file:
+    path: "{{ root_folder }}/install/disable_user.ldif"
+    state: absent
