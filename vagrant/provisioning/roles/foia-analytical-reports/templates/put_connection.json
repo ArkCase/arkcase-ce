@@ -10,8 +10,16 @@
     "username":"{{ rds_user | default('arkcase') }}",
     "attributes":{},
     "connectionPoolingProperties":{},
-    "extraOptions":{},
-    "extraOptionsOrder":{},
+    "extraOptions":{
+      "MARIADB.enabledSslProtocolSuites": "TLSv1.2",
+      "MARIADB.trustServerCertificate": "true",
+      "MARIADB.useSsl": "true"
+    },
+    "extraOptionsOrder":{        
+      "0": "MARIADB.enabledSslProtocolSuites",
+      "1": "MARIADB.trustServerCertificate",
+      "2": "MARIADB.useSsl"
+    },
     "accessType":"NATIVE",
     "databaseType":{
       "defaultDatabasePort":3306,
