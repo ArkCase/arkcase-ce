@@ -50,3 +50,5 @@
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
       tags: [core]
+    - role: disable-admin
+      tags: [core, ldap]
