@@ -54,4 +54,5 @@
       tags: [core]
     - role: start-arkcase
       tags: [core, arkcase]
-    
+    - role: disable-admin
+      tags: [core, ldap]
