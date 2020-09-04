@@ -212,31 +212,6 @@
 # Deploy the reports 
 #########################################################
 
-- name: unzip the report archive
-  become: yes
-  become_user: pentaho
-  unarchive:
-    remote_src: yes
-    src: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports/Marjan.zip"
-    dest: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports"
-    creates: "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports/exportManifest.xml"
+- name: import reports from the zip file archive
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/foia --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports/Marjan.zip' --permission=true --overwrite=true --retainOwnership=true"
 
-- name: find report files
-  become: yes
-  become_user: pentaho
-  find: 
-    paths: 
-      - "{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/reports"
-    file_type: file
-    recurse: yes
-    patterns: "*.xanalyzer"
-  register: foia_report_files
-
-- name: rename report files
-  command: mv {{ item }} '{{ item | replace("+", " ") }}'
-  loop: "{{ foia_report_files.files | map(attribute='path') | list }}"
-
-- name: import reports
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/foia --file-path='{{ item  | replace(\"+\", \" \") }}' --permission=true --overwrite=true --retainOwnership=true"
-  loop: "{{ foia_report_files.files | map(attribute='path') | list }}"
-  
