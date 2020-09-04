@@ -45,10 +45,14 @@
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
+    - role: foia
+      tags: [core, foia]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
       tags: [core]
+    - role: start-arkcase
+      tags: [core, arkcase]
     - role: disable-admin
       tags: [core, ldap]
