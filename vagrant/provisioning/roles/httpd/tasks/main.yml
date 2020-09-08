@@ -116,7 +116,7 @@
   systemd:
     name: httpd
     state: restarted
-  when: tls_conf is changed or mod_security_conf_updated is changed or alfresco_redirect_conf is changed
+  when: tls_conf is changed or mod_security_conf_updated is changed
 
 - name: Check whether I am inside a Docker container
   stat:
