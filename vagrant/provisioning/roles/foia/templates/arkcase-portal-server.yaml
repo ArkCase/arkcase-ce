@@ -1,0 +1,40 @@
+logging.level.web: DEBUG
+
+# server.port=8080
+# server.servlet.context-path=/${portal.applicationName}
+
+# Property used for enable/disable Spring security. For authenticated portal comment this property.  
+#spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
+
+
+portal.externalConfiguration: true
+portal.host={{ external_host }}
+portal.port=
+portal.uiApplicationUrl=https://{{ external_host }}/foia
+portal.uiApplicationHost=https://{{ external_host }}
+portal.id={{ 9999999999999999999999 | random | to_uuid }}
+
+portal.authenticatedMode=false
+
+portal.authorizedUrlsAuthenticated=
+#portal.authorizedUrlsAuthenticated=/rest/request/readingroom,/rest/users/login,/rest/users/logout,/rest/users/registrations/**,/rest/request/authenticatedMode
+portal.authorizedUrlsNotAuthenticated=/rest/request/**
+
+portal.homeDir=${user.home}/.${portal.applicationName}
+
+portal.activemqUrl=ssl://{{ activemq_host }}:61616
+portal.keystoreFilename=arkcase.ks
+portal.keystorePassword={{ java_key_store_pass }}
+portal.truststoreFilename=arkcase.ts
+portal.truststorePassword={{ java_trust_store_pass }}
+
+# authentication type, possible values (basic, external)
+portal.authenticationType=basic
+# basic
+portal.authenticationBasicUser={{ arkcase_admin_user }}@{{ ldap_user_domain }}
+portal.authenticationBasicPassword={{ arkcase_admin_password }}
+# external
+portal.authenticationExternalUser={{ arkcase_admin_user }}@{{ ldap_user_domain }}
+
+# ArkCase url
+portal.arkcaseUrl=https://{{ internal_host }}/arkcase
