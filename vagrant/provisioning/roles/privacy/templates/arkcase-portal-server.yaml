@@ -24,17 +24,17 @@ portal.homeDir: ${user.home}/.${portal.applicationName}
 
 portal.activemqUrl: "ssl://{{ activemq_host }}:61616"
 portal.keystoreFilename: arkcase.ks
-portal.keystorePassword: {{ java_key_store_pass }}
+portal.keystorePassword: "{{ java_key_store_pass }}"
 portal.truststoreFilename: arkcase.ts
-portal.truststorePassword: {{ java_trust_store_pass }}
+portal.truststorePassword: "{{ java_trust_store_pass }}"
 
 # authentication type, possible values (basic, external)
 portal.authenticationType: basic
 # basic
-portal.authenticationBasicUser: {{ arkcase_admin_user }}@{{ ldap_user_domain }}
-portal.authenticationBasicPassword: {{ arkcase_admin_password }}
+portal.authenticationBasicUser: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+portal.authenticationBasicPassword: "{{ arkcase_admin_password }}"
 # external
-portal.authenticationExternalUser: {{ arkcase_admin_user }}@{{ ldap_user_domain }}
+portal.authenticationExternalUser: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
 
 # ArkCase url
 portal.arkcaseUrl: "https://{{ internal_host }}/arkcase"
