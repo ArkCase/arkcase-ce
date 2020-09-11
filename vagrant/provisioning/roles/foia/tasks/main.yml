@@ -84,6 +84,7 @@
     force: no
     src: application.properties
     dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api"
+  when: arkcase_version != "" and arkcase_version is version('2020.14', '<')
 
 - name: ensure no acm-activemq in application.properties
   become: yes
@@ -92,6 +93,16 @@
     path: "{{ root_folder }}/data/arkcase-home/.external-portal-api/application.properties"
     regexp: "acm-activemq"
     replace: "{{ activemq_host }}"
+  when: arkcase_version != "" and arkcase_version is version('2020.14', '<')
+
+- name: server configuration
+  become: yes
+  become_user: arkcase
+  template:
+    force: yes
+    src: arkcase-portal-server.yaml
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
+  when: arkcase_version == "" or arkcase_version is version('2020.14', '>=')
 
 - name: configure LDAP
   include_role: 
