@@ -321,37 +321,8 @@ arkcase_extension_reports:
 
 # foia reports
 arkcase_foia_reports:
-  - path: "foia"
-    definition: "Administrative Appeals of Initial Determinations of FOIA Requests - Received Processed and Pending Administrative Appeals.prpt"
-  - path: "foia"
-    definition: "Dispositions of FOIA Requests - All Processed Requests.prpt"
-  - path: "foia"
-    definition: "Dispositions of FOIA Requests - Number of Times Exemptions Applied.prpt"
-  - path: "foia"
-    definition: "Fees Collected for Processing Requests.prpt"
-  - path: "foia"
-    definition: "FOIA Personnel and Costs.prpt"
-  - path: "foia"
-    definition: "FOIA Request - Response Time For All Processed Perfected Requests.prpt"
-  - path: "foia"
-    definition: "FOIA Requests - Received Processed and Pending FOIA Requests.prpt"
-  - path: "foia"
-    definition: "Number of FOIA Requests Processed by Days.prpt"
-  - path: "foia"
-    definition: "Pending Requests - All Pending Perfected Requests.prpt"
-  - path: "foia"
-    definition: "Pending Requests - Average Days Unfulfilled.prpt"
-  - path: "foia"
-    definition: "Processed Complex Requests - Response Time in Day Increments.prpt"
-  - path: "foia"
-    definition: "Processed Requests Granted Expedited Processing - Response Time in Day Increments.prpt"
-  - path: "foia"
-    definition: "Processed Simple Requests - Response Time in Day Increments.prpt"
-  - path: "foia"
-    definition: "Reasons for Denial on Appeal - Number of Times Exemptions Applied.prpt"
   - path: "foia-audit"
     definition: "AuditReport.prpt"
-
 
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
