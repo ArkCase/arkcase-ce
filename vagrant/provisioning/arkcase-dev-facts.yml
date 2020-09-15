@@ -58,8 +58,10 @@ ldap_ancestor_ous:
   - "{{ ldap_base }}"
   - "OU=ArkCase, {{ ldap_base }}"
 ldap_group_no_base: "OU=Groups,OU=ArkCase"
+ldap_portal_group_no_base: "OU=PortalGroups,OU=ArkCase"
 ldap_group_base: "{{ ldap_group_no_base }},{{ ldap_base }}"
 ldap_user_no_base: "OU=Users,OU=ArkCase"
+ldap_portal_user_no_base: "OU=UsersPortal,OU=ArkCase"
 ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
 ldap_prefix: ""
 
@@ -186,7 +188,13 @@ ldap_groups:
     name: "{{ ldap_prefix }}OFFICERS"
     alfresco_role: SiteManager
     alfresco_rma_role: Administrator
-        
+
+ldap_portal_groups:
+  - description: PortalUsers
+    name: '{{ ldap_prefix }}ARKCASE_PORTAL_USER'
+    alfresco_role: SiteContributor
+    alfresco_rma_role: Administrator
+
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
 arkcase_admin_password: "{{ default_user_password }}"
 arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
