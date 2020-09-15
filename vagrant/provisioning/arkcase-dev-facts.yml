@@ -197,7 +197,7 @@ ldap_portal_groups:
 
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
 arkcase_admin_password: "{{ default_user_password }}"
-arkcase_admin_group: "CN={{ ldap_pre`fix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
+arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
 
 ldap_users:
   - user_id: "{{ arkcase_admin_user }}"
