@@ -140,7 +140,6 @@
         acl acl_alfresco path_beg /alfresco
         acl acl_share path_beg /share
         acl acl_snowbound path_beg /VirtualViewerJavaHTML5
-        acl acl_foia path_beg /foia
         acl acl_arkcase path_beg /arkcase
         
         # ensure internal sites only visible internally
@@ -152,7 +151,6 @@
         use_backend be_alfresco if acl_alfresco
         use_backend be_share if acl_share
         use_backend be_snowbound if acl_snowbound
-        use_backend be_foia if acl_foia
         use_backend be_arkcase if acl_arkcase
         
       #backend servers  
@@ -194,7 +192,25 @@
         server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   
   register: arkcase_config
-  
+
+- name: FOIA fronted part
+  become: yes
+  lineinfile:
+    backup: yes      
+    path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    line: "  acl acl_foia path_beg /foia"
+  when: foia_portal_context is defined
+
+- name: Tell FOIA fronted which backend will use
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    insertafter: "# backend uses"
+    line: "  use_backend be_foia if acl_foia"
+  when: foia_portal_context is defined  
+
 - name: FOIA context, if needed
   become: yes
   blockinfile:
