@@ -4,7 +4,7 @@ Description=SOLR Service
 
 [Service]
 Type=forking
-User=root
+User=solr
 Group=root
 PIDFile={{ root_folder }}/app/solr/bin/solr-8983.pid
 Restart=always
