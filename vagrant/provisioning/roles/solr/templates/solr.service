@@ -1,17 +1,12 @@
 [Unit]
-Description=Solr service
+Description=SOLR Service
+
 
 [Service]
 Type=forking
-RemainAfterExit=true
-ExecStart={{ root_folder }}/app/solr/bin/init.d/solr start
-ExecStop={{ root_folder }}/app/solr/bin/init.d/solr stop
-# Starting from CentOS 7.7 we can't specify the PIDfile for 
-# solr anymore; but systemd can find it from the process 
-# table anyway.
-# PIDFile={{ root_folder }}/app/solr/bin/solr-8983.pid
 User=root
 Group=root
+PIDFile=/opt/app/arkcase/app/solr/bin/solr-8983.pid
 Restart=always
 RestartSec=10
 StandardOutput=syslog
@@ -20,6 +15,8 @@ SyslogIdentifier=solr
 LimitNOFILE=65000
 LimitNPROC=65000
 Environment="SOLR_PORT={{ solr_port }}"
+ExecStart={{ root_folder }}/app/solr/bin/solr start
+ExecStop={{ root_folder }}/app/solr/bin/solr stop
 
 [Install]
 WantedBy=multi-user.target
