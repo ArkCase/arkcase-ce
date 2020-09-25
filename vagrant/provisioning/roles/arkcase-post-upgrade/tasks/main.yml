@@ -38,6 +38,5 @@
    command: cp -f {{ latest_config_backup_folder.path }}/acm/acm-config-server-repo/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/{{ item }}
    loop:
      - "arkcase-portal-server.yaml"
-     - "arkcase-portal-server.yaml"
    when: foia_portal_context is defined
    ignore_errors: true
