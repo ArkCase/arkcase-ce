@@ -45,11 +45,10 @@
   file:
     path: "{{ item }}"
     state: directory
+    recurse: yes
   loop:
-    - "{{ root_folder }}/app/alfresco/shared"
-    - "{{ root_folder }}/app/alfresco/shared/classes"
+    - "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1"      
     - "{{ root_folder }}/app/alfresco/shared/lib"
-    - "{{ root_folder }}/app/alfresco/modules"
     - "{{ root_folder }}/app/alfresco/modules/platform"
     - "{{ root_folder }}/app/alfresco/modules/share"
 
@@ -277,7 +276,7 @@
       synchronization.syncOnStartup=true
       synchronization.syncWhenMissingPeopleLogIn=true
       synchronization.autoCreatePeopleOnLogin=false
-      synchronization.import.cron=* */5 * * * ? *
+      synchronization.import.cron=0 0/5 * * * ? *
       csrf.filter.enabled=false
       dir.root={{ root_folder }}/data/alfresco/alf_data
       db.name=alfresco
@@ -350,13 +349,6 @@
       ldap.synchronization.groupType=group
       ldap.synchronization.personType=user
       ldap.synchronization.userIdAttributeName=samAccountName
-      #### LDAP host-specific settings
-      ldap.authentication.java.naming.provider.url={{ ldap_url }}
-      ldap.synchronization.java.naming.security.principal={{ ldap_bind_user }}
-      ldap.synchronization.java.naming.security.credentials={{ ldap_bind_password }}
-      ldap.synchronization.groupSearchBase={{ ldap_group_base }}
-      ldap.synchronization.userSearchBase={{ ldap_user_base }}
-      ldap.authentication.userNameFormat=%s@{{ active_directory_domain }}
       # remove unneeded Alfresco activity
       system.usages.enabled=false
       cifs.enabled=false
@@ -373,6 +365,49 @@
       opencmis.servletpath.value=
       opencmis.server.override=true
       opencmis.server.value=https://{{ external_host }}/alfresco/api
+
+- name: create and populate ldap1-ad.properties
+  become: yes
+  become_user: alfresco
+  copy:
+    dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1/ldap-ad.properties"
+    content: |
+      ldap.authentication.java.naming.provider.url={{ ldap_url }}
+      ldap.synchronization.java.naming.security.principal={{ ldap_bind_user }}
+      ldap.synchronization.java.naming.security.credentials={{ ldap_bind_password }}
+      ldap.synchronization.groupSearchBase={{ ldap_group_base }}
+      ldap.synchronization.userSearchBase={{ ldap_user_base }}
+      ldap.authentication.userNameFormat=%s@{{ active_directory_domain }}
+
+- name: change alfresco-global.properties to support second LDAP configuration
+  block:
+    - name: add ldap2 in AD/Samba section
+      become: yes
+      become_user: alfresco
+      replace:
+        path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco-global.properties"
+        regexp: authentication\.chain=external1:external,ldap1:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+        replace: authentication.chain=external1:external,ldap1:ldap-ad,ldap2:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+    - name: create ldap-ad folder structure for ldap2
+      become: yes
+      become_user: alfresco
+      file:
+        path: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap2"
+        state: directory
+        recurse: yes
+    - name: create ldap2-ad.properties file and populate it
+      become: yes
+      become_user: alfresco
+      copy:
+        dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap2/ldap-ad.properties"
+        content: |
+          ldap.authentication.java.naming.provider.url={{ ldap_url }}
+          ldap.synchronization.java.naming.security.principal={{ ldap_bind_user }}
+          ldap.synchronization.java.naming.security.credentials={{ ldap_bind_password }}
+          ldap.synchronization.groupSearchBase={{ ldap_portal_group_no_base }},{{ ldap_base }}
+          ldap.synchronization.userSearchBase={{ ldap_portal_user_no_base }},{{ ldap_base }}
+          ldap.authentication.userNameFormat=%s@{{ active_directory_domain }}
+  when: foia_portal_context is defined        
 
 - name: configure alfresco.log location
   block:
