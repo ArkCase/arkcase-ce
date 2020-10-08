@@ -327,6 +327,8 @@ arkcase_extension_reports:
     jar_path: ""
     pentaho_path: ""
 
+foia_portal_context: foia
+
 # foia reports
 arkcase_foia_reports:
   - path: "foia-audit"
