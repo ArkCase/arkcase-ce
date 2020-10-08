@@ -133,7 +133,7 @@
         
         # for URLs that should not be called from outside, 
         # but only by services within our network.
-        acl only_localhost src 127.0.0.1
+        acl only_localhost src {{ arkcase_host_address | default('127.0.0.1') }}
         
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho
