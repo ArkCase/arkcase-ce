@@ -89,7 +89,8 @@
         Substitute "s|/api/|/control-center/api/|i"
         Substitute "s|{{ internal_host }}/clusters/|{{ internal_host }}/control-center/clusters/|i"
       </Location>
-  when: enable_kafka is defined and enable_kafka == "yes" and enable_elasticsearch is defined and enable_elasticsearch == "yes" 
+  when: enable_kafka is defined and enable_kafka == "yes" 
+  register: control_center_httpd
 
 - name: ArkCase index.html
   become: yes
@@ -138,7 +139,7 @@
   systemd:
     name: httpd
     state: restarted
-  when: tls_conf is changed or mod_security_conf_updated is changed
+  when: tls_conf is changed or mod_security_conf_updated is changed or control_center_httpd is changed
 
 - name: Check whether I am inside a Docker container
   stat:

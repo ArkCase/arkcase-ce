@@ -504,3 +504,5 @@ zipkin_version: 2.21.4
 # Enable these for Arkcase.NEXT development
 enable_elasticsearch: "no"
 enable_kafka: "no"
+enable_zipkin: "no"
+enable_eureka: "no"
