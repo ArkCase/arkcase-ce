@@ -233,7 +233,7 @@
   block:
     - name: Populate haproxy.conf with fronted part 
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK CONFLUENT PLATFORM CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL CONFLUENT PLATFORM CONTEXT"
       insertafter: "#arkcase.next services"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -244,7 +244,7 @@
     
     - name: Tell fronted part which backend servers will use
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK CONFLUENT PLATFORM CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND CONFLUENT PLATFORM CONTEXT"
       insertafter: "# backend uses"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -255,7 +255,7 @@
     
     - name: Populate haproxy.conf with backend servers for Confluent platform
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK CONFLUENT PLATFORM CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND CONFLUENT PLATFORM CONTEXT"
       insertafter: "#backend servers"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -291,7 +291,7 @@
   block:
     - name: Populate haproxy.conf with fronted part
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK ELASTICSEARCH CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ELASTICSEARCH CONTEXT"
       insertafter: "#arkcase.next services"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -299,7 +299,7 @@
 
     - name: Tell fronted part which backend servers will use
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK ELASTICSEARCH CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ELASTICSEARCH CONTEXT"
       insertafter: "# backend uses"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -307,7 +307,7 @@
 
     - name: Populate haproxy.conf with backend servers for ElasticSearch
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK ELASTICSEARCH CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ELASTICSEARCH CONTEXT"
       insertafter: "#backend servers"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -324,7 +324,7 @@
   block:
     - name: Populate haproxy.conf with fronted part
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK ZIPKIN CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ZIPKIN CONTEXT"
       insertafter: "#arkcase.next services"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -334,7 +334,7 @@
 
     - name: Tell fronted part which backend servers will use
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK ZIPKIN CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ZIPKIN CONTEXT"
       insertafter: "# backend uses"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -344,7 +344,7 @@
 
     - name: Populate haproxy.conf with backend servers for Zipkin
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK ZIPKIN CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ZIPKIN CONTEXT"
       insertafter: "#backend servers"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -373,7 +373,7 @@
   block:
     - name: Populate haproxy.conf with fronted part
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK EUREKA CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL EUREKA CONTEXT"
       insertafter: "#arkcase.next services"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -383,7 +383,7 @@
 
     - name: Tell fronted part which backend servers will use
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK EUREKA CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND EUREKA CONTEXT"
       insertafter: "# backend uses"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
@@ -393,7 +393,7 @@
           
     - name: Populate haproxy.conf with backend servers for Eureka
       become: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK EUREKA CONTEXT"
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND EUREKA CONTEXT"
       insertafter: "#backend servers"
       path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
       block: |
