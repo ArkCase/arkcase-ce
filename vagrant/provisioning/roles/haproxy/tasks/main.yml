@@ -440,20 +440,20 @@
     src: /usr/lib/systemd/system/rh-haproxy18-haproxy.service
     dest: /etc/systemd/system/haproxy.service
     state: link
-  register: haproxy_serivce_name
+  register: haproxy_service_name
 
 - name: Daemon reload if haproxy service uses another name
   become: yes
   systemd:
     daemon_reload: yes
-  when: haproxy_serivce_name is changed
+  when: haproxy_service_name is changed
 
-#- name: enable haproxy to connect to any port
-#  become: yes
-#  seboolean:
-#    name: haproxy_connect_any
-#    state: yes
-#    persistent: yes
+- name: enable haproxy to connect to any port
+  become: yes
+  seboolean:
+    name: haproxy_connect_any
+    state: yes
+    persistent: yes
     
 - name: enable haproxy
   become: yes
