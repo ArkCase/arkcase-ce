@@ -35,6 +35,7 @@
     state: directory
     owner: haproxy
     group: haproxy
+    mode: '0755'
 
 - name: Change rsyslog.conf for allow haproxy logging
   become: yes
@@ -142,6 +143,8 @@
         acl acl_snowbound path_beg /VirtualViewerJavaHTML5
         acl acl_arkcase path_beg /arkcase
         
+        #arkcase.next services
+
         # ensure internal sites only visible internally
         http-request deny if acl_solr !only_localhost
         
@@ -226,13 +229,216 @@
         server foia0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   when: foia_portal_context is defined
 
-- name: haprxy logrotate
+- name: Set up proxies to Confluent Platform services
+  block:
+    - name: Populate haproxy.conf with fronted part 
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL CONFLUENT PLATFORM CONTEXT"
+      insertafter: "#arkcase.next services"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        acl acl_schema-registry path_beg /schema-registry
+        acl acl_control-center path_beg /control-center
+        acl acl_config path_beg /config
+        acl acl_control-center-ws path_beg /ws
+    
+    - name: Tell fronted part which backend servers will use
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND CONFLUENT PLATFORM CONTEXT"
+      insertafter: "# backend uses"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        use_backend be_schema-registry if acl_schema-registry
+        use_backend be_control-center if acl_control-center
+        use_backend be_config if acl_config
+        use_backend be_control-center-ws if acl_control-center-ws
+    
+    - name: Populate haproxy.conf with backend servers for Confluent platform
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND CONFLUENT PLATFORM CONTEXT"
+      insertafter: "#backend servers"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        backend be_schema-registry
+          http-response add-header X-Schema-registry %s
+          mode http
+          option tcp-check
+          server schema-registry {{ internal_host }}:8081
+          reqrep ^([^\ ]*\ /)schema-registry[/]?(.*)     \1\2
+
+        backend be_control-center
+          http-response add-header X-Control-Center %s
+          mode http
+          option tcp-check
+          server control-center {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+        backend be_control-center-ws
+          mode http
+          option tcp-check
+          server controlws {{ internal_host }}:9021
+          reqrep (.*\/)control-center\/(.*)     \1\2
+
+        backend be_config
+          http-response add-header X-Config %s
+          mode http
+          option tcp-check
+          server config {{ arkcase_host }}:9999 
+
+  when: enable_kafka is defined and enable_kafka == "yes"
+  register: kafka_haproxy
+
+- name: Set up proxies to Elasticsearch
+  block:
+    - name: Populate haproxy.conf with fronted part
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ELASTICSEARCH CONTEXT"
+      insertafter: "#arkcase.next services"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        acl acl_elasticsearch path_beg /elasticsearch
+
+    - name: Tell fronted part which backend servers will use
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ELASTICSEARCH CONTEXT"
+      insertafter: "# backend uses"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        use_backend be_elasticsearch if acl_elasticsearch
+
+    - name: Populate haproxy.conf with backend servers for ElasticSearch
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ELASTICSEARCH CONTEXT"
+      insertafter: "#backend servers"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        backend be_elasticsearch
+          http-response add-header X-Elasticsearch %s
+          mode http
+          option tcp-check
+          server elasticsearch {{ internal_host }}:9200
+  
+  when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
+  register: elasticsearch_haproxy
+
+- name: Set up proxies to Zipkin
+  block:
+    - name: Populate haproxy.conf with fronted part
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ZIPKIN CONTEXT"
+      insertafter: "#arkcase.next services"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        acl acl_zipkin-health path_beg /zipkin/health
+        acl acl_zipkin-api path_beg /zipkin/api
+        acl acl_zipkin path_beg /zipkin
+
+    - name: Tell fronted part which backend servers will use
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ZIPKIN CONTEXT"
+      insertafter: "# backend uses"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        use_backend be_zipkin-health if acl_zipkin-health
+        use_backend be_zipkin-api if acl_zipkin-api
+        use_backend be_zipkin if acl_zipkin
+
+    - name: Populate haproxy.conf with backend servers for Zipkin
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ZIPKIN CONTEXT"
+      insertafter: "#backend servers"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        backend be_zipkin-health
+          http-response add-header X-Zipkin-Health %s
+          mode http
+          option tcp-check
+          server zipkin-health {{ internal_host }}:9411/health
+
+        backend be_zipkin-api
+          http-response add-header X-Zipkin-Api %s
+          mode http
+          option tcp-check
+          server zipkin-api {{ internal_host }}:9411/api
+
+        backend be_zipkin
+          http-response add-header X-Zipkin %s
+          mode http
+          option tcp-check
+          server zipkin {{ internal_host }}:9411/zipkin
+
+  when: enable_zipkin is defined and enable_zipkin == 'yes'
+  register: zipkin_haproxy    
+
+- name: Set up proxies to Eureka
+  block:
+    - name: Populate haproxy.conf with fronted part
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ACL EUREKA CONTEXT"
+      insertafter: "#arkcase.next services"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        acl acl_gateway path_beg /gateway
+        acl acl_eureka path_beg /eureka
+        acl acl_eureka-dashboard path_beg /eureka-dashboard
+
+    - name: Tell fronted part which backend servers will use
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND EUREKA CONTEXT"
+      insertafter: "# backend uses"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        use_backend be_gateway if acl_gateway
+        use_backend be_eureka if acl_eureka
+        use_backend be_eureka-dashboard if acl_eureka-dashboard
+          
+    - name: Populate haproxy.conf with backend servers for Eureka
+      become: yes
+      marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND EUREKA CONTEXT"
+      insertafter: "#backend servers"
+      path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+      block: |
+        backend be_gateway
+          http-response add-header X-Gateway %s
+          mode http
+          option tcp-check
+          server gateway {{ arkcase_host }}:9000
+
+        backend be_eureka
+          http-response add-header X-Eureka %s
+          mode http
+          option tcp-check
+          server eureka {{ arkcase_host }}:9000/eureka
+
+        backend be_eureka-dashboard
+          http-response add-header X-Eureka-Dashboard %s
+          mode http
+          option tcp-check
+          server eureka-dashboard {{ arkcase_host }}:9000/eureka-dashboard
+  
+  when: enable_eureka is defined and enable_eureka == 'yes'
+  register: eureka_haproxy
+
+- name: haproxy logrotate
   become: yes
   template:
     src: rh-haproxy18-haproxy.logrotate.d 
     dest: "/etc/logrotate.d/rh-haproxy18-haproxy"
     force: yes
     backup: yes
+
+- name: Change haproxy service name
+  become: yes
+  file:
+    src: /usr/lib/systemd/system/rh-haproxy18-haproxy.service
+    dest: /etc/systemd/system/haproxy.service
+    state: link
+  register: haproxy_serivce_name
+
+- name: Daemon reload if haproxy service uses another name
+  become: yes
+  systemd:
+    daemon_reload: yes
+  when: haproxy_service_name is changed
 
 - name: enable haproxy to connect to any port
   become: yes
@@ -244,12 +450,12 @@
 - name: enable haproxy
   become: yes
   systemd:
-    name: rh-haproxy18-haproxy
+    name: haproxy
     enabled: yes
     
 - name: restart haproxy if needed
   become: yes
   systemd:
-    name: rh-haproxy18-haproxy
+    name: haproxy
     state: restarted
-  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed
+  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed or kafka_haproxy is changed or elasticsearch_haproxy is changed or zipkin_haproxy is changed or eureka_haproxy is changed
