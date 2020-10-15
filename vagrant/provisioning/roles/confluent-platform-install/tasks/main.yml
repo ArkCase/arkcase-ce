@@ -66,6 +66,30 @@
     - "{{ root_folder }}/data/ksql"
     - "{{ root_folder }}/log/ksql"
 
+- name: Schema-registry folders
+  become: yes
+  file:
+    path: "{{ root_folder }}/log/schema-registry"
+    state: directory
+    group: confluent
+    owner: cp-schema-registry
+
+- name: Control-center folders
+  become: yes
+  file:
+    path: "{{ root_folder }}/log/control-center"
+    state: directory
+    group: confluent
+    owner: cp-control-center
+
+- name: Kafka-rest folders
+  become: yes
+  file:
+    path: "{{ root_folder }}/log/kafka-rest"
+    state: directory
+    group: confluent
+    owner: cp-kafka-rest
+
 - name: Change kafka data location
   become: yes
   template:
@@ -73,6 +97,42 @@
     dest: /etc/kafka/
     force: yes
     backup: yes
+
+- name: Change ksql log location
+  become: yes
+  lineinfile:
+    path: /usr/lib/systemd/system/confluent-ksql.service
+    backup: yes
+    regex: "LOG=/var/log/confluent/ksql"
+    line: "LOG_DIR={{ root_folder }}/log/ksql"
+  register: systemd_ksql
+
+- name: Change kafka-rest log location
+  become: yes
+  lineinfile:
+    path: /usr/lib/systemd/system/confluent-kafka-rest.service
+    backup: yes
+    regex: "LOG=/var/log/confluent/kafka-rest"
+    line: "LOG_DIR={{ root_folder }}/log/kafka-rest"
+  register: systemd_kafka-rest
+
+- name: Change control-center log location
+  become: yes
+  lineinfile:
+    path: /usr/lib/systemd/system/confluent-control-center.service
+    backup: yes
+    regex: "LOG_DIR=/var/log/confluent/control-center"
+    line: "LOG_DIR={{ root_folder }}/log/control-center"
+  register: systemd_control-center  
+
+- name: Change schema-registry log location
+  become: yes
+  lineinfile:
+    path: /usr/lib/systemd/system/confluent-schema-registry.service
+    backup: yes
+    regex: "LOG=/var/log/confluent/schema-registry"
+    line: "LOG_DIR={{ root_folder }}/log/schema-registry"
+  register: systemd_schema-registry
 
 - name: Change ksql data location
   become: yes
@@ -134,8 +194,9 @@
 
 - name: Reload daemon files if needed
   become: yes
-  command: systemctl daemon-reload
-  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed
+  systemd:
+    daemon_reload: yes
+  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed or systemd_ksql is changed or systemd_kafka-rest is changed or systemd_control-center is changed or systemd_schema-registry is changed
 
 - name: Enable Zookeeper to start on boot
   become: yes
