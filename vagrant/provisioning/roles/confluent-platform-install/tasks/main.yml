@@ -114,7 +114,7 @@
     backup: yes
     regex: "LOG=/var/log/confluent/kafka-rest"
     line: "LOG_DIR={{ root_folder }}/log/kafka-rest"
-  register: systemd_kafka-rest
+  register: systemd_kafka_rest
 
 - name: Change control-center log location
   become: yes
@@ -123,7 +123,7 @@
     backup: yes
     regex: "LOG_DIR=/var/log/confluent/control-center"
     line: "LOG_DIR={{ root_folder }}/log/control-center"
-  register: systemd_control-center  
+  register: systemd_control_center  
 
 - name: Change schema-registry log location
   become: yes
@@ -132,7 +132,7 @@
     backup: yes
     regex: "LOG=/var/log/confluent/schema-registry"
     line: "LOG_DIR={{ root_folder }}/log/schema-registry"
-  register: systemd_schema-registry
+  register: systemd_schema_registry
 
 - name: Change ksql data location
   become: yes
@@ -196,7 +196,7 @@
   become: yes
   systemd:
     daemon_reload: yes
-  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed or systemd_ksql is changed or systemd_kafka-rest is changed or systemd_control-center is changed or systemd_schema-registry is changed
+  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed or systemd_ksql is changed or systemd_kafka_rest is changed or systemd_control_center is changed or systemd_schema_registry is changed
 
 - name: Enable Zookeeper to start on boot
   become: yes
