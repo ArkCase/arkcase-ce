@@ -71,10 +71,10 @@
     attributes:
       description: "{{ item }}"
   loop:
-    - "{{ ldap_portal_group_base }}"
-    - "{{ ldap_portal_user_base }}"
-  when: ldap_portal_group_base is defined
-    
+    - "{{ ldap_portal_group_no_base }},{{ ldap_base }}"
+    - "{{ ldap_portal_user_no_base }},{{ ldap_base }}"
+  when: foia_portal_context is defined
+
 - name: add arkcase groups
   ldap_entry:
     server_uri: "{{ ldap_url }}"
@@ -105,9 +105,43 @@
       description: "{{ item.description }}"
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
-  loop: "{{ ldap_portal_groups | flatten }}"
-  when: ldap_portal_groups is defined
-     
+  loop: "{{ ldap_groups|flatten }}"
+
+- name: remove portal group from ArkCase OU if exists
+  ldap_entry:
+    server_uri: "{{ ldap_url }}"
+    validate_certs: no
+    bind_dn: "{{ ldap_bind_user }}"
+    bind_pw: "{{ ldap_bind_password }}"
+    dn: "CN={{ item.name }},{{ ldap_group_no_base }},{{ ldap_base }}"
+    state: absent
+    objectClass:
+      - group
+      - top
+    attributes:
+      description: "{{ item.description }}"
+      samAccountName: "{{ item.name }}"
+      cn: "{{ item.name }}"
+  loop: "{{ ldap_portal_groups|flatten }}"
+  when: foia_portal_context is defined
+
+- name: add portal groups
+  ldap_entry:
+    server_uri: "{{ ldap_url }}"
+    validate_certs: no
+    bind_dn: "{{ ldap_bind_user }}"
+    bind_pw: "{{ ldap_bind_password }}"
+    dn: "CN={{ item.name }},{{ ldap_portal_group_no_base }},{{ ldap_base }}"
+    objectClass:
+      - group
+      - top
+    attributes:
+      description: "{{ item.description }}"
+      samAccountName: "{{ item.name }}"
+      cn: "{{ item.name }}"
+  loop: "{{ ldap_portal_groups|flatten }}"  
+  when: foia_portal_context is defined
+
 - name: add users
   include_tasks: add-user.yml
   loop: "{{ ldap_users }}"    

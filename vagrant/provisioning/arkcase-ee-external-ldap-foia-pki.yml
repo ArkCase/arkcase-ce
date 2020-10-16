@@ -7,8 +7,6 @@
       tags: [core, pki]
     - role: pki_client
       tags: [core, pki_client]
-    - role: samba
-      tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
     - role: mariadb
@@ -21,8 +19,8 @@
       tags: [core, activemq]
     - role: alfresco-setup
       tags: [core, alfresco, alfresco-setup]
-    - role: alfresco-ce
-      tags: [core, alfresco-ce]
+    - role: alfresco-ee
+      tags: [core, alfresco, alfresco-ee]
     - role: alfresco
       tags: [core, alfresco]
     - role: alfresco-site
@@ -45,13 +43,16 @@
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
-    - role: privacy
-      tags: [core, privacy]
+    - role: foia
+      tags: [core, foia]
+    - role: pentaho-pdi-client
+      tags: [core, foia, foia-analytical-reports]
+    - role: foia-analytical-reports
+      tags: [core, foia, foia-analytical-reports]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
       tags: [core, firewall]
     - role: start-arkcase
       tags: [core, arkcase]
-
     

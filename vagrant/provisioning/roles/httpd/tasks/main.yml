@@ -82,6 +82,29 @@
       </Directory>
   when: foia_portal_context is defined
 
+- name: Control-center context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK CONTROL-CENTER CONTEXT"
+    insertbefore: "</VirtualHost>"
+    path: "/etc/httpd/conf.d/ssl.conf"
+    block: |
+      ProxyPass /control-center http://{{ internal_host }}:9021
+      ProxyPassReverse /control-center http://{{ internal_host }}:9021
+      <Location "/control-center">
+        AddOutputFilterByType INFLATE;SUBSTITUTE;DEFLATE text/html
+        AddOutputFilterByType INFLATE;SUBSTITUTE;DEFLATE application/javascript
+        SubstituteMaxLineLength 10M
+        Substitute "s|/dist/|/control-center/dist/|i"
+        Substitute "s|/2.0/|/control-center/2.0/|i"
+        Substitute "s|/3.0/|/control-center/3.0/|i"
+        Substitute "s|/api/|/control-center/api/|i"
+        Substitute "s|{{ internal_host }}/clusters/|{{ internal_host }}/control-center/clusters/|i"
+      </Location>
+  when: enable_kafka is defined and enable_kafka == "yes" 
+  register: control_center_httpd
+
 - name: ArkCase index.html
   become: yes
   become_user: apache
@@ -129,7 +152,7 @@
   systemd:
     name: httpd
     state: restarted
-  when: tls_conf is changed or mod_security_conf_updated is changed or alfresco_redirect_conf is changed
+  when: tls_conf is changed or mod_security_conf_updated is changed or control_center_httpd is changed
 
 - name: Check whether I am inside a Docker container
   stat:

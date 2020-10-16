@@ -15,6 +15,8 @@
       tags: [core, mariadb]
     - role: httpd
       tags: [core, httpd]
+    - role: haproxy
+      tags: [core, haproxy]
     - role: activemq
       tags: [core, activemq]
     - role: alfresco-setup
@@ -48,3 +50,5 @@
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
       tags: [core]
+    - role: disable-admin
+      tags: [core, ldap]

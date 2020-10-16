@@ -48,4 +48,11 @@
   file:
     dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/lib/mysql-connector-java-5.1.17.jar"
     state: absent
-    
+
+- name: change getting started port
+  become: yes
+  become_user: pentaho
+  replace:
+    path: /opt/arkcase/app/pentaho/pentaho-server/pentaho-solutions/system/GettingStartedDB.properties
+    regexp: '9092'
+    replace: '6092'    

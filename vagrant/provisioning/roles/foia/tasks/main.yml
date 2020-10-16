@@ -133,6 +133,7 @@
     force: no
     src: application.properties
     dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api"
+  when: arkcase_version != "" and arkcase_version is version('2020.14', '<')
 
 - name: ensure no acm-activemq in application.properties
   become: yes
@@ -141,6 +142,25 @@
     path: "{{ root_folder }}/data/arkcase-home/.external-portal-api/application.properties"
     regexp: "acm-activemq"
     replace: "{{ activemq_host }}"
+  when: arkcase_version != "" and arkcase_version is version('2020.14', '<')
+
+- name: server configuration
+  become: yes
+  become_user: arkcase
+  template:
+    force: yes
+    src: arkcase-portal-server.yaml
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
+  when: arkcase_version != "" and arkcase_version is version('2020.14', '>=') and arkcase_version is version('2020.16', '<')
+
+- name: server configuration from version 2020.16
+  become: yes
+  become_user: arkcase
+  template:
+    force: yes
+    src: arkcase-portal-server-2020.16.yaml
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
+  when: arkcase_version == "" or arkcase_version is version('2020.16', '>=')
 
 - name: configure LDAP
   include_role: 
@@ -221,14 +241,6 @@
     regexp: "server,runtime"
     replace: "FOIA_server,server,runtime"
   when: "'FOIA_server,server,runtime' not in foia_conf_yml.stdout"
-
-- name: deploy foia reports
-  include_tasks: deploy_foia_report.yml
-  loop: "{{ arkcase_foia_reports }}"
-  loop_control:
-    loop_var: r
-  vars:
-    report_path: "foia"
 
 - name: deploy foia audit reports
   include_tasks: deploy_foia_report.yml

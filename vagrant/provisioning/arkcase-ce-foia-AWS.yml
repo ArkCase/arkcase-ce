@@ -22,7 +22,7 @@
     - role: alfresco-setup
       tags: [core, alfresco, alfresco-setup]
     - role: alfresco-ce
-      tags: [core, alfresco-ce]
+      tags: [core, alfresco, alfresco-ce]
     - role: alfresco
       tags: [core, alfresco]
     - role: alfresco-site
@@ -31,27 +31,28 @@
       tags: [core, solr]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
-    - role: pentaho-ee
-      tags: [core, pentaho, pentaho-ee]
+    - role: pentaho-ce
+      tags: [core, pentaho, pentaho-ce]
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
-    - role: pentaho-license
-      tags: [core, pentaho, pentaho-license]
+    - role: confluent-platform-install
+      tags: [confluent]
     - role: arkcase-prerequisites
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
-    - role: privacy
-      tags: [core, privacy]
+    - role: foia
+      tags: [core, foia]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
-      tags: [core, firewall]
+      when: enable_firewall is undefined or enable_firewall
+      tags: [core]
     - role: start-arkcase
       tags: [core, arkcase]
-
-    
+    - role: disable-admin
+      tags: [core, ldap]
