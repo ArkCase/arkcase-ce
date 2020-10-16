@@ -50,7 +50,7 @@ Next, update your hosts file with an entry like below:
 
 Being careful to replace `192.168.56.15` with the correct IP address as output by the command `vagrant ssh -c ifconfig`.  Note, on Linux and Mac OSX, the hosts file is the file `/etc/hosts`; on Windows, it is `C:\Windows\System32\Drivers\etc\hosts` (or `%SystemDrive%\Windows\System32\Drivers\etc\hosts` in case Windows is not installed on the C drive).
 
-Now you should be able to open the web site `https://arcase-ce.local/arkcase` in your browser.  You will have to accept the ArkCase HTTPS certificate; your browser will show you a warning since ArkCase CE uses its own root certificate. 
+Now you should be able to open the web site `https://arkcase-ce.local/arkcase` in your browser.  You will have to accept the ArkCase HTTPS certificate; your browser will show you a warning since ArkCase CE uses its own root certificate. 
 
 The default admin user is `arkcase-admin@arkcase.org`, password `@rKc@3e`.
 
