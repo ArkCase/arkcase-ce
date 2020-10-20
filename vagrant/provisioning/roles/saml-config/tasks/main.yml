@@ -69,4 +69,16 @@
     regexp: 'logoutUrl: "/logout"'
     replace: 'logoutUrl: "/saml/logout"'
 
+- name: import SAML federation host certificate
+  become: yes
+  become_user: arkcase
+  java_cert:
+    cert_alias: "{{ saml_federation_host }}"
+    cert_port: 443
+    cert_url: "{{ saml_federation_host }}"
+    keystore_path: "{{ java_key_store }}"
+    keystore_pass: "{{ java_key_store_pass }}"
+    state: present
+
+
 
