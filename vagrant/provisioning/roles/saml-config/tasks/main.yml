@@ -52,20 +52,21 @@
     replace: "{{ item.replace }}"
   loop:
     - regexp: 'arkcase/acm/private/saml-keystore'
-      replace: 'arkcase/acm/private/keystore'
+      replace: 'arkcase/acm/private/arkcase.ks'
     - regexp: 'type="java.lang.String" value="password"'
-      replace: 'type="java.lang.String" value="changeit"'
+      replace: 'type="java.lang.String" value="{{ internal_host }}"'
     - regexp: 'key="armedia" value="AcMd3v\$"'
-      replace: 'key="eeoc-pre-prod-app-server" value="changeit"'
+      replace: 'key="{{ internal_host }}" value="{{ internal_host }}"'
     - regexp: 'type="java.lang.String" value="armedia"'
-      replace: 'type="java.lang.String" value="eeoc-pre-prod-app-server"'
+      replace: 'type="java.lang.String" value="{{ internal_host }}"'
 
-- name: copy the saml keystore
+- name: configure logout URL for SAML
   become: yes
   become_user: arkcase
-  copy:
+  replace:
     backup: yes
-    src: "{{ root_folder }}/install/arkcase/keystore"
-    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/keystore"
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml"
+    regexp: 'logoutUrl: "/logout"'
+    replace: 'logoutUrl: "/saml/logout"'
 
 
