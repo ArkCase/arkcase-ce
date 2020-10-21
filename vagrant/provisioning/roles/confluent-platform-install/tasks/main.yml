@@ -54,7 +54,6 @@
   loop:
     - "{{ root_folder }}/data/kafka"
     - "{{ root_folder }}/log/kafka"
-    - "{{ root_folder }}/app/kafka"
 
 - name: KSQL folders
   become: yes
@@ -66,7 +65,6 @@
   loop:
     - "{{ root_folder }}/data/ksql"
     - "{{ root_folder }}/log/ksql"
-    - "{{ root_folder }}/app/ksql"
 
 - name: Schema-registry folders
   become: yes
@@ -78,7 +76,6 @@
   loop:
     - "{{ root_folder }}/data/schema-registry"
     - "{{ root_folder }}/log/schema-registry"
-    - "{{ root_folder }}/app/schema-registry"
 
 - name: Control-center folders
   become: yes
@@ -90,7 +87,6 @@
   loop:
     - "{{ root_folder }}/data/control-center"
     - "{{ root_folder }}/log/control-center"
-    - "{{ root_folder }}/app/control-center"
 
 - name: Kafka-rest folders
   become: yes
@@ -102,7 +98,6 @@
   loop:
     - "{{ root_folder }}/data/kafka-rest"
     - "{{ root_folder }}/log/kafka-rest"
-    - "{{ root_folder }}/app/kafka-rest"
 
 - name: Change Confluent Services config location
   become: yes
@@ -114,12 +109,13 @@
     - /etc/confluent-control-center/ {{ root_folder }}/app/control-center/
     - /etc/kafka-rest/ {{ root_folder }}/app/kafka-rest/
   register: confluent_services_location_updated
+  ignore_errors: yes
 
 - name: Change kafka data location
   become: yes
   template:
     src: server.properties
-    dest: {{ root_folder }}/app/kafka/
+    dest: "{{ root_folder }}/app/kafka/"
     force: yes
     backup: yes    
     
@@ -127,7 +123,7 @@
   become: yes
   template:
     src: ksql-server.properties
-    dest: {{ root_folder }}/app/ksql/
+    dest: "{{ root_folder }}/app/ksql/"
     force: yes
     backup: yes
 
@@ -138,7 +134,7 @@
 
 - name: Enable Control Center to work with 1 broker
   lineinfile:
-    path: {{ root_folder }}/app/control-center/control-center-production.properties
+    path: "{{ root_folder }}/app/control-center/control-center-production.properties"
     state: present
     insertafter: EOF
     line: "{{ item }}"
@@ -153,7 +149,7 @@
   become: yes
   template:
     src: log4j.properties
-    dest: {{ root_folder }}/app/kafka
+    dest: "{{ root_folder }}/app/kafka"
     force: yes
     backup: yes
 
@@ -161,7 +157,7 @@
   become: yes
   template:
     src: connect-log4j.properties
-    dest: {{ root_folder }}/app/kafka
+    dest: "{{ root_folder }}/app/kafka"
     force: yes
     backup: yes
 
@@ -184,7 +180,7 @@
 - name: Control-center systemd unit file
   become: yes
   template:
-    src: confluent-control-ceter.service
+    src: confluent-control-center.service
     dest: /etc/systemd/system/confluent-control-center.service
     backup: yes
   register: systemd_control_center_updated
