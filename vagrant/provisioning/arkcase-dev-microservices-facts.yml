@@ -333,6 +333,8 @@ foia_portal_context: foia
 arkcase_foia_reports:
   - path: "foia-audit"
     definition: "AuditReport.prpt"
+  - path: "foia"
+    definition: "FOIA Log.prpt"
 
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
