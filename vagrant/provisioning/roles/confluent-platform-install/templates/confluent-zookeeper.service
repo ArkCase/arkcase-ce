@@ -8,7 +8,7 @@ Type=simple
 User=cp-kafka
 Group=confluent
 Environment="LOG_DIR={{ root_folder }}/log/kafka"
-ExecStart=/usr/bin/zookeeper-server-start /etc/kafka/zookeeper.properties
+ExecStart=/usr/bin/zookeeper-server-start {{root_folder}}/app/kafka/zookeeper.properties
 TimeoutStopSec=180
 Restart=no
 
