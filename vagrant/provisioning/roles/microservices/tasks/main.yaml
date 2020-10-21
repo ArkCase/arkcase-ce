@@ -9,14 +9,6 @@
   loop:
     - "9092/tcp"   # Kafka
 
-- name: Add HTTPD proxy settings for microservices
-  become: yes
-  blockinfile:
-    path: /etc/httpd/conf.d/ssl.conf
-    block: "{{ lookup('template', 'templates/ssl.conf') }}"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK for microservices"
-    insertbefore: "BrowserMatch"
-
 # CentOS 7 ships with HTTPD version 2.4.6. We need at least version 2.4.11 for the SubstituteMaxLineLength directive
 - name: Copy the HTTPD CodeIT repo
   template:
