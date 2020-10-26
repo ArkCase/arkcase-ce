@@ -22,12 +22,37 @@
     state: latest
     name:
       - httpd
+  register: httpd_upgrade
+
+- name: Populate control-center context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK CONTROL-CENTER CONTEXT"
+    insertbefore: "</VirtualHost>"
+    path: "/etc/httpd/conf.d/ssl.conf"
+    block: |
+      ProxyPass /control-center http://{{ internal_host }}:9021
+      ProxyPassReverse /control-center http://{{ internal_host }}:9021
+      <Location "/control-center">
+        AddOutputFilterByType INFLATE;SUBSTITUTE;DEFLATE text/html
+        AddOutputFilterByType INFLATE;SUBSTITUTE;DEFLATE application/javascript
+        SubstituteMaxLineLength 10M
+        Substitute "s|/dist/|/control-center/dist/|i"
+        Substitute "s|/2.0/|/control-center/2.0/|i"
+        Substitute "s|/3.0/|/control-center/3.0/|i"
+        Substitute "s|/api/|/control-center/api/|i"
+        Substitute "s|{{ internal_host }}/clusters/|{{ internal_host }}/control-center/clusters/|i"
+      </Location>
+  when: enable_kafka is defined and enable_kafka == "yes"
+  register: control_center_httpd 
 
 - name: name restart HTTPD
   become: yes
   systemd:
     name: "httpd"
     state: restarted
+  when: httpd_upgrade is changed or control_center_httpd is changed
 
 - name: Create zipkin user
   become: yes
