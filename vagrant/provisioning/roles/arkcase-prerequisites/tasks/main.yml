@@ -120,3 +120,13 @@
     block: |
       export TEMP={{ root_folder }}/tmp/arkcase
       export TMP={{ root_folder }}/tmp/arkcase
+
+- name: configure external web portal logging file
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - EXTERNAL-PORTAL LOGGING"
+    block: |
+      export LOG_FILE={{ root_folder }}/log/arkcase/externalPortal.log
