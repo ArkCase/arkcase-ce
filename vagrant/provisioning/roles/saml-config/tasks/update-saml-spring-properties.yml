@@ -1,0 +1,17 @@
+- name: update {{ saml_prop_file }}
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/spring-security/{{ saml_prop_file }}"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: 'arkcase/acm/private/saml-keystore'
+      replace: 'arkcase/acm/private/arkcase.ks'
+    - regexp: 'type="java.lang.String" value="password"'
+      replace: 'type="java.lang.String" value="{{ internal_host }}"'
+    - regexp: 'key="armedia" value="AcMd3v\$"'
+      replace: 'key="{{ internal_host }}" value="{{ internal_host }}"'
+    - regexp: 'type="java.lang.String" value="armedia"'
+      replace: 'type="java.lang.String" value="{{ internal_host }}"'
