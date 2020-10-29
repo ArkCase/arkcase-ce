@@ -1,0 +1,137 @@
+- name: install zabbix package repository
+  become: yes
+  package:
+    name: https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-{{ zabbix_version | default('5.0-1.el7') }}.noarch.rpm
+    state: present
+
+- name: enable zabbix-frontend (but not other zabbix repositories)
+  become: yes
+  replace:
+    backup: yes
+    path: /etc/yum.repos.d/zabbix.repo
+    after: "frontend"
+    before: "debuginfo"
+    regexp: "enabled=0"
+    replace: "enabled=1"
+
+- name: install zabbix packages, CentOS Package Collections, SELinux utils
+  become: yes
+  package:
+    name:
+      - zabbix-server-mysql
+      - zabbix-agent
+      - zabbix-java-gateway
+      - centos-release-scl
+      - setools-console
+    state: present
+
+- name: install Zabbix front-end packages
+  become: yes
+  package:
+    name:
+      - zabbix-web-mysql-scl
+      - zabbix-apache-conf-scl
+    state: present
+
+- name: set flag for local db, if local
+  set_fact:
+    schema_task_name: create_schema
+  when: not rds_password is defined
+
+- name: set flag for RDS, if RDS
+  set_fact:
+    schema_task_name: create_schema_rds
+  when: rds_password is defined
+
+- name: create zabbix database schema
+  include_tasks: "{{ role_path }}/../mariadb/tasks/{{ schema_task_name }}.yml"
+  args:
+    apply:
+      vars:
+        item: zabbix
+
+- name: get list of tables that already exist
+  command: mysql -uzabbix -p'{{ default_database_password }}' -h {{ database_host }} zabbix -e "show tables;"
+  register: table_list
+  changed_when: false
+
+- name: create zabbix database structures
+  shell: zcat /usr/share/doc/zabbix-server-mysql*/create.sql.gz | mysql -uzabbix -p'{{ default_database_password }}' -h {{ database_host }} zabbix
+  when: "'trends' not in table_list.stdout"
+
+- name: update zabbix server config
+  become: yes
+  blockinfile:
+    backup: yes
+    path: /etc/zabbix/zabbix_server.conf
+    block: | 
+      DBPassword={{ default_database_password }}
+      DBHost={{ database_host }}
+      DBName=zabbix
+      DBUser=zabbix
+
+- name: update Zabbix php config
+  become: yes
+  lineinfile:
+    backup: yes
+    path: /etc/opt/rh/rh-php72/php-fpm.d/zabbix.conf
+    line: php_value[date.timezone] = {{ server_time_zone | default('America/New_York') }}
+
+- name: SELinux policies
+  become: yes
+  command: setsebool -P {{ item }} 1
+  loop:
+    - httpd_can_network_connect
+    - httpd_can_connect_zabbix
+    - zabbix_can_network
+
+# following SELinux policy files were collected on a running Zabbix server 
+# via: grep zabbix_t /var/log/audit/audit.log | audit2allow -M zabbix_server_custom
+# per https://www.zabbix.com/forum/zabbix-help/367261-selinux-and-zabbix
+
+- name: copy SELinux policy files
+  become: yes
+  copy:
+    src: "{{ item }}"
+    dest: "{{ root_folder }}/common"
+  loop:
+    - zabbix_server_custom.pp
+    - zabbix_server_custom_2.pp
+
+- name: enable SELinux policies
+  become: yes
+  command: semodule -i {{ item }}
+  loop:
+    - "{{ root_folder }}/common/zabbix_server_custom.pp"
+    - "{{ root_folder }}/common/zabbix_server_custom_2.pp"
+
+- name: enable and start zabbix services
+  become: yes
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    state: started
+    name: "{{ item }}"
+  loop:
+    - zabbix-server
+    - zabbix-agent
+    - zabbix-java-gateway
+    - httpd 
+    - rh-php72-php-fpm
+
+- name: open firewall ports
+  become: yes
+  firewalld:
+    permanent: yes
+    immediate: yes
+    state: enabled
+    port: "{{ item }}"
+  loop:
+    - "10050/tcp"
+    - "80/tcp"
+    - "443/tcp"
+      
+
+
+
+
