@@ -285,7 +285,8 @@
             http-response add-header X-Config %s
             mode http
             option tcp-check
-            server config {{ arkcase_host }}:9999 
+            server config {{ arkcase_host }}:9999
+            http-request set-path %[path,regsub(^/config/,/)]
 
   when: enable_kafka is defined and enable_kafka == "yes"
 
