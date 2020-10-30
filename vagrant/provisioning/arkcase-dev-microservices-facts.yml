@@ -319,6 +319,8 @@ arkcase_core_reports:
   - path: "arkcase-audit"
     definition: "AuditReport.prpt"
 
+# arkcase extension 
+arkcase_extension_install: no
 # extension reports... each different extension may or may not have its own path 
 # in the jar file where report definitions are stored
 arkcase_extension_install_reports: no
