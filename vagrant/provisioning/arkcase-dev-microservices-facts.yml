@@ -306,6 +306,9 @@ email_convert_documents_to_pdf: false
 create_case_from_email_enabled: false
 create_complaint_from_email_enabled: false
 
+# retrieve arkcase from GitHub ("github") or SFTP ("sftp")
+arkcase_retrieve_strategy: "sftp"
+
 # core reports, these are always deployed
 arkcase_core_reports:
   - path: "arkcase"
