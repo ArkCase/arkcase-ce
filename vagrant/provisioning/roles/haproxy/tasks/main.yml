@@ -51,6 +51,19 @@
       line: '$UDPServerRun 514'
   register: rsyslog_configuration
 
+- name: Allow SELinux write access on the haproxy log directory
+  become: yes
+  sefcontext:
+    target: '{{ root_folder }}/log/haproxy'
+    setype: haproxy_var_log_t
+    state: present
+  register: allow_haproxy_logging
+
+- name: Apply new SELinux file context to filesystem
+  become: yes
+  command: restorecon -v {{ root_folder }}/log/haproxy
+  when: allow_haproxy_logging is changed
+
 - name: Copy haproxy log configuration into rsyslog.d
   become: yes
   template:
@@ -58,13 +71,6 @@
     dest: /etc/rsyslog.d/haproxy.conf
     backup: yes
   register: haproxy_rsyslog
-
-- name: Restart rsyslog service if needed
-  become: yes
-  systemd:
-    name: rsyslog
-    state: restarted
-  when: rsyslog_configuration is changed or haproxy_rsyslog is changed 
 
 - name: remove default TLS policies
   become: yes
@@ -469,3 +475,10 @@
     name: haproxy
     state: restarted
   when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed
+
+- name: Restart rsyslog service if needed
+  become: yes
+  systemd:
+    name: rsyslog
+    state: restarted
+  when: rsyslog_configuration is changed or haproxy_rsyslog is changed or allow_haproxy_logging is changed
