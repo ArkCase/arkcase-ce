@@ -53,6 +53,6 @@
   become: yes
   become_user: pentaho
   replace:
-    path: /opt/arkcase/app/pentaho/pentaho-server/pentaho-solutions/system/GettingStartedDB.properties
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/GettingStartedDB.properties"
     regexp: '9092'
     replace: '6092'    
