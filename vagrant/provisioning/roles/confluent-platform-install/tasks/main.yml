@@ -9,6 +9,7 @@
     - which
 
 - name: Install Confluent Platform public key
+  become: yes
   rpm_key:
     state: present
     key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
