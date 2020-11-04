@@ -15,6 +15,7 @@
     key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
 
 - name: Create Confluent repo (1/2)
+  become: yes
   yum_repository:
     name: Confluent.dist
     description: Confluent repository (dist)
@@ -25,6 +26,7 @@
     file: confluent
 
 - name: Create Confluent repo (2/2)
+  become: yes
   yum_repository:
     name: Confluent
     description: Confluent repository
