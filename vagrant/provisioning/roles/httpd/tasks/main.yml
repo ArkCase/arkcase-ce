@@ -44,6 +44,7 @@
   register: tls_conf
 
 - name: Remove httpd to bind on port 80 
+  become: yes
   lineinfile:
     path: "/etc/httpd/conf/httpd.conf"
     regexp: '(Listen 80)'
