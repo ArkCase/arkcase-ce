@@ -503,7 +503,7 @@
 - name: wait for Alfresco startup to finish
   wait_for:
     port: 7070
-    delay: 3
+    delay: 5
     timeout: 180
 
 - name: Wait for URI
