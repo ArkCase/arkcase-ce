@@ -326,6 +326,7 @@ arkcase_core_reports:
 # in the jar file where report definitions are stored
 arkcase_extension_install: no
 arkcase_extension_install_reports: no
+arkcase_extension_version: ""
 arkcase_extension_reports:
   - name: ""
     jar_path: ""
