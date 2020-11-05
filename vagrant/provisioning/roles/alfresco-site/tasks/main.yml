@@ -86,6 +86,7 @@
   uri:
     url: "{{ alfresco_url }}/alfresco/s/api/site/folder/acm/documentlibrary"
     method: POST
+    timeout: 60
     user: admin
     password: admin
     validate_certs: no
