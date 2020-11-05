@@ -1,6 +1,7 @@
 ---
 # tasks file for confluent-install
 - name: Install curl and which
+  become: yes
   yum:
     name: "{{ packages }}"
   vars:
@@ -38,11 +39,13 @@
 
 # The yum module does not support clearing yum cache in an idempotent way!
 - name: Clean the yum caches
+  become: yes
   command: yum clean all
   args:
     warn: False
 
 - name: Install Confluent Platform
+  become: yes
   yum:
     name: confluent-platform-{{ confluent_scala_version | default(2.12) }}
     state: present
@@ -131,11 +134,13 @@
     backup: yes
 
 - name: read control-center-production.properties
+  become: yes
   shell: cat {{ root_folder }}/app/control-center/control-center-production.properties
   register: control_center_production_properties_contents
   changed_when: false
 
 - name: Enable Control Center to work with 1 broker
+  become: yes
   lineinfile:
     path: "{{ root_folder }}/app/control-center/control-center-production.properties"
     state: present
