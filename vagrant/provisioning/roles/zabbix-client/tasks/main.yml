@@ -1,0 +1,69 @@
+- name: install zabbix package repository
+  become: yes
+  package:
+    name: https://repo.zabbix.com/zabbix/5.0/rhel/7/x86_64/zabbix-release-{{ zabbix_version | default('5.0-1.el7') }}.noarch.rpm
+    state: present
+
+- name: install zabbix packages
+  become: yes
+  package:
+    name:
+      - zabbix-agent
+      - sysstat
+    state: present
+
+- name: open firewall ports
+  become: yes
+  firewalld:
+    permanent: yes
+    immediate: yes
+    state: enabled
+    port: "{{ item }}"
+  loop:
+    - "10050/tcp"
+
+- name: update Zabbix configuration
+  become: yes
+  lineinfile:
+    backup: yes
+    path: /etc/zabbix/zabbix_agentd.conf
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: LogFileSize=0
+      line: LogFileSize=512
+    - regexp: "# DebugLevel=3"
+      line: "DebugLevel=3"
+    - regexp: Server=127.0.0.1
+      line: Server={{ zabbix_host }}
+    - regexp: ServerActive=127.0.0.1
+      line: ServerActive={{ zabbix_host }}
+    - regexp: Hostname=Zabbix server
+      line: Hostname={{ internal_host }}
+
+- name: sar user parameter file
+  become: yes
+  copy:
+    src: userparameter_sar.conf
+    dest: /etc/zabbix/zabbix_agentd.d/userparameter_sar.conf
+
+- name: update sysstat configuration
+  become: yes
+  lineinfile:
+    backup: yes
+    path: /etc/sysconfig/sysstat
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: SADC_OPTIONS="-S DISK"
+      line: SADC_OPTIONS="-S XALL"
+
+- name: enable and start zabbix services
+  become: yes
+  systemd:
+    daemon_reload: yes
+    enabled: yes
+    state: started
+    name: "{{ item }}"
+  loop:
+    - zabbix-agent

@@ -53,6 +53,7 @@ application:
     applicationName: "arkcase"
     alfrescoUserIdLdapAttribute: "samAccountName"
     issueCollectorFlag: false
+    logoutUrl: "/logout"
 alfresco:
   admin:
     baseurl: "https://{{ alfresco_host }}/alfresco/s/admin/admin-sync"

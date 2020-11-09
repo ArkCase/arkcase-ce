@@ -9,6 +9,7 @@
         login_password: "{{ rds_password }}"
         name: "{{ item }}"
         encoding: utf8
+        collation: utf8_bin
         state: present
     - name: create {{ item }} MySQL user
       become: yes

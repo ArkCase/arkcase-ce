@@ -203,7 +203,9 @@
 #      dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle"
 
 - name: Update Pentaho to support report designer within ArkCase iframe
-  shell: "{{ item }}"
+  shell: "{{ item }}" 
+  become: yes
+  become_user: pentaho
   with_items:
     - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
     - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
@@ -216,6 +218,8 @@
     - cp -prf {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
 
 - name: Replace modernizr
+  become: yes
+  become_user: pentaho
   lineinfile:
     path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/content/welcome/index.html"
     regexp: '<script src="..\/..\/..\/..\/plugin\/pentaho-cdf\/api\/resources\/js\/compressed\/lib\/modernizr\/modernizr-2.8.3.js" charset="utf-8"><\/script>'
@@ -224,6 +228,8 @@
     backup: yes
 
 - name: Replace jquery
+  become: yes
+  become_user: pentaho
   lineinfile:
     path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/content/welcome/index.html"
     regexp: '<script src="..\/..\/..\/..\/content\/common-ui\/resources\/web\/compressed\/jquery\/jquery.js" charset="utf-8"><\/script>'
@@ -340,4 +346,24 @@
     immediate: yes
     state: enabled
 
+- name: format extension version
+  set_fact:
+    arkcase_extension_version_formatted: "{{ '-' ~ arkcase_extension_version if arkcase_extension_version != '' else '' }}"
+  when: arkcase_extension_install|bool and arkcase_extension_install_reports|bool
 
+- name: download extension (if configured)
+  become: yes
+  become_user: pentaho
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.jar
+  args:
+    chdir: "{{ root_folder }}/install/pentaho"
+  environment:
+    SSHPASS: "{{ sftp_extension_password }}"
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
+
+- name: deploy extension reports
+  include_tasks: deploy_extension_report.yml
+  loop: "{{ arkcase_extension_reports|flatten }}"
+  when: arkcase_extension_install_reports|bool
+  loop_control:
+    loop_var: r

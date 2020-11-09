@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  roles:
+    - role: zabbix-client
+      tags: [zabbix-client]

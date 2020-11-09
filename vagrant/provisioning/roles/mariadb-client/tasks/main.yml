@@ -1,3 +1,9 @@
+- name: folder structure
+  become: yes
+  file:
+    path: "{{ root_folder }}/common"
+    state: directory
+
 - name: configure MariaDB v10 repository
   become: yes
   copy:

@@ -1,3 +1,16 @@
+
+- name: pki facts	
+  set_fact:	
+    ssl_key: "/etc/pki/tls/private/{{ ansible_facts.hostname }}.pem"	
+    ssl_cert: "/etc/pki/tls/certs/{{ ansible_facts.hostname }}.pem"	
+    ssl_chain_cert: "/etc/pki/tls/certs/arkcase-chain.pem"	
+    java_key_store: "{{ root_folder }}/common/arkcase.ks"	
+    java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"	
+    java_trust_store: "{{ root_folder }}/common/arkcase.ts"	
+    java_key_store_pass: "{{ ansible_facts.fqdn }}"	
+    java_trust_store_pass: "{{ ansible_facts.fqdn }}"	
+    java_p12_store: "{{ root_folder }}/common/arkcase.p12"
+
 - name: folder structure for app, data and logs
   become: yes
   file:
@@ -25,6 +38,8 @@
     state: installed
     name:
       - python-pip
+      - java-11-openjdk	
+      - java-11-openjdk-devel
 
 - name: install Python crypto library
   become: yes

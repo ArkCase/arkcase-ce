@@ -1,13 +1,19 @@
 ---
 - hosts: localhost
   roles:
-    - pki-aws-client
-    - mariadb-client
-    - pentaho-setup
-    - pentaho-ee
+    - role: pki-aws-client
+      tags: [pki-aws-client]
+    - role: mariadb-client
+      tags: [mariadb-client]
+    - role: pentaho-setup
+      tags: [pentaho-setup]
+    - role: pentaho-ee
+      tags: [pentaho-ee]
 #    - ldap
-    - pentaho-configuration
-    - pentaho-license
+    - role: pentaho-configuration
+      tags: [pentaho-configuration]
+    - role: pentaho-license
+      tags: [pentaho-license]
 
   vars_prompt:
     - name: root_folder

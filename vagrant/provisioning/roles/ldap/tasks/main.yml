@@ -105,7 +105,8 @@
       description: "{{ item.description }}"
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
-  loop: "{{ ldap_groups|flatten }}"
+  loop: "{{ ldap_portal_groups|flatten }}"
+  when: foia_portal_context is defined
 
 - name: remove portal group from ArkCase OU if exists
   ldap_entry:
