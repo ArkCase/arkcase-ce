@@ -10,7 +10,7 @@ Group=confluent
 Environment="LOG_DIR={{ root_folder }}/log/schema-registry"
 ExecStart=/usr/bin/schema-registry-start {{ root_folder }}/app/schema-registry/schema-registry.properties
 TimeoutStopSec=180
-Restart=no
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
