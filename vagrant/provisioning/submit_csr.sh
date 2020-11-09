@@ -21,7 +21,7 @@ ENCODED=`cat $CSR_IN | hexdump -v -e '1/1 "%02x\t"' -e '1/1 "%_c\n"' |
 
 curl -k --negotiate -u : -d CertRequest=${ENCODED} -d SaveCert=yes -d Mode=newreq -d CertAttrib=CertificateTemplate:"${CERT_TEMPLATE}" -o ${REQ_OUT} ${ADCS_URL}/certfnsh.asp
 
-APPLICATION_REQUEST_ID=`grep -m 1 ReqID ${REQ_OUT} | sed -e 's/.*ReqID=\(.*\)&amp.*/\1/g'`
+APPLICATION_REQUEST_ID=`grep -m 1 ReqID= ${REQ_OUT} | sed -e 's/.*ReqID=\(.*\)&amp.*/\1/g'`
 
 if [ "$APPLICATION_REQUEST_ID" == "" ];
 then
@@ -29,9 +29,10 @@ then
   exit 1
 fi
 
-echo waiting for ADCS to do some work...
+echo waiting for ADCS to work on application request id $APPLICATION_REQUEST_ID ...
 sleep 15
 
+echo curl -k -o ${P7B_OUT} -A "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.5) Gecko/2008120122 Firefox/3.0.5" --negotiate -u : "${ADCS_URL}/certnew.p7b?ReqID=${APPLICATION_REQUEST_ID}&Enc=b64"
 curl -k -o ${P7B_OUT} -A "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.5) Gecko/2008120122 Firefox/3.0.5" --negotiate -u : "${ADCS_URL}/certnew.p7b?ReqID=${APPLICATION_REQUEST_ID}&Enc=b64"
 
 openssl pkcs7 -print_certs -in ${P7B_OUT}  -out ${PEM_OUT}
