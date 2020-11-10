@@ -27,6 +27,7 @@
     - "{{ root_folder }}/app/config-server"
     - "{{ root_folder }}/log/config-server"
     - "{{ root_folder }}/tmp/config-server"
+    - "{{ root_folder }}/data/config-server/tmp"
   register: arkcase_folder_structure
 
 - name: link folders if they don't already exist
