@@ -20,27 +20,9 @@
     - "acmSequenceConfiguration.json"
   when: latest_config_backup_folder is defined
 
-- name: restore branding files 
-  become: yes
-  become_user: arkcase
-  command: cp {{ latest_config_backup_folder.path }}/acm/acm-config-server-repo/branding/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/branding/{{ item }}
-  loop:
-    - "email-logo-runtime.png"
-    - "header-logo-runtime.png"
-    - "login-logo-runtime.png"
-    - "custom-runtime.css"
-  when: latest_config_backup_folder is defined
-  ignore_errors: true
-
 - name: Restore runtime files from previous backup
   become: yes
   become_user: arkcase
-  command: cp -rf {{ latest_config_backup_folder.path }}/acm/acm-config-server-repo/{{ item }}/*runtime* {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/{{ item }}
-  loop:
-    - "branding"
-    - "labels"
-    - "ldap"
-    - "lookups"
-    - "rules"
-    - "spring"
+  command: rsync -avm --include='*runtime*' -f 'hide,! */' {{ latest_config_backup_folder.path }}/acm/acm-config-server-repo/ {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/
+  when: latest_config_backup_folder is defined
   ignore_errors: true
