@@ -5,7 +5,8 @@ After=syslog.target
 [Service]
 ExecStart={{ root_folder }}/app/config-server/config-server.jar
 SuccessExitStatus=143
-Environment=LOGGING_FILE="{{ root_folder }}/log/config-server/acmConfigServer.log" "_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp"
+Environment=LOGGING_FILE={{ root_folder }}/log/config-server/acmConfigServer.log
+Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp
 WorkingDirectory={{ root_folder }}/app/config-server
 User=arkcase
 Group=arkcase
