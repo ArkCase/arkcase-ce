@@ -31,10 +31,12 @@
       tags: [core, solr]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
-    - role: pentaho-ce
-      tags: [core, pentaho, pentaho-ce]
+    - role: pentaho-ee
+      tags: [core, pentaho, pentaho-ee]
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
+    - role: pentaho-license
+      tags: [core, pentaho, pentaho-license]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app
