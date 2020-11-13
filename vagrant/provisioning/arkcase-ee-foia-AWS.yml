@@ -49,6 +49,10 @@
       tags: [core, arkcase]
     - role: foia
       tags: [core, foia]
+    - role: pentaho-pdi-client
+      tags: [core, foia, foia-analytical-reports]
+    - role: foia-analytical-reports
+      tags: [core, foia, foia-analytical-reports]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
