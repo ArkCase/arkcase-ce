@@ -246,13 +246,24 @@
     - "arkcase"
     - "config-server"
 
+
+- name: set path to arkcase.service (local arkcase)
+  set_fact:
+    arkcase.service.path: arkcase.service
+  when: not rds_password is defined
+
+- name: set path to arkcase.service (AWS arkcase)
+  set_fact:
+    arkcase.service.path: arkcase-aws.service
+  when: rds_password is defined
+
 - name: copy ArkCase and config server systemd unit files
   become: yes
   template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   loop:
-    - src: arkcase.service
+    - src: "{{ arkcase.service.path }}"
       dest: /etc/systemd/system/arkcase.service
     - src: config-server.service
       dest: /etc/systemd/system/config-server.service
