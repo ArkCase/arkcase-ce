@@ -65,10 +65,17 @@
   register: arkcase_config_unzipped
   when: pentaho_host != internal_host
 
-- name: Install interactive reports datasources from configuration
-  loop: "{{ lookup('fileglob', '/home/arkcase/.arkcase/acm/reports/interactive/datasources/*.xmi', wantlist=True) }}"
+- name: Find interactive reports datasources in configuration
+  find:
+    paths: /home/arkcase/.arkcase/acm/reports/interactive/datasources
+    patterns: '*.xmi'
+    recurse: no
+  register: interactive_reports_datasources
+  
+- name: Install interactive reports datasources
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item }}' --permission=true --overwrite=true --retainOwnership=true"
-
+  with_items: "{{ interactive_reports_datasources.files | map(attribute='path') | list }}"
+  
 - name: Check if foia or core variant
   stat: 
     path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-foia.yaml
@@ -78,6 +85,13 @@
   set_fact:
     reports_folder: "'foia' if {{ arkcase_foia_yaml.stat.exists == true }} else 'arkcase'"
 
+- name: Find interactive reports in configuration
+  find:
+    paths: /home/arkcase/.arkcase/acm/reports/interactive/reports
+    patterns: '*.zip'
+    recurse: no
+  register: interactive_reports
+  
 - name: Install interactive reports from configuration
-  loop: "{{ lookup('fileglob', '/home/arkcase/.arkcase/acm/reports/interactive/reports/*.zip', wantlist=True) }}"
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item }}'"
+  with_items: "{{ interactive_reports.files | map(attribute='path') | list }}"
