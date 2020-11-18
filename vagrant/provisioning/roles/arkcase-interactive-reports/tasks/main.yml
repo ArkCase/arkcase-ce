@@ -31,9 +31,11 @@
 
 - name: download configuration (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
-  owner: arkcase
-  url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
+  loop:
+    - name: ArkCase configuration
+      dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
+      owner: arkcase
+      url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
   when: arkcase_retrieve_strategy == "github" and pentaho_host != internal_host
 
 - name: rename extension config zip to common file name
