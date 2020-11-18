@@ -13,52 +13,52 @@
   register: setenv_contents
   changed_when: false
 
-- name: replace ldap profile with ssoSaml
+- name: replace ssoSaml profile with externalSaml
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    regexp: "ssoSaml"
+    replace: "externalSaml"
+  when: '"ssoSaml" in setenv_contents.stdout'
+
+- name: replace ldap profile with externalSaml
   become: yes
   become_user: arkcase
   replace:
     backup: yes
     path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
     regexp: "ldap"
-    replace: "ssoSaml"
+    replace: "externalSaml"
   when: '"ldap" in setenv_contents.stdout'
 
-- name: ensure ssoSaml is in the profile (other profiles already exist)
+- name: ensure externalSaml is in the profile (other profiles already exist)
   become: yes
   become_user: arkcase
   replace:
     backup: yes
     path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
     regexp: "spring.profiles.active="
-    replace: "spring.profiles.active=ssoSaml"
-  when: '"ssoSaml" not in setenv_contents.stdout and "ldap" not in setenv_contents.stdout and "spring.profiles.active" in setenv_contents.stdout'
+    replace: "spring.profiles.active=externalSaml"
+  when: '"externalSaml" not in setenv_contents.stdout and "ldap" not in setenv_contents.stdout and "spring.profiles.active" in setenv_contents.stdout'
 
-- name: ensure ssoSaml is in the profile (no other profiles already exist)
+- name: ensure externalSaml is in the profile (no other profiles already exist)
   become: yes
   become_user: arkcase
   lineinfile:
     backup: yes
     path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
-    line: 'JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=ssoSaml"'
+    line: 'JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=externalSaml"'
   when: '"spring.profiles.active" not in setenv_contents.stdout'
 
-- name: update spring-security-config-saml.xml
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/spring-security/spring-security-config-saml.xml"
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
+- name: update SAML spring properties
+  include_tasks: update-saml-spring-properties.yml
   loop:
-    - regexp: 'arkcase/acm/private/saml-keystore'
-      replace: 'arkcase/acm/private/arkcase.ks'
-    - regexp: 'type="java.lang.String" value="password"'
-      replace: 'type="java.lang.String" value="{{ internal_host }}"'
-    - regexp: 'key="armedia" value="AcMd3v\$"'
-      replace: 'key="{{ internal_host }}" value="{{ internal_host }}"'
-    - regexp: 'type="java.lang.String" value="armedia"'
-      replace: 'type="java.lang.String" value="{{ internal_host }}"'
+    - spring-security-config-saml.xml
+    - spring-security-config-external-saml.xml
+  loop_control:
+    loop_var: saml_prop_file
 
 - name: configure logout URL for SAML
   become: yes
@@ -79,6 +79,3 @@
     keystore_path: "{{ java_key_store }}"
     keystore_pass: "{{ java_key_store_pass }}"
     state: present
-
-
-
