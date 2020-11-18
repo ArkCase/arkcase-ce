@@ -74,7 +74,7 @@
   
 - name: Install interactive reports datasources
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item }}' --permission=true --overwrite=true --retainOwnership=true"
-  with_items: "{{ interactive_reports_datasources.files | map(attribute='path') | list }}"
+  with_items: "{{ interactive_reports_datasources.files }}"
   
 - name: Check if foia or core variant
   stat: 
