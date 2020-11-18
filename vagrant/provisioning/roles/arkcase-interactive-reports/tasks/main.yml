@@ -1,0 +1,81 @@
+# Get the reports form configuration
+- name: download configuration (if using sftp, and no extension is configured)
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool and pentaho_host != internal_host
+
+- name: set extension config file name (extension id)
+  set_fact:
+    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.zip"
+  when: arkcase_extension_id is defined and pentaho_host != internal_host
+
+- name: set extension config file name (no extension id)
+  set_fact:
+    extension_config_file_name: "arkcase-config{{ arkcase_extension_version }}.zip"
+  when: not arkcase_extension_id is defined and pentaho_host != internal_host
+
+- name: download extension configuration (if configured)
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ extension_config_file_name }}
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_extension_password }}"
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool and pentaho_host != internal_host
+
+- name: download configuration (if using GitHub)
+  include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
+  owner: arkcase
+  url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
+  when: arkcase_retrieve_strategy == "github" and pentaho_host != internal_host
+
+- name: rename extension config zip to common file name
+  become: yes
+  become_user: arkcase
+  command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip" and pentaho_host != internal_host
+
+- name: format config version
+  set_fact:
+    arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
+
+- name: rename core config zip to common file name
+  become: yes
+  become_user: arkcase
+  command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
+  when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool and pentaho_host != internal_host
+
+- name: unzip the configuration files
+  become: yes
+  become_user: arkcase
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
+    dest: "/home/arkcase/.arkcase"
+    creates: "/home/arkcase/.arkcase/acm/conf.yml"
+  register: arkcase_config_unzipped
+  when:  and pentaho_host != internal_host
+
+- name: Install interactive reports datasources from configuration
+  loop: "{{ lookup('fileglob', '/home/arkcase/.arkcase/acm/reports/interactive/datasources/*.xmi', wantlist=True) }}"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id={{ item.path | basename | splitext | first }} --file-path='{{ item }}'' --permission=true --overwrite=true --retainOwnership=true"
+
+- name: Check if foia or core variant
+  stat: 
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-foia.yaml
+  register: arkcase_foia_yaml
+
+- name: Set reports folder
+  set_fact:
+    reports_folder: "'foia' if {{ arkcase_foia_yaml.stat.exists == true }} else 'arkcase'"
+
+- name: Install interactive reports from configuration
+  loop: "{{ lookup('fileglob', '/home/arkcase/.arkcase/acm/reports/interactive/reports/*.zip', wantlist=True) }}"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item }}'"
