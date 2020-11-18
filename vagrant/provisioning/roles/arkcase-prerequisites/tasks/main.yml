@@ -27,6 +27,7 @@
     - "{{ root_folder }}/app/config-server"
     - "{{ root_folder }}/log/config-server"
     - "{{ root_folder }}/tmp/config-server"
+    - "{{ root_folder }}/data/config-server/tmp"
   register: arkcase_folder_structure
 
 - name: link folders if they don't already exist
@@ -175,3 +176,13 @@
       become: yes
       command: openssl rsautl -encrypt -pubin -inkey "{{ root_folder }}/common/arkcase-server.pub" -in "{{ root_folder }}/common/symmetricKey.txt" -out "{{ root_folder }}/common/symmetricKey.encrypted"
       when: sym_key_enc.stat.exists == False
+      
+- name: configure external web portal logging file
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - EXTERNAL-PORTAL LOGGING"
+    block: |
+      export LOG_FILE={{ root_folder }}/log/arkcase/externalPortal.log

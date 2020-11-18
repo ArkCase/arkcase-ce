@@ -8,8 +8,8 @@ Type=simple
 User=cp-kafka
 Group=confluent
 Environment="LOG_DIR={{ root_folder }}/log/kafka"
-ExecStart=/usr/bin/kafka-server-start /etc/kafka/server.properties
-ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+ExecStart=/usr/bin/kafka-server-start {{root_folder}}/app/kafka/server.properties
+ExecStop=/usr/bin/kafka-server-stop
 LimitNOFILE=1000000
 TimeoutStopSec=180
 Restart=no

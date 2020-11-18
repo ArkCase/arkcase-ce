@@ -21,6 +21,7 @@ report:
 solr:
   host: "{{ solr_host }}"
   port: 443
+fileEditingEnabled: {{ arkcase_ee | default('false') }}
 ecm:
   viewer.snowbound: "https://{{ external_host }}/arkcase/VirtualViewerJavaHTML5/index.html?documentId=ecmFileId=$[fileId]%26acm_ticket=$[ticket]%26userid=$[userid]"
   viewer.snowbound.encryptionKey: "{{ snowbound_symmetric_key }}"

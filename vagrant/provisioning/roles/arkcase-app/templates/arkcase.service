@@ -1,7 +1,7 @@
 [Unit]
 Description=ArkCase Service
-After=mariadb.service,activemq.service,alfresco.service,samba.service,solr.service,config-server.service
-BindsTo=mariadb.service,activemq.service,alfresco.service,samba.service,solr.service,config-server.service
+After={{ arkcase_required_services }}
+BindsTo={{ arkcase_required_services }}
 
 [Service]
 Type=forking

@@ -51,6 +51,19 @@
       line: '$UDPServerRun 514'
   register: rsyslog_configuration
 
+- name: Allow SELinux write access on the haproxy log directory
+  become: yes
+  sefcontext:
+    target: '{{ root_folder }}/log/haproxy'
+    setype: haproxy_var_log_t
+    state: present
+  register: allow_haproxy_logging
+
+- name: Apply new SELinux file context to filesystem
+  become: yes
+  command: restorecon -v {{ root_folder }}/log/haproxy
+  when: allow_haproxy_logging is changed
+
 - name: Copy haproxy log configuration into rsyslog.d
   become: yes
   template:
@@ -58,13 +71,6 @@
     dest: /etc/rsyslog.d/haproxy.conf
     backup: yes
   register: haproxy_rsyslog
-
-- name: Restart rsyslog service if needed
-  become: yes
-  systemd:
-    name: rsyslog
-    state: restarted
-  when: rsyslog_configuration is changed or haproxy_rsyslog is changed 
 
 - name: remove default TLS policies
   become: yes
@@ -134,7 +140,7 @@
         
         # for URLs that should not be called from outside, 
         # but only by services within our network.
-        acl only_localhost src {{ arkcase_host_address | default('127.0.0.1') }}
+        acl only_arkcase_host src {{ arkcase_host | default('127.0.0.1') }}
         
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho
@@ -142,11 +148,14 @@
         acl acl_share path_beg /share
         acl acl_snowbound path_beg /VirtualViewerJavaHTML5
         acl acl_arkcase path_beg /arkcase
+        acl acl_config path_beg /config
         
         #arkcase.next services
 
         # ensure internal sites only visible internally
-        http-request deny if acl_solr !only_localhost
+        http-request deny if acl_solr !only_arkcase_host
+        http-request deny if acl_config !only_arkcase_host
+
         
         # backend uses
         use_backend be_solr if acl_solr
@@ -155,6 +164,7 @@
         use_backend be_share if acl_share
         use_backend be_snowbound if acl_snowbound
         use_backend be_arkcase if acl_arkcase
+        use_backend be_config if acl_config
         
       #backend servers  
       backend be_solr
@@ -193,6 +203,13 @@
         mode http
         option tcp-check
         server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_config
+        http-response add-header X-Config %s
+        mode http
+        option tcp-check
+        server config {{ arkcase_host }}:9999
+        http-request set-path %[path,regsub(^/config/,/)]  
   
   register: arkcase_config
 
@@ -240,7 +257,6 @@
         block: |
             acl acl_schema-registry path_beg /schema-registry
             acl acl_control-center path_beg /control-center
-            acl acl_config path_beg /config
             acl acl_control-center-ws path_beg /ws    
 
     - name: Tell fronted part which backend servers will use
@@ -251,8 +267,7 @@
         path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
         block: |
             use_backend be_schema-registry if acl_schema-registry
-            use_backend be_control-center if acl_control-center
-            use_backend be_config if acl_config
+            use_backend be_control-center if acl_control-center            
             use_backend be_control-center-ws if acl_control-center-ws
     
     - name: Populate haproxy.conf with backend servers for Confluent platform
@@ -280,12 +295,6 @@
             option tcp-check
             server controlws {{ internal_host }}:9021
             reqrep (.*\/)control-center\/(.*)     \1\2
-
-          backend be_config
-            http-response add-header X-Config %s
-            mode http
-            option tcp-check
-            server config {{ arkcase_host }}:9999 
 
   when: enable_kafka is defined and enable_kafka == "yes"
 
@@ -384,7 +393,7 @@
         insertafter: "#arkcase.next services"
         path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
         block: |
-            acl acl_gateway path_beg /gateway
+            acl acl_gateway path_beg /adk
             acl acl_eureka path_beg /eureka
             acl acl_eureka-dashboard path_beg /eureka-dashboard
 
@@ -411,6 +420,7 @@
             mode http
             option tcp-check
             server gateway {{ arkcase_host }}:9000
+            http-request set-path %[path,regsub(^/adk/,/)]
 
           backend be_eureka
             http-response add-header X-Eureka %s
@@ -467,3 +477,10 @@
     name: haproxy
     state: restarted
   when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed
+
+- name: Restart rsyslog service if needed
+  become: yes
+  systemd:
+    name: rsyslog
+    state: restarted
+  when: rsyslog_configuration is changed or haproxy_rsyslog is changed or allow_haproxy_logging is changed

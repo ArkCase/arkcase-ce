@@ -1,5 +1,3 @@
-logging.level.web: DEBUG
-
 # server.port: 8080
 # server.servlet.context-path: /${portal.applicationName}
 
@@ -15,10 +13,6 @@ portal.uiApplicationHost: "https://{{ external_host }}"
 portal.id: {{ 9999999999999999999999 | random | to_uuid }}
 
 portal.authenticatedMode: false
-
-portal.publicUrlsInAuthenticatedMode: /rest/request/readingroom,/rest/users/login,/rest/users/logout,/rest/users/registrations/**,/rest/request/authenticatedMode,/rest/request/document,/rest/inquiry, /actuator/bus-refresh
-portal.publicUrlsInNonAuthenticatedMode: /rest/request/create,/rest/request/status,/rest/request/objectTitle
-portal.unauthorizedUrlsInNonAuthenticatedMode: /rest/users
 
 portal.homeDir: ${user.home}/.${portal.applicationName}
 

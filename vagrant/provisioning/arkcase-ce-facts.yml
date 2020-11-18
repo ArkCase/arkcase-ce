@@ -65,6 +65,8 @@ ldap_group_base: "{{ ldap_group_no_base }},{{ ldap_base }}"
 ldap_user_no_base: "OU=Users,OU=ArkCase"
 ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
 ldap_prefix: ""
+ldap_portal_group_no_base: "OU=PortalGroups,OU=ArkCase"
+ldap_portal_user_no_base: "OU=UsersPortal,OU=ArkCase"
 
 # if yes, will reset the password unconditionally.  
 # otherwise, will set the password only if the user is created (user did not already exist)
@@ -121,6 +123,12 @@ ldap_groups:
   - description: Contributors
     name: "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR"
     alfresco_role: SiteManager
+    alfresco_rma_role: Administrator
+
+ldap_portal_groups:
+  - description: PortalUsers
+    name: '{{ ldap_prefix }}ARKCASE_PORTAL_USER'
+    alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
         
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
