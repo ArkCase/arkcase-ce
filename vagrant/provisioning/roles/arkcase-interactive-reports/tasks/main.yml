@@ -63,7 +63,7 @@
     dest: "/home/arkcase/.arkcase"
     creates: "/home/arkcase/.arkcase/acm/conf.yml"
   register: arkcase_config_unzipped
-  when:  and pentaho_host != internal_host
+  when: pentaho_host != internal_host
 
 - name: Install interactive reports datasources from configuration
   loop: "{{ lookup('fileglob', '/home/arkcase/.arkcase/acm/reports/interactive/datasources/*.xmi', wantlist=True) }}"
