@@ -71,7 +71,6 @@
 
 - name: import SAML federation host certificate
   become: yes
-  become_user: arkcase
   java_cert:
     cert_alias: "{{ saml_federation_host }}"
     cert_port: 443
