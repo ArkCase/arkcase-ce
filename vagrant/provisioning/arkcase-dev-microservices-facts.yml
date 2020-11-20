@@ -158,7 +158,7 @@ roles_to_groups_yaml:
   ROLE_PORTAL_ADMINISTRATOR:
   - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   ROLE_PORTAL_USER:
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
+  - "{{ foia_portal_group }}@{{ ldap_user_domain | upper }}"
 
 ldap_groups:
   - description: Entity administrators
@@ -196,18 +196,19 @@ ldap_groups:
 
 ldap_portal_groups:
   - description: PortalUsers
-    name: '{{ ldap_prefix }}ARKCASE_PORTAL_USER'
+    name: '{{ foia_portal_group }}'
     alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
      
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
+arkcase_admin_name: "ArkCase Administrator"
 arkcase_admin_password: "{{ default_user_password }}"
 arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
 
 ldap_users:
   - user_id: "{{ arkcase_admin_user }}"
     description: ArkCase administrator
-    name: ArkCase Administrator
+    name: "{{ arkcase_admin_name }}"
     mail: "{{ server_admin }}"
     firstName: ArkCase
     lastName: Administrator
