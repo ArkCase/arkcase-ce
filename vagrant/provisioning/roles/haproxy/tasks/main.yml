@@ -464,13 +464,14 @@
     name: haproxy_connect_any
     state: yes
     persistent: yes
-    
-- name: enable haproxy
+
+- name: enable and start haproxy
   become: yes
   systemd:
     name: haproxy
     enabled: yes
-    
+    state: started
+
 - name: restart haproxy if needed
   become: yes
   systemd:

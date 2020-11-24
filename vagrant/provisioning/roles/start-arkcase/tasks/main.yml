@@ -15,3 +15,7 @@
   systemd:
     name: "arkcase"
     state: started
+
+- name: wait for arkcase to create the tables in the database
+  pause:
+    minutes: 3
