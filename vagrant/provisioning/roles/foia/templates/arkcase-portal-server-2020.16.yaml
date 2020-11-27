@@ -8,7 +8,7 @@ logging:
 
 portal:
   uiApplicationUrl: "https://{{ external_host }}/foia"
-  uiApplicationHost: "https://{{ external_host }}/foia"
+  uiApplicationHost: "https://{{ external_host }}"
   id: "{{ foia_portal_id }}"
   url: "https://{{ external_host }}/{{ foia_portal_context }}"
   arkcaseUrl: "https://{{ internal_host }}/arkcase"
