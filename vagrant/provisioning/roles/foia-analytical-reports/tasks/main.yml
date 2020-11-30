@@ -20,7 +20,6 @@
   command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ item }}
   args:
     chdir: "{{ root_folder }}/install/pentaho"
-    creates: "{{ root_folder }}/install/pentaho/{{ item }}"
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
   loop:
@@ -33,7 +32,6 @@
     remote_src: yes
     src: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip"
     dest: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
-    creates: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb"
 
 ##########################################################
 # Configure the Kettle job files and run the Kettle job.
