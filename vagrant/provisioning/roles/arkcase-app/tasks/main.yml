@@ -249,12 +249,12 @@
 
 - name: set path to arkcase.service (local arkcase)
   set_fact:
-    arkcase.service.path: arkcase.service
+    arkcase_service_path: arkcase.service
   when: not rds_password is defined
 
 - name: set path to arkcase.service (AWS arkcase)
   set_fact:
-    arkcase.service.path: arkcase-aws.service
+    arkcase_service_path: arkcase-aws.service
   when: rds_password is defined
   
 - name: Ensure ArkCase required services are populated inside the arkcase.service
@@ -267,18 +267,10 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   loop:
-    - src: "{{ arkcase.service.path }}"
+    - src: "{{ arkcase_service_path }}"
       dest: /etc/systemd/system/arkcase.service
     - src: config-server.service
       dest: /etc/systemd/system/config-server.service
-
-- name: copy config-server configuration file
-  become: yes
-  become_user: arkcase
-  template:
-    src: config-server.conf
-    dest: "{{ root_folder }}/app/config-server/config-server.conf"
-    force: yes
 
 ##### Mule TLS fixes #####
 - name: ensure custom/WEB-INF/classes exists
@@ -912,9 +904,9 @@
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'
-      replace: 'value="{{ private_key_alias }}"'
+      replace: 'value="{{ private_key_alias | default(internal_host) }}"'
     - regexp: 'value="arkcase"'
-      replace: 'value="{{ private_key_alias }}"'
+      replace: 'value="{{ private_key_alias | default(internal_host) }}"'
 
 - name: proxy servlet
   become: yes

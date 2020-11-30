@@ -5,8 +5,6 @@
       tags: [core, common]
     - role: pki-aws-client
       tags: [core, pki-aws-client]
-    - role: ldap
-      tags: [core, ldap]
     - role: mariadb-client
       tags: [core, mariadb-client]
     - role: arkcase-prerequisites
@@ -19,5 +17,7 @@
       tags: [foia]
     - role: foia-aws
       tags: [foia]
+    - role: saml-config
+      tags: [saml-config]
 
     

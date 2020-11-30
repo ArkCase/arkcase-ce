@@ -1,16 +1,3 @@
-
-- name: pki facts	
-  set_fact:	
-    ssl_key: "/etc/pki/tls/private/{{ ansible_facts.hostname }}.pem"	
-    ssl_cert: "/etc/pki/tls/certs/{{ ansible_facts.hostname }}.pem"	
-    ssl_chain_cert: "/etc/pki/tls/certs/arkcase-chain.pem"	
-    java_key_store: "{{ root_folder }}/common/arkcase.ks"	
-    java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"	
-    java_trust_store: "{{ root_folder }}/common/arkcase.ts"	
-    java_key_store_pass: "{{ ansible_facts.fqdn }}"	
-    java_trust_store_pass: "{{ ansible_facts.fqdn }}"	
-    java_p12_store: "{{ root_folder }}/common/arkcase.p12"
-
 - name: folder structure for app, data and logs
   become: yes
   file:
@@ -38,13 +25,14 @@
   yum:
     state: installed
     name:
-      - python-pip
+      - python3-pip
       - java-11-openjdk	
       - java-11-openjdk-devel
 
 - name: install Python crypto library
   become: yes
   pip:
+    executable: pip3
     name: cryptography
     extra_args: --upgrade
 
@@ -121,8 +109,8 @@
   become: yes
   copy: 
     remote_src: yes
-    src: "/etc/pki/tls/certs/{{ internal_host_base }}.pem"
-    dest: /data/shared/certificates/{{ internal_host_base }}.pem
+    src: "/etc/pki/tls/certs/{{ internal_host }}.pem"
+    dest: /data/shared/certificates/{{ internal_host }}.pem
 
 - name: find server certs copied so far
   find:

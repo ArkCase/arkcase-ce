@@ -27,7 +27,7 @@
         <property name="initParameters">
             <props>
                 <!-- TODO: parameterize the URLs -->
-                <prop key="targetUri">https://{{ pentaho_host }}:2002/</prop>
+                <prop key="targetUri">https://{{ pentaho_host }}:{{ pentaho_server_internal_port | default(2002) }}/</prop>
                 <prop key="http.protocol.handle-redirects">true</prop>
                 <!-- resource names regex patterns separated with comma "," if multiple.
                 Will be processed and override urls inside the response-->

@@ -38,7 +38,7 @@
     - name: "Zookeeper"
       dest: "{{ root_folder }}/install/zookeeper/{{ zk_archive_name }}"
       owner: "zookeeper"
-      url: "https://archive.apache.org/dist/zookeeper/zookeeper-{{ zookeeper_version }}/{{ zk_archive_name }}"
+      url: "https://archive.apache.org/dist/zookeeper/zookeeper-{{ zookeeper_version | default('3.4.13') }}/{{ zk_archive_name }}"
 
 - name: unarchive Zookeeper distribution
   become: yes

@@ -7,6 +7,7 @@ ExecStart={{ root_folder }}/app/config-server/config-server.jar
 SuccessExitStatus=143
 Environment=LOGGING_FILE={{ root_folder }}/log/config-server/acmConfigServer.log
 Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp
+JAVA_OPTS="-Dserver.port=9999 -Djava.net.preferIPv4Stack=true -Dacm.activemq.keystore={{ java_key_store }} -Dacm.activemq.keystore-password={{ java_key_store_pass }} -Dacm.activemq.truststore={{ java_trust_store }} -Dacm.activemq.truststore-password={{ java_trust_store_pass }} -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Dspring.activemq.broker-url=ssl://{{ activemq_host }}:61616 -Dacm.activemq.broker-url=ssl://{{ activemq_host }}:61616"
 WorkingDirectory={{ root_folder }}/app/config-server
 User=arkcase
 Group=arkcase
