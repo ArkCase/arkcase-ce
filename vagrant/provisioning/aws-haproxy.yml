@@ -1,0 +1,12 @@
+- hosts: localhost
+  roles:
+    - role: dns_client
+      tags: [ dns_client ]
+    - role: aws-haproxy
+      tags: [ aws-haproxy ]
+    - role: lets_encrypt
+      tags: [ lets_encrypt ]
+    # run aws-haproxy again, to pickup the TLS settings 
+    # we just got from lets_encrypt
+    - role: aws-haproxy
+      tags: [ aws-haproxy-tls ]
