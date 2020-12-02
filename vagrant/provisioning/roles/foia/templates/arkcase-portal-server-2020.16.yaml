@@ -7,7 +7,7 @@ logging:
     springfox: warn
 
 portal:
-  uiApplicationUrl: "https://{{ external_host }}/foia"
+  uiApplicationUrl: "https://{{ external_host }}/{{ foia_portal_context }}"
   uiApplicationHost: "https://{{ external_host }}"
   id: "{{ foia_portal_id }}"
   url: "https://{{ external_host }}/{{ foia_portal_context }}"
