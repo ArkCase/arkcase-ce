@@ -14,7 +14,7 @@ portal.uiApplicationUrl: "https://{{ external_host }}/foia"
 portal.uiApplicationHost: "https://{{ external_host }}"
 portal.id: {{ 9999999999999999999999 | random | to_uuid }}
 
-portal.authenticatedMode: false
+portal.authenticatedMode: {{ portal_authenticated_mode | default (false) }}
 
 portal.authorizedUrlsAuthenticated:
 #portal.authorizedUrlsAuthenticated: /rest/request/readingroom,/rest/users/login,/rest/users/logout,/rest/users/registrations/**,/rest/request/authenticatedMode,/rest/request/document,/rest/inquiry, /actuator/bus-refresh
