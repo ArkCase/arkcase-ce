@@ -163,7 +163,7 @@
       line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
     - regexp: "ARKCASE_PASS=AcMd3v$"
       line: "ARKCASE_PASS={{ arkcase_admin_password }}"
-    - regexp: "TRUSTSTORE_PATH=~/\.arkcase/acm/private/arkcase\.ts"
+    - regexp: "TRUSTSTORE_PATH=~/\\.arkcase/acm/private/arkcase\\.ts"
       line: "TRUSTSTORE_PATH={{ java_trust_store }}"
     - regexp: "TRUSTSTORE_PASSWORD=password"
       line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
