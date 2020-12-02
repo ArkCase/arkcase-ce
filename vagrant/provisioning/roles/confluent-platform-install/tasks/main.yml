@@ -1,6 +1,7 @@
 ---
 # tasks file for confluent-install
 - name: Install curl and which
+  become: yes
   yum:
     name: "{{ packages }}"
   vars:
@@ -9,11 +10,13 @@
     - which
 
 - name: Install Confluent Platform public key
+  become: yes
   rpm_key:
     state: present
     key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
 
 - name: Create Confluent repo (1/2)
+  become: yes
   yum_repository:
     name: Confluent.dist
     description: Confluent repository (dist)
@@ -24,6 +27,7 @@
     file: confluent
 
 - name: Create Confluent repo (2/2)
+  become: yes
   yum_repository:
     name: Confluent
     description: Confluent repository
@@ -35,11 +39,13 @@
 
 # The yum module does not support clearing yum cache in an idempotent way!
 - name: Clean the yum caches
+  become: yes
   command: yum clean all
   args:
     warn: False
 
 - name: Install Confluent Platform
+  become: yes
   yum:
     name: confluent-platform-{{ confluent_scala_version | default(2.12) }}
     state: present
@@ -66,30 +72,77 @@
     - "{{ root_folder }}/data/ksql"
     - "{{ root_folder }}/log/ksql"
 
+- name: Schema-registry folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-schema-registry
+  loop:
+    - "{{ root_folder }}/data/schema-registry"
+    - "{{ root_folder }}/log/schema-registry"
+
+- name: Control-center folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-control-center
+  loop:
+    - "{{ root_folder }}/data/control-center"
+    - "{{ root_folder }}/log/control-center"
+
+- name: Kafka-rest folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-kafka-rest
+  loop:
+    - "{{ root_folder }}/data/kafka-rest"
+    - "{{ root_folder }}/log/kafka-rest"
+
+- name: Change Confluent Services config location
+  become: yes
+  command: mv {{ item }}
+  with_items:
+    - /etc/kafka/ {{ root_folder }}/app/kafka/
+    - /etc/ksql/ {{ root_folder }}/app/ksql/
+    - /etc/schema-registry/ {{ root_folder }}/app/schema-registry/
+    - /etc/confluent-control-center/ {{ root_folder }}/app/control-center/
+    - /etc/kafka-rest/ {{ root_folder }}/app/kafka-rest/
+  register: confluent_services_location_updated
+  ignore_errors: yes
+
 - name: Change kafka data location
   become: yes
   template:
     src: server.properties
-    dest: /etc/kafka/
+    dest: "{{ root_folder }}/app/kafka/"
     force: yes
-    backup: yes
-
+    backup: yes    
+    
 - name: Change ksql data location
   become: yes
   template:
     src: ksql-server.properties
-    dest: /etc/ksql/
+    dest: "{{ root_folder }}/app/ksql/"
     force: yes
     backup: yes
 
 - name: read control-center-production.properties
-  shell: cat /etc/confluent-control-center/control-center-production.properties
+  become: yes
+  shell: cat {{ root_folder }}/app/control-center/control-center-production.properties
   register: control_center_production_properties_contents
   changed_when: false
 
 - name: Enable Control Center to work with 1 broker
+  become: yes
   lineinfile:
-    path: /etc/confluent-control-center/control-center-production.properties
+    path: "{{ root_folder }}/app/control-center/control-center-production.properties"
     state: present
     insertafter: EOF
     line: "{{ item }}"
@@ -104,7 +157,7 @@
   become: yes
   template:
     src: log4j.properties
-    dest: /etc/kafka/
+    dest: "{{ root_folder }}/app/kafka"
     force: yes
     backup: yes
 
@@ -112,7 +165,7 @@
   become: yes
   template:
     src: connect-log4j.properties
-    dest: /etc/kafka
+    dest: "{{ root_folder }}/app/kafka"
     force: yes
     backup: yes
 
@@ -132,10 +185,50 @@
     backup: yes
   register: systemd_zookeeper_updated
 
+- name: Control-center systemd unit file
+  become: yes
+  template:
+    src: confluent-control-center.service
+    dest: /etc/systemd/system/confluent-control-center.service
+    backup: yes
+  register: systemd_control_center_updated
+
+- name: Kafka-connect systemd unit file
+  become: yes
+  template:
+    src: confluent-kafka-connect.service
+    dest: /etc/systemd/system/confluent-kafka-connect.service
+    backup: yes
+  register: systemd_kafka_connect_updated
+
+- name: Kafka-rest systemd unit file
+  become: yes
+  template:
+    src: confluent-kafka-rest.service
+    dest: /etc/systemd/system/confluent-kafka-rest.service
+    backup: yes
+  register: systemd_kafka_rest_updated
+
+- name: KSQL systemd unit file
+  become: yes
+  template:
+    src: confluent-ksql.service
+    dest: /etc/systemd/system/confluent-ksql.service
+    backup: yes
+  register: systemd_ksql_updated
+
+- name: Schema-registry systemd unit file
+  become: yes
+  template:
+    src: confluent-schema-registry.service
+    dest: /etc/systemd/system/confluent-schema-registry.service
+    backup: yes
+  register: systemd_schema_registry_updated
+
 - name: Reload daemon files if needed
   become: yes
   command: systemctl daemon-reload
-  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed
+  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed or systemd_control_center_updated is changed or systemd_kafka_connect_updated is changed or systemd_kafka_rest_updated is changed or systemd_ksql_updated is changed or systemd_schema_registry_updated is changed
 
 - name: Enable Zookeeper to start on boot
   become: yes
@@ -143,8 +236,8 @@
     name: confluent-zookeeper
     enabled: yes
     masked: no
-    state: started
-  when: enable_kafka is defined and enable_kafka == "yes"
+    state: restarted
+  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_zookeeper_updated is changed)
 
 - name: Enable Kafka to start on boot
   become: yes
@@ -152,8 +245,8 @@
     name: confluent-kafka
     enabled: yes
     masked: no
-    state: started
-  when: enable_kafka is defined and enable_kafka == "yes"
+    state: restarted
+  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_kafka_updated is changed)
 
 - name: Enable Schema Registry to start on boot
   become: yes
@@ -161,8 +254,8 @@
     name: confluent-schema-registry
     enabled: yes
     masked: no
-    state: started
-  when: enable_kafka is defined and enable_kafka == "yes"
+    state: restarted
+  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_schema_registry_updated is changed)
 
 - name: Enable KSQL to start on boot
   become: yes
@@ -170,8 +263,8 @@
     name: confluent-ksql
     enabled: yes
     masked: no
-    state: started
-  when: enable_kafka is defined and enable_kafka == "yes"
+    state: restarted
+  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_ksql_updated is changed)
 
 - name: Enable Control Center to start on boot
   become: yes
@@ -179,8 +272,8 @@
     name: confluent-control-center
     enabled: yes
     masked: no
-    state: started
-  when: enable_kafka is defined and enable_kafka == "yes"
+    state: restarted
+  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_control_center_updated is changed)
 
 - name: Enable Kafka Rest to start on boot
   become: yes
@@ -188,8 +281,8 @@
     name: confluent-kafka-rest
     enabled: yes
     masked: no
-    state: started
-  when: enable_kafka is defined and enable_kafka == "yes"
+    state: restarted
+  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_kafka_rest_updated is changed)
 
 - name: Enable Kafka Connect to start on boot
   become: yes
@@ -198,4 +291,4 @@
     enabled: yes
     masked: no
     state: started
-  when: enable_kafka is defined and enable_kafka == "yes"
+  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_kafka_connect_updated is changed)

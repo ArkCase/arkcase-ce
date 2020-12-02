@@ -242,10 +242,10 @@
     replace: "FOIA_server,server,runtime"
   when: "'FOIA_server,server,runtime' not in foia_conf_yml.stdout"
 
-- name: deploy foia audit reports
-  include_tasks: deploy_foia_report.yml
-  loop: "{{ arkcase_foia_audit_reports }}"
-  loop_control:
-    loop_var: r
-  vars:
-    report_path: "foia-audit"
+# - name: deploy foia audit reports
+#   include_tasks: deploy_foia_report.yml
+#   loop: "{{ arkcase_foia_audit_reports }}"
+#   loop_control:
+#     loop_var: r
+#   vars:
+#     report_path: "foia-audit"

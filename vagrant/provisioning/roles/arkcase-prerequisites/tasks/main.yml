@@ -7,6 +7,10 @@
     create_home: yes
     home: /home/arkcase
 
+- name: set path to arkcase data folder
+  set_fact:
+    data_folder: "{{ arkcase_data_folder | default(root_folder + '/data/arkcase-home') }}"
+
 - name: arkcase folders
   become: yes
   file:
@@ -16,10 +20,10 @@
     owner: arkcase
   loop:
     - "{{ root_folder }}/data/arkcase"
-    - "{{ root_folder }}/data/arkcase-home"
-    - "{{ root_folder }}/data/arkcase-home/.arkcase"
-    - "{{ root_folder }}/data/arkcase-home/.yarn"
-    - "{{ root_folder }}/data/arkcase-home/.cache"
+    - "{{ data_folder }}"
+    - "{{ data_folder }}/.arkcase"
+    - "{{ data_folder }}/.yarn"
+    - "{{ data_folder }}/.cache"
     - "{{ root_folder }}/log/arkcase"
     - "{{ root_folder }}/app/arkcase"
     - "{{ root_folder }}/install/arkcase"
@@ -27,7 +31,18 @@
     - "{{ root_folder }}/app/config-server"
     - "{{ root_folder }}/log/config-server"
     - "{{ root_folder }}/tmp/config-server"
+    - "{{ root_folder }}/data/config-server/tmp"
   register: arkcase_folder_structure
+
+- name: link data folder to root folder if necessary
+  become: yes
+  file:
+    group: arkcase
+    owner: arkcase
+    src: "{{ data_folder }}"
+    dest: "{{ root_folder }}/data/arkcase-home"
+    state: link
+  when: data_folder != root_folder + "/data/arkcase-home"
 
 - name: link folders if they don't already exist
   include_tasks: link_folder.yml
@@ -105,7 +120,7 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - CONFIG-SERVER JAVA_OPTS"
     block: |
-      export JAVA_OPTS="$JAVA_OPTS -Dacm.configurationserver.propertyfile=/home/arkcase/.arkcase/acm/conf.yml -Duser.home={{ root_folder }}/data/arkcase-home"
+      export JAVA_OPTS="$JAVA_OPTS -Dacm.configurationserver.propertyfile=/home/arkcase/.arkcase/acm/conf.yml -Duser.home={{ data_folder }}"
 
 
 - name: configure NodeJS minification
@@ -175,3 +190,13 @@
       become: yes
       command: openssl rsautl -encrypt -pubin -inkey "{{ root_folder }}/common/arkcase-server.pub" -in "{{ root_folder }}/common/symmetricKey.txt" -out "{{ root_folder }}/common/symmetricKey.encrypted"
       when: sym_key_enc.stat.exists == False
+      
+- name: configure external web portal logging file
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - EXTERNAL-PORTAL LOGGING"
+    block: |
+      export LOG_FILE={{ root_folder }}/log/arkcase/externalPortal.log

@@ -48,14 +48,14 @@
     block: |
       SOLR_SSL_ENABLED=true
       SOLR_SSL_KEY_STORE={{ java_key_store_jks }}
-      SOLR_SSL_KEY_STORE_PASSWORD={{ java_key_store_pass }}
-      SOLR_SSL_TRUST_STORE={{ java_trust_store }}
-      SOLR_SSL_TRUST_STORE_PASSWORD={{ java_trust_store_pass }}
+      SOLR_SSL_KEY_STORE_PASSWORD='{{ java_key_store_pass }}'
+      SOLR_SSL_TRUST_STORE='{{ java_trust_store }}'
+      SOLR_SSL_TRUST_STORE_PASSWORD='{{ java_trust_store_pass }}'
       SOLR_SSL_TRUST_STORE_TYPE=JKS
       SOLR_SSL_KEY_STORE_TYPE=JKS
       SOLR_SSL_NEED_CLIENT_AUTH=false
       SOLR_SSL_WANT_CLIENT_AUTH=false
-      SOLR_OPTS="$SOLR_OPTS -Djavax.net.ssl.keyStorePassword={{ ansible_facts.fqdn }} -Djavax.net.ssl.trustStorePassword={{ ansible_facts.fqdn }}"
+      SOLR_OPTS="$SOLR_OPTS -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass | replace('$', '\$') }} -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass | replace('$', '\$') }}"
 
 # NOTE, per https://lucene.apache.org/solr/guide/7_7/taking-solr-to-production.html#taking-solr-to-production, 
 # setting ZK_HOST is sufficient to start Solr in Solr Cloud mode

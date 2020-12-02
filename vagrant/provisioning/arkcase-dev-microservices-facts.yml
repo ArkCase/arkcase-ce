@@ -28,6 +28,11 @@ snowbound_host: "{{ internal_host }}"
 solr_host: "{{ internal_host }}"
 
 
+### Define LDAP Version for the ArkCase service file
+### It should be "samba" for development vagrant boxes, where we have the LDAP localy and AWS instances
+### If it's a installation with an external LDAP then use "ad"
+ldap_type: "samba"
+
 ### ensure samba domain is based on the internal_host
 samba_domain: "DC.ARKCASE-CE"
 
@@ -306,6 +311,9 @@ email_convert_documents_to_pdf: false
 create_case_from_email_enabled: false
 create_complaint_from_email_enabled: false
 
+# retrieve arkcase from GitHub ("github") or SFTP ("sftp")
+arkcase_retrieve_strategy: "sftp"
+
 # core reports, these are always deployed
 arkcase_core_reports:
   - path: "arkcase"
@@ -319,6 +327,9 @@ arkcase_core_reports:
   - path: "arkcase-audit"
     definition: "AuditReport.prpt"
 
+# arkcase extension 
+arkcase_extension_install: no
+arkcase_extension_version: ""
 # extension reports... each different extension may or may not have its own path 
 # in the jar file where report definitions are stored
 arkcase_extension_install_reports: no
@@ -333,6 +344,8 @@ foia_portal_context: foia
 arkcase_foia_reports:
   - path: "foia-audit"
     definition: "AuditReport.prpt"
+  - path: "foia"
+    definition: "FOIA Log.prpt"
 
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 

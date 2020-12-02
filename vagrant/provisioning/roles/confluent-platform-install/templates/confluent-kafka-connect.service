@@ -1,0 +1,15 @@
+[Unit]
+Description=Apache Kafka Connect - distributed
+Documentation=http://docs.confluent.io/
+After=network.target confluent-kafka.target
+
+[Service]
+Type=simple
+User=cp-kafka-connect
+Group=confluent
+ExecStart=/usr/bin/connect-distributed {{ root_folder }}/app/kafka/connect-distributed.properties
+TimeoutStopSec=180
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
