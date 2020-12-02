@@ -134,6 +134,40 @@
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
 
+- name: setup path to arkcase config file
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "<name>C{ ':\' }}Users\marjan.stefanoski\foia---reports-dw-1\config\arkcase_config.properties</name>"
+      line: "<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>"
+
+- name: setup Arkcase REST endpoints
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "AGENCY_REST_ENDPOINT=https{{ ':' }}//acm-arkcase/arkcase/api/latest/service/config/lookups"
+      line: "AGENCY_REST_ENDPOINT=https://{{ external_host }}/arkcase/api/latest/service/config/lookups"
+    - regexp: "ARKCASE_USER=arkcase-admin@arkcase.org"
+      line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+    - regexp: "ARKCASE_PASS=AcMd3v$"
+      line: "ARKCASE_PASS={{ arkcase_admin_password }}"
+    - regexp: "TRUSTSTORE_PATH=~/\.arkcase/acm/private/arkcase\.ts"
+      line: "TRUSTSTORE_PATH={{ java_trust_store }}"
+    - regexp: "TRUSTSTORE_PASSWORD=password"
+      line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
+
 - name: run the job to create and populate the mondrian cubes
   become: yes
   become_user: pentaho-pdi
