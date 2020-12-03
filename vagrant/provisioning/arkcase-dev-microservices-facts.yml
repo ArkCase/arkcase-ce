@@ -205,6 +205,9 @@ arkcase_admin_name: "ArkCase Administrator"
 arkcase_admin_password: "{{ default_user_password }}"
 arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
 
+foia_portal_group: "{{ ldap_prefix }}ARKCASE_PORTAL_USER"
+foia_portal_id: "8c41ee4e-49d4-4acb-8bce-866e52de3e4e"
+
 ldap_users:
   - user_id: "{{ arkcase_admin_user }}"
     description: ArkCase administrator
