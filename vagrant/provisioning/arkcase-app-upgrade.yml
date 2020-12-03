@@ -11,6 +11,8 @@
       tags: [core]
     - role: foia
       tags: [foia]
+    - role: start-arkcase
+      tags: [core]
     - role: arkcase-interactive-reports
       tags: [core]
     - role: foia-analytical-reports
@@ -21,6 +23,4 @@
     - role: arkcase-post-upgrade
       tags: [core]
     - role: snowbound-app
-      tags: [core]
-    - role: start-arkcase
       tags: [core]
