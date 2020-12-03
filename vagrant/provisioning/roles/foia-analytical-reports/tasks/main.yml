@@ -153,7 +153,7 @@
       line: "AGENCY_REST_ENDPOINT=https://{{ external_host }}/arkcase/api/latest/service/config/lookups"
     - regexp: "ARKCASE_USER=arkcase-admin@arkcase.org"
       line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
-    - regexp: "ARKCASE_PASS=AcMd3v\$"
+    - regexp: "ARKCASE_PASS=AcMd3v\\$"
       line: "ARKCASE_PASS={{ arkcase_admin_password }}"
     - regexp: "TRUSTSTORE_PATH=/some/path/to/truststore"
       line: "TRUSTSTORE_PATH={{ java_trust_store }}"
