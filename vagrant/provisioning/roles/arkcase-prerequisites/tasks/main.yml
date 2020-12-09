@@ -130,4 +130,4 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - EXTERNAL-PORTAL LOGGING"
     block: |
-      export LOG_FILE={{ root_folder }}/log/arkcase/externalPortal.log
+      export LOGGING_FILE_NAME={{ root_folder }}/log/arkcase/externalPortal.log
