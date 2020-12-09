@@ -20,13 +20,13 @@
 - name: import the ldap cert to the ArkCase trust store
   become: yes
   java_cert:
-    cert_alias: "arkcase_ldap_cert"
+    cert_alias: "arkcase_ldap_portal_cert"
     cert_url: "{{ ldap_portal_host }}"
     cert_port: "{{ ldap_portal_port|int }}"
     keystore_path: "{{ java_trust_store }}"
     keystore_pass: "{{ java_trust_store_pass }}"
     state: present
-  when: "'arkcase_ldap_cert' not in cert_list.stdout"
+  when: "'arkcase_ldap_portal_cert' not in cert_list.stdout"
 
 - name: add arkcase ancestors
   ldap_entry:
