@@ -1,0 +1,29 @@
+logging:
+  level:
+    com.arkcase.portal: debug
+    org:
+      springframework: warn
+      apache: warn
+    springfox: warn
+
+portal:
+  uiApplicationUrl: "https://{{ external_host }}/{{ privacy_portal_context }}"
+  uiApplicationHost: "https://{{ external_host }}"
+  id: "{{ privacy_portal_id }}"
+  url: "https://{{ external_host }}/{{ privacy_portal_context }}"
+  arkcaseUrl: "https://{{ internal_host }}/arkcase"
+  groupName: "{{ privacy_portal_group }}@{{ ldap_user_domain | upper}}"
+  # authentication type, possible values (basic, external)
+  authenticationType: basic
+  userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+  password: "{{ arkcase_admin_password }}"
+  # portal configuration type
+  externalConfiguration: true
+  authenticatedMode: false
+  activemqUrl: "ssl://{{ activemq_host }}:61616"
+  serviceProvider:
+    directory.name: "privacyportal"
+  keystoreFilename: arkcase.ks
+  keystorePassword: "{{ java_key_store_pass }}"
+  truststoreFilename: arkcase.ts
+  truststorePassword: "{{ java_trust_store_pass }}"
