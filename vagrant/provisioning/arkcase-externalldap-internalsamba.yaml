@@ -1,8 +1,10 @@
 ---
-- hosts: localhost
+- hosts: all
   roles:
     - role: common
       tags: [core, common]
+    - role: pki
+      tags: [core, pki]  
     - role: pki_client
       tags: [core, pki_client]
     - role: samba
@@ -43,6 +45,8 @@
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
+    - role: start-arkcase
+      tags: [core, arkcase]
     - role: foia
       tags: [core, foia]
     - role: pentaho-pdi-client
@@ -53,7 +57,3 @@
       tags: [core, arkcase, tesseract]
     - role: firewall
       tags: [core, firewall]
-    - role: start-arkcase
-      tags: [core, arkcase]
-    
-
