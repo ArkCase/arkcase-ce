@@ -45,6 +45,8 @@
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
+    - role: start-arkcase
+      tags: [core, arkcase]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
