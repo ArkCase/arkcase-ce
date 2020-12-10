@@ -401,12 +401,12 @@
       copy:
         dest: "{{ root_folder }}/app/alfresco/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap2/ldap-ad.properties"
         content: |
-          ldap.authentication.java.naming.provider.url={{ ldap_portal_url | default(ldap_url) }}
-          ldap.synchronization.java.naming.security.principal={{ ldap_portal_bind_user | default(ldap_bind_user) }}
-          ldap.synchronization.java.naming.security.credentials={{ ldap_portal_bind_password | default(ldap_bind_password) }}
+          ldap.authentication.java.naming.provider.url={{ ldap_portal_url | default({{ ldap_url }}) }}
+          ldap.synchronization.java.naming.security.principal={{ ldap_portal_bind_user | default({{ ldap_bind_user }}) }}
+          ldap.synchronization.java.naming.security.credentials={{ ldap_portal_bind_password | default({{ ldap_bind_password }}) }}
           ldap.synchronization.groupSearchBase={{ ldap_portal_group_no_base }},{{ ldap_base }}
           ldap.synchronization.userSearchBase={{ ldap_portal_user_no_base }},{{ ldap_base }}
-          ldap.authentication.userNameFormat=%s@{{ ldap_portal_user_domain | default(active_directory_domain) }}
+          ldap.authentication.userNameFormat=%s@{{ ldap_portal_user_domain | default({{ active_directory_domain }}) }}
   when: foia_portal_context is defined        
 
 - name: configure alfresco.log location
