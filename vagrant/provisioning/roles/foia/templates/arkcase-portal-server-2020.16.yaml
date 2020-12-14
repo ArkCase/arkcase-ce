@@ -29,4 +29,4 @@ portal:
   truststorePassword: "{{ java_trust_store_pass }}"
   security.authentication:
     header.parameter.name: foia-api-secret
-    token: YXJrY2FzZTpFRU9DQWNNZDN2JA
+    token:  "{{ portal_foiagov_token | default (YXJrY2FzZTpFRU9DQWNNZDN2JA) }}"
