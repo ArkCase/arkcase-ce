@@ -19,7 +19,7 @@ portal:
   password: "{{ arkcase_admin_password }}"
   # portal configuration type
   externalConfiguration: true
-  authenticatedMode: false
+  authenticatedMode: {{ portal_authenticated_mode | default (false) }}
   activemqUrl: "ssl://{{ activemq_host }}:61616"
   serviceProvider:
     directory.name: "foiaportal"
