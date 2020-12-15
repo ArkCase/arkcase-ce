@@ -49,6 +49,7 @@
   file:
     path: "{{ root_folder }}/common/symmetricKey.decrypted"
     state: absent
+  when: not foia_portal_context is defined
 
 - name: remove the decrypted symmetric key with new line
   become: yes
