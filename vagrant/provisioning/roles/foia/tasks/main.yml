@@ -113,7 +113,6 @@
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
   when: arkcase_version == "" or arkcase_version is version('2020.16', '>=')
 
-
 - name: encrypt passwords
   include_tasks: encrypt_password.yml
   loop:
@@ -122,6 +121,12 @@
   loop_control:
     loop_var: p
   when: ldap_portal_bind_password is defined
+
+- name: remove the decrypted symmetric key
+  become: yes
+  file:
+    path: "{{ root_folder }}/common/symmetricKey.decrypted"
+    state: absent
 
 - name: Set ldap_portal_base
   set_fact:
