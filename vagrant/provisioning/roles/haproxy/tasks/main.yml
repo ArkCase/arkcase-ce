@@ -330,6 +330,7 @@
             mode http
             option tcp-check
             server elasticsearch {{ internal_host }}:9200
+            http-request set-path %[path,regsub(^/elasticsearch/,/)]
   
   when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
 
@@ -368,13 +369,15 @@
             http-response add-header X-Zipkin-Health %s
             mode http
             option tcp-check
-            server zipkin-health {{ internal_host }}:9411/health
+            server zipkin-health {{ internal_host }}:9411
+            http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin-api
             http-response add-header X-Zipkin-Api %s
             mode http
             option tcp-check
-            server zipkin-api {{ internal_host }}:9411/api
+            server zipkin-api {{ internal_host }}:9411
+            http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin
             http-response add-header X-Zipkin %s
