@@ -1,6 +1,6 @@
 [Unit]
 Description=Zipkin Server
-After=syslog.target,elasticsearch
+After=syslog.target elasticsearch.service
 
 [Service]
 ExecStart={{ root_folder }}/app/zipkin/zipkin-server-{{ zipkin_version }}.jar
