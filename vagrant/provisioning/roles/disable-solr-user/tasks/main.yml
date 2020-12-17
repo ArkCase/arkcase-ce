@@ -1,0 +1,5 @@
+- name: Disable solr user
+  become: yes
+  user:
+    name: solr
+    password: "!"  # Disable the solr user

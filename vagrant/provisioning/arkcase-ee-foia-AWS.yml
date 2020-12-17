@@ -62,3 +62,5 @@
       tags: [core]
     - role: disable-admin
       tags: [core, ldap]
+    - role: disable-solr-user
+      tags: [core, solr]
