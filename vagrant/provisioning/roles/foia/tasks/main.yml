@@ -164,7 +164,6 @@
     ldap_authentication_service_class: "gov.foia.service.FOIALdapAuthenticationService"
     portal_prefix: "portal."
     ldap_template_name: "spring-config-foiaportal-ldap.xml"
-
     group_base: "{{ ldap_portal_group_no_base | default(ldap_group_no_base) }}"
     user_base: "{{ ldap_portal_user_no_base | default(ldap_user_no_base) }}"
     ldap_base: "{{ ldap_portal_base }}"
