@@ -43,6 +43,8 @@
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
+    - role: foia
+      tags: [core,foia]
     - role: start-arkcase
       tags: [core, arkcase]
     - role: pentaho-pdi-client
