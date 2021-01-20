@@ -32,7 +32,7 @@
     - name: "{{ mongodb_data_folder }}"
       setype: ""
     - name: "{{ mongodb_log_folder }}"
-      setype: "mysqld_log_t"
+      setype: ""
   register: mongodb_folder_structure
 
 - name: set log folder
@@ -59,17 +59,12 @@
   - debug:
       msg: "File exists..."
     when: p.stat.exists
-    skip: 
 
   - debug:
       msg: "File not found"
-    when: p.stat.exists == False
     become: yes
     command: cp -rp /var/lib/mongo {{ mongodb_data_folder }}
-
-- name: Transfer mongodb Data Directory to the new location
-  become: yes
-  command: cp -rp /var/lib/mongo {{ mongodb_data_folder }}
+    when: p.stat.exists == False
 
 - name: SELinux context on the new logpath
   become: yes
