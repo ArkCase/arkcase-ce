@@ -1,0 +1,10 @@
+
+- name: Create database 'arkcase' user with name 'arkcase' and password
+mongodb_security_authorization: "enabled"
+mongodb_users:
+  - {
+    name: arkcase,
+    password: "{{ default_user_password }}",
+    roles: readWrite,dbAdmin,userAdmin,
+    database: arkcase
+}

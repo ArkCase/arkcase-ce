@@ -1,0 +1,93 @@
+- name: configure Mongodb 4.0 repository
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mongodb-org.repo
+    force: no
+    content: |
+      [mongodb-org-4.0]
+      name=MongoDB Repository
+      baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.0/x86_64/
+      gpgcheck=1
+      enabled=1
+      gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
+
+- name: install Mongodb
+  become: yes
+  yum:
+    state: installed
+    disable_gpg_check: yes
+    name:
+      - mongodb-org
+  register: mongodb_install
+
+- name: Mongodb folders
+  become: yes
+  file:
+    path: "{{ item.name }}"
+    state: directory
+    group: mongod
+    owner: mongod
+    setype: "{{ item.setype }}"
+  loop:
+    - name: "{{ mongodb_data_folder }}"
+      setype: ""
+    - name: "{{ mongodb_log_folder }}"
+      setype: "mysqld_log_t"
+  register: mongodb_folder_structure
+
+- name: set log folder
+  become: yes
+  lineinfile:
+    path: /etc/mongod.conf
+    insertafter: "systemLog"
+    regexp: '^path:'
+    line: 'path:{{ mongodb_log_folder }}/mongod.log'
+
+- name: set data folder
+  become: yes
+  lineinfile:
+    path: /etc/mongod.conf
+    insertafter: "storage"
+    regexp: '^dbPath:'
+    line: 'dbPath:{{ mongodb_data_folder }}'
+
+#Ansible check if file existis in order to not replace the existing data files with the default ones.
+- name: Ansible check file exists.
+    stat:
+      path: '{{ mongodb_data_folder }}/mongod.lock'
+    register: p
+  - debug:
+      msg: "File exists..."
+    when: p.stat.exists
+    skip: 
+
+  - debug:
+      msg: "File not found"
+    when: p.stat.exists == False
+    become: yes
+    command: cp -rp /var/lib/mongo {{ mongodb_data_folder }}
+
+- name: Transfer mongodb Data Directory to the new location
+  become: yes
+  command: cp -rp /var/lib/mongo {{ mongodb_data_folder }}
+
+- name: SELinux context on the new logpath
+  become: yes
+  command: chcon -Rv --type=mongod_log_t {{ mongodb_log_folder }}
+
+- name: SELinux context on the new dbpath
+  become: yes
+  command: chcon -Rv --type=mongod_var_lib_t {{ mongodb_data_folder }}
+
+- name: enable Mongodb to start on boot
+  become: yes
+  systemd:
+    name: mongod
+    enabled: yes
+    masked: no
+
+- name: ensure mongodb is started
+  become: yes
+  systemd:
+    name: mongod
+    state: started

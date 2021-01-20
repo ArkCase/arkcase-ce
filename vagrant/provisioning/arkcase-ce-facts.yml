@@ -303,6 +303,10 @@ ssl_version: "TLSv1.2"
 # ssl_cipher only for backward compatibility
 ssl_cipher: "{{ ssl_version }}"
 
+# Mongodb folder location
+mongodb_data_folder: "{{ root_folder }}/data/mongo"
+mongodb_log_folder: "{{ root_folder }}/log/mongodb"
+
 # for the pki role (used by CE installer to create a self-hosted
 # PKI), these facts are prescriptive, and the pki role will
 # create these files.  For the pki_client role (which creates
@@ -430,3 +434,4 @@ confluent_major_version: 5.4
 confluent_minor_version: 7
 confluent_scala_version: 2.12
 
+ldap_type: samba
