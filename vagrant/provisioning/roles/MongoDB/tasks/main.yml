@@ -56,9 +56,9 @@
   stat:
     path: '{{ mongodb_data_folder }}/mongod.lock'
     register: p
-- debug:
+  debug:
     msg: "File exists..."
-    when: p.stat.exists
+  when: p.stat.exists
 
 - debug:
   msg: "File not found"
