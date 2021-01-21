@@ -55,15 +55,9 @@
 - name: Ansible check file exists.
   stat:
     path: '{{ mongodb_data_folder }}/mongod.lock'
-    register: p
-- name: Check if file exists.  
-  debug:
-    msg: "File exists..."
-  when: p.stat.exists
+  register: p
 
 - name: copy data
-  debug:
-    msg: "File not found"
   become: yes
   command: cp -rp /var/lib/mongo/* {{ mongodb_data_folder }}
   when: p.stat.exists == False
