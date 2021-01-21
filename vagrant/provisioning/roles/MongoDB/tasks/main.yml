@@ -30,49 +30,43 @@
     setype: "{{ item.setype }}"
   loop:
     - name: "{{ mongodb_data_folder }}"
-      setype: ""
+    #SELinux context on the new dbpath
+      setype: "mongod_var_lib_t"
     - name: "{{ mongodb_log_folder }}"
-      setype: ""
+    #SELinux context on the new logpath
+      setype: "mongod_log_t"
   register: mongodb_folder_structure
 
-- name: set log folder
+- name: Change path to the data folder
   become: yes
-  lineinfile:
-    path: /etc/mongod.conf
-    insertafter: "systemLog"
-    regexp: '^path:'
-    line: 'path:{{ mongodb_log_folder }}/mongod.log'
+  replace: 
+    path: /tmp/mongod.conf
+    regexp: "dbPath:/var/lib/mongo"
+    replace: "dbPath:/opt/arkcase/data/mongo"
 
-- name: set data folder
+- name: Change path to the log folder
   become: yes
-  lineinfile:
-    path: /etc/mongod.conf
-    insertafter: "storage"
-    regexp: '^dbPath:'
-    line: 'dbPath:{{ mongodb_data_folder }}'
+  replace: 
+    path: /tmp/mongod.conf
+    regexp: "path:/var/log/mongodb/mongod.log"
+    replace: "path:/opt/arkcase/log/mongodb/mongod.log"
 
 #Ansible check if file existis in order to not replace the existing data files with the default ones.
 - name: Ansible check file exists.
   stat:
     path: '{{ mongodb_data_folder }}/mongod.lock'
     register: p
+- name: Check if file exists.  
   debug:
     msg: "File exists..."
   when: p.stat.exists
 
-- debug:
-  msg: "File not found"
+- name: copy data
+  debug:
+    msg: "File not found"
   become: yes
-  command: cp -rp /var/lib/mongo {{ mongodb_data_folder }}
+  command: cp -rp /var/lib/mongo/* {{ mongodb_data_folder }}
   when: p.stat.exists == False
-
-- name: SELinux context on the new logpath
-  become: yes
-  command: chcon -Rv --type=mongod_log_t {{ mongodb_log_folder }}
-
-- name: SELinux context on the new dbpath
-  become: yes
-  command: chcon -Rv --type=mongod_var_lib_t {{ mongodb_data_folder }}
 
 - name: enable Mongodb to start on boot
   become: yes
