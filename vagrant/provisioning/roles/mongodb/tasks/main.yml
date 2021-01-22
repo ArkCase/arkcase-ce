@@ -20,7 +20,19 @@
       - mongodb-org
   register: mongodb_install
 
-- name: Mongodb folders
+- name: ensure Mongodb is started
+  become: yes
+  systemd:
+    name: mongod
+    state: started
+
+- name: ensure Mongodb is stopped
+  become: yes
+  systemd:
+    name: mongod
+    state: stopped
+
+- name: Mongodb data and log folder structure
   become: yes
   file:
     path: "{{ item.name }}"
@@ -36,31 +48,23 @@
     #SELinux context on the new logpath
       setype: "mongod_log_t"
   register: mongodb_folder_structure
-
-- name: Change path to the data folder
+  
+- name: Mongodb config
   become: yes
-  replace: 
-    path: /tmp/mongod.conf
-    regexp: "dbPath:/var/lib/mongo"
-    replace: "dbPath:/opt/arkcase/data/mongo"
-
-- name: Change path to the log folder
-  become: yes
-  replace: 
-    path: /tmp/mongod.conf
-    regexp: "path:/var/log/mongodb/mongod.log"
-    replace: "path:/opt/arkcase/log/mongodb/mongod.log"
+  template:
+    src: templates/mongod.conf
+    dest: /etc/mongod.conf
 
 #Ansible check if file existis in order to not replace the existing data files with the default ones.
-- name: Ansible check file exists.
+- name: ansible check if file exists on a specific path
   stat:
     path: '{{ mongodb_data_folder }}/mongod.lock'
   register: p
 
 - name: copy data
   become: yes
-  command: cp -rp /var/lib/mongo/* {{ mongodb_data_folder }}
-  when: p.stat.exists == False
+  command: "cp -rp /var/lib/mongo/* {{ mongodb_data_folder }}"
+  when: p.stat.exists == True
 
 - name: enable Mongodb to start on boot
   become: yes
@@ -69,7 +73,7 @@
     enabled: yes
     masked: no
 
-- name: ensure mongodb is started
+- name: ensure Mongodb is started
   become: yes
   systemd:
     name: mongod
