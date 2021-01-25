@@ -41,16 +41,17 @@
     owner: mongod
     setype: "{{ item.setype }}"
   loop:
-    - name: "{{ mongodb_data_folder }}"
+    - name: "{{ root_folder }}/data/mongo"
     #SELinux context on the new dbpath
       setype: "mongod_var_lib_t"
-    - name: "{{ mongodb_log_folder }}"
+    - name: "{{ root_folder }}/log/mongodb"
     #SELinux context on the new logpath
       setype: "mongod_log_t"
   register: mongodb_folder_structure
   
 - name: Mongodb config
   become: yes
+  backup: yes
   template:
     src: templates/mongod.conf
     dest: /etc/mongod.conf
