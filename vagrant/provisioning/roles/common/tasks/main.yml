@@ -14,12 +14,12 @@
       - java-11-openjdk-devel
       - java-1.8.0-openjdk
       - java-1.8.0-openjdk-devel
-      - policycoreutils-python
+        #      - policycoreutils-python
       - zip
       - unzip
       - git
       - net-tools
-      - python-pip
+#      - python-pip
       - "@Development Tools"
       - deltarpm
       - bzip2
