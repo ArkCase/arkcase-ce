@@ -19,8 +19,8 @@
       - unzip
       - git
       - net-tools
-      - python36u
-      - python36u-devel  
+        #- python36u
+        #- python36u-devel  
       - python3-pip
       - "@Development Tools"
       - deltarpm
