@@ -20,19 +20,7 @@
       - mongodb-org
   register: mongodb_install
 
-- name: ensure Mongodb is started
-  become: yes
-  systemd:
-    name: mongod
-    state: started
-
-- name: ensure Mongodb is stopped
-  become: yes
-  systemd:
-    name: mongod
-    state: stopped
-
-- name: Mongodb data and log folder structure
+- name: Mongodb folders
   become: yes
   file:
     path: "{{ item.name }}"
@@ -41,31 +29,19 @@
     owner: mongod
     setype: "{{ item.setype }}"
   loop:
-    - name: "{{ root_folder }}/data/mongo"
+    - name: "{{ mongodb_data_folder }}"
     #SELinux context on the new dbpath
       setype: "mongod_var_lib_t"
-    - name: "{{ root_folder }}/log/mongodb"
+    - name: "{{ mongodb_log_folder }}"
     #SELinux context on the new logpath
       setype: "mongod_log_t"
   register: mongodb_folder_structure
-  
+
 - name: Mongodb config
   become: yes
-  backup: yes
   template:
     src: templates/mongod.conf
     dest: /etc/mongod.conf
-
-#Ansible check if file existis in order to not replace the existing data files with the default ones.
-- name: ansible check if file exists on a specific path
-  stat:
-    path: '{{ mongodb_data_folder }}/mongod.lock'
-  register: p
-
-- name: copy data
-  become: yes
-  command: "cp -rp /var/lib/mongo/* {{ mongodb_data_folder }}"
-  when: p.stat.exists == True
 
 - name: enable Mongodb to start on boot
   become: yes
@@ -74,8 +50,16 @@
     enabled: yes
     masked: no
 
-- name: ensure Mongodb is started
+- name: ensure mongodb is started
   become: yes
   systemd:
     name: mongod
     state: started
+
+- name: install pymongo
+  become: yes
+  pip:
+    name: pymongo
+
+- name: create arkcase mongo database
+  include_tasks: "{{ role_path }}/../MongoDB/tasks/create_user_database.yml"
