@@ -61,13 +61,15 @@
 - name: update PIP if necessary
   become: yes
   pip:
+    executable: pip3
     name:
       - pip
     extra_args: --upgrade
 
 - name: install Python Excel module
   become: yes
-  pip: 
+  pip:
+    executable: pip3      
     name: 
       - openpyxl
       - lxml
