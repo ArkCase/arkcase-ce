@@ -1,0 +1,30 @@
+- name: read current /etc/resolv.conf
+  command: cat /etc/resolv.conf
+  register: resolv_contents
+  changed_when: false
+
+- name: get the network device
+  become: yes
+  shell: nmcli --fields NAME c show --active | grep -v NAME | sed 's/.$//'
+  register: netdevice
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: set name servers 
+  become: yes
+  command: nmcli con mod "{{ netdevice.stdout }}" ipv4.dns '{{ nameserver_ip_addresses }}'
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: set dns search order 
+  become: yes
+  command: nmcli con mod "{{ netdevice.stdout }}" ipv4.dns-search '{{ active_directory_domain }}'
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: ignore auto dns
+  become: yes
+  command: nmcli con mod "{{ netdevice.stdout }}" ipv4.ignore-auto-dns yes
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout
+
+- name: restart network 
+  become: yes
+  command: nmcli con up "{{ netdevice.stdout }}"
+  when: nameserver_ip_addresses.split(",")[0] not in resolv_contents.stdout

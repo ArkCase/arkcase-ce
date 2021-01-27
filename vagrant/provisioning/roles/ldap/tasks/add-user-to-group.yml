@@ -9,7 +9,7 @@
       dn: {{ item }}
       changetype: modify
       add: member
-      member: CN={{ user_id }},{{ ldap_user_base }}
+      member: CN={{ user_id }},{{ target_user_base }}
     dest: "{{ root_folder }}/install/add_user_to_group.ldif"
   when: "'givenName' not in group_memberships.stdout"
   register: add_user_to_group_ldif

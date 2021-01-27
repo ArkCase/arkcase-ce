@@ -5,6 +5,7 @@ Description=Alfresco service
 Type=forking
 ExecStart={{ root_folder }}/app/alfresco/bin/startup.sh
 ExecStop={{ root_folder }}/app/alfresco/bin/shutdown.sh -force
+Environment="JAVA_OPTS='-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }}'"
 User=alfresco
 Group=alfresco
 Restart=always

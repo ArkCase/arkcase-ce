@@ -1,6 +1,14 @@
-- name: check solr_cores
+- name: list solr_cores
   debug:
     var: solr_cores
+
+- name: add {{ external_host }} to hosts file
+  become: yes
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+  loop:
+    - "{{ external_host_entry | default('') }}"
 
 - name: Create {{ item }} collection (Solr cloud), with one replica
   become: yes
@@ -11,11 +19,11 @@
 - name: Create 2nd replica for {{ item }} collection
   become: yes
   become_user: solr
-  shell: curl https://{{ ansible_facts.hostname }}:8983/solr/admin/collections?action=ADDREPLICA\&collection={{ item }}\&shard=shard1
+  shell: curl https://{{ internal_host }}:8983/solr/admin/collections?action=ADDREPLICA\&collection={{ item }}\&shard=shard1
   loop: "{{ solr_cores }}"
 
 - name: Create 3rd replica for {{ item }} collection
   become: yes
   become_user: solr
-  shell: curl https://{{ ansible_facts.hostname }}:8983/solr/admin/collections?action=ADDREPLICA\&collection={{ item }}\&shard=shard1
+  shell: curl https://{{ internal_host }}:8983/solr/admin/collections?action=ADDREPLICA\&collection={{ item }}\&shard=shard1
   loop: "{{ solr_cores }}"

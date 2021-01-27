@@ -143,9 +143,24 @@
   loop: "{{ ldap_portal_groups|flatten }}"  
   when: foia_portal_context is defined
 
+- name: set user base for app users
+  set_fact:
+    target_user_base: "{{ ldap_user_base }}"
+
 - name: add users
   include_tasks: add-user.yml
   loop: "{{ ldap_users }}"    
   loop_control:
     loop_var: u  
+
+- name: set user base for portal users
+  set_fact:
+    target_user_base: "{{ ldap_portal_user_base }}"
+
+- name: add portal users
+  include_tasks: add-user.yml
+  loop: "{{ portal_ldap_users }}"    
+  loop_control:
+    loop_var: u  
+  when: portal_ldap_users is defined
 

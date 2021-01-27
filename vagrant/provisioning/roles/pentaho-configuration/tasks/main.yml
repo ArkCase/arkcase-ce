@@ -19,17 +19,32 @@
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/repository.spring.properties"
 
 - name: import arkcase keystore
-  become: yes
-  become_user: pentaho
-  java_cert:
-    pkcs12_alias: "{{ keystore_alias | default('arkcase_server') }}"
-    pkcs12_path: "{{ java_p12_store }}"
-    pkcs12_password: "{{ java_key_store_pass }}"
-    keystore_create: yes
-    keystore_pass: password
-    keystore_path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
-    state: present
-    cert_alias: tomcat
+  block:
+    - name: import with keystore_alias
+      become: yes
+      become_user: pentaho
+      java_cert:
+        pkcs12_alias: "{{ keystore_alias | default('arkcase_server') }}"
+        pkcs12_path: "{{ java_p12_store }}"
+        pkcs12_password: "{{ java_key_store_pass }}"
+        keystore_create: yes
+        keystore_pass: password
+        keystore_path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
+        state: present
+        cert_alias: tomcat
+  rescue:
+    - name: try internal_host as the alias
+      become: yes
+      become_user: pentaho
+      java_cert:
+        pkcs12_alias: "{{ internal_host }}"
+        pkcs12_path: "{{ java_p12_store }}"
+        pkcs12_password: "{{ java_key_store_pass }}"
+        keystore_create: yes
+        keystore_pass: password
+        keystore_path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
+        state: present
+        cert_alias: tomcat
 
 - name: ensure proper permissions on pentaho keystore
   become: yes
@@ -359,11 +374,11 @@
     chdir: "{{ root_folder }}/install/pentaho"
   environment:
     SSHPASS: "{{ sftp_extension_password }}"
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
+  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool and arkcase_extension_install_reports|bool
 
 - name: deploy extension reports
   include_tasks: deploy_extension_report.yml
   loop: "{{ arkcase_extension_reports|flatten }}"
-  when: arkcase_extension_install_reports|bool
+  when: arkcase_extension_install_reports|bool and arkcase_extension_install|bool
   loop_control:
     loop_var: r

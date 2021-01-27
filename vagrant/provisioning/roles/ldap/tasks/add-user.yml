@@ -4,7 +4,7 @@
     validate_certs: no
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
-    dn: CN={{ u.user_id }},{{ldap_user_base}}
+    dn: CN={{ u.user_id }},{{target_user_base}}
     objectClass:
       - organizationalPerson
       - person
@@ -33,7 +33,7 @@
       become: yes
       copy:
         content: |
-          dn: CN={{ u.user_id }},{{ ldap_user_base }}
+          dn: CN={{ u.user_id }},{{ target_user_base }}
           changetype: modify
           replace: unicodePwd
           unicodePwd:: {{ base64_password.stdout }}
@@ -54,7 +54,7 @@
       become: yes
       copy:
         content: |
-          dn: CN={{ u.user_id }},{{ ldap_user_base }}
+          dn: CN={{ u.user_id }},{{ target_user_base }}
           changetype: modify
           replace: userAccountControl
           userAccountControl: 512
