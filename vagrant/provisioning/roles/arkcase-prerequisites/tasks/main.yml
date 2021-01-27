@@ -52,12 +52,12 @@
     schema_task_name: create_schema_rds
   when: rds_password is defined
 
-- name: create arkcase database schema
-  include_tasks: "{{ role_path }}/../mariadb/tasks/{{ schema_task_name }}.yml"
-  args:
-    apply:
-      vars:
-        item: arkcase
+# - name: create arkcase database schema
+#   include_tasks: "{{ role_path }}/../mariadb/tasks/{{ schema_task_name }}.yml"
+#   args:
+#     apply:
+#       vars:
+#         item: arkcase
 
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
