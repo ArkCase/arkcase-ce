@@ -67,7 +67,8 @@
 
 - name: install Python Excel module
   become: yes
-  pip: 
+  pip:
+    executable: pip3
     name: 
       - openpyxl
       - lxml
