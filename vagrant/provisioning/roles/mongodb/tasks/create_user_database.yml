@@ -1,7 +1,19 @@
-- name: Create database 'arkcase' user with name 'arkcase' and password
-  mongodb_security_authorization: "enabled"
-  mongodb_users:
-- name: arkcase
-  password: '{{ default_user_password }}'
-  roles: readWrite,dbAdmin,userAdmin,
-  database: arkcase
+- name: Create MongoDB root user siteRootAdmin
+  mongodb_user:
+    login_port: "27017"
+    database: "admin"
+    name: arkcase
+    password: '{{ default_user_password }}'
+    roles: "root"
+
+- name: Create MongoDB administrative user siteUserAdmin
+  mongodb_user:
+    login_user: arkcase
+    login_password: '{{ default_user_password }}'
+    login_port: "27017"
+    database: "arkcase"
+    name: arkcase
+    password: '{{ default_user_password }}'
+    roles:
+      - { db: "admin", role: "readWrite" }
+      - { db: arkcase, role: "readWrite" }

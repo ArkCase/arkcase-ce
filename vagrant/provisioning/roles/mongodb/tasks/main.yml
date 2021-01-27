@@ -62,4 +62,4 @@
     name: pymongo
 
 - name: create arkcase mongo database
-  include_tasks: "{{ role_path }}/../MongoDB/tasks/create_user_database.yml"
+  include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"
