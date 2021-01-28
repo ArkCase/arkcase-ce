@@ -5,7 +5,7 @@
 - name: update assignment rules spreadsheet {{ s.base_path }}
   become: yes
   become_user: arkcase
-  command: "{{ root_folder }}/install/arkcase/fixGroups.py {{ s.base_path_no_xlsx }} {{ s.replacements }}"
+  command: "/bin/python3 {{ root_folder }}/install/arkcase/fixGroups.py {{ s.base_path_no_xlsx }} {{ s.replacements }}"
   register: rule_update
   changed_when: "'replacing' in rule_update.stdout"
 

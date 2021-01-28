@@ -58,16 +58,17 @@
     state: absent
 
 # might have to upgrade PIP itself before installing openpyxl
-#- name: update PIP if necessary
-#  become: yes
-#  pip:
-#    name:
-#      - pip
-#    extra_args: --upgrade
+- name: update PIP if necessary
+  become: yes
+  pip:      
+    name:
+      - pip
+    extra_args: --upgrade
 
 - name: install Python Excel module
   become: yes
   pip:
+    executable: pip3      
     name: 
       - openpyxl
       - lxml
