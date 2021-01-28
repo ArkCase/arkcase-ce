@@ -1,0 +1,19 @@
+- name: Create MongoDB root user siteRootAdmin
+  mongodb_user:
+    login_port: "27017"
+    database: "admin"
+    name: arkcase
+    password: '{{ default_user_password }}'
+    roles: "root"
+
+- name: Create MongoDB administrative user siteUserAdmin
+  mongodb_user:
+    login_user: arkcase
+    login_password: '{{ default_user_password }}'
+    login_port: "27017"
+    database: "arkcase"
+    name: arkcase
+    password: '{{ default_user_password }}'
+    roles:
+      - { db: "admin", role: "readWrite" }
+      - { db: arkcase, role: "readWrite" }

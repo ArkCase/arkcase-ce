@@ -11,6 +11,8 @@
       tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
+    - role: mongodb
+      tags: [core, mongodb]
     - role: mariadb
       tags: [core, mariadb]
     - role: httpd

@@ -1,0 +1,73 @@
+- name: configure Mongodb 4.0 repository
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mongodb-org.repo
+    force: no
+    content: |
+      [mongodb-org-4.0]
+      name=MongoDB Repository
+      baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.0/x86_64/
+      gpgcheck=1
+      enabled=1
+      gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
+
+- name: ensure mongodb port
+  become: yes
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ mongodb_port }}/tcp"
+    state: enabled
+
+- name: install Mongodb
+  become: yes
+  yum:
+    state: installed
+    disable_gpg_check: yes
+    name:
+      - mongodb-org
+  register: mongodb_install
+
+- name: Mongodb folders
+  become: yes
+  file:
+    path: "{{ item.name }}"
+    state: directory
+    group: mongod
+    owner: mongod
+    setype: "{{ item.setype }}"
+  loop:
+    - name: "{{ root_folder }}/data/mongo"
+    #SELinux context on the new dbpath
+      setype: "mongod_var_lib_t"
+    - name: "{{ root_folder }}/log/mongodb"
+    #SELinux context on the new logpath
+      setype: "mongod_log_t"
+  register: mongodb_folder_structure
+
+- name: Mongodb config
+  become: yes
+  template:
+    src: templates/mongod.conf
+    dest: /etc/mongod.conf
+
+- name: enable Mongodb to start on boot
+  become: yes
+  systemd:
+    name: mongod
+    enabled: yes
+    masked: no
+
+- name: ensure mongodb is started
+  become: yes
+  systemd:
+    name: mongod
+    state: started
+
+- name: install pymongo
+  become: yes
+  pip:
+    name: pymongo
+
+- name: create arkcase mongo database
+  include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"
