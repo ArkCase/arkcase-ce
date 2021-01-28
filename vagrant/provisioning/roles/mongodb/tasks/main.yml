@@ -11,6 +11,14 @@
       enabled=1
       gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
 
+- name: ensure mongodb port
+  become: yes
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ mongodb_port }}/tcp"
+    state: enabled
+
 - name: install Mongodb
   become: yes
   yum:
@@ -29,10 +37,10 @@
     owner: mongod
     setype: "{{ item.setype }}"
   loop:
-    - name: "{{ mongodb_data_folder }}"
+    - name: "{{ root_folder }}/data/mongo"
     #SELinux context on the new dbpath
       setype: "mongod_var_lib_t"
-    - name: "{{ mongodb_log_folder }}"
+    - name: "{{ root_folder }}/log/mongodb"
     #SELinux context on the new logpath
       setype: "mongod_log_t"
   register: mongodb_folder_structure

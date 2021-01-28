@@ -385,9 +385,8 @@ ssl_version: "TLSv1.2"
 # ssl_cipher only for backward compatibility
 ssl_cipher: "{{ ssl_version }}"
 
-# Mongodb folder location
-mongodb_data_folder: "{{ root_folder }}/data/mongo"
-mongodb_log_folder: "{{ root_folder }}/log/mongodb"
+# Mongodb port
+mongodb_port: "27017"
 
 # for the pki role (used by CE installer to create a self-hosted
 # PKI), these facts are prescriptive, and the pki role will
