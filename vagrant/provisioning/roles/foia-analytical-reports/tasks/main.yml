@@ -20,7 +20,6 @@
   command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ item }}
   args:
     chdir: "{{ root_folder }}/install/pentaho"
-    creates: "{{ root_folder }}/install/pentaho/{{ item }}"
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
   loop:
@@ -33,7 +32,6 @@
     remote_src: yes
     src: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip"
     dest: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
-    creates: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb"
 
 ##########################################################
 # Configure the Kettle job files and run the Kettle job.
@@ -135,6 +133,32 @@
       line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
+
+- name: setup path to arkcase config file
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~C:\\Users\\marjan\.stefanoski\\foia---reports-dw-1\\config\\arkcase_config\.properties~{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config\.properties~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr
+
+- name: setup Arkcase REST endpoints
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "AGENCY_REST_ENDPOINT=https{{ ':' }}//acm-arkcase/arkcase/api/latest/service/config/lookups"
+      line: "AGENCY_REST_ENDPOINT=https://{{ external_host }}/arkcase/api/latest/service/config/lookups"
+    - regexp: "ARKCASE_USER=arkcase-admin@arkcase.org"
+      line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+    - regexp: "ARKCASE_PASS=AcMd3v\\$"
+      line: "ARKCASE_PASS={{ arkcase_admin_password }}"
+    - regexp: "TRUSTSTORE_PATH=/some/path/to/truststore"
+      line: "TRUSTSTORE_PATH={{ java_trust_store }}"
+    - regexp: "TRUSTSTORE_PASSWORD=password"
+      line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
 
 - name: run the job to create and populate the mondrian cubes
   become: yes
