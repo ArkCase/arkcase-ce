@@ -3,7 +3,7 @@ import sys
 import openpyxl
 
 if len(sys.argv) < 4:
-    print "Must provide Excel file name, and at least one old_string,new_string pair"
+    print ("Must provide Excel file name, and at least one old_string,new_string pair")
     sys.exit(1)
 
 excel_file = sys.argv[1] + ".xlsx"
@@ -21,8 +21,8 @@ for r in range(1, sheet.max_row + 1):
         for p in range(2, len(sys.argv), 2):
             old_string = sys.argv[p]
             new_string = sys.argv[p + 1]
-            if old_string <> new_string and hasattr(v, 'strip') and v.strip() == old_string:
-                print "replacing " + v
+            if old_string != new_string and hasattr(v, 'strip') and v.strip() == old_string:
+                print ("replacing " + v)
                 sheet[rowcol_index] = new_string
                 updated = True
 
