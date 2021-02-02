@@ -521,3 +521,5 @@ enable_elasticsearch: "no"
 enable_kafka: "no"
 enable_zipkin: "no"
 enable_eureka: "no"
+
+ldap_type: "samba"

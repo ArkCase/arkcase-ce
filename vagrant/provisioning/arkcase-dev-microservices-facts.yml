@@ -385,6 +385,9 @@ ssl_version: "TLSv1.2"
 # ssl_cipher only for backward compatibility
 ssl_cipher: "{{ ssl_version }}"
 
+# Mongodb port
+mongodb_port: "27017"
+
 # for the pki role (used by CE installer to create a self-hosted
 # PKI), these facts are prescriptive, and the pki role will
 # create these files.  For the pki_client role (which creates
