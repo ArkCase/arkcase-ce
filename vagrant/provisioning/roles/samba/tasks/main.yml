@@ -70,6 +70,7 @@
 - name: install Python packages
   become: yes
   pip:
+    executable: pip3      
     name: python-config
     
 - name: configure Samba, this will take 5 - 10 minutes
