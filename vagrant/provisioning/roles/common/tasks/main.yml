@@ -19,7 +19,7 @@
       - unzip
       - git
       - net-tools
-      - python-pip
+      #- python-pip
       - "@Development Tools"
       - deltarpm
       - bzip2

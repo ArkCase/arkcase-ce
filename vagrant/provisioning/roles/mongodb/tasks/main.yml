@@ -67,6 +67,7 @@
 - name: install pymongo
   become: yes
   pip:
+    executable: pip3
     name: pymongo
 
 - name: create arkcase mongo database
