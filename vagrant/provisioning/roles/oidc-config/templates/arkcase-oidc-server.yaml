@@ -1,0 +1,11 @@
+oidc:
+  registrationId: "oidc_registrationId"
+  clientId: "oidc_clientId"
+  clientSecret: "oidc_clientSecret"
+  redirectUri: "oidc_redirectUri"
+  authorizationUri: "oidc_authorizationUri"
+  tokenUri: "oidc_tokenUri"
+  jwkSetUri: "oidc_jwkSetUri"
+  issuerUri: "oidc_issuerUri"
+  userInfoUri: "oidc_userInfoUri"
+  scope: "oidc_scope"

@@ -11,6 +11,8 @@
       tags: [core]
     - role: saml-config
       tags: [saml-config]
+    - role: oidc-config
+      tags: [oidc-config]
     - role: foia
       tags: [foia]
     - role: start-arkcase

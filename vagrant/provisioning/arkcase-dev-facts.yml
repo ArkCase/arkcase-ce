@@ -523,3 +523,17 @@ enable_zipkin: "no"
 enable_eureka: "no"
 
 ldap_type: "samba"
+
+# OIDC authentication properties
+#oidc_registrationId: ""
+#oidc_clientId: ""
+#oidc_clientSecret: ""
+#oidc_redirectUri: ""
+#oidc_authorizationUri: ""
+#oidc_tokenUri: ""
+#oidc_jwkSetUri: ""
+#oidc_issuerUri: ""
+#oidc_userInfoUri: ""
+#oidc_scope: ""
+#oidc_federation_host: ""
+
