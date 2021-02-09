@@ -9,10 +9,10 @@
       tags: [core]
     - role: arkcase-app
       tags: [core]
-    - role: saml-config
-      tags: [saml-config]
     - role: foia
       tags: [foia]
+    - role: saml-config
+      tags: [saml-config]
     - role: start-arkcase
       tags: [core]
     - role: arkcase-interactive-reports
