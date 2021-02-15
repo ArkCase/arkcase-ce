@@ -1,7 +1,7 @@
-- name: install pyOpenSSL
+- name: install cryptography
   become: yes
   pip:
-    name: pyOpenSSL
+    name: cryptography
 
 - name: see if rsa private key exists
   stat:
