@@ -44,7 +44,9 @@
     - role: arkcase-app
       tags: [core, arkcase]
     - role: foia
-      tags: [core, foia]
+      tags: [core,foia]
+    - role: start-arkcase
+      tags: [core, arkcase]
     - role: pentaho-pdi-client
       tags: [core, foia, foia-analytical-reports]
     - role: foia-analytical-reports
@@ -53,6 +55,4 @@
       tags: [core, arkcase, tesseract]
     - role: firewall
       tags: [core, firewall]
-    - role: start-arkcase
-      tags: [core, arkcase]
     

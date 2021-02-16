@@ -113,6 +113,46 @@
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
   when: arkcase_version == "" or arkcase_version is version('2020.16', '>=')
 
+- name: encrypt passwords
+  include_tasks: encrypt_password.yml
+  loop:
+      - name: ldap_portal_bind_password
+        value: "{{ ldap_portal_bind_password }}"
+  loop_control:
+    loop_var: p
+  when: ldap_portal_bind_password is defined
+
+- name: remove the decrypted symmetric key
+  become: yes
+  file:
+    path: "{{ root_folder }}/common/symmetricKey.decrypted"
+    state: absent
+
+- name: Set ldap_portal_base
+  set_fact:
+    ldap_portal_base: "{{ ldap_base }}"
+  when: ldap_portal_base is not defined 
+  
+- name: Set ldap_portal_bind_user
+  set_fact:
+    ldap_portal_bind_user: "{{ ldap_bind_user }}"
+  when: ldap_portal_bind_user is not defined
+
+- name: Set encrypted_ldap_portal_bind_password
+  set_fact:
+    encrypted_ldap_portal_bind_password: "{{ encrypted_ldap_bind_password }}"
+  when: encrypted_ldap_portal_bind_password is not defined
+
+- name: Set ldap_portal_url
+  set_fact:
+    ldap_portal_url: "{{ ldap_url }}"
+  when: ldap_portal_url is not defined
+
+- name: Set ldap_portal_user_domain
+  set_fact:
+    ldap_portal_user_domain: "{{ ldap_user_domain }}"
+  when: ldap_portal_user_domain is not defined
+
 - name: configure LDAP
   include_role: 
     name: arkcase-ldap-config
@@ -126,7 +166,12 @@
     ldap_template_name: "spring-config-foiaportal-ldap.xml"
     group_base: "{{ ldap_portal_group_no_base | default(ldap_group_no_base) }}"
     user_base: "{{ ldap_portal_user_no_base | default(ldap_user_no_base) }}"
-  when: encrypted_ldap_bind_password is defined
+    ldap_base: "{{ ldap_portal_base }}"
+    ldap_bind_user: "{{ ldap_portal_bind_user }}"
+    encrypted_ldap_bind_password: "{{ encrypted_ldap_portal_bind_password }}"
+    ldap_url: "{{ ldap_portal_url }}"
+    ldap_user_domain: "{{ ldap_portal_user_domain }}"
+  when: encrypted_ldap_portal_bind_password is defined
 
 - name: copy key store and trust store
   become: yes

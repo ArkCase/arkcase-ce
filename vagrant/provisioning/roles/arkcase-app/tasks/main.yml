@@ -49,6 +49,7 @@
   file:
     path: "{{ root_folder }}/common/symmetricKey.decrypted"
     state: absent
+  when: not foia_portal_context is defined
 
 - name: remove the decrypted symmetric key with new line
   become: yes
@@ -56,17 +57,10 @@
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
 
-# might have to upgrade PIP itself before installing openpyxl
-- name: update PIP if necessary
-  become: yes
-  pip:
-    name:
-      - pip
-    extra_args: --upgrade
-
 - name: install Python Excel module
   become: yes
-  pip: 
+  pip:
+    executable: pip3      
     name: 
       - openpyxl
       - lxml
@@ -245,6 +239,10 @@
   loop:
     - "arkcase"
     - "config-server"
+
+- name: Ensure ArkCase required services are populated inside the arkcase.service
+  set_fact:
+    arkcase_required_services: "{{ 'mariadb.service activemq.service alfresco.service samba.service solr.service config-server.service' if ldap_type=='samba' else 'mariadb.service activemq.service alfresco.service solr.service config-server.service' }}"
 
 - name: copy ArkCase and config server systemd unit files
   become: yes

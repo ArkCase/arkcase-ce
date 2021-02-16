@@ -1,34 +1,32 @@
-# server.port: 8080
-# server.servlet.context-path: /${portal.applicationName}
+logging:
+  level:
+    com.arkcase.portal: debug
+    org:
+      springframework: warn
+      apache: warn
+    springfox: warn
 
-# Property used for enable/disable Spring security. For authenticated portal comment this property.  
-#spring.autoconfigure.exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
-
-
-portal.externalConfiguration: true
-portal.host: {{ external_host }}
-portal.port:
-portal.uiApplicationUrl: "https://{{ external_host }}/foia"
-portal.uiApplicationHost: "https://{{ external_host }}"
-portal.id: {{ 9999999999999999999999 | random | to_uuid }}
-
-portal.authenticatedMode: false
-
-portal.homeDir: ${user.home}/.${portal.applicationName}
-
-portal.activemqUrl: "ssl://{{ activemq_host }}:61616"
-portal.keystoreFilename: arkcase.ks
-portal.keystorePassword: "{{ java_key_store_pass }}"
-portal.truststoreFilename: arkcase.ts
-portal.truststorePassword: "{{ java_trust_store_pass }}"
-
-# authentication type, possible values (basic, external)
-portal.authenticationType: basic
-# basic
-portal.authenticationBasicUser: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
-portal.authenticationBasicPassword: "{{ arkcase_admin_password }}"
-# external
-portal.authenticationExternalUser: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
-
-# ArkCase url
-portal.arkcaseUrl: "https://{{ internal_host }}/arkcase"
+portal:
+  uiApplicationUrl: "https://{{ external_host }}/{{ foia_portal_context }}"
+  uiApplicationHost: "https://{{ external_host }}"
+  id: "{{ foia_portal_id }}"
+  url: "https://{{ external_host }}/{{ foia_portal_context }}"
+  arkcaseUrl: "https://{{ internal_host }}/arkcase"
+  groupName: "{{ foia_portal_group }}@{{ ldap_portal_user_domain | default(ldap_user_domain) | upper}}"
+  # authentication type, possible values (basic, external)
+  authenticationType: basic
+  userId: "{{ arkcase_admin_user }}@{{ ldap_portal_user_domain | default(ldap_user_domain) }}"
+  password: "{{ arkcase_admin_password }}"
+  # portal configuration type
+  externalConfiguration: true
+  authenticatedMode: {{ portal_authenticated_mode | default (false) }}
+  activemqUrl: "ssl://{{ activemq_host }}:61616"
+  serviceProvider:
+    directory.name: "foiaportal"
+  keystoreFilename: arkcase.ks
+  keystorePassword: "{{ java_key_store_pass }}"
+  truststoreFilename: arkcase.ts
+  truststorePassword: "{{ java_trust_store_pass }}"
+  security.authentication:
+    header.parameter.name: foia-api-secret
+    token:  "{{ portal_foiagov_token | default ('') }}"

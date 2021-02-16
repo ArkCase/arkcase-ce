@@ -11,6 +11,14 @@
       tags: [core]
     - role: foia
       tags: [foia]
+    - role: saml-config
+      tags: [saml-config]
+    - role: oidc-config
+      tags: [oidc-config]
+    - role: start-arkcase
+      tags: [core]
+    - role: arkcase-interactive-reports
+      tags: [core]
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
       tags: [foia]
@@ -19,6 +27,4 @@
     - role: arkcase-post-upgrade
       tags: [core]
     - role: snowbound-app
-      tags: [core]
-    - role: start-arkcase
       tags: [core]

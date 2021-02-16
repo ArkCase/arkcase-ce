@@ -7,8 +7,6 @@
       tags: [core, pki]
     - role: pki_client
       tags: [core, pki_client]
-    - role: samba
-      tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
     - role: mariadb
@@ -21,8 +19,8 @@
       tags: [core, activemq]
     - role: alfresco-setup
       tags: [core, alfresco, alfresco-setup]
-    - role: alfresco-ce
-      tags: [core, alfresco, alfresco-ce]
+    - role: alfresco-ee
+      tags: [core, alfresco, alfresco-ee]
     - role: alfresco
       tags: [core, alfresco]
     - role: alfresco-site
@@ -31,28 +29,32 @@
       tags: [core, solr]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
-    - role: pentaho-ce
-      tags: [core, pentaho, pentaho-ce]
+    - role: pentaho-ee
+      tags: [core, pentaho, pentaho-ee]
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
-    - role: confluent-platform-install
-      tags: [confluent]
+    - role: pentaho-license
+      tags: [core, pentaho, pentaho-license]
     - role: arkcase-prerequisites
       tags: [core, arkcase]
     - role: arkcase-app
       tags: [core, arkcase]
     - role: foia
       tags: [core, foia]
+    - role: start-arkcase
+      tags: [core, arkcase]
+    - role: pentaho-pdi-client
+      tags: [core, foia, foia-analytical-reports]
+    - role: foia-analytical-reports
+      tags: [core, foia, foia-analytical-reports]
+    - role: oidc-config
+      tags: [core, oidc-config]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
-      when: enable_firewall is undefined or enable_firewall
-      tags: [core]
-    - role: start-arkcase
-      tags: [core, arkcase]
-    - role: disable-admin
-      tags: [core, ldap]
+      tags: [core, firewall]
+    
