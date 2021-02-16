@@ -1,56 +1,60 @@
 ---
-- hosts: localhost
+- hosts: all
   roles:
     - role: common
-      tags: [core, common, upgrade]
+      tags: [core, common, upgrade, marketplace]
     - role: arkcase-pre-upgrade
       tags: [upgrade]   
     - role: pki
       tags: [pki]
     - role: pki_client
-      tags: [core, pki_client]
+      tags: [core, pki_client, marketplace]
     - role: samba
-      tags: [samba]
+      tags: [samba, marketplace]
     - role: ldap
-      tags: [core, ldap, samba]
+      tags: [core, ldap, marketplace]
+      when: ldap_portal_url is undefined
+    - role: ldap-portal
+      tags: [ldap-portal]
+      when: ldap_portal_url is defined 
     - role: mariadb
-      tags: [core, mariadb]
+      tags: [core, mariadb, marketplace]
     - role: httpd
-      tags: [core, httpd]
+      tags: [core, httpd, marketplace]
     - role: haproxy
-      tags: [core, haproxy]
+      tags: [core, haproxy, marketplace]
     - role: activemq
-      tags: [core, activemq]
+      tags: [core, activemq, marketplace]
     - role: alfresco-setup
-      tags: [core, alfresco, alfresco-setup]
+      tags: [core, alfresco, alfresco-setup, marketplace]
     - role: alfresco-ce
       tags: [alfresco-ce, arkcase-ce]
     - role: alfresco-ee
       tags: [alfresco-ee, arkcase-ee]
     - role: alfresco
-      tags: [core, alfresco]
+      tags: [core, alfresco, marketplace]
     - role: alfresco-site
-      tags: [core, alfresco, alfresco-site]
+      tags: [core, alfresco, alfresco-site, marketplace]
     - role: solr
-      tags: [core, solr]
+      tags: [core, solr, marketplace]
     - role: pentaho-setup
-      tags: [core, pentaho, pentaho-setup]
+      tags: [core, pentaho, pentaho-setup, marketplace]
     - role: pentaho-ce
       tags: [pentaho-ce, arkcase-ce]
     - role: pentaho-ee
       tags: [pentaho-ee, arkcase-ee]
     - role: pentaho-configuration
-      tags: [core, pentaho, pentaho-configuration]
+      tags: [core, pentaho, pentaho-configuration, marketplace]
     - role: snowbound
-      tags: [core, snowbound]
+      tags: [core, snowbound, marketplace]
     - role: snowbound-app
-      tags: [core, snowbound, snowbound-app, upgrade]
+      tags: [core, snowbound, snowbound-app, upgrade, marketplace]
     - role: pentaho-license
-      tags: [pentaho-license, arkcase-ee]   
+      tags: [pentaho-license, pentaho-ee, arkcase-ee]   
     - role: arkcase-prerequisites
-      tags: [core, arkcase, upgrade]
+      tags: [core, arkcase, upgrade, marketplace]
     - role: arkcase-app
-      tags: [core, arkcase, upgrade]
+      tags: [core, arkcase, upgrade, marketplace]
     - role: foia
       tags: [foia]
     - role: privacy
@@ -58,15 +62,25 @@
     - role: arkcase-post-upgrade
       tags: [upgrade]  
     - role: pentaho-pdi-client
-      tags: [foia, foia-analytical-reports]
+      when: foia_analytical_reports_version is defined
+      tags: [foia-analytical-reports]
     - role: foia-analytical-reports
-      tags: [foia, foia-analytical-reports]
+      when: foia_analytical_reports_version is defined
+      tags: [foia-analytical-reports]
     - role: tesseract
-      tags: [core, arkcase, tesseract]
+      tags: [core, arkcase, tesseract, marketplace]
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
-      tags: [core]
+      tags: [core, marketplace]
     - role: saml-config
       tags: [upgrade-saml]
+    - role: oidc-config
+      tags: [oidc-config]
+    - role: arkcase-interactive-reports
+      tags: [interactive-reports]
+    - role: disable-admin
+      tags: [marketplace]
+    - role: disable-solr-user
+      tags: [marketplace]
     - role: start-arkcase
       tags: [core, arkcase, upgrade]
