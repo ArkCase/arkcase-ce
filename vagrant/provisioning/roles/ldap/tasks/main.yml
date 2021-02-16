@@ -6,10 +6,10 @@
       - openldap-clients
       - python-ldap
 
-- name: install pyOpenSSL
+- name: install cryptography
   become: yes
   pip:
-    name: pyOpenSSL
+    name: cryptography
 
 - name: list certs in the key store
   become: yes
@@ -130,5 +130,10 @@
   include_tasks: add-user.yml
   loop: "{{ ldap_users }}"    
   loop_control:
-    loop_var: u  
+    loop_var: u 
+
+- name: Make sure Samba passwords never expire
+  become: yes
+  command: '{{ root_folder }}/app/samba/bin/samba-tool domain passwordsettings set --max-pwd-age=0'
+  when: ldap_type == "samba"
 
