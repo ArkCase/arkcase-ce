@@ -3,7 +3,7 @@
   become_user: arkcase
   template:
     src: arkcase-oidc-server.yaml 
-    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server/arkcase-oidc-server.yaml"
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-oidc-server.yaml"
     backup: no
 
 - name: read current setenv.sh
