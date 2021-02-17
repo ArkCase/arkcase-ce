@@ -539,3 +539,4 @@ ldap_type: "samba"
 # OIDC system user and password are used when Arkcase is making calls to another OIDC environment
 #oidc_systemUserEmail: ""
 #oidc_systemUserPassword: ""
+#oidc_federation_host: ""
