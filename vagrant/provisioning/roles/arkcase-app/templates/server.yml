@@ -116,3 +116,9 @@ calendar:
   :\"{{ calendar_purge_option }}\",\"daysClosed\":null}}"
 acm.hazelcast:
   log.folder: "{{ root_folder }}/log/arkcase"
+
+################### AWS Credentials (aws/credentials.properties) ####################
+## AccessKeyId and SecretAccessKey must be encrypted. ##
+aws.credentials:
+  awsAccessKeyId: {{ awsAccessKeyId_fact }}
+  awsSecretAccessKey: {{ awsSecretAccessKey_fact }}
