@@ -524,18 +524,18 @@ enable_eureka: "no"
 
 ldap_type: "samba"
 
-  # OIDC authentication properties
-  #oidc_registrationId: ""
-  #oidc_clientId: ""
-  #oidc_clientSecret: ""
-  #oidc_redirectUri: ""
-  #oidc_authorizationUri: ""
-  #oidc_tokenUri: ""
-  #oidc_jwkSetUri: ""
-  #oidc_issuerUri: ""
-  #oidc_usernameAttribute: ""
-  #oidc_userInfoUri: ""
-  #oidc_scope: ""
-  # OIDC system user and password are used when Arkcase is making calls to another OIDC environment
-  #oidc_systemUserEmail: ""
-  #oidc_systemUserPassword: ""
+# OIDC authentication properties
+#oidc_registrationId: ""
+#oidc_clientId: ""
+#oidc_clientSecret: ""
+#oidc_redirectUri: ""
+#oidc_authorizationUri: ""
+#oidc_tokenUri: ""
+#oidc_jwkSetUri: ""
+#oidc_issuerUri: ""
+#oidc_usernameAttribute: ""
+#oidc_userInfoUri: ""
+#oidc_scope: ""
+# OIDC system user and password are used when Arkcase is making calls to another OIDC environment
+#oidc_systemUserEmail: ""
+#oidc_systemUserPassword: ""
