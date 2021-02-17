@@ -7,5 +7,9 @@ oidc:
   tokenUri: "{{ oidc_tokenUri }}"
   jwkSetUri: "{{ oidc_jwkSetUri }}"
   issuerUri: "{{ oidc_issuerUri }}"
+  usernameAttribute: "{{ oidc_usernameAttribute }}" 
   userInfoUri: "{{ oidc_userInfoUri }}"
   scope: "{{ oidc_scope }}"
+  systemUserEmail: "{{ oidc_systemUserEmail }}" 
+  systemUserPassword: "{{ oidc_systemUserPassword }}"￼
+  usersDirectory: "arkcase"
