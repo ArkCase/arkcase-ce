@@ -122,12 +122,6 @@
     loop_var: p
   when: ldap_portal_bind_password is defined
 
-- name: remove the decrypted symmetric key
-  become: yes
-  file:
-    path: "{{ root_folder }}/common/symmetricKey.decrypted"
-    state: absent
-
 - name: Set ldap_portal_base
   set_fact:
     ldap_portal_base: "{{ ldap_base }}"
