@@ -799,30 +799,6 @@
         {{ roles_to_groups_yaml | to_nice_yaml | indent(2) }}
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
 
-- name: Make sure AWS credentials are insterted in the arkcase-server.yaml file if they are defined
-  become: yes
-  become_user: arkcase
-  lineinfile:
-    path: /opt/arkcase/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-    state: present
-    backup: True
-    backrefs: True
-    regexp: '^awsAccessKeyId'
-    line: 'awsAccessKeyId: {{ awsAccessKeyId_fact }}'
-  when: awsAccessKeyId_fact is defined
-
-- name: Make sure AWS credentials are insterted in the arkcase-server.yaml file if they are defined
-  become: yes
-  become_user: arkcase
-  lineinfile:
-    path: /opt/arkcase/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-    state: present
-    backup: True
-    backrefs: True
-    regexp: '^awsSecretAccessKey:'
-    line: 'awsSecretAccessKey: {{ awsSecretAccessKey_fact }}'
-  when: awsSecretAccessKey_fact is defined
-
 - name: cmis host name
   become: yes
   become_user: arkcase

@@ -522,4 +522,8 @@ enable_kafka: "no"
 enable_zipkin: "no"
 enable_eureka: "no"
 
+#AWS Credentials
+aws_access_key_id: ""
+aws_secret_access_key: ""
+
 ldap_type: "samba"
