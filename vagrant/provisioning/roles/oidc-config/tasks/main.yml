@@ -1,3 +1,11 @@
+- name: encrypt passwords
+  include_tasks: encrypt_password.yml
+  loop: 
+      - name: oidc_systemUserPassword
+        value: "{{ oidc_systemUserPassword }}"
+  loop_control:
+    loop_var: p
+
 - name:  arkcase-oidc-server.yaml file
   become: yes
   become_user: arkcase
