@@ -1,0 +1,70 @@
+- name: encrypt passwords
+  include_tasks: encrypt_password.yml
+  loop: 
+      - name: oidc_systemUserPassword
+        value: "{{ oidc_systemUserPassword }}"
+  loop_control:
+    loop_var: p
+
+- name:  arkcase-oidc-server.yaml file
+  become: yes
+  become_user: arkcase
+  template:
+    src: arkcase-oidc-server.yaml 
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-oidc-server.yaml"
+    backup: no
+
+- name: read current setenv.sh
+  become: yes
+  become_user: arkcase
+  command: cat {{ root_folder }}/app/arkcase/bin/setenv.sh
+  register: setenv_contents
+  changed_when: false
+
+- name: replace ldap profile with externalOidc
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    regexp: "ldap"
+    replace: "externalOidc"
+  when: '"ldap" in setenv_contents.stdout'
+
+- name: ensure externalOidc is in the profile (other profiles already exist)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    regexp: "spring.profiles.active="
+    replace: "spring.profiles.active=externalOidc"
+  when: '"externalOidc" not in setenv_contents.stdout and "ldap" not in setenv_contents.stdout and "spring.profiles.active" in setenv_contents.stdout'
+
+- name: ensure externalOidc is in the profile (no other profiles already exist)
+  become: yes
+  become_user: arkcase
+  lineinfile:
+    backup: yes
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    line: 'JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=externalOidc"'
+  when: '"spring.profiles.active" not in setenv_contents.stdout'
+
+- name: configure logout URL for OIDC
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml"
+    regexp: 'logoutUrl: "/logout"'
+    replace: 'logoutUrl: "/oauth-logout"'
+
+- name: import OIDC federation host certificate
+  become: yes
+  java_cert:
+    cert_alias: "{{ oidc_federation_host }}"
+    cert_port: 443
+    cert_url: "{{ oidc_federation_host }}"
+    keystore_path: "{{ java_key_store }}"
+    keystore_pass: "{{ java_key_store_pass }}"
+    state: present

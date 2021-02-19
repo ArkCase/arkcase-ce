@@ -13,6 +13,8 @@
       tags: [foia]
     - role: saml-config
       tags: [saml-config]
+    - role: oidc-config
+      tags: [oidc-config]
     - role: start-arkcase
       tags: [core]
     - role: arkcase-interactive-reports

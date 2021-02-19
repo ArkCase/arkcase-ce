@@ -1,7 +1,7 @@
-- name: install pyOpenSSL
+- name: install cryptography
   become: yes
   pip:
-    name: pyOpenSSL
+    name: cryptography
 
 - name: create pki folder structure
   become: yes
@@ -22,7 +22,7 @@
     path: "/etc/tls/private/arkcase-root-passphrase.pem"
     type: RSA
     size: 4096
-    cipher: "AES-256-ECB"
+    cipher: "auto"
     passphrase: "m0rn1ngD$w"
 
 - name: remove passphrase from private key
@@ -69,7 +69,7 @@
     path: "/etc/tls/private/arkcase-intermediate-pp.pem"
     type: RSA
     size: 4096
-    cipher: "AES-256-ECB"
+    cipher: "auto"
     passphrase: "m0rn1ngD$w"
   register: intermediate_private_key
 
@@ -133,7 +133,7 @@
     type: RSA
     size: 2048
     mode: 0644
-    cipher: "AES-256-ECB"
+    cipher: "auto"
     passphrase: "m0rn1ngD$w"
   register: server_private_key
 

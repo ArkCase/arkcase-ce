@@ -1,3 +1,9 @@
+- name: remove the decrypted symmetric key
+  become: yes
+  file:
+    path: "{{ root_folder }}/common/symmetricKey.decrypted"
+    state: absent
+
 - name: start config server
   become: yes
   systemd:
