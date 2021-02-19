@@ -41,6 +41,10 @@
         value: "{{ java_trust_store_pass }}"
       - name: ldap_bind_password
         value: "{{ ldap_bind_password }}"
+      - name: aws_access_key_id
+        value: "{{ aws_access_key_id }}"
+      - name: aws_secret_access_key
+        value: "{{ aws_secret_access_key }}"
   loop_control:
     loop_var: p
 
