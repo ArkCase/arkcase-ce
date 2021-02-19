@@ -453,6 +453,7 @@
     register: haproxy_service
 
 - name: Rename HaProxy service name to haproxy
+  become: yes
   command: mv /usr/lib/systemd/system/rh-haproxy18-haproxy.service /usr/lib/systemd/system/haproxy.service
   register: haproxy_service_name
   when: haproxy_service.stat.exists
