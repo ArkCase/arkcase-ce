@@ -12,4 +12,4 @@ oidc:
   scope: "{{ oidc_scope }}"
   systemUserEmail: "{{ oidc_systemUserEmail }}"
   systemUserPassword: "ENC({{ encrypted_oidc_systemUserPassword }})"
-  usersDirectory: "arkcase"
+  usersDirectory: "{{ ldap_user_domain | replace('.', '_') }}"
