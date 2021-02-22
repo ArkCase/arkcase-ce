@@ -1,0 +1,44 @@
+ARKCASE-CE:
+arkcase-ce: core, pki,samba , arkcase-ce
+arkcase-ce-AWS: marketplace, pki, arkcase-ce
+arkcase-ce-external-ldap: core, pki, alfresco-ce, pentaho-ee
+arkcase-ce-external-ldap-foia: core, alfresco-ce, pentaho-ee, foia
+arkcase-ce-external-ldap-foia-pki: core, pki, alfresco-ce, pentaho-ee, foia
+arkcase-ce-external-ldap-privacy: core, alfresco-ce, pentaho-ee, privacy
+arkcase-ce-external-ldap-privacy-pki: core, pki, alfresco-ce, pentaho-ee, privacy
+arkcase-ce-foia: core, pki, samba, arkcase-ce, foia
+arkcase-ce-foia-AWS: marketplace, pki, arkcase-ce, foia
+arkcase-ce-privacy: core , pki, samba, arkcase-ce, privacy
+
+ARKCASE-EE:
+arkcase-ee-external-ldap: core, arkcase-ee (arkcase-ee + pentaho-ee)
+arkcase-ee-external-ldap-core-pki: core, pki, arkcase-ee (arkcase-ee + pentaho-ee)
+arkcase-ee-external-ldap-foia: core, arkcase-ee (arkcase-ee + pentaho-ee), foia, foia-analytical-reports
+arkcase-ee-external-ldap-foia-pki: core, pki, arkcase-ee (arkcase-ee + pentaho-ee), foia, foia-analytical-reports
+arkcase-ee-external-ldap-privacy: core, arkcase-ee (arkcase-ee + pentaho-ee), privacy
+arkcase-ee-foia: core, pki, samba, alfresco-ce, pentaho-ee, foia, foia-analytical-reports
+arkcase-ee-foia-AWS: marketplace, pki, alfresco-ce, pentaho-ee, foia, foia-analytical-reports
+arkcase-ee-privacy: core, pki, samba, alfresco-ce, pentaho-ee, privacy
+arkcase-ee-saml-foia-pki: core, pki, arkcase-ee (arkcase-ee + pentaho-ee), foia, foia-analytical-reports, upgrade-saml
+arkcase-ee-oidc-foia-pki: core, pki, arkcase-ee (arkcase-ee + pentaho-ee), foia, foia-analytical-reports, oidc-config
+arkcase-ee-externalldap-internalsamba: core, pki, samba, ldap-portal, arkcase-ee (arkcase-ee + pentaho-ee), foia, foia-analytical-reports
+
+
+UPGRADE:
+arkcase-foia-saml-upgrade: upgrade, foia, foia-analytical-reports, upgrade-saml
+arkcase-foia-upgrade: upgrade, foia, foia-analytical-reports
+arkcase-privacy-saml-upgrade: upgrade, privacy, upgrade-saml
+arkcase-privacy-upgrade: upgrade, privacy
+arkcase-saml-upgrade: upgrade, upgrade-saml
+arkcase-upgrade: upgrade 
+arkcase-app-upgrade:  upgrade, foia, upgrade-saml, privacy, foia-analytical-reports, interactive-reports
+arkcase-foia-oidc-upgrade: upgrade, foia, foia-analytical-reports, oidc-config
+arkcase-privacy-oidc-upgrade: upgrade, privacy, oidc-config
+arkcase-oidc-ugrade: upgrade, oidc-config
+
+ARKCASE-DEV-ALL.YML:
+arkcase-dev: core
+arkcase-dev-microservices: core, confluent (or enable_kafka is defined and enable_kafka == "yes"), elasticsearch (or enable_elasticsearch is defined and enable_elasticsearch == "yes"), microservices
+
+
+

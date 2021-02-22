@@ -1,10 +1,10 @@
 ---
-- hosts: all
-  roles:
+- hosts: localhost
+  roles: 
     - role: common
       tags: [core, common]
-    - role: pki
-      tags: [core, pki]
+    - role: pki-dev
+      tags: [core, pki-dev]
     - role: pki_client
       tags: [core, pki_client]
     - role: samba
@@ -40,17 +40,22 @@
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
     - role: confluent-platform-install
+      when: enable_kafka is defined and enable_kafka == "yes"
       tags: [confluent]
-    - role: arkcase-prerequisites
-      tags: [core, arkcase]
-    - role: arkcase-app
-      tags: [core, arkcase]
-    - role: start-arkcase
-      tags: [core, arkcase]
+    - role: elasticsearch-install
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
+      tags: [elasticsearch]
+    - role: microservices
+      tags: [microservices]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
-      when: enable_firewall is undefined or enable_firewall
-      tags: [core]
-    - role: disable-admin
-      tags: [core, ldap]
+      tags: [core, firewall]
+    - role: arkcase-dev-reports    
+      tags: [core, reports, arkcase-dev-reports]
+    - role: foia-dev-reports
+      tags: [core, foia, reports, foia-dev-reports]
+    - role: arkcase-developer
+      tags: [core, arkcase, arkcase-developer]
+
+    
