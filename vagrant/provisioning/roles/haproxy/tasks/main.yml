@@ -447,13 +447,16 @@
     force: yes
     backup: yes
 
-- name: Change haproxy service name
+- name: Ensure that haproxy service file exists
+  stat:
+    path: /usr/lib/systemd/system/rh-haproxy18-haproxy.service
+  register: haproxy_service
+
+- name: Rename HaProxy service name to haproxy
   become: yes
-  file:
-    src: /usr/lib/systemd/system/rh-haproxy18-haproxy.service
-    dest: /etc/systemd/system/haproxy.service
-    state: link
+  command: mv /usr/lib/systemd/system/rh-haproxy18-haproxy.service /usr/lib/systemd/system/haproxy.service
   register: haproxy_service_name
+  when: haproxy_service.stat.exists
 
 - name: Daemon reload if haproxy service uses another name
   become: yes
