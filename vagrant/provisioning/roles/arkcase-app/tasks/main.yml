@@ -42,9 +42,9 @@
       - name: ldap_bind_password
         value: "{{ ldap_bind_password }}"
       - name: aws_access_key_id
-        value: "{{ aws_access_key_id }}"
+        value: "{{ aws_access_key_id | default('') }}"
       - name: aws_secret_access_key
-        value: "{{ aws_secret_access_key }}"
+        value: "{{ aws_secret_access_key | default('') }}"
   loop_control:
     loop_var: p
 
