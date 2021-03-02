@@ -24,6 +24,7 @@
     size: 4096
     cipher: "auto"
     passphrase: "m0rn1ngD$w"
+    select_crypto_backend: "cryptography"
 
 - name: remove passphrase from private key
   become: yes
