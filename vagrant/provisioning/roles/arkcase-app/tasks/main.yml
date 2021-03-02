@@ -41,6 +41,10 @@
         value: "{{ java_trust_store_pass }}"
       - name: ldap_bind_password
         value: "{{ ldap_bind_password }}"
+      - name: aws_access_key_id
+        value: "{{ aws_access_key_id }}"
+      - name: aws_secret_access_key
+        value: "{{ aws_secret_access_key }}"
   loop_control:
     loop_var: p
 
@@ -791,7 +795,7 @@
       application.rolesToGroups:
         {{ roles_to_groups_yaml | to_nice_yaml | indent(2) }}
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
-    
+
 - name: cmis host name
   become: yes
   become_user: arkcase

@@ -430,6 +430,11 @@ confluent_major_version: 5.4
 confluent_minor_version: 7
 confluent_scala_version: 2.12
 
+
+#AWS Credentials
+aws_access_key_id: ""
+aws_secret_access_key: ""
+
 ldap_type: samba
 
 # OIDC authentication properties
@@ -448,3 +453,4 @@ ldap_type: samba
 #oidc_systemUserEmail: ""
 #oidc_systemUserPassword: ""
 #oidc_federation_host: ""
+
