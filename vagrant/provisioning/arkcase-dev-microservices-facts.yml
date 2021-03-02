@@ -486,6 +486,8 @@ records_management_categories:
   - "Document Repositories"
   - "Requests"
   - "Tasks"
+  - "Consultations"
+  - "SAR"
 content_management_folders:
   - "Case Files"
   - "Complaints"
@@ -497,6 +499,9 @@ content_management_folders:
   - "Timesheets"
   - "User Profile"
   - "Business Processes"   
+  - "Consultations"
+  - "Requests"
+  - "SAR"
 
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
