@@ -120,5 +120,5 @@ acm.hazelcast:
 ################### AWS Credentials (aws/credentials.properties) ####################
 ## AccessKeyId and SecretAccessKey must be encrypted. ##
 aws.credentials:
-  awsAccessKeyId: "{{ '' if aws_access_key == '' else 'ENC('+encrypted_aws_access_key+')' }}"
-  awsSecretAccessKey: "{{ '' if aws_secret_access_key == '' else 'ENC('+encrypted_aws_secret_access_key+')' }}"
+  awsAccessKeyId: "{{ '' if aws_access_key_id == '' else 'ENC('+aws_access_key_id+')' }}"
+  awsSecretAccessKey: "{{ '' if aws_secret_access_key == '' else 'ENC('+aws_secret_access_key+')' }}"
