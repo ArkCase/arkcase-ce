@@ -439,6 +439,24 @@
     path: /home/arkcase/.arkcase/acm/private/acm-arkcase.crt
     state: absent
   when: acmarkcase_stat.stat.exists and not acmarkcase_stat.stat.islnk
+
+
+- name: list certs in the key store
+  become: yes
+  command: keytool -v -list -keystore "{{ java_trust_store }}" -storepass "{{ java_trust_store_pass }}"
+  register: cert_list
+  changed_when: false
+
+- name: import the zylab cert to the ArkCase trust store
+  become: yes
+  java_cert:
+    cert_alias: "zylab_server_cert"
+    cert_url: "{{ zylab-server-host }}"
+    cert_port: "{{ lzylab-server-port|int }}"
+    keystore_path: "{{ java_trust_store }}"
+    keystore_pass: "{{ java_trust_store_pass }}"
+    state: present
+  when: zylab-integration-enabled | bool and 'zylab_server_cert' not in cert_list.stdout
   
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release

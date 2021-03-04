@@ -122,3 +122,8 @@ acm.hazelcast:
 aws.credentials:
   awsAccessKeyId: "ENC({{ encrypted_aws_access_key_id }})"
   awsSecretAccessKey: "ENC({{ encrypted_aws_secret_access_key }})"
+
+zylabIntegration:
+  enabled: {{ zylab-integration-enabled | default(false) }}
+  host: "{{ zylab-server-host }}"
+  port: "{{ zylab-server-port }}"
