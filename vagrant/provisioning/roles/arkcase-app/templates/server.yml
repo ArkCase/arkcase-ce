@@ -124,6 +124,6 @@ aws.credentials:
   awsSecretAccessKey: "ENC({{ encrypted_aws_secret_access_key }})"
 
 zylabIntegration:
-  enabled: {{ zylab-integration-enabled | default(false) }}
-  host: "{{ zylab-server-host }}"
-  port: "{{ zylab-server-port }}"
+  enabled: {{ zylab_integration_enabled | default(false) }}
+  host: "{{ zylab_server_host }}"
+  port: "{{ zylab_server_port }}"

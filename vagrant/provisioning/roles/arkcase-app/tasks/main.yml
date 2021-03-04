@@ -451,12 +451,12 @@
   become: yes
   java_cert:
     cert_alias: "zylab_server_cert"
-    cert_url: "{{ zylab-server-host }}"
-    cert_port: "{{ lzylab-server-port|int }}"
+    cert_url: "{{ zylab_server_host }}"
+    cert_port: "{{ zylab_server_port|int }}"
     keystore_path: "{{ java_trust_store }}"
     keystore_pass: "{{ java_trust_store_pass }}"
     state: present
-  when: zylab-integration-enabled | bool and 'zylab_server_cert' not in cert_list.stdout
+  when: zylab_integration_enabled | default(false) and 'zylab_server_cert' not in cert_list.stdout
   
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
