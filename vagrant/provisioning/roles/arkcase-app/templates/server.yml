@@ -125,5 +125,5 @@ aws.credentials:
 
 zylabIntegration:
   enabled: {{ zylab_integration_enabled | default(false) }}
-  host: "{{ zylab_server_host }}"
-  port: "{{ zylab_server_port }}"
+  host: "{{ zylab_server_host | default('') }}"
+  port: "{{ zylab_server_port | default('') }}"
