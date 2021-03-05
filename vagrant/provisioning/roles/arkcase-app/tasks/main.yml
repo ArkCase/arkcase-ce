@@ -451,7 +451,7 @@
   become: yes
   java_cert:
     cert_alias: "zylab_server_cert"
-    cert_url: "{{ zylab_server_host }}"
+    cert_url: "{{ zylab_server_host | default('') }}"
     cert_port: "{{ zylab_server_port|int }}"
     keystore_path: "{{ java_trust_store }}"
     keystore_pass: "{{ java_trust_store_pass }}"
