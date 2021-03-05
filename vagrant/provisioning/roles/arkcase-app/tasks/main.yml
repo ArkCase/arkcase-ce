@@ -456,7 +456,7 @@
     keystore_path: "{{ java_trust_store }}"
     keystore_pass: "{{ java_trust_store_pass }}"
     state: present
-  when: zylab_integration_enabled | default(false) and 'zylab_server_cert' not in cert_list.stdout
+  when: zylab_integration_enabled is defined AND zylab_integration_enabled | default(false) and 'zylab_server_cert' not in cert_list.stdout
   
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
