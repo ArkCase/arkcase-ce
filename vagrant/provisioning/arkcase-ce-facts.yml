@@ -458,3 +458,9 @@ ldap_type: samba
 #zylab_integration_enabled: false
 #zylab_server_host: ""
 #zylab_server_port: ""
+#zylab_registrationId: ""
+#zylab_clientId: ""
+#zylab_clientSecret: ""
+#zylab_tokenUri: ""
+#zylab_systemUserEmail: ""
+#zylab_systemUserPassword: ""

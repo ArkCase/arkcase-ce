@@ -127,3 +127,10 @@ zylabIntegration:
   enabled: {{ zylab_integration_enabled | default(false) }}
   host: "{{ zylab_server_host | default('') }}"
   port: "{{ zylab_server_port | default('') }}"
+  authentication:
+    registrationId: "{{ zylab_registrationId | default('') }}"
+    clientId: "{{ zylab_clientId | default('') }}"
+    clientSecret: "{{ zylab_clientSecret | default('') }}"
+    tokenUri: "{{ zylab_tokenUri| default('') }}"
+    systemUserEmail: "{{ zylab_systemUserEmail | default('') }}"
+    systemUserPassword: "{{ zylab_systemUserPassword | default('') }}"
