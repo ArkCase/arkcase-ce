@@ -64,6 +64,8 @@
     - role: pentaho-pdi-client
       when: foia_analytical_reports_version is defined
       tags: [foia-analytical-reports]
+    - role: start-arkcase
+      tags: [core, arkcase, upgrade, marketplace]  
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
       tags: [foia-analytical-reports]
@@ -82,5 +84,3 @@
       tags: [marketplace]
     - role: disable-solr-user
       tags: [marketplace]
-    - role: start-arkcase
-      tags: [core, arkcase, upgrade]
