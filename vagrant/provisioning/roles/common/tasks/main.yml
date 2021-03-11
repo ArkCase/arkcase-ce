@@ -40,7 +40,7 @@
   become: yes
   pip:
     name: pip
-    extra_args: --upgrade "pip < 21.0"
+    extra_args: --upgrade \"pip < 21.0\"
         
 - name: install firewalld
   become: yes
