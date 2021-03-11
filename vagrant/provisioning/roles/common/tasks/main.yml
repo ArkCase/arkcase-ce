@@ -3,7 +3,14 @@
   yum:
     state: installed
     name: 
-      - epel-release
+      - epel-release        
+
+- name: remove pip2 that might come up along OS        
+  become: yes
+  yum:
+    state: absent
+    name:
+      - python-pip
 
 - name: install required packages
   become: yes
@@ -29,6 +36,12 @@
       - python3
       - python3-pip
 
+- name: upgrade pip2 in order to support installation of cryptography
+  become: yes
+  pip:
+    name: pip
+    extra_args: --upgrade "pip < 21.0"
+        
 - name: install firewalld
   become: yes
   yum:
