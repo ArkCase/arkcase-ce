@@ -40,12 +40,12 @@
   become: yes
   copy:
     src: requirements.txt
-    dest: /home/
+    dest: /tmp/
         
 - name: upgrade pip2 in order to support installation of cryptography
   become: yes
   pip:
-    requirements: /home/requirements.txt
+    requirements: /tmp/requirements.txt
     extra_args: --upgrade
 
 - name: install firewalld
