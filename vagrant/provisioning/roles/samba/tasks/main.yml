@@ -36,7 +36,8 @@
 - name: install upstream repository
   become: yes
   yum:
-    state: installed
+    state: present
+    disable_gpg_check: yes
     name: https://repo.ius.io/ius-release-el7.rpm
 
 - name: Samba and LDAP required packages
