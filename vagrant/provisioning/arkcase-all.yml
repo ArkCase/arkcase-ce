@@ -28,9 +28,9 @@
     - role: alfresco-setup
       tags: [core, alfresco, alfresco-setup, marketplace]
     - role: alfresco-ce
-      tags: [alfresco-ce, arkcase-ce]
+      tags: [alfresco-ce, arkcase-ce, arkcase-ee]
     - role: alfresco-ee
-      tags: [alfresco-ee, arkcase-ee]
+      tags: [alfresco-ee]
     - role: alfresco
       tags: [core, alfresco, marketplace]
     - role: alfresco-site
