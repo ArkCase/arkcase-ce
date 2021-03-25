@@ -8,3 +8,6 @@ gov.foia.broker:
   truststore: "{{ java_trust_store }}"
   truststore.password: "{{ java_trust_store_pass }}"
   file_upload_url: "file:///${user.home}/fileserver/"
+application:
+  properties:
+    basePortalUrl: "https://{{ external_host }}/{{ foia_portal_context }}"
