@@ -555,3 +555,8 @@ ldap_type: "samba"
 #zylab_tokenUri: ""
 #zylab_systemUserEmail: ""
 #zylab_systemUserPassword: ""
+
+#touchnet_username: ""
+#touchnet_password: ""
+#touchnet_securelinkendpoint: ""
+#touchnet_upaysiteid: ""

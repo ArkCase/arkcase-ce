@@ -134,3 +134,9 @@ zylabIntegration:
     tokenUri: "{{ zylab_tokenUri| default('') }}"
     systemUserEmail: "{{ zylab_systemUserEmail | default('') }}"
     systemUserPassword: "{{ zylab_systemUserPassword | default('') }}"
+payment:
+  touchnet:
+    username: "{{ touchnet_username | default('') }}"
+    password: "{{ touchnet_password | default('') }}"
+    securelinkendpoint: "{{ touchnet_securelinkendpoint | default('') }}"
+    upaysiteid: "{{ touchnet_upaysiteid | default('') }}"
