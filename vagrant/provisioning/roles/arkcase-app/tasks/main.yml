@@ -45,6 +45,8 @@
         value: "{{ aws_access_key_id | default('') }}"
       - name: aws_secret_access_key
         value: "{{ aws_secret_access_key | default('') }}"
+      - name: email_receiver_password
+        value: "{{ email_receiver_password | default('') }}"
   loop_control:
     loop_var: p
 
