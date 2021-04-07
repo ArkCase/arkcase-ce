@@ -143,10 +143,6 @@ payment:
 
 ################### Outlook email address for email ingestion - Mail Receiver ###################
 email:
-  should-delete-messages: false
-  should-mark-messages-as-read: false
-  max-messages-per-poll: 1
-  fixed-rate: 120000
   #set some existing email here for testing
   CASE_FILE.user: "{{ email_receiver_account_escaped | default('') }}"
   CASE_FILE.password: "ENC({{ encrypted_email_receiver_password | default('') }})"
@@ -154,18 +150,8 @@ email:
   COMPLAINT.password: "ENC({{ encrypted_email_receiver_password | default('') }})"
   CONSULTATION.user: "{{ email_receiver_account_escaped | default('') }}"
   CONSULTATION.password: "ENC({{ encrypted_email_receiver_password | default('') }})"
-  protocol: "imap"
-  fetch.folder: "Inbox"
   host: "{{ email_host_imap }}"
   port: {{ email_port_imap|int }}
-  debug: true
-  userId: "mail-service"
   create:
     case.enabled: {{ create_case_from_email_enabled | lower }}
     complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
-    consultation.enabled: false
-  enableBurstingAttachments: false
-  replyHandlers:
-    caseFileMailFilter: caseFileMailHandler
-    complaintMailFilter: complaintMailHandler
-    taskMailFilter: taskMailHandler
