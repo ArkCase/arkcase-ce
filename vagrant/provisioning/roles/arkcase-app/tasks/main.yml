@@ -45,8 +45,12 @@
         value: "{{ aws_access_key_id | default('') }}"
       - name: aws_secret_access_key
         value: "{{ aws_secret_access_key | default('') }}"
-      - name: email_receiver_password
-        value: "{{ email_receiver_password | default('') }}"
+      - name: email_receiver_case_file_password
+        value: "{{ email_receiver_case_file_password | default('') }}"
+      - name: email_receiver_complaint_password
+        value: "{{ email_receiver_complaint_password | default('') }}"
+      - name: email_receiver_consultation_password
+        value: "{{ email_receiver_consultation_password | default('') }}"
   loop_control:
     loop_var: p
 

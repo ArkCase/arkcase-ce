@@ -560,3 +560,16 @@ ldap_type: "samba"
 #touchnet_password: ""
 #touchnet_securelinkendpoint: ""
 #touchnet_upaysiteid: ""
+
+#Put your outlook credentials below if you want to use Email receiver in Arkcase, depending on your case
+email_receiver_case_file_account: ""
+email_receiver_case_file_account_escaped: "{{ email_receiver_case_file_account | replace('@', '%40') }}"
+email_receiver_case_file_password: ""
+
+email_receiver_complaint_account: ""
+email_receiver_complaint_account_escaped: "{{ email_receiver_complaint_account | replace('@', '%40') }}"
+email_receiver_complaint_password: ""
+
+email_receiver_consultation_account: ""
+email_receiver_consultation_account_escaped: "{{ email_receiver_consultation_account | replace('@', '%40') }}"
+email_receiver_consultation_password: ""
