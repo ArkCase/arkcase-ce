@@ -145,11 +145,11 @@ payment:
 email:
   #set some existing email here for testing
   CASE_FILE.user: "{{ email_receiver_account_escaped | default('') }}"
-  CASE_FILE.password: "ENC({{ encrypted_email_receiver_password | default('') }})"
+  CASE_FILE.password: "ENC({{ encrypted_email_receiver_password }})"
   COMPLAINT.user: "{{ email_receiver_account_escaped | default('') }}"
-  COMPLAINT.password: "ENC({{ encrypted_email_receiver_password | default('') }})"
+  COMPLAINT.password: "ENC({{ encrypted_email_receiver_password }})"
   CONSULTATION.user: "{{ email_receiver_account_escaped | default('') }}"
-  CONSULTATION.password: "ENC({{ encrypted_email_receiver_password | default('') }})"
+  CONSULTATION.password: "ENC({{ encrypted_email_receiver_password }})"
   host: "{{ email_host_imap }}"
   port: {{ email_port_imap|int }}
   create:
