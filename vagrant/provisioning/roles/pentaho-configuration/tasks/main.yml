@@ -349,7 +349,7 @@
 - name: format extension version
   set_fact:
     arkcase_extension_version_formatted: "{{ '-' ~ arkcase_extension_version if arkcase_extension_version != '' else '' }}"
-  when: arkcase_extension_install|bool and arkcase_extension_install_reports|bool
+  when: arkcase_extension_install|bool or arkcase_extension_install_reports|bool
 
 - name: download extension (if configured)
   become: yes
