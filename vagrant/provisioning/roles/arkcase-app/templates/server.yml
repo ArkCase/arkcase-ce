@@ -71,19 +71,10 @@ email:
   max-messages-per-poll: 1
   fixed-rate: 120000
   #set some existing email here for testing 
-  CASE_FILE.user: "{{ email_service_account_escaped }}"
-  CASE_FILE.password: "ENC({{ encrypted_email_service_password }})"
-  COMPLAINT.user: "{{ email_service_account_escaped }}"
-  COMPLAINT.password: "ENC({{ encrypted_email_service_password }})"
   protocol: "imap"
   fetch.folder: "Inbox"
-  host: "{{ email_host_imap }}"
-  port: {{ email_port_imap|int }}
   debug: true
   userId: "mail-service"
-  create:
-    case.enabled: {{ create_case_from_email_enabled | lower }}
-    complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
   sender:
     type: "{{ email_sender_protocol }}"
     encryption: "{{ email_sender_encryption }}"
