@@ -96,6 +96,19 @@ email:
     username: "{{ email_smtp_username }}"
     password: "ENC({{ encrypted_email_smtp_password }})"
     convertDocumentsToPdf: {{ email_convert_documents_to_pdf | lower }}
+    ################### Outlook email address for email ingestion - Mail Receiver ###################
+  #set some existing email here for testing
+  CASE_FILE.user: "{{ email_receiver_case_file_account_escaped | default('') }}"
+  CASE_FILE.password: "ENC({{ encrypted_email_receiver_case_file_password }})"
+  COMPLAINT.user: "{{ email_receiver_complaint_account_escaped | default('') }}"
+  COMPLAINT.password: "ENC({{ encrypted_email_receiver_complaint_password }})"
+  CONSULTATION.user: "{{ email_receiver_consultation_account_escaped | default('') }}"
+  CONSULTATION.password: "ENC({{ encrypted_email_receiver_consultation_password }})"
+  host: "{{ email_host_imap }}"
+  port: {{ email_port_imap|int }}
+  create:
+    case.enabled: {{ create_case_from_email_enabled | lower }}
+    complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
 ocr:
   tempPath: "{{ root_folder }}/tmp/arkcase/"
 ark.activemq:
@@ -140,18 +153,3 @@ payment:
     password: "{{ touchnet_password | default('') }}"
     securelinkendpoint: "{{ touchnet_securelinkendpoint | default('') }}"
     upaysiteid: "{{ touchnet_upaysiteid | default('') }}"
-
-################### Outlook email address for email ingestion - Mail Receiver ###################
-email:
-  #set some existing email here for testing
-  CASE_FILE.user: "{{ email_receiver_case_file_account_escaped | default('') }}"
-  CASE_FILE.password: "ENC({{ encrypted_email_receiver_case_file_password }})"
-  COMPLAINT.user: "{{ email_receiver_complaint_account_escaped | default('') }}"
-  COMPLAINT.password: "ENC({{ encrypted_email_receiver_complaint_password }})"
-  CONSULTATION.user: "{{ email_receiver_consultation_account_escaped | default('') }}"
-  CONSULTATION.password: "ENC({{ encrypted_email_receiver_consultation_password }})"
-  host: "{{ email_host_imap }}"
-  port: {{ email_port_imap|int }}
-  create:
-    case.enabled: {{ create_case_from_email_enabled | lower }}
-    complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
