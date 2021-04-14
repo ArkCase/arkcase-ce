@@ -39,6 +39,8 @@ samba_domain: "DC.ARKCASE-CE"
 # server_admin goes in the httpd conf file, and is the email
 # address of the arkcase-admin user
 server_admin: "david.miller@arkcase.com"
+# Not using arkcase-admin as a hardcoded user but instead use it as a variable since this user can vary from environment to environment
+admin_user: "arkcase-admin"
 
 default_user_password: "AcMd3v$"
 
@@ -200,7 +202,7 @@ ldap_portal_groups:
     alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
      
-arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
+arkcase_admin_user: "{{ ldap_prefix}}{{ admin_user }}"
 arkcase_admin_name: "ArkCase Administrator"
 arkcase_admin_password: "{{ default_user_password }}"
 arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
