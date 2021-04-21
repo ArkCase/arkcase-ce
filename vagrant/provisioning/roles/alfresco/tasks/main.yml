@@ -472,8 +472,25 @@
       args:
         chdir: "{{ root_folder }}/tmp/alfresco"
       when: share_log4j_updated is changed
-      
-      
+
+- name: Run Python script to generate the hash
+  script: "passencrypt.py {{ alfresco_admin_password }}"
+  register: pass_hash
+
+- name: Execute required update querry to change default alfresco password
+  command: >
+    mysql -u root -D alfresco -e "UPDATE alf_node_properties SET string_value='{{ pass_hash.stdout | trim }}' WHERE node_id=(SELECT anp1.node_id FROM alf_node_properties anp1 INNER JOIN alf_qname aq1 ON aq1.id = anp1.qname_id INNER JOIN alf_node_properties anp2 ON anp2.node_id = anp1.node_id INNER JOIN alf_qname aq2 ON aq2.id = anp2.qname_id WHERE aq1.local_name = 'password' AND aq2.local_name = 'username' AND anp2.string_value = 'admin') and qname_id=(SELECT anp1.qname_id FROM alf_node_properties anp1 INNER JOIN alf_qname aq1 ON aq1.id = anp1.qname_id INNER JOIN alf_node_properties anp2 ON anp2.node_id = anp1.node_id INNER JOIN alf_qname aq2 ON aq2.id = anp2.qname_id WHERE aq1.local_name = 'password' AND aq2.local_name = 'username' AND anp2.string_value = 'admin');"
+
+- name: Check Alfresco if active
+  shell: systemctl status alfresco.service | grep Active | awk -v N=2 '{print $N}'
+  register: output
+
+- name: Stop Alfresco to accept password change
+  service:
+    name: alfresco
+    state: stopped
+  when: output.stdout == 'active'
+
 - name: Alfresco systemd unit file
   become: yes
   template:
