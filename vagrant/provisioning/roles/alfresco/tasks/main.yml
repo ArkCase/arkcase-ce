@@ -262,6 +262,16 @@
   shell: rpm -ql ImageMagick | grep modules | grep coders | awk -F / '{ print $5 }' | sort -u
   register: imagemagick_modules
 
+- name: check Alfresco is active
+  shell: systemctl status alfresco.service | grep Active | awk -v N=2 '{print $N}'
+  register: output
+
+- name: stop Alfresco to add new items in alfresco-global.properties
+  service:
+    name: alfresco
+    state: stopped
+  when: output.stdout == 'active'
+
 - name: populate alfresco-global.properties
   become: yes
   become_user: alfresco
@@ -277,6 +287,7 @@
       synchronization.syncWhenMissingPeopleLogIn=true
       synchronization.autoCreatePeopleOnLogin=false
       synchronization.import.cron=0 0/5 * * * ? *
+      system.preferred.password.encoding=bcrypt10
       csrf.filter.enabled=false
       dir.root={{ root_folder }}/data/alfresco/alf_data
       db.name=alfresco
@@ -473,24 +484,6 @@
         chdir: "{{ root_folder }}/tmp/alfresco"
       when: share_log4j_updated is changed
 
-- name: Run Python script to generate the hash
-  script: "passencrypt.py {{ alfresco_admin_password }}"
-  register: pass_hash
-
-- name: Execute required update querry to change default alfresco password
-  command: >
-    mysql -u root -D alfresco -e "UPDATE alf_node_properties SET string_value='{{ pass_hash.stdout | trim }}' WHERE node_id=(SELECT anp1.node_id FROM alf_node_properties anp1 INNER JOIN alf_qname aq1 ON aq1.id = anp1.qname_id INNER JOIN alf_node_properties anp2 ON anp2.node_id = anp1.node_id INNER JOIN alf_qname aq2 ON aq2.id = anp2.qname_id WHERE aq1.local_name = 'password' AND aq2.local_name = 'username' AND anp2.string_value = 'admin') and qname_id=(SELECT anp1.qname_id FROM alf_node_properties anp1 INNER JOIN alf_qname aq1 ON aq1.id = anp1.qname_id INNER JOIN alf_node_properties anp2 ON anp2.node_id = anp1.node_id INNER JOIN alf_qname aq2 ON aq2.id = anp2.qname_id WHERE aq1.local_name = 'password' AND aq2.local_name = 'username' AND anp2.string_value = 'admin');"
-
-- name: Check Alfresco if active
-  shell: systemctl status alfresco.service | grep Active | awk -v N=2 '{print $N}'
-  register: output
-
-- name: Stop Alfresco to accept password change
-  service:
-    name: alfresco
-    state: stopped
-  when: output.stdout == 'active'
-
 - name: Alfresco systemd unit file
   become: yes
   template:
@@ -516,6 +509,25 @@
     daemon_reload: true
     name: alfresco
     state: started
+
+- name: install bcrypt for hashing
+  become: yes
+  pip:
+    name: bcrypt
+
+- name: run Python script to generate the hash
+  script: "passencode.py {{ alfresco_admin_password }}"
+  register: pass_hash
+
+- name: execute required update querry to change default alfresco password
+  command: >
+    mysql -u root -D alfresco -e "UPDATE alf_node_properties SET string_value='{{ pass_hash.stdout | trim }}' WHERE node_id=(SELECT anp1.node_id FROM alf_node_properties anp1 INNER JOIN alf_qname aq1 ON aq1.id = anp1.qname_id INNER JOIN alf_node_properties anp2 ON anp2.node_id = anp1.node_id INNER JOIN alf_qname aq2 ON aq2.id = anp2.qname_id WHERE aq1.local_name = 'passwordHash' AND aq2.local_name = 'username' AND anp2.string_value = 'admin') and qname_id=(SELECT anp1.qname_id FROM alf_node_properties anp1 INNER JOIN alf_qname aq1 ON aq1.id = anp1.qname_id INNER JOIN alf_node_properties anp2 ON anp2.node_id = anp1.node_id INNER JOIN alf_qname aq2 ON aq2.id = anp2.qname_id WHERE aq1.local_name = 'passwordHash' AND aq2.local_name = 'username' AND anp2.string_value = 'admin');"
+
+- name: restart Alfresco
+  become: yes
+  systemd:
+    name: alfresco
+    state: restarted
 
 - name: wait for Alfresco startup to finish
   wait_for:
