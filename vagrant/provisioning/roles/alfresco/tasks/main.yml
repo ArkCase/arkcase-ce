@@ -513,6 +513,7 @@
 - name: install bcrypt for hashing
   become: yes
   pip:
+    executable: pip3
     name: bcrypt
 
 - name: run Python script to generate the hash
