@@ -376,8 +376,8 @@ default_database_password: "@rKc@3S!"
 tomcat_major_version: 9
 tomcat_version: 9.0.22
 
-# Set Alfresco Admin password
-alfresco_admin_password: "{{ arkcase_admin_password }}" 
+# use more complicated password for Alfresco admin user before you start with the installation
+alfresco_admin_password: "admin"
 
 # Alfresco Community Edition
 alfresco_release_name: 201806-GA
