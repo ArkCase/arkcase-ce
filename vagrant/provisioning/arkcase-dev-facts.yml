@@ -544,8 +544,6 @@ ldap_type: "samba"
 #oidc_systemUserEmail: ""
 #oidc_systemUserPassword: ""
 #oidc_federation_host: ""
-#oidc_tenantId: ""
-#oidc_tenantSecret: ""
 #zylab_integration_enabled: false
 #zylab_server_host: ""
 #zylab_server_port: ""

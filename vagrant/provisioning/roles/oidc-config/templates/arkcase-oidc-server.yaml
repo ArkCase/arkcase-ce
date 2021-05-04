@@ -2,8 +2,6 @@ oidc:
   registrationId: "{{ oidc_registrationId }}"
   clientId: "{{ oidc_clientId }}"
   clientSecret: "{{ oidc_clientSecret }}"
-  tenantId: "{{ oidc_tenantId }}"
-  tenantSecret: "{{ oidc_tenantSecret }}"
   redirectUri: "{{ oidc_redirectUri }}"
   authorizationUri: "{{ oidc_authorizationUri }}"
   tokenUri: "{{ oidc_tokenUri }}"
