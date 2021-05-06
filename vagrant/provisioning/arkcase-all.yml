@@ -16,7 +16,9 @@
       when: ldap_portal_url is undefined
     - role: ldap-portal
       tags: [ldap-portal]
-      when: ldap_portal_url is defined 
+      when: ldap_portal_url is defined
+    - role: mongodb
+      tags: [microservices, mongodb]  
     - role: mariadb
       tags: [core, mariadb, marketplace]
     - role: httpd
@@ -49,6 +51,14 @@
       tags: [core, snowbound, marketplace]
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app, upgrade, marketplace]
+    - role: confluent-platform-install
+      when: enable_kafka is defined and enable_kafka == "yes"
+      tags: [microservices, confluent]
+    - role: elasticsearch-install
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
+      tags: [microservices, elasticsearch]
+    - role: microservices
+      tags: [microservices]
     - role: pentaho-license
       tags: [pentaho-license, pentaho-ee, arkcase-ee]   
     - role: arkcase-prerequisites
@@ -84,3 +94,9 @@
       tags: [marketplace]
     - role: disable-solr-user
       tags: [marketplace]
+    - role: arkcase-dev-reports
+      tags: [arkcase-dev-reports, arkcase-developer]
+    - role: foia-dev-reports
+      tags: [foia-dev-reports, arkcase-developer]
+    - role: arkcase-developer
+      tags: [arkcase-developer]
