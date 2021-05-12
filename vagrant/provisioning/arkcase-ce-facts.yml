@@ -480,3 +480,6 @@ email_receiver_complaint_password: ""
 email_receiver_consultation_account: ""
 email_receiver_consultation_account_escaped: "{{ email_receiver_consultation_account | replace('@', '%40') }}"
 email_receiver_consultation_password: ""
+
+# specify zookeeper version
+zookeeper_version: "3.6.3"

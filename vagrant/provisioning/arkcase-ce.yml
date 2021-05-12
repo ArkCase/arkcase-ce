@@ -27,8 +27,14 @@
       tags: [core, alfresco]
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
+    - role: remove-solr
+      tags: [core, solr]
+    - role: zookeeper
+      tags: [core, zookeeper]
     - role: solr
       tags: [core, solr]
+    - role: solr-cloud-collections
+      tags: [core, solr-cloud-collections]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
     - role: pentaho-ce

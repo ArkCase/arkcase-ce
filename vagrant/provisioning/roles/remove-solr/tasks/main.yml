@@ -1,0 +1,23 @@
+- name: Check systemd solr file exists
+  stat:
+    path: /etc/systemd/system/solr.service
+  register: service_file
+
+- name: Stop solr
+  become: yes
+  systemd:
+    name: solr
+    state: stopped
+  when: service_file.stat.exists
+
+- name: Remove solr config files and folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+    group: solr
+    owner: solr
+  loop:
+    - "{{ root_folder }}/data/solr"
+    - "{{ root_folder }}/app/solr"
+    - "{{ root_folder }}/install/solr"

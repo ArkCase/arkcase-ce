@@ -1,0 +1,20 @@
+[Unit]
+Description=Zookeeper Service
+
+[Service]
+Type=forking
+WorkingDirectory={{ root_folder }}/app/zookeeper/
+PIDFile={{ root_folder }}/data/zookeeper/zookeeper_server.pid
+SyslogIdentifier=zookeeper
+User=zookeeper
+Group=zookeeper
+Environment="ZOOCFGDIR={{ root_folder }}/app/zookeeper/conf"
+ExecStart={{ root_folder }}/app/zookeeper/bin/zkServer.sh start
+ExecStop={{ root_folder }}/app/zookeeper/bin/zkServer.sh stop
+Restart=always
+TimeoutSec=20
+SuccessExitStatus=130 143
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
