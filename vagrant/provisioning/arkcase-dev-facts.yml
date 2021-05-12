@@ -574,5 +574,3 @@ email_receiver_consultation_password: ""
 
 # specify zookeeper version
 zookeeper_version: "3.6.3"
-zookeeper_data_folder: "{{ root_folder }}/data/zookeeper"
-

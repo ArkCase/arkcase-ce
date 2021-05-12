@@ -21,3 +21,4 @@
     - "{{ root_folder }}/data/solr"
     - "{{ root_folder }}/app/solr"
     - "{{ root_folder }}/install/solr"
+    - "/etc/systemd/system/solr.service"
