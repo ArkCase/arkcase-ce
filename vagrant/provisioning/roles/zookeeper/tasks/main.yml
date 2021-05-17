@@ -60,6 +60,26 @@
     dest: "{{ root_folder }}/app/zookeeper/conf/zoo.cfg"
     backup: yes
 
+- name: insert solr_node_2 in zoo.cfg, if defined
+  become: yes
+  become_user: zookeeper
+  lineinfile:
+    path: "{{ root_folder }}/app/zookeeper/conf/zoo.cfg"
+    state: present
+    insertafter: "server.1={{ solr_node_1 }}:2888:3888"
+    line: "server.2={{ solr_node_2 }}:2888:3888"
+  when: (solr_node_2 is defined) and (solr_node_2|length > 0)
+
+- name: insert solr_node_3 in zoo.cfg, if defined
+  become: yes
+  become_user: zookeeper
+  lineinfile:
+    path: "{{ root_folder }}/app/zookeeper/conf/zoo.cfg"
+    state: present
+    insertafter: "server.2={{ solr_node_2 }}:2888:3888"
+    line: server.3={{ solr_node_3 }}:2888:3888
+  when: (solr_node_3 is defined) and (solr_node_3|length > 0)
+
 - name: Zookeeper node id file
   become: yes
   become_user: zookeeper
