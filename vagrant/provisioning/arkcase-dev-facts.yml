@@ -443,11 +443,17 @@ pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
 
 pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
 
-solr_version: 7.7.2
+solr_version: 8.8.2
 solr_jmx_enabled: true
 solr_cores:
   - "acmAdvancedSearch"
   - "acmQuickSearch"
+
+# enable solr cloud and define it's nodes
+enable_solr_cloud: true
+solr_node_1: "localhost"
+solr_node_2: ""
+solr_node_3: ""
 
 # NOTE: Alfresco CE 2018-06 does NOT work with
 # higher versions of Maria JDBC; specifically it does NOT

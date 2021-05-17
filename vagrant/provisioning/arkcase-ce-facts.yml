@@ -364,6 +364,12 @@ solr_cores:
   - "acmAdvancedSearch"
   - "acmQuickSearch"
 
+# enable solr cloud and define it's nodes
+enable_solr_cloud: true
+solr_node_1: "localhost"
+solr_node_2: ""
+solr_node_3: ""
+
 # NOTE: Alfresco CE 2018-06 does NOT work with
 # higher versions of Maria JDBC; specifically it does NOT
 # work with 2.4.2.  

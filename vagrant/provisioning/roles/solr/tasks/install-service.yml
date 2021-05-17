@@ -26,7 +26,6 @@
       SOLR_LOG_LEVEL=INFO
       SOLR_HOST={{ solr_host }}
       SOLR_PORT={{ solr_port }}
-
 - name: update environment file - jmx enabled
   become: yes
   become_user: solr
@@ -47,13 +46,33 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS"
     block: |
       SOLR_SSL_ENABLED=true
-      SOLR_SSL_KEY_STORE={{ java_key_store }}
-      SOLR_SSL_KEY_STORE_PASSWORD={{ java_key_store_pass }}
-      SOLR_SSL_TRUST_STORE={{ java_trust_store }}
-      SOLR_SSL_TRUST_STORE_PASSWORD={{ java_trust_store_pass }}
+      SOLR_SSL_KEY_STORE={{ java_key_store_jks }}
+      SOLR_SSL_KEY_STORE_PASSWORD='{{ java_key_store_pass }}'
+      SOLR_SSL_TRUST_STORE='{{ java_trust_store }}'
+      SOLR_SSL_TRUST_STORE_PASSWORD='{{ java_trust_store_pass }}'
       SOLR_SSL_TRUST_STORE_TYPE=JKS
+      SOLR_SSL_KEY_STORE_TYPE=JKS
       SOLR_SSL_NEED_CLIENT_AUTH=false
       SOLR_SSL_WANT_CLIENT_AUTH=false
+      SOLR_OPTS="$SOLR_OPTS -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass | replace('$', '\$') }} -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass | replace('$', '\$') }}"
+# NOTE, per https://lucene.apache.org/solr/guide/7_7/taking-solr-to-production.html#taking-solr-to-production, 
+# setting ZK_HOST is sufficient to start Solr in Solr Cloud mode
+- name: Solr cloud, if configured
+  become: yes
+  become_user: solr
+  blockinfile:
+    path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - SOLR CLOUD"
+    block: |
+      ZK_HOST={{ solr_node_1 }},{{ solr_node_2 }},{{ solr_node_3 }}
+  when: enable_solr_cloud is defined and enable_solr_cloud
+
+- name: configure Solr to use TLS with Zookeeper, if Solr Cloud is enabled
+  become: yes
+  become_user: solr
+  command: "{{ root_folder }}/app/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost localhost:2181 -cmd clusterprop -name urlScheme -val https"
+  when: enable_solr_cloud is defined and enable_solr_cloud
 
 - name: updated environment file - Solr max heap space
   become: yes
@@ -62,7 +81,7 @@
     path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
     backup: yes
     regexp: '^#SOLR_JAVA_MEM.*'
-    line: 'SOLR_JAVA_MEM="-Xms{{ solr_heap_mem | default("1024m") }} -Xmx{{ solr_heap_mem | default("1024m") }}"'
+    line: 'SOLR_JAVA_MEM="-Xms{{ solr_heap_mem | default("512m") }} -Xmx{{ solr_heap_mem | default("512m") }}"'
   register: solr_heap_space_updated
 
 - name: Solr logrotate
