@@ -1,0 +1,55 @@
+- name: ensure Config-Server is stopped
+  become: yes
+  systemd:
+    name: config-server
+    state: stopped
+
+- name: ensure Snowbound is stopped
+  become: yes
+  systemd:
+    name: snowbound
+    state: stopped    
+
+- name: ensure External Portal is stopped
+  become: yes
+  systemd:
+    name: arkcase
+    state: stopped
+  when: foia_portal_context is defined
+
+- name: backup data folders 
+  become: yes
+  file:
+    path: "{{ root_folder }}/backups/webapps"
+    state: present
+
+- name: Config-Server jar backuping
+  become: yes
+  copy:
+    src: "{{ root_folder }}/app/config-server"
+    dest: "{{ root_folder }}/backups/webapps/config-server-{{ ansible_date_time.iso8601 }}"
+    directory_mode: yes
+    owner: arkcase
+    group: arkcase
+    backup: yes
+
+- name: Snowbound war backuping
+  become: yes
+  copy:
+    src: "{{ root_folder }}/app/snowbound/webapps/VirtualViewerJavaHTML5.war"
+    dest: "{{ root_folder }}/backups/webapps/snowbound-{{ ansible_date_time.iso8601 }}/"
+    directory_mode: yes
+    owner: alfresco
+    group: alfresco
+    backup: yes
+
+- name: External-portal-api war backuping
+  become: yes
+  copy:
+    src: "{{ root_folder }}/app/arkcase/webapps/arkcase#external-portal.war"
+    dest: "{{ root_folder }}/backups/webapps/external-portal-{{ ansible_date_time.iso8601 }}/"
+    directory_mode: yes
+    owner: arkcase
+    group: arkcase
+    backup: yes
+  when: foia_portal_context is defined   
