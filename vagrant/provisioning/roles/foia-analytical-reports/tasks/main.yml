@@ -151,6 +151,8 @@
   loop:
     - regexp: "AGENCY_REST_ENDPOINT=https{{ ':' }}//acm-arkcase/arkcase/api/latest/service/config/lookups"
       line: "AGENCY_REST_ENDPOINT=https://{{ external_host }}/arkcase/api/latest/service/config/lookups"
+    - regexp: "X_ARKCASE_EXTERNAL_USER=arkcase-admin@arkcase.org"
+      line: "X_ARKCASE_EXTERNAL_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
     - regexp: "ARKCASE_USER=arkcase-admin@arkcase.org"
       line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
     - regexp: "ARKCASE_PASS=AcMd3v\\$"
