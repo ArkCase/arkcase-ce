@@ -1,0 +1,1 @@
+{{ solr_node_id | default ('1') }}
