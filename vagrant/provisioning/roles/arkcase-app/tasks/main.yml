@@ -29,6 +29,8 @@
         value: AcMd3v$
       - name: activemq_guest
         value: guest
+      - name: activemq_password
+        value: "{{ activemq_password | default('guest', true) }}"
       - name: snowbound_key
         value: armediaaeskey123
       - name: admin_user_password
@@ -592,7 +594,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -616,7 +618,7 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_activemq_xml.stat.exists
       
 - name: plaintext passwords (forms properties)
@@ -636,7 +638,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -666,7 +668,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -699,7 +701,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -743,7 +745,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -776,7 +778,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -868,7 +870,7 @@
     - regexp: "acm-arkcase"
       replace: "{{ activemq_host }}"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
 
 - name: copy arkcase-activemq.yaml if necessary
