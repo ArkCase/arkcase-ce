@@ -3,7 +3,7 @@
     url: '{{ alfresco_url }}/alfresco/s/api/type/rma{{ ":" }}recordCategory/formprocessor'
     method: POST
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: false
     body_format: json
     body:
