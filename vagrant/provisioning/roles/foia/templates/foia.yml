@@ -8,7 +8,7 @@ gov.foia.broker:
   truststore: "{{ java_trust_store }}"
   truststore.password: "{{ java_trust_store_pass }}"
   file_upload_url: "file:///${user.home}/fileserver/"
-  userName: "guest"￼
+  userName: "guest"
   password: "guest"
 application:
   properties:
