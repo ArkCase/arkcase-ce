@@ -27,8 +27,6 @@
         value: admin
       - name: old_default_user
         value: AcMd3v$
-      - name: activemq_guest
-        value: guest
       - name: activemq_password
         value: "{{ activemq_password | default('guest', true) }}"
       - name: snowbound_key
@@ -340,6 +338,23 @@
     warn: false
   when: tls_default_removed_from_service is changed
 
+- name: application.properties file
+  become: yes
+  become_user: arkcase
+  template:
+    src: application.properties
+    dest: "{{ root_folder }}/app/config-server/application.properties"
+    backup: yes
+
+- name: run config-server with application.properties file
+  become: yes
+  replace:
+    backup: yes
+    path: "/etc/systemd/system/config-server.service"
+    regexp: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp"
+    replace: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp -Dspring.config.location=/opt/arkcase/app/config-server/application.properties"
+  when: arkcase_version == "" or arkcase_version is version('2021.02', '>=')
+
 - name: enable ArkCase 
   become: yes
   systemd:
@@ -355,7 +370,17 @@
     name: config-server
     enabled: yes
     masked: no
-  
+
+- name: check config-server is active
+  shell: systemctl status config-server.service | grep Active | awk -v N=2 '{print $N}'
+  register: output
+
+- name: restart config-server to bring the changes in the service file
+  service:
+    name: config-server
+    state: restarted
+  when: output.stdout == 'active'
+
 - name: capture current arkcase.yaml
   become: yes
   become_user: arkcase
