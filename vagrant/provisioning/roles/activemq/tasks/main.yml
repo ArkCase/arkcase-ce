@@ -182,7 +182,7 @@
           <!-- Configure authentication; Username, passwords and groups -->
           <simpleAuthenticationPlugin>
               <users>
-                  <authenticationUser username="${arkcase.user}" password="${arkcase.password}" groups="users"/>
+                  <authenticationUser username="${arkcase.user}" password="${arkcase.password}" groups="users,admins"/>
               </users>
           </simpleAuthenticationPlugin>
       </plugins>
