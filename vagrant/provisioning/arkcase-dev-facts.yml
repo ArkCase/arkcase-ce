@@ -570,3 +570,7 @@ email_receiver_complaint_password: ""
 email_receiver_consultation_account: ""
 email_receiver_consultation_account_escaped: "{{ email_receiver_consultation_account | replace('@', '%40') }}"
 email_receiver_consultation_password: ""
+
+# define username and password for ActiveMQ authentication between apps
+activemq_user: ""
+activemq_password: ""
