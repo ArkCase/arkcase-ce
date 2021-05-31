@@ -21,6 +21,8 @@ portal:
   externalConfiguration: true
   authenticatedMode: {{ portal_authenticated_mode | default (false) }}
   activemqUrl: "ssl://{{ activemq_host }}:61616"
+  activemqUsername: "{{ activemq_user | default('guest', true) }}"
+  activemqPassword: "{{ activemq_password | default('guest', true) }}"
   serviceProvider:
     directory.name: "foiaportal"
   keystoreFilename: arkcase.ks
@@ -30,5 +32,3 @@ portal:
   security.authentication:
     header.parameter.name: foia-api-secret
     token:  "{{ portal_foiagov_token | default ('') }}"
-  userName: "{{ activemq_user | default('guest', true) }}"
-  password: "ENC({{ encrypted_activemq_password }})"

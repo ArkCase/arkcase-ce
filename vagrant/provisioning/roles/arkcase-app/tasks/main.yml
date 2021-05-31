@@ -338,21 +338,21 @@
     warn: false
   when: tls_default_removed_from_service is changed
 
-- name: application.properties file
+- name: application.yaml file
   become: yes
   become_user: arkcase
   template:
-    src: application.properties
-    dest: "{{ root_folder }}/app/config-server/application.properties"
+    src: application.yaml
+    dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
 
-- name: run config-server with application.properties file
+- name: run config-server with application.yaml file
   become: yes
   replace:
     backup: yes
     path: "/etc/systemd/system/config-server.service"
     regexp: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp"
-    replace: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp -Dspring.config.location=/opt/arkcase/app/config-server/application.properties"
+    replace: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp -Dspring.config.location={{ root_folder }}/app/config-server/application.yaml"
   when: arkcase_version == "" or arkcase_version is version('2021.02', '>=')
 
 - name: enable ArkCase 

@@ -2,11 +2,11 @@ server.port: 9999
 spring:
   profiles.active: native
   cloud.config.server:
-    native.searchLocations: file:"{{ root_folder }}/app/config-server",file:"{{ root_folder }}/app/config-server/labels",file:"{{ root_folder }}/app/config-server/ldap",file:"{{ root_folder }}/app/config-server/lookups",file:"{{ root_folder }}/app/config-server/rules"
+    native.searchLocations: file:${user.home}/.arkcase/acm/acm-config-server-repo,file:${user.home}/.arkcase/acm/acm-config-server-repo/labels,file:${user.home}/.arkcase/acm/acm-config-server-repo/ldap,file:${user.home}/.arkcase/acm/acm-config-server-repo/lookups,file:${user.home}/.arkcase/acm/acm-config-server-repo/rules
   jms:
     pub-sub-domain: true
-properties.folder.path: "{{ root_folder }}/app/config-server"
-branding.files.folder.path: "{{ root_folder }}/app/config-server/branding"
+properties.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo
+branding.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/branding
 logging:
   file.max-history: 10
   file.max-size: 10MB
