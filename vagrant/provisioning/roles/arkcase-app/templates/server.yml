@@ -149,10 +149,3 @@ payment:
     password: "{{ touchnet_password | default('') }}"
     securelinkendpoint: "{{ touchnet_securelinkendpoint | default('') }}"
     upaysiteid: "{{ touchnet_upaysiteid | default('') }}"
-
-acm.websockets:
-  stomp_broker_relay.client_login: "{{ activemq_user | default('guest', true) }}"
-  stomp_broker_relay.client_passcode: "ENC({{ encrypted_activemq_password }})"
-  #STOMP (ArkCase to ActiveMQ) authentication
-  stomp_broker_relay.system_login: "{{ activemq_user | default('guest', true) }}"
-  stomp_broker_relay.system_passcode: "ENC({{ encrypted_activemq_password }})"
