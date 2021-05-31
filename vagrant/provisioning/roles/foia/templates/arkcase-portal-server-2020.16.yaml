@@ -32,3 +32,5 @@ portal:
   security.authentication:
     header.parameter.name: foia-api-secret
     token:  "{{ portal_foiagov_token | default ('') }}"
+  userName: "{{ activemq_user | default('guest', true) }}"
+  password: "ENC({{ encrypted_activemq_password }})"
