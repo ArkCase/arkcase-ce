@@ -73,7 +73,7 @@
   register: interactive_reports_datasources
   
 - name: Install interactive reports datasources
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ interactive_reports_datasources.files }}"
   
 - name: Check if foia or core variant
@@ -93,5 +93,5 @@
   register: interactive_reports
   
 - name: Install interactive reports from configuration
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}'"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}'"
   with_items: "{{ interactive_reports.files }}"
