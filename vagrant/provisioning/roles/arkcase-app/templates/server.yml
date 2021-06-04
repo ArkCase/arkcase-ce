@@ -148,4 +148,5 @@ payment:
     username: "{{ touchnet_username | default('') }}"
     password: "{{ touchnet_password | default('') }}"
     securelinkendpoint: "{{ touchnet_securelinkendpoint | default('') }}"
+    securepaylinkendpoint: "{{ touchnet_securepaylinkendpoint | default('') }}"
     upaysiteid: "{{ touchnet_upaysiteid | default('') }}"

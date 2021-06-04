@@ -465,6 +465,7 @@ ldap_type: samba
 #touchnet_username: ""
 #touchnet_password: ""
 #touchnet_securelinkendpoint: ""
+#touchnet_securepaylinkendpoint: ""
 #touchnet_upaysiteid: ""
 
 #Put your outlook credentials below if you want to use Email receiver in Arkcase, depending on your case
