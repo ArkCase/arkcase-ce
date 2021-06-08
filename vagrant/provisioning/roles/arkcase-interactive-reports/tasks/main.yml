@@ -95,3 +95,14 @@
 - name: Install interactive reports from configuration
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}'"
   with_items: "{{ interactive_reports.files }}"
+
+- name: Find static reports folder in configuration
+  find:
+    paths: /home/arkcase/.arkcase/acm/reports/static/reports
+    patterns: '*.prpt'
+    recurse: yes
+  register: static_reports
+
+- name: Install static reports from configuration
+  command: curl -k -v -X PUT -H "Content-Type: application/octet-stream" -F "data=@item.path" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/repo/files/:public:{{ item.path | dirname }}:{{ item.path | basename }}
+  with_items: "{{ static_reports.files }}"
