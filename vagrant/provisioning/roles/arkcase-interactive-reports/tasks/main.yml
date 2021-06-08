@@ -105,6 +105,6 @@
 
 - name: Install static reports from configuration
   command:
-    cmd: 'curl -k -v -X PUT -H "Content-Type: application/octet-stream" -F "data=@{{ item.path }}" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/repo/files/:public:{{ item.path | dirname }}:{{ item.path | basename | replace(' ','%20')}}'
+    cmd: 'curl -k -v -X PUT -H "Content-Type: application/octet-stream" -F "data=@{{ item.path }}" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/repo/files/:public:{{ item.path | dirname }}:{{ item.path | basename | replace(" ","%20")}}'
     warn: no
   with_items: "{{ static_reports.files }}"
