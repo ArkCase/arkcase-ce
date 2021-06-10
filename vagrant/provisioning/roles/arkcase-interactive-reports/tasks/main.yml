@@ -1,20 +1,20 @@
 - name: Check if keep alive report exists
-  command: curl -k -v -H -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/getJobs'
+  command: 'curl -k -v -H -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/getJobs'
   register: scheduledJobs
 
 - name: Deploy keep alive interactive reports datasource
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ role_path }}/files/DBConnectionDS.xmi' --permission=true --overwrite=true --retainOwnership=true"
-  when: "KeepAliveJob" not in scheduledJobs.outputs
+  when: '"KeepAliveJob" not in scheduledJobs.content'
 
 - name: Deploy keep alive interactive report
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ role_path }}/files/DBKeepAlive.prpti.zip'"
-  when: "KeepAliveJob" not in scheduledJobs.output
+  when: '"KeepAliveJob" not in scheduledJobs.content'
 
 - name: Schedule execution of keep alive report on every 30 min to keep connection alive
   command:
     cmd: 'curl -k -v -H "Content-Type: application/xml" --data @{{ role_path }}/files/DBKeepAliveJob.xml -X POST -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/job'
     warn: no
-  when: "KeepAliveJob" not in scheduledJobs.output
+  when: '"KeepAliveJob" not in scheduledJobs.content'
 
 - name: download configuration (if using sftp, and no extension is configured)
   become: yes
