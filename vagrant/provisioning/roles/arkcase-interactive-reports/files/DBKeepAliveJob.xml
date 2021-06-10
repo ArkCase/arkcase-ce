@@ -1,0 +1,17 @@
+<jobScheduleRequest>
+  <jobName>KeepAliveJob</jobName>
+  <simpleJobTrigger>
+    <uiPassParam>MINUTES</uiPassParam>
+    <repeatInterval>1800</repeatInterval>
+    <repeatCount>-1</repeatCount>
+    <startTime>2015-01-10T01:00:00.000</startTime>
+    <endTime />
+  </simpleJobTrigger>
+  <inputFile>/public/DBKeepAlive.prpti</inputFile>
+  <outputFile>/public/DBKeepAlive</outputFile>
+  <jobParameters>
+    <name>autoCreateUniqueFilename</name>
+    <type>string</type>
+    <stringValue>false</stringValue>
+  </jobParameters>
+</jobScheduleRequest>
