@@ -176,7 +176,7 @@
   blockinfile:
     path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
     insertafter: "        </persistenceAdapter>"
-    marker: "# {mark} ANSIBLE MANAGED BLOCK: Authentication"
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: Authentication"
     block: |
       <plugins>    
           <!-- Configure authentication; Username, passwords and groups -->
