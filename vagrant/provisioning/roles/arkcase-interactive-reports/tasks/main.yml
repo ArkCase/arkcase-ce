@@ -1,3 +1,34 @@
+- name: list the data sources that already exist
+  become: yes
+  become_user: pentaho
+  command: 
+    cmd: 'wget --no-check-certificate -O {{ root_folder }}/install/pentaho/datasources-list.json --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
+    warn: no
+  changed_when: false
+
+- name: read the list of data sources
+  become: yes
+  become_user: pentaho
+  command: cat {{ root_folder }}/install/pentaho/datasources-list.json
+  register: data_source_list
+  changed_when: false
+
+- name: file to post to Pentaho to create the data source
+  become: yes
+  become_user: pentaho
+  template:
+    src: put_connection.json
+    dest: "{{ root_folder }}/install/pentaho/put_connection.json"
+  when: not '"MariaDB Local"' in data_source_list.stdout
+
+# the ansible uri module causes a timeout for some reason but wget works fine
+- name: create the ArkCase JDBC data source for interactive reports
+  command: 
+    cmd: 'wget --no-check-certificate --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
+    warn: no
+  register: create_datasource_rest_call
+  when: not '"MariaDB Local"' in data_source_list.stdout
+
 - name: Check if keep alive report exists
   command: 
     cmd: 'curl -k -v -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/getJobs'
