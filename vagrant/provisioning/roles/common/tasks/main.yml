@@ -111,3 +111,14 @@
 - name: Set default locale to en_US.utf8
   become: yes
   command: localectl set-locale LANG=en_US.utf8
+
+- name: Run CRON job every day at 1.05 to remove files older than 7 days
+  become: yes
+  become_method: sudo
+  cron:
+    name: "remove_files"
+    user: "root"
+    hour: "1"
+    minute: "5"
+    job: 'find {{ root_folder }}/data/arkcase-home/fileserver -mtime +6 -type f -exec rm {} \;'
+    state: present

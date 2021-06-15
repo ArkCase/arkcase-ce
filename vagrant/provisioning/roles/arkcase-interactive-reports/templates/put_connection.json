@@ -1,0 +1,31 @@
+{
+    "changed":true,
+    "usingConnectionPool":true,
+    "connectSql":"",
+    "databaseName":"arkcase",
+    "databasePort":"3306",
+    "hostname":"{{ database_host }}",
+    "name":"MariaDB Local",
+    "password":"{{ rds_password | default(default_database_password) }}",
+    "username":"{{ rds_user | default('arkcase') }}",
+    "attributes":{},
+    "connectionPoolingProperties":{},
+    "extraOptions":{
+      "MARIADB.enabledSslProtocolSuites": "TLSv1.2",
+      "MARIADB.trustServerCertificate": "true",
+      "MARIADB.useSsl": "true"
+    },
+    "extraOptionsOrder":{        
+      "0": "MARIADB.enabledSslProtocolSuites",
+      "1": "MARIADB.trustServerCertificate",
+      "2": "MARIADB.useSsl"
+    },
+    "accessType":"NATIVE",
+    "databaseType":{
+      "defaultDatabasePort":3306,
+      "extraOptionsHelpUrl":"https://mariadb.com/kb/en/mariadb/about-mariadb-connector-j/",
+      "name":"MariaDB",
+      "shortName":"MARIADB",
+      "supportedAccessTypes":["NATIVE","ODBC","JNDI"]
+    }
+  }

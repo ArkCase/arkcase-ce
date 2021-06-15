@@ -2,7 +2,7 @@
 ## host-specific settings
 #################################
 # IP address for Arkcase host. If not defined 127.0.0.1 is used
-arkcase_host_address: "172.28.128.1"
+arkcase_host_address: ""
 
 email_service_account: "nosuchmailbox@arkcase.com"
 email_service_account_escaped: "{{ email_service_account | replace('@', '%40') }}"
@@ -39,8 +39,6 @@ samba_domain: "DC.ARKCASE-CE"
 # server_admin goes in the httpd conf file, and is the email
 # address of the arkcase-admin user
 server_admin: "david.miller@arkcase.com"
-# Not using arkcase-admin as a hardcoded user but instead use it as a variable since this user can vary from environment to environment
-admin_user: "arkcase-admin"
 
 default_user_password: "AcMd3v$"
 
@@ -202,7 +200,7 @@ ldap_portal_groups:
     alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
 
-arkcase_admin_user: "{{ ldap_prefix}}{{ admin_user }}"
+arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
 arkcase_admin_name: "ArkCase Administrator"
 arkcase_admin_password: "{{ default_user_password }}"
 arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
@@ -371,16 +369,16 @@ sftp_extension_folder: ""
 sftp_user: "{{ sftp_extension_user }}"
 
 # retrieve snowbound from GitHub ("github") or SFTP ("sftp")
-snowbound_retrieve_strategy: "sftp"
-snowbound_vendor_version: "5.6.2"
-snowbound_arkcase_version: ""
+snowbound_retrieve_strategy: "github"
+snowbound_vendor_version: "5.2"
+snowbound_arkcase_version: "2021.01"
 snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
 
 ### default values that shouldn't have to change
 arkcase_host_name: "{{ arkcase_host }}"
 
-root_folder: "/opt/arkcase"
+root_folder: "/opt/app/arkcase"
 
 mariadb_data_folder: "{{ root_folder }}/data/mariadb"
 mariadb_log_folder: "{{ root_folder }}/log/mariadb"
@@ -404,8 +402,8 @@ ssl_key_rsa: "/etc/tls/private/arkcase-server.rsa.key"
 java_trust_store: "{{ root_folder }}/common/arkcase.ts"
 java_key_store: "{{ root_folder }}/common/arkcase.ks"
 java_key_store_jks: "{{ root_folder }}/common/arkcase-jks.ks"
-java_trust_store_pass: "{{ default_user_password }}"
-java_key_store_pass: "{{ default_user_password }}"
+java_trust_store_pass: "password"
+java_key_store_pass: "AcMd3v$"
 java_p12_store: "{{ root_folder }}/common/arkcase-client.p12"
 
 samba_version: 4.10.8
@@ -577,3 +575,4 @@ email_receiver_consultation_password: ""
 # define username and password for ActiveMQ authentication between apps
 activemq_user: ""
 activemq_password: ""
+arkcase_version: ""

@@ -130,11 +130,7 @@
     - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
       line: "<nullif>https://{{ internal_host }}:2002/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
     - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
-      line: "  <httpLogin>{{ ldap_user_prefix }}{{ admin_user }}</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
-      line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
-
-- name: setup path to arkcase config file
   become: yes
   become_user: pentaho
   shell: sed -i 's~C:\\Users\\marjan\.stefanoski\\foia---reports-dw-1\\config\\arkcase_config\.properties~{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config\.properties~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr
@@ -159,6 +155,16 @@
       line: "TRUSTSTORE_PATH={{ java_trust_store }}"
     - regexp: "TRUSTSTORE_PASSWORD=password"
       line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
+
+- name: setup arkcase admin user in stg_foia_organization.ktr
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION.ktr
+
+- name: setup arkcase admin user in stg_foia_organization_consultation.ktr
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION_CONSULTATION.ktr
 
 - name: run the job to create and populate the mondrian cubes
   become: yes
