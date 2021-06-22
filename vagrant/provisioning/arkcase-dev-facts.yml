@@ -575,3 +575,6 @@ email_receiver_consultation_password: ""
 # define username and password for ActiveMQ authentication between apps
 activemq_user: ""
 activemq_password: ""
+
+# missing fact during vagrant provisioning 
+arkcase_version: ""
