@@ -1,0 +1,8 @@
+---
+collections:
+
+- servicenow.servicenow
+- netbox.netbox
+- arubanetworks.aos_switch
+- cisco.ios
+- community.general
