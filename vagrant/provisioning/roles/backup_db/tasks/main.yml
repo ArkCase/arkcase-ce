@@ -1,0 +1,39 @@
+- name: ensure ArkCase is stopped
+  become: yes
+  systemd:
+    name: arkcase
+    state: stopped
+
+- name: ensure Alfresco is stopped
+  become: yes
+  systemd:
+    name: alfresco
+    state: stopped
+    
+- name: backup db folders 
+  become: yes
+  file:
+    path: "{{ root_folder }}/backups/db"
+    state: directory
+
+- name: ArkCase db backuping
+  become: yes
+  mysql_db:
+    state: dump
+    name: arkcase
+    target: "{{ root_folder }}/backups/db/arkcase-{{ ansible_date_time.iso8601 }}.sql"
+    login_user: "{{ database_arkcase_user }}"
+    login_pass: "{{ default_database_password }}"
+    login_host: "{{ database_host }}"
+    ca_cert: "{{ ssl_ca }}"
+
+- name: Alfresco db backuping
+  become: yes
+  mysql_db:
+    state: dump
+    name: alfresco
+    target: "{{ root_folder }}/backups/db/alfresco-{{ ansible_date_time.iso8601 }}.sql"
+    login_user: alfresco
+    login_pass: "{{ default_database_password }}"
+    login_host: "{{ database_host }}"
+    ca_cert: "{{ ssl_ca }}"
