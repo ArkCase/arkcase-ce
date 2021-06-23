@@ -108,6 +108,10 @@
 #  timezone:
 #    name: UTC
 
+- name: Set timezone to Asia/Tokyo
+  community.general.timezone:
+    name: Asia/Toky
+
 - name: Set default locale to en_US.utf8
   become: yes
   command: localectl set-locale LANG=en_US.utf8
