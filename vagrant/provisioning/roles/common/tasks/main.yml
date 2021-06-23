@@ -103,14 +103,10 @@
   # `docker run` command line.
   when: not stat_dockerenv_result.stat.exists
 
-#- name: set timezone to UTC
-#  become: yes
-#  timezone:
-#    name: UTC
-
-- name: Set timezone to Asia/Tokyo
-  community.general.timezone:
-    name: Asia/Toky
+- name: set timezone to UTC
+  become: yes
+  timezone:
+    name: UTC
 
 - name: Set default locale to en_US.utf8
   become: yes
