@@ -21,15 +21,7 @@
 - name: import arkcase keystore
   become: yes
   become_user: pentaho
-  java_cert:
-    pkcs12_alias: "{{ keystore_alias | default('arkcase_server') }}"
-    pkcs12_path: "{{ java_p12_store | default(root_folder + '/common/arkcase-client.p12') }}"
-    pkcs12_password: "{{ java_key_store_pass }}"
-    keystore_create: yes
-    keystore_pass: password
-    keystore_path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
-    state: present
-    cert_alias: tomcat
+  command: keytool -importkeystore -srckeystore {{ java_p12_store | default(root_folder + '/common/arkcase-client.p12') }} -srcstoretype pkcs12 -srcalias {{ keystore_alias | default('arkcase_server') }} -destkeystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore -deststoretype jks -deststorepass password -destalias tomcat
 
 - name: ensure proper permissions on pentaho keystore
   become: yes
