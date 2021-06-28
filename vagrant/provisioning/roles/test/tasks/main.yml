@@ -1,7 +1,9 @@
-- name: test user
+- name: test1 user
   become: yes
   user:
-    name: test
+    name: test1
     shell: /bin/bash
     password: "$6$random_salt$NULr1R3MgNFy3ytIthn9lwnd4qXZGI4du0MEJb/jDxrl8TrAaS97I77FGI/fUCq8bL54vq7oC98GHT7UqSo/Q0"
     update_password: on_create
+    state: present
+    group: test1
