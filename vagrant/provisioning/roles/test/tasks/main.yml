@@ -1,8 +1,8 @@
-- name: arkcase user
+- name: test3 user
   become: yes
   user:
-    name: arkcase
+    name: test3
     shell: /bin/false
     state: present
     create_home: yes
-    home: /home/arkcase
+    home: /home/test3
