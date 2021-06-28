@@ -1,14 +1,8 @@
-- name: Ensure group "test1" exists
-  ansible.builtin.group:
-    name: test1
-    state: present
-
-- name: test1 user
+- name: arkcase user
   become: yes
   user:
-    name: test1
-    shell: /bin/bash
-    password: "$6$random_salt$NULr1R3MgNFy3ytIthn9lwnd4qXZGI4du0MEJb/jDxrl8TrAaS97I77FGI/fUCq8bL54vq7oC98GHT7UqSo/Q0"
-    update_password: on_create
+    name: arkcase
+    shell: /bin/false
     state: present
-    group: test1
+    create_home: yes
+    home: /home/arkcase
