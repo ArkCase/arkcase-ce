@@ -1,3 +1,8 @@
+- name: Ensure group "test1" exists
+  ansible.builtin.group:
+    name: test1
+    state: present
+
 - name: test1 user
   become: yes
   user:
