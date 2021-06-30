@@ -1,11 +1,15 @@
+- name: Ensure group snowbound exists
+  ansible.builtin.group:
+    name: snowbound
+    state: present
+
 - name: snowbound user
   become: yes
   user:
     name: snowbound
     shell: /bin/false
     state: present
-    create_home: yes
-    home: /home/snowbound
+    group: snowbound
 
 - name: Snowbound folders
   become: yes
