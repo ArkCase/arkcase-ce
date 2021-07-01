@@ -14,7 +14,9 @@
         host: "%"
         name: "{{ item }}"
         password: "{{ default_database_password }}" 
-        priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
+        tls_requires:
+          SSL:
+        priv: '{{ item }}.*:ALL'
         state: present 
     - name: create {{ item }} MySQL user (IP address)
       become: yes
@@ -23,7 +25,9 @@
         host: "127.0.0.1"
         name: "{{ item }}"
         password: "{{ default_database_password }}" 
-        priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
+        tls_requires:
+          SSL:
+        priv: '{{ item }}.*:ALL'
         state: present
     
 

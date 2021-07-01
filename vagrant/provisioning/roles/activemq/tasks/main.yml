@@ -1,11 +1,15 @@
+- name: Ensure group activemq exists
+  ansible.builtin.group:
+    name: activemq
+    state: present
+
 - name: activemq user
   become: yes
   user:
     name: activemq
     shell: /bin/false
     state: present
-    create_home: yes
-    home: /home/activemq
+    group: activemq
 
 - name: ActiveMQ folders
   become: yes

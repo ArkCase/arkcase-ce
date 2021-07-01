@@ -10,6 +10,11 @@
     name:
       - lsof
 
+- name: Ensure group solr exists
+  ansible.builtin.group:
+    name: solr
+    state: present
+
 # solr startup script requires an enabled user, with
 # a real shell, and a valid password
 - name: solr user
@@ -20,8 +25,7 @@
     password: "$6$random_salt$NULr1R3MgNFy3ytIthn9lwnd4qXZGI4du0MEJb/jDxrl8TrAaS97I77FGI/fUCq8bL54vq7oC98GHT7UqSo/Q0"
     update_password: on_create
     state: present
-    create_home: yes
-    home: /home/solr
+    group: solr
 
 - name: Solr folders
   become: yes

@@ -24,6 +24,8 @@
     host: "%"
     name: "{{ s.user }}"
     password: "{{ default_database_password }}" 
-    priv: '*.*:REQUIRESSL/{{ s.schema }}.*:ALL'
+    tls_requires:
+      SSL:
+    priv: '{{ s.schema }}.*:ALL'
     state: present
 

@@ -1,11 +1,15 @@
+- name: Ensure group pentaho exists
+  ansible.builtin.group:
+    name: pentaho
+    state: present
+
 - name: pentaho user
   become: yes
   user:
     name: pentaho
     shell: /bin/false
     state: present
-    create_home: yes
-    home: /home/pentaho
+    group: pentaho
 
 - name: Pentaho folders
   become: yes

@@ -1,11 +1,15 @@
+- name: Ensure group arkcase exists
+  ansible.builtin.group:
+    name: arkcase
+    state: present
+
 - name: arkcase user
   become: yes
   user:
     name: arkcase
     shell: /bin/false
     state: present
-    create_home: yes
-    home: /home/arkcase
+    group: arkcase
 
 - name: arkcase folders
   become: yes
