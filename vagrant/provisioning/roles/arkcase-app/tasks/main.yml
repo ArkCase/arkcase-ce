@@ -990,6 +990,26 @@
     - regexp: 'filePattern="\$\{sys\:catalina.base\}/logs'
       replace: 'filePattern="{{ root_folder}}/log/arkcase'
 
+- name: replace arkcase core log level if variable defined in facts file
+  become: yes
+  become_user: arkcase
+  ansible.builtin.replace:
+    path: /home/arkcase/.arkcase/acm/log4j2.xml
+    after: '<Logger name="com.armedia" '
+    before: ' additivity="false">'
+    regexp: '^(.+)$'
+    replace: "level=\"{{ arkcase_log_level | default('info', true) }}\""
+
+- name: replace arkcase foia log level if variable defined in facts file
+  become: yes
+  become_user: arkcase
+  ansible.builtin.replace:
+    path: /home/arkcase/.arkcase/acm/log4j2.xml
+    after: '<Logger name="gov.foia" '
+    before: ' additivity="false">'
+    regexp: '^(.+)$'
+    replace: "level=\"{{ arkcase_log_level | default('info', true) }}\""
+
 - name: install any extra artifacts
   include_tasks: extra_artifacts.yml
   loop: "{{ arkcase_extra_artifacts }}"

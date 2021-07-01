@@ -484,3 +484,7 @@ email_receiver_consultation_password: ""
 # define username and password for ActiveMQ authentication between apps
 activemq_user: ""
 activemq_password: ""
+
+# define arkcase_log_level core/foia with one of thge following valid values: trace, debug, info, warn, error
+# if not defined default value will be info
+arkcase_log_level: ""
