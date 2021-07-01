@@ -578,3 +578,7 @@ activemq_password: ""
 
 # missing fact during vagrant provisioning 
 arkcase_version: ""
+
+# define arkcase_log_level core/foia with one of thge following valid values: trace, debug, info, warn, error
+# if not defined default value will be info
+arkcase_log_level: ""
