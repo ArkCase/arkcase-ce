@@ -89,7 +89,7 @@
     - role: oidc-config
       tags: [oidc-config]
     - role: arkcase-interactive-reports
-      tags: [interactive-reports]
+      tags: [interactive-reports, upgrade]
     - role: disable-admin
       tags: [marketplace]
     - role: disable-solr-user
