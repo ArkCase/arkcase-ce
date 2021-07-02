@@ -78,7 +78,7 @@
       tags: [core, arkcase, upgrade, marketplace]  
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
-      tags: [foia-analytical-reports]
+      tags: [foia-analytical-reports, foia]
     - role: tesseract
       tags: [core, arkcase, tesseract, marketplace]
     - role: firewall
