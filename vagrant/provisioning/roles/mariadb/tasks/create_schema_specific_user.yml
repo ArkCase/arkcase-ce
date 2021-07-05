@@ -28,4 +28,15 @@
       SSL:
     priv: '{{ s.schema }}.*:ALL'
     state: present
+  when: ansible_version.full is version('2.10.1', '>=')
 
+- name: create {{ s.user }} MySQL user
+  become: yes
+  mysql_user:
+    login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+    host: "%"
+    name: "{{ s.user }}"
+    password: "{{ default_database_password }}" 
+    priv: '*.*:REQUIRESSL/{{ s.schema }}.*:ALL'
+    state: present
+  when: ansible_version.full is version('2.10.0', '<')
