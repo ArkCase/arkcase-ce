@@ -17,7 +17,7 @@
     single_transaction: yes
   when: s.script | length > 0
   
-- name: create {{ s.user }} MySQL user
+- name: create {{ s.user }} MySQL user with tls_requires
   become: yes
   mysql_user:
     login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
@@ -30,7 +30,7 @@
     state: present
   when: ansible_version.full is version('2.10.1', '>=')
 
-- name: create {{ s.user }} MySQL user
+- name: create {{ s.user }} MySQL user with REQUIRESSL
   become: yes
   mysql_user:
     login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
