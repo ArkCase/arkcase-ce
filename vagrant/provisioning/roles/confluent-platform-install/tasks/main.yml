@@ -233,6 +233,7 @@
 - name: Enable Zookeeper to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: confluent-zookeeper
     enabled: yes
     masked: no
@@ -242,6 +243,7 @@
 - name: Enable Kafka to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: confluent-kafka
     enabled: yes
     masked: no
@@ -251,6 +253,7 @@
 - name: Enable Schema Registry to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: confluent-schema-registry
     enabled: yes
     masked: no
@@ -260,6 +263,7 @@
 - name: Enable KSQL to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: confluent-ksql
     enabled: yes
     masked: no
@@ -269,6 +273,7 @@
 - name: Enable Control Center to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: confluent-control-center
     enabled: yes
     masked: no
@@ -278,6 +283,7 @@
 - name: Enable Kafka Rest to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: confluent-kafka-rest
     enabled: yes
     masked: no
@@ -287,6 +293,7 @@
 - name: Enable Kafka Connect to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: confluent-kafka-connect
     enabled: yes
     masked: no

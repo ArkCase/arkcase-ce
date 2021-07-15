@@ -474,6 +474,7 @@
 - name: enable and start haproxy
   become: yes
   systemd:
+    daemon_reload: true
     name: haproxy
     enabled: yes
     state: started

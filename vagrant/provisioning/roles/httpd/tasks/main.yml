@@ -108,6 +108,7 @@
 - name: enable httpd to run at startup
   become: yes
   systemd:
+    daemon_reload: true
     name: httpd
     enabled: yes
     masked: no

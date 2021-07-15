@@ -147,6 +147,7 @@
 - name: enable Samba to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: samba
     enabled: yes
     masked: no

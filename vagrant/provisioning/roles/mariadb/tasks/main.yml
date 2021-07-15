@@ -155,6 +155,7 @@
 - name: enable MariaDB to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: mariadb
     enabled: yes
     masked: no

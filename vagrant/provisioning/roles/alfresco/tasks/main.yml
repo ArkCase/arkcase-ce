@@ -489,6 +489,7 @@
 - name: enable Alfresco to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: alfresco
     enabled: yes
     masked: no

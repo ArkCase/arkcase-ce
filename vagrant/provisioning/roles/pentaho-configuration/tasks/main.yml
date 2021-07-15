@@ -254,6 +254,7 @@
 - name: enable Pentaho to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: pentaho
     enabled: yes
     masked: no
