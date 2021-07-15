@@ -18,6 +18,12 @@
     - src: "repository.spring.properties"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/repository.spring.properties"
 
+- name: delete alias tomcat from keystore if exists
+  become: yes
+  become_user: pentaho
+  command: keytool -delete -alias tomcat -keystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore --deststorepass password
+  ignore_errors: true
+
 - name: import arkcase keystore
   become: yes
   become_user: pentaho
