@@ -129,6 +129,7 @@
 - name: enable Snowbound to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: snowbound
     enabled: yes
     masked: no

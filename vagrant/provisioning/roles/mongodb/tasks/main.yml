@@ -54,6 +54,7 @@
 - name: enable Mongodb to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: mongod
     enabled: yes
     masked: no

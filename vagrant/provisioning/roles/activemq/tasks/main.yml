@@ -301,6 +301,7 @@
 - name: enable ActiveMQ to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: activemq
     enabled: yes
     masked: no

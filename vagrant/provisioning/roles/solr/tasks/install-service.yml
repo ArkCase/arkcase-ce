@@ -86,6 +86,7 @@
 - name: enable Solr to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: solr
     enabled: yes
     masked: no

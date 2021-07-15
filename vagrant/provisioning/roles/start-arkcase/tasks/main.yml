@@ -7,6 +7,7 @@
 - name: start config server
   become: yes
   systemd:
+    daemon_reload: true
     name: "config-server"
     state: started
 
@@ -19,6 +20,7 @@
 - name: start arkcase
   become: yes
   systemd:
+    daemon_reload: true
     name: "arkcase"
     state: started
 
