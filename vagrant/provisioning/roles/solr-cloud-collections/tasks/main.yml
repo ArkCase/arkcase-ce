@@ -9,9 +9,3 @@
     line: "{{ item }}"
   loop:
     - "{{ external_host_entry | default('') }}"
-
-- name: Create {{ item }} collection (Solr cloud), with one replica
-  become: yes
-  become_user: solr
-  shell: "{{ root_folder }}/app/solr/bin/solr create_collection -c {{ item }} -d {{ root_folder }}/app/solr/server/solr/configsets/arkcase -shards 1 -replicationFactor 1"
-  loop: "{{ solr_cores }}"
