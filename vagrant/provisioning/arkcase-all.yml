@@ -69,6 +69,8 @@
       tags: [foia]
     - role: privacy
       tags: [privacy]
+    - role: hr
+      tags: [hr]
     - role: arkcase-post-upgrade
       tags: [upgrade]  
     - role: pentaho-pdi-client
