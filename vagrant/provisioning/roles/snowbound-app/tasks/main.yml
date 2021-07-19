@@ -88,6 +88,10 @@
       replace: "https://{{ snowbound_host }}"
     - regexp: "https://acm-arkcase:8843"
       replace: "https://{{ arkcase_host_name }}:8843"
+    - regexp: "\$\{snowbound_host_port\}"
+      replace: "https://{{ snowbound_host }}"
+    - regexp: "\$\{arkcase_host_port\}"
+      replace: "https://{{ arkcase_host_name }}:8843"
   register: web_xml
   when: snowbound_war is changed
 
