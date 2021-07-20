@@ -1,5 +1,5 @@
 - name: Ensure group activemq exists
-  ansible.builtin.group:
+  group:
     name: activemq
     state: present
 

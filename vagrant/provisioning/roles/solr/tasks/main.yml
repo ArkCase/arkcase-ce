@@ -11,7 +11,7 @@
       - lsof
 
 - name: Ensure group solr exists
-  ansible.builtin.group:
+  group:
     name: solr
     state: present
 

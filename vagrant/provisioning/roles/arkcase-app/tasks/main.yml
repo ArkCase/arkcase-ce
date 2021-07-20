@@ -993,7 +993,7 @@
 - name: replace arkcase core log level if variable defined in facts file
   become: yes
   become_user: arkcase
-  ansible.builtin.replace:
+  replace:
     path: /home/arkcase/.arkcase/acm/log4j2.xml
     after: '<Logger name="com.armedia" '
     before: ' additivity="false">'
@@ -1003,7 +1003,7 @@
 - name: replace arkcase foia log level if variable defined in facts file
   become: yes
   become_user: arkcase
-  ansible.builtin.replace:
+  replace:
     path: /home/arkcase/.arkcase/acm/log4j2.xml
     after: '<Logger name="gov.foia" '
     before: ' additivity="false">'
