@@ -1,4 +1,5 @@
 - name: Ensure group alfresco exists
+  become: yes
   group:
     name: alfresco
     state: present

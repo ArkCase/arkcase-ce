@@ -11,6 +11,7 @@
       - lsof
 
 - name: Ensure group solr exists
+  become: yes
   group:
     name: solr
     state: present
