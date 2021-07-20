@@ -1,4 +1,5 @@
 - name: Ensure group snowbound exists
+  become: yes
   group:
     name: snowbound
     state: present

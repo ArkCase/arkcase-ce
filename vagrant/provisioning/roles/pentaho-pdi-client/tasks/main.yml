@@ -1,4 +1,5 @@
 - name: Ensure group pentaho-pdi exists
+  become: yes
   group:
     name: pentaho-pdi
     state: present
