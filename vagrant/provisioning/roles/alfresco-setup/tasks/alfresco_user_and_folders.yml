@@ -1,5 +1,5 @@
 - name: Ensure group alfresco exists
-  ansible.builtin.group:
+  group:
     name: alfresco
     state: present
 

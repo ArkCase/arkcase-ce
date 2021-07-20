@@ -1,5 +1,5 @@
 - name: Ensure group pentaho exists
-  ansible.builtin.group:
+  group:
     name: pentaho
     state: present
 
