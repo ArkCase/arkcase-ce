@@ -71,8 +71,12 @@
       tags: [privacy]
     - role: hr
       tags: [hr]
+    - role: saml-config
+      tags: [upgrade-saml]
+    - role: oidc-config
+      tags: [oidc-config]
     - role: arkcase-post-upgrade
-      tags: [upgrade]  
+      tags: [upgrade]
     - role: pentaho-pdi-client
       when: foia_analytical_reports_version is defined
       tags: [foia-analytical-reports]
@@ -86,10 +90,6 @@
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
       tags: [core, marketplace]
-    - role: saml-config
-      tags: [upgrade-saml]
-    - role: oidc-config
-      tags: [oidc-config]
     - role: arkcase-interactive-reports
       tags: [core, interactive-reports, upgrade]
     - role: disable-admin
