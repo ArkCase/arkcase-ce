@@ -11,14 +11,13 @@
     latest_config_backup_folder: "{{ found_folders.files | sort(attribute='mtime',reverse=true) | first }}"
   ignore_errors: true
     
-- name: restore config files 
+- name: restore config files (2021.03 and bellow)
   become: yes
   become_user: arkcase
   command: cp {{ latest_config_backup_folder.path }}/acm/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/{{ item }}
   loop:
-    - "acm-config-server-repo/arkcase-runtime.yaml"
     - "acmSequenceConfiguration.json"
-  when: latest_config_backup_folder is defined
+  when: latest_config_backup_folder is defined and arkcase_version != "" and arkcase_version is version('2021.04', '<')
 
 - name: Restore runtime files from previous backup
   become: yes
