@@ -50,7 +50,7 @@
 
 - name: find files with 640 permissions
   become: yes
-  command: find {{ latest_config_backup_folder.path }}/acm/correspondenceTemplates -type f -perm 640 -name "*.html"
+  command: find {{ latest_config_backup_folder.path }}/acm/templates -type f -perm 640 -name "*.html"
   register: files
   when: latest_config_backup_folder is defined
 
