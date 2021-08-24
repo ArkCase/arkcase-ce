@@ -57,7 +57,7 @@
 - name: copy files
   copy:
     src: "{{ item }}"
-    dest: /home/arkcase/.arkcase/acm/templates.new/
+    dest: /home/arkcase/.arkcase/acm/templates
     owner: arkcase
     group: arkcase
     mode: 0640
