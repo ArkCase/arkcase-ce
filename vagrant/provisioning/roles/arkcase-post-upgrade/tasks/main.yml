@@ -18,6 +18,7 @@
   loop:
     - "acm-config-server-repo/arkcase-runtime.yaml"
     - "acmSequenceConfiguration.json"
+    - "templates-configuration.json"
   when: latest_config_backup_folder is defined
 
 - name: Restore runtime files from previous backup
@@ -26,3 +27,40 @@
   command: rsync -avm --include='*runtime*' -f 'hide,! */' {{ latest_config_backup_folder.path }}/acm/acm-config-server-repo/ {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/
   when: latest_config_backup_folder is defined
   ignore_errors: true
+
+- name: match the file naming
+  find:
+    paths: "{{ latest_config_backup_folder.path }}/acm/correspondenceTemplates"
+    file_type: file
+    use_regex: yes
+    patterns: ['([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(2[0-3]|[01][0-9])([0-5][0-9])([0-5][0-9]_.*..docx)']
+    register: files_to_copy
+  when: latest_config_backup_folder is defined
+
+- name: copy matched files
+  copy:
+    src: "{{ item.path }}"
+    dest: /home/arkcase/.arkcase/acm/correspondenceTemplates
+    owner: arkcase
+    group: arkcase
+  with_items: "{{ files_to_copy.files }}"
+  when: 
+    - files_to_copy is defined
+    - arkcase_version is version('2020.18', '>=')
+
+- name: find files with 640 permissions
+  become: yes
+  command: find {{ latest_config_backup_folder.path }}/acm/correspondenceTemplates -type f -perm 640 -name "*.html"
+  register: files
+  when: latest_config_backup_folder is defined
+
+- name: copy files
+  copy:
+    src: "{{ item }}"
+    dest: /home/arkcase/.arkcase/acm/templates.new/
+    owner: arkcase
+    group: arkcase
+    mode: 0640
+  with_items: "{{ files.stdout_lines }}"
+  when: 
+    - arkcase_version is version('2020.18', '>=')
