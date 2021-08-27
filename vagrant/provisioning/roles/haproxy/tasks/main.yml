@@ -85,7 +85,20 @@
     - regexp: '^    ssl-default-server-ciphers PROFILE=SYSTEM'
       line: '   # ssl-default-server-ciphers PROFILE=SYSTEM'
   register: default_tls_options
-  
+ 
+- name: increase 'timeout server' and 'timeout client'
+  become: yes
+  lineinfile:
+    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: 'timeout client          1m'
+      line: 'timeout client          3m'
+    - regexp: 'timeout server          1m'
+      line: 'timeout server          3m'
+
 - name: establish our preferred default policies
   become: yes
   lineinfile:
