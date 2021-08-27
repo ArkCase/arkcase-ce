@@ -98,6 +98,7 @@
       line: 'timeout client          3m'
     - regexp: 'timeout server          1m'
       line: 'timeout server          3m'
+  register: timeout_settings
 
 - name: establish our preferred default policies
   become: yes
@@ -497,7 +498,7 @@
   systemd:
     name: haproxy
     state: restarted
-  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed
+  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed or timeout_settings is changed
 
 - name: Restart rsyslog service if needed
   become: yes
