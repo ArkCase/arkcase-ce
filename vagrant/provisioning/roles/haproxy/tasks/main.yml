@@ -163,6 +163,10 @@
         acl acl_snowbound path_beg /VirtualViewerJavaHTML5
         acl acl_arkcase path_beg /arkcase
         acl acl_config path_beg /config
+        acl acl_root path -i /
+
+        # redirections
+        redirect code 301 location /arkcase if acl_root
         
         #arkcase.next services
 
