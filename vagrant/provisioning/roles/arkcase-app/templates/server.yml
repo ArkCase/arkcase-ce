@@ -53,10 +53,14 @@ application:
 alfresco:
   admin:
     baseurl: "https://{{ alfresco_host }}/alfresco/s/admin/admin-sync"
+    username: "admin"
+    password: "ENC({{ encrypted_default_alfresco }})"
   sync:
     host: "{{ alfresco_host }}"
     port: 443
     enabled: {{ enable_alfresco_sync | lower }}
+    username: admin
+    password: "ENC({{ encrypted_default_alfresco }})"
 ################### Alfresco RMA Plugin Configuration (alfrescoRmaPlugin.properties) ####################
 alfresco_host: "{{ alfresco_host }}"
 alfresco_port: 443
