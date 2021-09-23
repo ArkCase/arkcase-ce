@@ -45,6 +45,7 @@
     group: arkcase
     mode: '0666'
     backup: true
+    remote_src: yes
   when: template_file.stat.exists
 
 - name: match the file naming
@@ -66,6 +67,7 @@
     dest: /home/arkcase/.arkcase/acm/correspondenceTemplates
     owner: arkcase
     group: arkcase
+    remote_src: yes
   with_items: "{{ files_to_copy.files }}"
   when: 
     - files_to_copy is defined
@@ -88,6 +90,7 @@
     owner: arkcase
     group: arkcase
     mode: '0640'
+    remote_src: yes
   with_items: "{{ files.stdout_lines }}"
   when: 
     - arkcase_version is version('2020.18', '>=')
