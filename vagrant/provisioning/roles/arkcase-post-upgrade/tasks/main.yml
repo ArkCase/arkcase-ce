@@ -28,12 +28,16 @@
   ignore_errors: true
 
 - name: find "templates-configuration.json" file
+  become: yes
+  become_user: arkcase
   stat:
     path="{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
   register: template_file
   when: latest_config_backup_folder is defined
 
 - name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version
+  become: yes
+  become_user: arkcase
   copy:
     src: "{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
     dest: /home/arkcase/.arkcase/acm
@@ -44,6 +48,8 @@
   when: template_file.stat.exists
 
 - name: match the file naming
+  become: yes
+  become_user: arkcase
   find:
     paths: "{{ latest_config_backup_folder.path }}/acm/correspondenceTemplates"
     file_type: file
@@ -53,6 +59,8 @@
   when: latest_config_backup_folder is defined
 
 - name: copy matched files
+  become: yes
+  become_user: arkcase
   copy:
     src: "{{ item.path }}"
     dest: /home/arkcase/.arkcase/acm/correspondenceTemplates
@@ -65,12 +73,15 @@
 
 - name: find files with 640 permissions
   become: yes
+  become_user: arkcase
   command: find {{ latest_config_backup_folder.path }}/acm/templates -type f -perm 640 -name "*.html"
   register: files
   when: latest_config_backup_folder is defined
   ignore_errors: true
 
 - name: copy files
+  become: yes
+  become_user: arkcase
   copy:
     src: "{{ item }}"
     dest: /home/arkcase/.arkcase/acm/templates
