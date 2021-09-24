@@ -94,4 +94,5 @@
     remote_src: yes
   with_items: "{{ files.stdout_lines }}"
   when: 
+    - arkcase_version != ""
     - arkcase_version is version('2020.18', '>=')
