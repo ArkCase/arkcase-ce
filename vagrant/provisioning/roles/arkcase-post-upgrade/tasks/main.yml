@@ -69,10 +69,7 @@
     group: arkcase
     remote_src: yes
   with_items: "{{ files_to_copy.files }}"
-  when: 
-    - files_to_copy is defined
-    - arkcase_version != ""
-    - arkcase_version is version('2020.18', '>=')
+  when: files_to_copy is defined and (arkcase_version == "" or arkcase_version is version('2020.18', '>='))
 
 - name: find files with 640 permissions
   become: yes
@@ -93,6 +90,4 @@
     mode: '0640'
     remote_src: yes
   with_items: "{{ files.stdout_lines }}"
-  when: 
-    - arkcase_version != ""
-    - arkcase_version is version('2020.18', '>=')
+  when: arkcase_version == "" or arkcase_version is version('2020.18', '>=')
