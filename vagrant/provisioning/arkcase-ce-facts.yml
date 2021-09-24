@@ -490,7 +490,8 @@ activemq_password: ""
 arkcase_log_level: ""
 
 # when defining multiple notifications_groups the flow shoud be
-#notifications_groups:
+# notifications_groups:
 # - group@example.com
 # - group1@example.com
-notifications_groups: ""
+notifications_groups:
+  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain }}"
