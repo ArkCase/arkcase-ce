@@ -466,6 +466,8 @@ alfresco_release_name: 201806-GA
 alfresco_build_number: "-build-00113"
 alfresco_content_services_version: 6.0.7-ga
 alfresco_records_management_version: 3.0.a
+# Alfresco RM site type for dod5015 is '{http://www.alfresco.org/model/dod5015/1.0}site' and for standard type is '{http://www.alfresco.org/model/recordsmanagement/1.0}rmsite'
+alfresco_records_management_site_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
 
 # Alfresco Enterprise Edition
 # for Alfresco EE you must have an Alfresco EE license file

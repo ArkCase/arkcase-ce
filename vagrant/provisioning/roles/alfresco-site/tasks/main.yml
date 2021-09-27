@@ -107,8 +107,8 @@
     s_name: "rm"
     s_description: "Records Management Site"
     s_preset: "rm-site-dashboard"
-    s_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
-    s_compliance: "{http://www.alfresco.org/model/dod5015/1.0}site"
+    s_type: "{{ alfresco_records_management_site_type | default('{http://www.alfresco.org/model/dod5015/1.0}site') }}"
+    s_compliance: "{{ alfresco_records_management_site_type | default('{http://www.alfresco.org/model/dod5015/1.0}site') }}"
     s_csrftoken: "{{ csrftoken }}"
 
 - name: fetch the RM container
