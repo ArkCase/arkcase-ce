@@ -249,7 +249,7 @@
 - name: create "lookups-server.yml" file
   become: yes
   template:
-    src: "lookup-server.yaml"
+    src: "lookups-server.yaml"
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/lookups/lookups-server.yml"
     owner: arkcase
     group: arkcase
