@@ -136,3 +136,8 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - EXTERNAL-PORTAL LOGGING"
     block: |
       export LOGGING_FILE_NAME={{ root_folder }}/log/arkcase/externalPortal.log
+
+- name: Install "yaml-cli" yaml/json editing node.js package globally.
+  npm:
+    name: yaml-cli
+    global: yes
