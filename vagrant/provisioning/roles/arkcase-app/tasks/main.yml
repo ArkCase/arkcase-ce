@@ -1035,3 +1035,26 @@
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
 
+- name: replace values in "conf.yml"
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "(  host: )(.*)"
+      replace: "  host: {{ arkcase_vault_host | default('127.0.0.1', true) }}"
+    - regexp: "(  port: )(.*)"
+      replace: "  port: {{ arkcase_vault_port | default('8200', true) }}"
+    - regexp: "(  scheme: )(.*)"
+      replace: "  scheme: {{ arkcase_vault_scheme | default('http', true) }}"
+    - regexp: "(  appRole: )(.*)"
+      replace: "  appRole: {{ arkcase_vault_appRole | default('arkcase', true) }}"
+    - regexp: "(  authMethod: )(.*)"
+      replace: "  authMethod: {{ arkcase_vault_authMethod | default('approle', true) }}"
+    - regexp: "(  username: )(.*)"
+      replace: "  username: {{ arkcase_vault_username | default('arkcase', true) }}"
+    - regexp: "(  password: )(.*)"
+      replace: "  password: {{ arkcase_vault_password | default('arkcase', true) }}"
