@@ -495,3 +495,12 @@ arkcase_log_level: ""
 # - group1@example.com
 notifications_groups:
   - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain }}"
+
+# Vault configuration for "conf.yml"
+arkcase_vault_host: ""
+arkcase_vault_port: ""
+arkcase_vault_scheme: ""
+arkcase_vault_appRole: ""
+arkcase_vault_authMethod: ""
+arkcase_vault_username: ""
+arkcase_vault_password: ""
