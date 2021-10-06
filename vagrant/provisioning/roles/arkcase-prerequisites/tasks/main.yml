@@ -137,7 +137,9 @@
     block: |
       export LOGGING_FILE_NAME={{ root_folder }}/log/arkcase/externalPortal.log
 
-- name: Install "yaml-cli" yaml/json editing node.js package globally.
-  npm:
-    name: yaml-cli
-    global: yes
+- name: install "yq" cli yaml/json editing tool
+  become: yes
+  get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/{{ yq_version }}/yq_linux_amd64"
+    dest: /usr/bin/yq
+    mode: '0755'
