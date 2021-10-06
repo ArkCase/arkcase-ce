@@ -496,9 +496,6 @@ arkcase_log_level: ""
 notifications_groups:
   - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain }}"
 
-# define yq command-line YAML processor version
-yq_version: "v4.13.2"
-
 # Vault configuration for "conf.yml"
 arkcase_vault_host: ""
 arkcase_vault_port: ""
