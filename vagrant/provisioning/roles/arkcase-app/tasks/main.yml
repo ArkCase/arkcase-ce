@@ -1035,3 +1035,15 @@
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
 
+- name: replace values in "conf.yml" using yq tool
+  become: yes
+  become_user: arkcase
+  shell: yq e -i '{{item}}' /home/arkcase/.arkcase/acm/conf.yml
+  with_items:
+    - .vault.host = "{{ arkcase_vault_host | default('127.0.0.1', true) }}"
+    - .vault.port = {{ arkcase_vault_port | default(8200, true) }}
+    - .vault.scheme = "{{ arkcase_vault_scheme | default('http', true) }}"
+    - .vault.appRole = "{{ arkcase_vault_appRole | default('arkcase', true) }}"
+    - .vault.authMethod = "{{ arkcase_vault_authMethod | default('approle', true) }}"
+    - .vault.username = "{{ arkcase_vault_username | default('arkcase', true) }}"
+    - .vault.password = "{{ arkcase_vault_password | default('arkcase', true) }}"

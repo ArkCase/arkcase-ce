@@ -154,7 +154,7 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
        EXAMPLE:  name="*_i" will match any field ending in _i (like myid_i, z_i)
        RESTRICTION: the glob-like pattern in the name attribute must have a "*" only at the start or the end.  -->
    
-	<dynamicField name="ignored_doubles_*" type="ignoredDoubles" multiValued="true"/>
+    <dynamicField name="ignored_doubles_*" type="ignoredDoubles" multiValued="true"/>
     <dynamicField name="*_i"  type="pint"    indexed="true"  stored="true"/>
     <dynamicField name="*_is" type="pints"    indexed="true"  stored="true"/>
     <dynamicField name="*_s"  type="string"  indexed="true"  stored="true" />
