@@ -801,8 +801,8 @@
       <str name="uprefix">ignored_</str>
       <str name="captureAttr">true</str>
 
-      <str name="fmap.media_white_point">ignored_</str>
-      <str name="fmap.media_black_point">ignored_</str>
+      <str name="fmap.media_white_point">ignored_doubles_</str>
+      <str name="fmap.media_black_point">ignored_doubles_</str>
       <str name="fmap.meta">ignored_</str>
       <str name="fmap.content">content</str>
       <str name="fmap.a">links</str>
