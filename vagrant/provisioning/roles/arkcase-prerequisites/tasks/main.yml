@@ -157,7 +157,7 @@
   blockinfile:
     path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
     insertbefore: EOF
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - FOIA EXTENSION"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Core"
     block: |
       export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=ldap"
   when: 
