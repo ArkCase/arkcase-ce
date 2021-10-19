@@ -71,6 +71,8 @@
       tags: [privacy]
     - role: hr
       tags: [hr]
+    - role: legal
+      tags: [legal]
     - role: saml-config
       tags: [upgrade-saml]
     - role: oidc-config
