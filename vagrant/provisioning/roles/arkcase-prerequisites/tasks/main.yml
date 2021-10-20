@@ -143,3 +143,4 @@
     url: "https://github.com/mikefarah/yq/releases/download/v4.13.2/yq_linux_amd64"
     dest: /usr/bin/yq
     mode: '0755'
+
