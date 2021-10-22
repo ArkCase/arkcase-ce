@@ -108,4 +108,4 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - Core"
     block: |
       export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=ldap"
-  when: '"-Dspring.profiles.active=ldap" not in setenv_contents.stdout'
+  when: '"-Dspring.profiles.active" not in setenv_contents.stdout'
