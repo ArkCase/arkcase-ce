@@ -521,3 +521,6 @@ enable_elasticsearch: "yes"
 enable_kafka: "yes"
 enable_zipkin: "yes"
 enable_eureka: "yes"
+
+# missing fact during vagrant provisioning
+arkcase_version: ""
