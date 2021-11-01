@@ -11,14 +11,13 @@
     latest_config_backup_folder: "{{ found_folders.files | sort(attribute='mtime',reverse=true) | first }}"
   ignore_errors: true
     
-- name: restore config files 
+- name: restore config files (2021.03 and bellow)
   become: yes
   become_user: arkcase
   command: cp {{ latest_config_backup_folder.path }}/acm/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/{{ item }}
   loop:
-    - "acm-config-server-repo/arkcase-runtime.yaml"
     - "acmSequenceConfiguration.json"
-  when: latest_config_backup_folder is defined
+  when: latest_config_backup_folder is defined and arkcase_version != "" and arkcase_version is version('2021.04', '<')
 
 - name: Restore runtime files from previous backup
   become: yes
@@ -27,15 +26,15 @@
   when: latest_config_backup_folder is defined
   ignore_errors: true
 
-- name: find "templates-configuration.json" file
+- name: find "templates-configuration.json" file (2021.03 and bellow)
   become: yes
   become_user: arkcase
   stat:
     path="{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
   register: template_file
-  when: latest_config_backup_folder is defined
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and latest_config_backup_folder is defined
 
-- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version
+- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version  (2021.03 and bellow)
   become: yes
   become_user: arkcase
   copy:
@@ -46,9 +45,9 @@
     mode: '0666'
     backup: true
     remote_src: yes
-  when: template_file.stat.exists
+  when:  arkcase_version != "" and arkcase_version is version('2021.04', '<') and template_file.stat.exists
 
-- name: match the file naming
+- name: match the file naming (2021.03 and bellow)
   become: yes
   become_user: arkcase
   find:
@@ -57,9 +56,9 @@
     use_regex: yes
     patterns: ['([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(2[0-3]|[01][0-9])([0-5][0-9])([0-5][0-9]_.*..docx)']
   register: files_to_copy
-  when: latest_config_backup_folder is defined
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and latest_config_backup_folder is defined
 
-- name: copy matched files
+- name: copy matched files (2021.03 and bellow)
   become: yes
   become_user: arkcase
   copy:
@@ -69,9 +68,9 @@
     group: arkcase
     remote_src: yes
   with_items: "{{ files_to_copy.files }}"
-  when: files_to_copy is defined and (arkcase_version == "" or arkcase_version is version('2020.18', '>='))
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and files_to_copy is defined and arkcase_version is version('2020.18', '>=')
 
-- name: find files with 640 permissions
+- name: find files with 640 permissions (2021.03 and bellow)
   become: yes
   become_user: arkcase
   command: find {{ latest_config_backup_folder.path }}/acm/templates -type f -perm 640 -name "*.html"
@@ -79,7 +78,7 @@
   when: latest_config_backup_folder is defined
   ignore_errors: true
 
-- name: copy files
+- name: copy files (2021.03 and bellow)
   become: yes
   become_user: arkcase
   copy:
@@ -90,7 +89,7 @@
     mode: '0640'
     remote_src: yes
   with_items: "{{ files.stdout_lines }}"
-  when: arkcase_version == "" or arkcase_version is version('2020.18', '>=')
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and arkcase_version is version('2020.18', '>=')
 
 - name: read current setenv.sh
   become: yes
