@@ -239,3 +239,18 @@
     loop_var: r
   vars:
     report_path: "foia-audit"
+
+- name: set fact if notifications_groups undefined
+  set_fact:
+    notifications_groups: 
+      - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain | upper }}"
+  when: notifications_groups is undefined
+
+- name: create "lookups-server.yml" file
+  become: yes
+  template:
+    src: "lookups-server.yaml"
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/lookups/lookups-server.yml"
+    owner: arkcase
+    group: arkcase
+    mode: '0666'

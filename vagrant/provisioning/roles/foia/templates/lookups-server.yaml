@@ -1,0 +1,12 @@
+lookupsConfiguration:
+  standardLookup:
+    downloadResponseNotificationGroup:
+      entries:
+        ^groupName:
+          value: ""
+          order: 1
+{% for item in notifications_groups %}
+        group{{ loop.index0 }}:
+          value: "{{ notifications_groups[loop.index0] }}"
+          order: {{ loop.index0 }}
+{% endfor %}

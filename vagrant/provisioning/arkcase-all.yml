@@ -4,7 +4,7 @@
     - role: common
       tags: [core, common, upgrade, marketplace]
     - role: arkcase-pre-upgrade
-      tags: [upgrade]   
+      tags: [arkcase-pre-upgrade, upgrade]   
     - role: pki
       tags: [pki]
     - role: pki_client
@@ -62,26 +62,28 @@
     - role: pentaho-license
       tags: [pentaho-license, pentaho-ee, arkcase-ee]   
     - role: arkcase-prerequisites
-      tags: [core, arkcase, upgrade, marketplace]
+      tags: [arkcase-prerequisites, core, arkcase, upgrade, marketplace]
     - role: arkcase-app
-      tags: [core, arkcase, upgrade, marketplace]
+      tags: [arkcase-app, core, arkcase, upgrade, marketplace]
     - role: foia
       tags: [foia]
     - role: privacy
       tags: [privacy]
     - role: hr
       tags: [hr]
+    - role: legal
+      tags: [legal]
     - role: saml-config
       tags: [upgrade-saml]
     - role: oidc-config
       tags: [oidc-config]
     - role: arkcase-post-upgrade
-      tags: [upgrade]
+      tags: [arkcase-post-upgrade, upgrade]
     - role: pentaho-pdi-client
       when: foia_analytical_reports_version is defined
-      tags: [foia-analytical-reports]
+      tags: [pentaho-pdi-client, foia-analytical-reports]
     - role: start-arkcase
-      tags: [core, arkcase, upgrade, marketplace]  
+      tags: [start-arkcase, core, arkcase, upgrade, marketplace]  
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
       tags: [foia-analytical-reports, foia]
@@ -89,13 +91,13 @@
       tags: [core, arkcase, tesseract, marketplace]
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
-      tags: [core, marketplace]
+      tags: [firewall, core, marketplace]
     - role: arkcase-interactive-reports
       tags: [core, interactive-reports, upgrade]
     - role: disable-admin
-      tags: [marketplace]
+      tags: [disable-admin, marketplace]
     - role: disable-solr-user
-      tags: [marketplace]
+      tags: [disable-solr-user, marketplace]
     - role: arkcase-dev-reports
       tags: [arkcase-dev-reports, arkcase-developer]
     - role: foia-dev-reports

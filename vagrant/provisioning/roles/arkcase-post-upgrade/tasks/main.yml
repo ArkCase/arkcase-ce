@@ -25,3 +25,86 @@
   command: rsync -avm --include='*runtime*' -f 'hide,! */' {{ latest_config_backup_folder.path }}/acm/acm-config-server-repo/ {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/
   when: latest_config_backup_folder is defined
   ignore_errors: true
+
+- name: find "templates-configuration.json" file
+  become: yes
+  become_user: arkcase
+  stat:
+    path="{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
+  register: template_file
+  when: latest_config_backup_folder is defined
+
+- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version
+  become: yes
+  become_user: arkcase
+  copy:
+    src: "{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
+    dest: /home/arkcase/.arkcase/acm
+    owner: arkcase
+    group: arkcase
+    mode: '0666'
+    backup: true
+    remote_src: yes
+  when: template_file.stat.exists
+
+- name: match the file naming
+  become: yes
+  become_user: arkcase
+  find:
+    paths: "{{ latest_config_backup_folder.path }}/acm/correspondenceTemplates"
+    file_type: file
+    use_regex: yes
+    patterns: ['([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(2[0-3]|[01][0-9])([0-5][0-9])([0-5][0-9]_.*..docx)']
+  register: files_to_copy
+  when: latest_config_backup_folder is defined
+
+- name: copy matched files
+  become: yes
+  become_user: arkcase
+  copy:
+    src: "{{ item.path }}"
+    dest: /home/arkcase/.arkcase/acm/correspondenceTemplates
+    owner: arkcase
+    group: arkcase
+    remote_src: yes
+  with_items: "{{ files_to_copy.files }}"
+  when: files_to_copy is defined and (arkcase_version == "" or arkcase_version is version('2020.18', '>='))
+
+- name: find files with 640 permissions
+  become: yes
+  become_user: arkcase
+  command: find {{ latest_config_backup_folder.path }}/acm/templates -type f -perm 640 -name "*.html"
+  register: files
+  when: latest_config_backup_folder is defined
+  ignore_errors: true
+
+- name: copy files
+  become: yes
+  become_user: arkcase
+  copy:
+    src: "{{ item }}"
+    dest: /home/arkcase/.arkcase/acm/templates
+    owner: arkcase
+    group: arkcase
+    mode: '0640'
+    remote_src: yes
+  with_items: "{{ files.stdout_lines }}"
+  when: arkcase_version == "" or arkcase_version is version('2020.18', '>=')
+
+- name: read current setenv.sh
+  become: yes
+  become_user: arkcase
+  command: cat {{ root_folder }}/app/arkcase/bin/setenv.sh
+  register: setenv_contents
+  changed_when: false
+
+- name: ensure ldap is in the profile (no other profiles already exist)
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Core"
+    block: |
+      export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=ldap"
+  when: '"-Dspring.profiles.active" not in setenv_contents.stdout'

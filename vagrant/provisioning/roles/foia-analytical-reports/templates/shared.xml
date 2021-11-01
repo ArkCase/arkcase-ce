@@ -26,6 +26,7 @@
       <attribute><code>SUPPORTS_TIMESTAMP_DATA_TYPE</code><attribute>Y</attribute></attribute>
       <attribute><code>USE_POOLING</code><attribute>N</attribute></attribute>
       <attribute><code>STREAM_RESULTS</code><attribute>Y</attribute></attribute>
+      <attribute><code>EXTRA_OPTION_MARIADB.sessionVariables</code><attribute>net_read_timeout=9000,net_write_timeout=9000</attribute></attribute>
     </attributes>
   </connection>
 </sharedobjects>

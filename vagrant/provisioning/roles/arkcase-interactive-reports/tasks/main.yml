@@ -141,7 +141,7 @@
 
 - name: Set reports folder
   set_fact:
-    reports_folder: "'foia' if {{ arkcase_foia_yaml.stat.exists == true }} else 'arkcase'"
+    reports_folder: "{{ 'foia' if arkcase_foia_yaml.stat.exists == true else 'arkcase' }}"
 
 - name: Find interactive reports in configuration
   find:
