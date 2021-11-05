@@ -16,7 +16,7 @@
   firewalld:
     immediate: yes
     permanent: yes
-    port: "{{ mongodb_port }}/tcp"
+    port: "{{ mongodb_port | default(27017) }}/tcp"
     state: enabled
 
 - name: install Mongodb
