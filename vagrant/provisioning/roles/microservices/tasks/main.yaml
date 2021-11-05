@@ -7,7 +7,7 @@
     immediate: yes
   register: microservices_ports
   loop:
-    - "9092/tcp"   # Kafka
+    - "{{ kafka_port | default(9092) }}/tcp"   # Kafka
 
 # CentOS 7 ships with HTTPD version 2.4.6. We need at least version 2.4.11 for the SubstituteMaxLineLength directive
 - name: Copy the HTTPD CodeIT repo

@@ -352,7 +352,7 @@
 - name: Expose Kafka port
   become: yes
   firewalld:
-    port: "9092/tcp"
+    port: "{{ kafka_port | default(9092) }}/tcp"
     permanent: true
     state: enabled
     immediate: yes

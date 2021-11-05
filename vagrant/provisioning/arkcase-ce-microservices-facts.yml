@@ -433,6 +433,9 @@ activemq_version: 5.15.9
 # Mongodb port
 mongodb_port: "27017"
 
+#Kafka port
+kafka_port: "9092"
+
 # Confluent platform (with default version)
 confluent_major_version: 5.4
 confluent_minor_version: 7
