@@ -526,8 +526,6 @@ enable_eureka: "no"
 aws_access_key_id: ""
 aws_secret_access_key: ""
 
-ldap_type: "samba"
-
 # OIDC authentication properties
 #oidc_registrationId: ""
 #oidc_clientId: ""

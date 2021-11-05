@@ -1,9 +1,6 @@
 #################################
 ## host-specific settings
 #################################
-# IP address for Arkcase host. If not defined 127.0.0.1 is used
-arkcase_host_address: "172.28.128.1"
-
 email_service_account: "nosuchmailbox@arkcase.com"
 email_service_account_escaped: "{{ email_service_account | replace('@', '%40') }}"
 email_service_password: "not-a-real-password"
@@ -13,14 +10,20 @@ calendar_purge_option: "RETAIN_INDEFINITELY"
 calendar_enabled_for_complaints: false
 
 # external_host: the host name a browser will use
-external_host: acm-arkcase
+external_host: arkcase-ce.local
 # internal host: the actual host name of the VM
-base_domain: acm-arkcase
+base_domain: arkcase-ce.local
 internal_host: "{{ base_domain }}"
+
+# Whether to enable or disable the local firewall.
+#
+# If this variable is not set, or set to `true`, the firewall will be
+# enabled. To disable the firewall, set this variable to `false`.
+enable_firewall: false
 
 activemq_host: "{{ internal_host }}"
 alfresco_host: "{{ internal_host }}"
-arkcase_host: "arkcase-host"
+arkcase_host: "{{ internal_host }}"
 database_host: "{{ internal_host }}"
 mariadb_host: "{{ internal_host }}"
 pentaho_host: "{{ internal_host }}"
@@ -40,39 +43,45 @@ samba_domain: "DC.ARKCASE-CE"
 # address of the arkcase-admin user
 server_admin: "david.miller@arkcase.com"
 
-default_user_password: "AcMd3v$"
+default_user_password: "@rKc@3e"
 
 # This LDAP information is for the local Samba instance
 ldap_host: "{{ internal_host }}"
 ldap_protocol: ldaps
 ldap_port: 636
 ldap_url: "{{ ldap_protocol }}://{{ ldap_host }}:{{ ldap_port }}"
-ldap_base: "DC=arkcase-ce"
+ldap_base: "DC=arkcase-ce,DC=local"
 ldap_bind_user: "CN=Administrator,CN=Users,{{ ldap_base }}"
 ldap_bind_password: "{{ default_user_password }}"
 
 # ldap_user_domain is how people will log into
 # ArkCase; at the ArkCase login they will login as
 # "user@{{ ldap_user_domain }}"
-ldap_user_domain: "armedia.com"
+ldap_user_domain: "arkcase.org"
 # active_directory_domain is of course the AD domain
-active_directory_domain: "arkcase-ce"
+active_directory_domain: "arkcase-ce.local"
 
 # The group and user base will be created if necessary
 ldap_ancestor_ous:
   - "{{ ldap_base }}"
   - "OU=ArkCase, {{ ldap_base }}"
 ldap_group_no_base: "OU=Groups,OU=ArkCase"
-ldap_portal_group_no_base: "OU=PortalGroups,OU=ArkCase"
 ldap_group_base: "{{ ldap_group_no_base }},{{ ldap_base }}"
 ldap_user_no_base: "OU=Users,OU=ArkCase"
-ldap_portal_user_no_base: "OU=UsersPortal,OU=ArkCase"
 ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
 ldap_prefix: ""
+ldap_portal_group_no_base: "OU=PortalGroups,OU=ArkCase"
+ldap_portal_user_no_base: "OU=UsersPortal,OU=ArkCase"
 
 # if yes, will reset the password unconditionally.  
 # otherwise, will set the password only if the user is created (user did not already exist)
 ldap_force_password_reset: yes
+
+# used in version 3.3.2
+# it takes some work to get Ansible to output the rolesToGroups value in the format 
+# needed by ArkCase.  Each role name and each group name have to be surrounded by \\\", 
+# and separated by a colon, and everything has to be one long line
+roles_to_groups: "{\\\"ROLE_ENTITY_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_CONSUMER\\\": \\\"{{ ldap_prefix }}ARKCASE_CONSUMER@ARKCASE.ORG\\\", \\\"ROLE_SUPERVISOR\\\": \\\"{{ ldap_prefix }}ARKCASE_SUPERVISOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_EXTERNAL\\\": \\\"{{ ldap_prefix }}ARKCASE_EXTERNAL@ARKCASE.ORG\\\", \\\"ROLE_CONTRIBUTOR\\\": \\\"{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@ARKCASE.ORG\\\"}"
 
 # used in versions 3.3.3 and up
 roles_to_groups_yaml:
@@ -82,83 +91,18 @@ roles_to_groups_yaml:
   - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
   ROLE_SUPERVISOR:
   - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
+  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   ROLE_ADMINISTRATOR:
   - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   ROLE_EXTERNAL:
   - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
   ROLE_BILLING_QUEUE:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
   - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
   - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_GENERALCOUNSEL_QUEUE:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_RELEASE_QUEUE:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_APPROVE_QUEUE:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_INTAKE_QUEUE:
-  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain | upper}}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_HOLD_QUEUE:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_APPEAL_QUEUE:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_FULFILL_QUEUE:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper}}"
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_QUEUE_MASS_ASSIGNMENT:
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_SUPERVISOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_CONSUMER@{{ ldap_user_domain | upper }}"
-  - "{{ ldap_prefix }}ARKCASE_EXTERNAL@{{ ldap_user_domain | upper }}"
-  ROLE_APPROVER:
-  - "{{ ldap_prefix }}APPROVERS@{{ ldap_user_domain | upper }}"
-  ROLE_CONTRIBUTOR:
-  - "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@{{ ldap_user_domain | upper }}"
-  ROLE_OFFICER:
-  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain | upper }}"
-  ROLE_PORTAL_ADMINISTRATOR:
-  - "{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@{{ ldap_user_domain | upper }}"
-  ROLE_PORTAL_USER:
-  - "{{ foia_portal_group }}@{{ ldap_user_domain | upper }}"
 
 ldap_groups:
   - description: Entity administrators
@@ -185,129 +129,50 @@ ldap_groups:
     name: "{{ ldap_prefix }}ARKCASE_CONTRIBUTOR"
     alfresco_role: SiteManager
     alfresco_rma_role: Administrator
-  - description: Approvers
-    name: "{{ ldap_prefix }}APPROVERS"
-    alfresco_role: SiteManager
-    alfresco_rma_role: Administrator
-  - description: Officers
-    name: "{{ ldap_prefix }}OFFICERS"
-    alfresco_role: SiteManager
-    alfresco_rma_role: Administrator
 
 ldap_portal_groups:
   - description: PortalUsers
-    name: '{{ foia_portal_group }}'
+    name: '{{ ldap_prefix }}ARKCASE_PORTAL_USER'
     alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
-
+        
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
-arkcase_admin_name: "ArkCase Administrator"
 arkcase_admin_password: "{{ default_user_password }}"
 arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
-
-foia_portal_group: "{{ ldap_prefix }}ARKCASE_PORTAL_USER"
-foia_portal_id: "8c41ee4e-49d4-4acb-8bce-866e52de3e4e"
 
 ldap_users:
   - user_id: "{{ arkcase_admin_user }}"
     description: ArkCase administrator
-    name: "{{ arkcase_admin_name }}"
+    name: ArkCase Administrator
     mail: "{{ server_admin }}"
     firstName: ArkCase
     lastName: Administrator
     password: "{{ arkcase_admin_password }}"
     groups:
       - "{{ arkcase_admin_group }}"
-      - "CN={{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR,{{ldap_group_base}}"
-    nonexpiring_password: yes
-  - user_id: "{{ ldap_prefix }}ann-acm"
-    description: Ann Smith
-    name: Ann Smith
-    mail: "ann-acm@armedia.com"
-    firstName: Ann
-    lastName: Smith
-    password: "{{ default_user_password }}"
-    groups:
-      - "{{ arkcase_admin_group }}"
-      - "CN={{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR,{{ldap_group_base}}"
-    nonexpiring_password: yes
-  - user_id: "{{ ldap_prefix }}david.miller"
-    description: David Miller
-    name: David Miller
-    mail: "david.miller@arkcase.com"
-    firstName: David
-    lastName: Miller
-    password: "{{ default_user_password }}"
-    groups:
-      - "{{ arkcase_admin_group }}"
-    nonexpiring_password: yes
-  - user_id: "{{ ldap_prefix }}matthew.maines"
-    description: Matthew Maines
-    name: Matthew Maines
-    mail: "mmaines@armedia.com"
-    firstName: Matthew
-    lastName: Maines
-    password: "{{ default_user_password }}"
-    groups:
-      - "{{ arkcase_admin_group }}"
-    nonexpiring_password: yes
-  - user_id: "{{ ldap_prefix }}sally-acm"
-    description: Sally Supervisor
-    name: Sally Supervisor
-    mail: "sally-acm@armedia.com"
-    firstName: Sally
-    lastName: Supervisor
-    password: "{{ default_user_password }}"
-    groups:
-      - "CN={{ ldap_prefix }}ARKCASE_SUPERVISOR,{{ldap_group_base}}"
-    nonexpiring_password: yes
-  - user_id: "{{ ldap_prefix }}samuel-acm"
-    description: Samuel Supervisor
-    name: Samuel Supervisor
-    mail: "samuel-acm@armedia.com"
-    firstName: Samuel
-    lastName: Supervisor
-    password: "{{ default_user_password }}"
-    groups:
-      - "CN={{ ldap_prefix }}ARKCASE_SUPERVISOR,{{ldap_group_base}}"
-    nonexpiring_password: yes
-  - user_id: "{{ ldap_prefix }}owen.officer"
-    description: Owen Officer
-    name: Owen Officer
-    mail: "owen.officer@armedia.com"
-    firstName: Owen
-    lastName: Officer
-    password: "{{ default_user_password }}"
-    groups:
-      - "CN={{ ldap_prefix }}OFFICERS,{{ldap_group_base}}"
-    nonexpiring_password: yes
-  - user_id: "{{ ldap_prefix }}andy.approver"
-    description: Andy Approver
-    name: Andy Approver
-    mail: "andy.approver@armedia.com"
-    firstName: Andy
-    lastName: Approver
-    password: "{{ default_user_password }}"
-    groups:
-      - "CN={{ ldap_prefix }}APPROVERS,{{ldap_group_base}}"
     nonexpiring_password: yes
 
 # for each spreadsheet to be udpated, first give the path WITHOUT the .xlsx extension, then give a list of pairs of "string to be replaced", "replacement string"
-rules_spreadsheet_updates: []
+rules_spreadsheet_updates:
+  - base_path_no_xlsx: /home/arkcase/.arkcase/acm/rules/drools-assignment-rules
+    replacements: '"owning group, ARKCASE_SUPERVISOR@ARMEDIA.COM" "owning group, {{ ldap_prefix }}ARKCASE_SUPERVISOR@ARMEDIA.COM" "owning group, ARKCASE_ENTITY_ADMINISTRATOR@ARMEDIA.COM" "owning group, {{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARMEDIA.COM"'
+
 
 
 ########################################
 ### email settings
 #######################################
-email_host_imap: "relay.armedia.com"
-email_port_imap: 143
+# below settings work for Outlook 365    
+
+email_host_imap: "outlook.office365.com"
+email_port_imap: 993
 email_sender_protocol: "smtp"
-email_sender_encryption: "none"
-email_sender_port: 25
+email_sender_encryption: "starttls"
+email_sender_port: 587
 email_allow_attachments: true
 email_allow_documents: true
 email_allow_hyperlinks: true
-email_smtp_host: "relay.armedia.com"
+email_smtp_host: "smtp.office365.com"
 email_user_from: "{{ email_service_account }}"
 email_smtp_username: "{{ email_service_account }}"
 email_smtp_password: "{{ email_service_password }}"
@@ -316,7 +181,34 @@ create_case_from_email_enabled: false
 create_complaint_from_email_enabled: false
 
 # retrieve arkcase from GitHub ("github") or SFTP ("sftp")
-arkcase_retrieve_strategy: "sftp"
+arkcase_retrieve_strategy: "github"
+
+# arkcase_webapp_supported_version is for github (i.e, CE) downloads.
+# "supported version" means there is a GitHub release tag named "arkcase-$VERSION".
+# So, "3.3.0" is a supported version because the repository https://github.com/ArkCase/ArkCase
+# has a release tagged "arkcase-3.3.0".  Furthermore, this release has a release artifact
+# consisting of the acm-law-enforcement war file.  In short, the ArkCase war file can
+# be downloaded from the URL "https://github.com/ArkCase/ArkCase/releases/download/arkcase-3.3.0/acm-law-enforcement-3.3.0.war".
+# If there is no such URL, ArkCase installation will fail.
+arkcase_webapp_supported_versions:
+  - "3.3.0"
+  - "3.3.1"
+  - "3.3.1-r1"
+
+# arkcase_version is either a maven version (for SFTP download) 
+# or a github release version (for github downloads). 
+# Leave blank to get latest Maven snapshot from SFTP.
+arkcase_version: "2021.04"
+arkcase_version_formatted: "{{ '-' ~ arkcase_version if arkcase_version != '' else '' }}"
+
+# arkcase extension 
+arkcase_extension_install: no
+# arkcase_extension_id is the base name of the jar file, 
+# which should also be the branch name in the configuration
+# repository.
+arkcase_extension_id: ""
+# leave version blank to get latest Maven snapshot from SFTP
+arkcase_extension_version: ""
 
 # core reports, these are always deployed
 arkcase_core_reports:
@@ -331,9 +223,7 @@ arkcase_core_reports:
   - path: "arkcase-audit"
     definition: "AuditReport.prpt"
 
-# arkcase extension 
-arkcase_extension_install: no
-arkcase_extension_version: ""
+
 # extension reports... each different extension may or may not have its own path 
 # in the jar file where report definitions are stored
 arkcase_extension_install_reports: no
@@ -342,19 +232,16 @@ arkcase_extension_reports:
     jar_path: ""
     pentaho_path: ""
 
-foia_portal_context: foia
+# if arkcase_extension_install is "no", arkcase_configuration_classifier 
+# must be either "core" or "foia" or "privacy".  
+arkcase_configuration_classifier: "core"
+arkcase_configuration_version: "2021.04"
 
-# foia reports
-arkcase_foia_reports:
-  - path: "foia-audit"
-    definition: "AuditReport.prpt"
-  - path: "foia"
-    definition: "FOIA Log.prpt"
-
-# privacy reports
-arkcase_privacy_reports:
-  - path: "privacy"
-    definition: "SARs-Received Processed and Pending SARs.prpt"
+# portal_version is either a maven version (for SFTP download) 
+# or a github release version (for github downloads). 
+# Leave blank to get latest Maven snapshot from SFTP.
+# Used only with foia and privacy extensions
+portal_version: ""
 
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
@@ -370,12 +257,43 @@ sftp_extension_user: ""
 sftp_extension_folder: ""
 sftp_user: "{{ sftp_extension_user }}"
 
+# some installations require additional artifacts...
+arkcase_deploy_extra_artifacts: no
+arkcase_extra_artifacts:
+  - name: "sample"
+    sftp_base_url: "{{ sftp_service_base_url }}"
+    sftp_folder: ""
+    sftp_artifact: ""
+    deploy_path: ""
+    deploy_filename: ""
+    post_install_required: no
+    create_files: no
+    files:
+      path: ""
+      copy_files: no
+      files_to_copy:
+        - src: ""
+          dest: ""
+      template_files: no
+      templates:
+        - src: |
+            key=value
+          dest: application.properties
+    
+# if `arkcase_retrieve_strategy` is "github" then `arkcase_config_server_version` must
+# correspond to a release tag on the GitHub site; in other words,
+# there must be a release artifact at the URL
+# "https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar"
+# leave blank to get the latest Maven snapshot from SFTP
+arkcase_config_server_version: "2021.04"
+
 # retrieve snowbound from GitHub ("github") or SFTP ("sftp")
-snowbound_retrieve_strategy: "sftp"
-snowbound_vendor_version: "5.6.2"
-snowbound_arkcase_version: ""
+snowbound_retrieve_strategy: "github"
+snowbound_vendor_version: "5.2"
+snowbound_arkcase_version: "2021.04"
 snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
+
 
 ### default values that shouldn't have to change
 arkcase_host_name: "{{ arkcase_host }}"
@@ -409,7 +327,7 @@ java_key_store_pass: "{{ default_user_password }}"
 java_p12_store: "{{ root_folder }}/common/arkcase-client.p12"
 
 samba_version: 4.10.8
-samba_realm: "arkcase-ce"
+samba_realm: "{{ internal_host }}"
 samba_host_ip: "127.0.0.1"
 samba_admin_password: "{{ default_user_password }}"
 samba_server_role: dc
@@ -457,7 +375,7 @@ solr_cores:
 # Also, Alfresco 6.1 EE is certified with 2.2.5... 
 # it doesn't work with 2.2.6.
 mariadb_jdbc_version: 2.2.5
-default_database_password: "@rM3d1A!"
+default_database_password: "@rKc@3S!"
 
 # tomcat_major_version needed to build download URL
 tomcat_major_version: 9
@@ -502,9 +420,9 @@ content_management_folders:
   - "User Profile"
   - "Business Processes"
   - "Consultations"
-  - "Requests"
   - "SAR"
-
+  - "Requests" 
+  
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
 # from https://social.technet.microsoft.com/wiki/contents/articles/29480.active-directory-fun-with-maximum-password-age.aspx... just under 30,000 years from now
@@ -581,9 +499,6 @@ email_receiver_consultation_password: ""
 # define username and password for ActiveMQ authentication between apps
 activemq_user: ""
 activemq_password: ""
-
-# missing fact during vagrant provisioning 
-arkcase_version: ""
 
 # define arkcase_log_level core/foia with one of thge following valid values: trace, debug, info, warn, error
 # if not defined default value will be info
