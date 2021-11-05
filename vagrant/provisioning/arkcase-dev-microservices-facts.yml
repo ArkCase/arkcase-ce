@@ -199,7 +199,7 @@ ldap_portal_groups:
     name: '{{ foia_portal_group }}'
     alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
-     
+
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
 arkcase_admin_name: "ArkCase Administrator"
 arkcase_admin_password: "{{ default_user_password }}"
@@ -351,6 +351,11 @@ arkcase_foia_reports:
   - path: "foia"
     definition: "FOIA Log.prpt"
 
+# privacy reports
+arkcase_privacy_reports:
+  - path: "privacy"
+    definition: "SARs-Received Processed and Pending SARs.prpt"
+
 # sftp_arkcase_password, sftp_pentaho_password, 
 # and sftp_extension_password must be specified as 
 # extra arguments.
@@ -384,9 +389,6 @@ ssl_version: "TLSv1.2"
 
 # ssl_cipher only for backward compatibility
 ssl_cipher: "{{ ssl_version }}"
-
-# Mongodb port
-mongodb_port: "27017"
 
 # for the pki role (used by CE installer to create a self-hosted
 # PKI), these facts are prescriptive, and the pki role will
@@ -498,7 +500,7 @@ content_management_folders:
   - "Tasks"
   - "Timesheets"
   - "User Profile"
-  - "Business Processes"   
+  - "Business Processes"
   - "Consultations"
   - "Requests"
   - "SAR"
@@ -509,6 +511,9 @@ content_management_folders:
 active_directory_non_expiring_password_age: -9223372036854775808
 
 activemq_version: 5.15.9
+
+# Mongodb port
+mongodb_port: "27017"
 
 # Confluent platform (with default version)
 confluent_major_version: 5.4
@@ -522,5 +527,77 @@ enable_kafka: "yes"
 enable_zipkin: "yes"
 enable_eureka: "yes"
 
-# missing fact during vagrant provisioning
+#AWS Credentials
+aws_access_key_id: ""
+aws_secret_access_key: ""
+
+# OIDC authentication properties
+#oidc_registrationId: ""
+#oidc_clientId: ""
+#oidc_clientSecret: ""
+#oidc_redirectUri: ""
+#oidc_authorizationUri: ""
+#oidc_tokenUri: ""
+#oidc_jwkSetUri: ""
+#oidc_issuerUri: ""
+#oidc_usernameAttribute: ""
+#oidc_userInfoUri: ""
+#oidc_scope: ""
+# OIDC system user and password are used when Arkcase is making calls to another OIDC environment
+#oidc_systemUserEmail: ""
+#oidc_systemUserPassword: ""
+#oidc_federation_host: ""
+#zylab_integration_enabled: false
+#zylab_server_host: ""
+#zylab_server_port: ""
+#zylab_registrationId: ""
+#zylab_clientId: ""
+#zylab_clientSecret: ""
+#zylab_tokenUri: ""
+#zylab_tenant: ""
+
+#touchnet_username: ""
+#touchnet_password: ""
+#touchnet_securelinkendpoint: ""
+#touchnet_securepaylinkendpoint: ""
+#touchnet_upaysiteid: ""
+
+#Put your outlook credentials below if you want to use Email receiver in Arkcase, depending on your case
+email_receiver_case_file_account: ""
+email_receiver_case_file_account_escaped: "{{ email_receiver_case_file_account | replace('@', '%40') }}"
+email_receiver_case_file_password: ""
+
+email_receiver_complaint_account: ""
+email_receiver_complaint_account_escaped: "{{ email_receiver_complaint_account | replace('@', '%40') }}"
+email_receiver_complaint_password: ""
+
+email_receiver_consultation_account: ""
+email_receiver_consultation_account_escaped: "{{ email_receiver_consultation_account | replace('@', '%40') }}"
+email_receiver_consultation_password: ""
+
+# define username and password for ActiveMQ authentication between apps
+activemq_user: ""
+activemq_password: ""
+
+# missing fact during vagrant provisioning 
 arkcase_version: ""
+
+# define arkcase_log_level core/foia with one of thge following valid values: trace, debug, info, warn, error
+# if not defined default value will be info
+arkcase_log_level: ""
+
+# when defining multiple notifications_groups the flow shoud be
+# notifications_groups:
+# - group@example.com
+# - group1@example.com
+notifications_groups:
+  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain }}"
+
+# Vault configuration for "conf.yml"
+arkcase_vault_host: ""
+arkcase_vault_port: ""
+arkcase_vault_scheme: ""
+arkcase_vault_appRole: ""
+arkcase_vault_authMethod: ""
+arkcase_vault_username: ""
+arkcase_vault_password: ""
