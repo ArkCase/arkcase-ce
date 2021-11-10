@@ -1,0 +1,83 @@
+---
+- name: Ensure PostgreSQL packages are installed.
+  become: yes
+  yum:
+    name: 
+      - postgresql
+      - postgresql-server
+      - postgresql-contrib
+      - postgresql-libs
+    state: present
+
+- name: Ensure PostgreSQL Python libraries are installed.
+  yum:
+    name: python-psycopg2
+    state: present
+
+- name: PostgreSQL folders
+  become: yes
+  file:
+    path: "{{ item.name }}"
+    state: directory
+    group: postgres
+    owner: postgres
+    setype: "{{ item.setype }}"
+  loop:
+    - name: "{{ postgresql_data_dir }}"
+      setype: "postgresql_db_t"
+    - name: "{{ postgres_log_folder }}"
+      setype: "postgresql_log_t"
+  register: postgres_folder_structure
+
+- name: PostgreSQL systemd unit file
+  become: yes
+  template:
+    src: "postgresql.service"
+    dest: /etc/systemd/system/postgresql.service
+  register: postgresql_systemd
+
+- name: reload daemon-files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: postgresql_systemd is changed
+
+- name: Check if PostgreSQL database is initialized.
+  stat:
+    path: "{{ postgresql_data_dir }}/PG_VERSION"
+  register: pgdata_dir_version
+
+- name: Ensure PostgreSQL database is initialized.
+  command: "/usr/bin/initdb -D {{ postgresql_data_dir }}"
+  when: not pgdata_dir_version.stat.exists
+  become: true
+  become_user: postgres
+  vars:
+    ansible_ssh_pipelining: true
+
+- name: PostgreSQL conf file
+  become: yes
+  template:
+    src: "postgresql.conf"
+    dest: "{{ postgresql_data_dir }}/postgresql.conf"
+    owner: postgres
+    group: postgres
+  register: postgresql_conf
+
+- name: restart PostgreSQL if needed
+  become: yes
+  systemd:
+    name: postgresql
+    state: restarted
+  when: postgresql_conf is changed 
+
+- name: Ensure PostgreSQL is started and enabled on boot.
+  service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: create PostgreSQL user
+  include_tasks: "{{ role_path }}/../postgresql/tasks/create_user.yml"
+
+- name: create PostgreSQL database
+  include_tasks: "{{ role_path }}/../postgresql/tasks/create_database.yml"

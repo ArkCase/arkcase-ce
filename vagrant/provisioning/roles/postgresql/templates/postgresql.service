@@ -1,0 +1,17 @@
+.include /lib/systemd/system/postgresql.service
+
+[Unit]
+Description=PostgreSQL database server
+After=network.target
+
+[Service]
+Type=forking
+
+User=postgres
+Group=postgres
+
+# Port number for server to listen on
+Environment=PGPORT=5432
+
+# Location of database directory
+Environment=PGDATA={{ postgresql_data_dir }}

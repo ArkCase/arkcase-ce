@@ -504,3 +504,10 @@ arkcase_vault_appRole: ""
 arkcase_vault_authMethod: ""
 arkcase_vault_username: ""
 arkcase_vault_password: ""
+
+# postgresql
+postgresql_data_dir: "{{ root_folder }}/data/postgresql/data"
+postgres_log_folder: "{{ root_folder }}/log/postgresql"
+postgresql_auth_method: "{{ ansible_fips  | ternary('scram-sha-256', 'md5') }}"
+postgresql_user: postgres
+postgresql_group: postgres

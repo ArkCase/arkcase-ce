@@ -13,6 +13,8 @@
       tags: [core, ldap]
     - role: mariadb
       tags: [core, mariadb]
+    - role: postgresql
+      tags: [core, postgresql]
     - role: httpd
       tags: [core, httpd]
     - role: haproxy
