@@ -9,13 +9,14 @@
     login_host: "{{ item.login_host | default('localhost') }}"
     login_password: "{{ item.login_password | default(omit) }}"
     login_user: "{{ item.login_user | default('postgres') }}"
-    # login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_directories[0]) }}"
+    login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
     port: "{{ item.port | default(omit) }}"
-    owner: "{{ item.owner | default('postgres') }}"
+    owner: "{{ item.owner | default(item) }}"
     state: present
   with_items: 
     - arkcase
     - alfresco
+    - jackrabbit
   become: true
   become_user: postgres
   # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
