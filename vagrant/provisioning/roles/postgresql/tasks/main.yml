@@ -9,7 +9,8 @@
       - postgresql-libs
     state: present
 
-- name: Ensure PostgreSQL Python libraries are installed.
+- name: Ensure PostgreSQL Python libraries are installed
+  become: yes
   yum:
     name: python-psycopg2
     state: present
@@ -42,6 +43,8 @@
   when: postgresql_systemd is changed
 
 - name: Check if PostgreSQL database is initialized.
+  become: yes
+  become_user: postgres
   stat:
     path: "{{ postgresql_data_dir }}/PG_VERSION"
   register: pgdata_dir_version
@@ -71,6 +74,7 @@
   when: postgresql_conf is changed 
 
 - name: Ensure PostgreSQL is started and enabled on boot.
+  become: yes
   service:
     name: postgresql
     state: started
