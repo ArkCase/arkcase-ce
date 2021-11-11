@@ -341,6 +341,7 @@ arkcase_extension_reports:
 foia_portal_context: foia
 foia_portal_group: "{{ ldap_prefix }}ARKCASE_PORTAL_USER"
 foia_portal_id: "8c41ee4e-49d4-4acb-8bce-866e52de3e4e"
+portal_authenticated: true
 
 # foia reports
 arkcase_foia_reports:
