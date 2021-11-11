@@ -66,6 +66,21 @@
   vars:
     ansible_ssh_pipelining: true
 
+- name: copy private keys for PostgreSQL use
+  become: yes
+  copy: 
+    remote_src: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: postgres
+    group: postgres
+    mode: 0600
+  loop:
+    - src: "{{ ssl_key_rsa }}"
+      dest: "{{ postgresql_data_dir }}/server.key"
+    - src: "{{ ssl_cert }}"
+      dest: "{{ postgresql_data_dir }}/server.crt"
+
 - name: PostgreSQL conf file
   become: yes
   template:
@@ -88,21 +103,6 @@
     name: postgresql-13
     state: started
     enabled: true
-
-- name: copy private keys for PostgreSQL use
-  become: yes
-  copy: 
-    remote_src: yes
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    owner: postgres
-    group: postgres
-    mode: 400
-  loop:
-    - src: "{{ ssl_key_rsa }}"
-      dest: "{{ postgresql_data_dir }}/server.key"
-    - src: "{{ ssl_cert }}"
-      dest: "{{ postgresql_data_dir }}/server.crt"
 
 - name: create PostgreSQL users
   include_tasks: "{{ role_path }}/../postgresql/tasks/create_user.yml"
