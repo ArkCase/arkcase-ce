@@ -1,7 +1,7 @@
 ---
 - name: Ensure PostgreSQL databases are present.
   postgresql_db:
-    name: "{{ item }}"
+    name: "{{ item.name }}"
     lc_collate: "{{ item.lc_collate | default('en_US.UTF-8') }}"
     lc_ctype: "{{ item.lc_ctype | default('en_US.UTF-8') }}"
     encoding: "{{ item.encoding | default('UTF-8') }}"
@@ -11,12 +11,15 @@
     login_user: "{{ item.login_user | default('postgres') }}"
     login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
     port: "{{ item.port | default(omit) }}"
-    owner: "{{ item.owner | default(item) }}"
+    owner: "{{ item.owner | default(item.name) }}"
     state: present
   with_items: 
-    - arkcase
-    - alfresco
-    - jackrabbit
+    - name: arkcase
+      owner: arkcase
+    - name: alfresco
+      owner: alfresco
+    - name: jackrabbit
+      owner: pentaho
   become: true
   become_user: postgres
   # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509

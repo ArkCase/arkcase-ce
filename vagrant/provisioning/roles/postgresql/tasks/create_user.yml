@@ -1,7 +1,7 @@
 ---
 - name: Ensure PostgreSQL users are present.
   postgresql_user:
-    name: "{{ item }}"
+    name: "{{ item.name }}"
     password: "{{ item.password | default(omit) }}"
     login_host: "{{ item.login_host | default('localhost') }}"
     login_password: "{{ item.login_password | default('postgres') }}"
@@ -9,9 +9,12 @@
     login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
     port: "{{ item.port | default(omit) }}"
   with_items: 
-    - arkcase
-    - alfresco
-    - jackrabbit
+    - name: arkcase
+      password: "{{ default_database_password }}"
+    - name: alfresco
+      password: "{{ default_database_password }}"
+    - name: pentaho
+      password: "{{ default_database_password }}"
   no_log: false
   become: true
   become_user: postgres
