@@ -69,7 +69,7 @@
 - name: PostgreSQL conf file
   become: yes
   template:
-    src: "postgresql.conf"
+    src: "postgresql-13.conf"
     dest: "{{ postgresql_data_dir }}/postgresql.conf"
     owner: postgres
     group: postgres
