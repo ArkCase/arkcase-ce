@@ -12,6 +12,8 @@
     login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
     port: "{{ item.port | default(omit) }}"
     owner: "{{ item.owner | default(item.name) }}"
+    ssl_mode: require
+    ca_cert: "{{ ssl_cert }}"
     state: present
   with_items: 
     - name: arkcase
