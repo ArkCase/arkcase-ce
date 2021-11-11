@@ -165,7 +165,7 @@
     encrypted_ldap_bind_password: "{{ encrypted_ldap_portal_bind_password }}"
     ldap_url: "{{ ldap_portal_url }}"
     ldap_user_domain: "{{ ldap_portal_user_domain }}"
-  when: encrypted_ldap_portal_bind_password is defined
+  when: encrypted_ldap_portal_bind_password is defined and portal_authenticated|default(true)|bool == true
 
 - name: copy key store and trust store
   become: yes
