@@ -14,7 +14,7 @@
     - role: mariadb
       tags: [core, mariadb]
     - role: postgresql
-      tags: [core, postgresql]
+      tags: [postgresql]
     - role: httpd
       tags: [core, httpd]
     - role: haproxy
