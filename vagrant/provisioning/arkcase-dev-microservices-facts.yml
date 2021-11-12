@@ -343,6 +343,7 @@ arkcase_extension_reports:
     pentaho_path: ""
 
 foia_portal_context: foia
+portal_authenticated: true
 
 # foia reports
 arkcase_foia_reports:
