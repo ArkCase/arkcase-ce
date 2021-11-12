@@ -109,3 +109,10 @@
 
 - name: create PostgreSQL databases
   include_tasks: "{{ role_path }}/../postgresql/tasks/create_database.yml"
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "PostgreSQL JDBC Driver"
+      dest: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+      owner: "root"
+      url: "https://jdbc.postgresql.org/download/{{ jdbc_driver_jar_filename }}"

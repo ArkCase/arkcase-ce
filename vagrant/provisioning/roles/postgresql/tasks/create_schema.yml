@@ -1,0 +1,38 @@
+---
+- name: Create postgres user.
+  postgresql_user:
+    name: "{{ item.name | default(item) }}"
+    password: "{{ item.password | default(default_database_password) }}"
+    login_host: "{{ item.login_host | default('localhost') }}"
+    login_password: "{{ item.login_password | default('postgres') }}"
+    login_user: "{{ item.login_user | default('postgres') }}"
+    login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
+    port: "{{ item.port | default(omit) }}"
+    ssl_mode: require
+    ca_cert: "{{ ssl_cert }}"
+  no_log: false
+  become: true
+  become_user: postgres
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+
+- name: create postgres schema
+  postgresql_schema:
+    name: "{{ item.name | default(item) }}"
+    owner: "{{ item.name | default(item) }}"
+    login_host: "{{ item.login_host | default('localhost') }}"
+    login_password: "{{ item.login_password | default('postgres') }}"
+    login_user: "{{ item.login_user | default('postgres') }}"
+    login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
+    port: "{{ item.port | default(omit) }}"
+  no_log: false
+  become: true
+  become_user: postgres
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"

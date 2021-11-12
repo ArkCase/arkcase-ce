@@ -22,6 +22,8 @@
       owner: alfresco
     - name: jackrabbit
       owner: pentaho
+    - name: activemq
+      owner: activemq
   become: true
   become_user: postgres
   # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509

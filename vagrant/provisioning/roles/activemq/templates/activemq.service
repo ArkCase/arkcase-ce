@@ -1,7 +1,7 @@
 [Unit]
 Description=ActiveMQ service
-After=mariadb.service
-BindsTo=mariadb.service
+After={{ (db_engine == 'postgresql') | ternary('postgresql-13.service', 'mariadb.service') if activemq_host == database_host }}
+BindsTo={{ (db_engine == 'postgresql') | ternary('postgresql-13.service', 'mariadb.service') if activemq_host == database_host }}
 
 [Service]
 Type=forking
