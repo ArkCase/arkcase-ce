@@ -171,6 +171,12 @@
   delay: 5
   when: not first_time_startup.stat.exists
 
+- name: stop after first-time startup (if needed)
+  become: yes
+  become_user: alfresco-search
+  command: '{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr/bin/solr stop'
+  when: not first_time_startup.stat.exists
+
 - name: Alfresco Search Services systemd unit file
   become: yes
   template:
