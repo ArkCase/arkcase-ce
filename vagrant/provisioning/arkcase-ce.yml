@@ -21,7 +21,7 @@
       tags: [core, haproxy]
     - role: activemq
       tags: [core, activemq]
-    - role: alfresco-search-services-1.4
+    - role: alfresco-search-services
       tags: [alfresco-search-services]
     - role: alfresco-setup
       tags: [core, alfresco, alfresco-setup]

@@ -1,0 +1,198 @@
+- name: Ensure group alfresco-search exists
+  become: yes
+  group:
+    name: alfresco-search
+    state: present
+
+- name: alfresco-search user
+  become: yes
+  user:
+    name: alfresco-search
+    shell: /bin/false
+    state: present
+    group: alfresco-search
+
+- name: alfresco-search folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: alfresco-search
+    owner: alfresco-search
+  loop:
+    - "{{ root_folder }}/data/alfresco-search"
+    - "{{ root_folder }}/log/alfresco-search"
+    - "{{ root_folder }}/app/alfresco-search"
+    - "{{ root_folder }}/install/alfresco-search"
+    - "{{ root_folder }}/tmp/alfresco-search"
+  register: alfresco_search_folder_structure
+
+- name: enable logrotate for alfresco-search log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  loop:
+    - alfresco-search
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: Alfresco Search Services Community
+      dest: "{{ root_folder }}/install/alfresco-search/alfresco-search-services-{{ alfresco_search_services_version | default('2.0.2') }}.zip"
+      owner: alfresco-search
+      url: https://artifacts.alfresco.com/nexus/content/groups/public/org/alfresco/alfresco-search-services/{{ alfresco_search_services_version | default('2.0.2') }}/alfresco-search-services-{{ alfresco_search_services_version | default('2.0.2') }}.zip
+
+- name: unzip search services
+  become: yes
+  become_user: alfresco-search
+  unarchive:
+    src: "{{ root_folder }}/install/alfresco-search/alfresco-search-services-{{ alfresco_search_services_version | default('2.0.2') }}.zip"
+    remote_src: true
+    dest: "{{ root_folder }}/app/alfresco-search"
+    creates: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/licenses/license.txt"
+
+- name: update default solr properties
+  become: yes
+  become_user: alfresco-search
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/solrhome/templates/rerank/conf/solrcore.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "^alfresco.port.ssl=8443$"
+      replace: "alfresco.port.ssl=7070"
+    - regexp: "^alfresco.encryption.ssl.truststore.location=ssl.repo.client.truststore$"
+      replace: "alfresco.encryption.ssl.truststore.location={{ root_folder }}/common/arkcase.ts"
+    - regexp: "^alfresco.encryption.ssl.keystore.location=ssl.repo.client.keystore$"
+      replace: "alfresco.encryption.ssl.keystore.location={{ root_folder }}/common/arkcase.ks"
+    - regexp: "^alfresco.encryption.ssl.keystore.type=JCEKS$"
+      replace: "alfresco.encryption.ssl.keystore.type=PKCS12"
+    - regexp: "^#data.dir.root=DATA_DIR$"
+      replace: "data.dir.root={{ root_folder }}/data/alfresco-search"
+    - regexp: "^alfresco.encryption.ssl.truststore.type=JCEKS$"
+      replace: "alfresco.encryption.ssl.truststore.type=JKS"
+    - regexp: "^alfresco.host=localhost$"
+      replace: "alfresco.host={{ alfresco_host }}"
+    - regexp: "^alfresco.encryption.ssl.keystore.passwordFileLocation=$"
+      replace: "alfresco.encryption.ssl.keystore.passwordFileLocation={{ root_folder }}/app/alfresco-search/ssl-keystore-passwords.properties"
+    - regexp: "^alfresco.encryption.ssl.truststore.passwordFileLocation=$"
+      replace: "alfresco.encryption.ssl.truststore.passwordFileLocation={{ root_folder }}/app/alfresco-search/ssl-truststore-passwords.properties"
+    - regexp: "^#alfresco.ignore.datatype.1=d:content$"
+      replace: "alfresco.ignore.datatype.1=d:content"
+    - regexp: "^#alfresco.index.transformContent=false$"
+      replace: "alfresco.index.transformContent=false"
+    - regexp: "^#data.dir.store=workspace/SpacesStore$"
+      replace: "data.dir.store=alfresco"
+  
+- name: update solr start script
+  become: yes
+  become_user: alfresco-search
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr.in.sh"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: '#SOLR_HEAP="512m"$'
+      replace: 'SOLR_HEAP="{{ solr_heap_space | default(''1G'') }}"'
+    - regexp: '^SOLR_LOGS_DIR=../../logs$'
+      replace: 'SOLR_LOGS_DIR={{ root_folder }}/log/alfresco-search'
+    - regexp: '^#SOLR_PORT=8983$'
+      replace: 'SOLR_PORT=8984'
+    - regexp: '^#SOLR_JAVA_HOME=""$'
+      replace: 'SOLR_JAVA_HOME=/usr/lib/jvm/java-11-openjdk'
+    - regexp: '^#SOLR_HOST="192.168.1.1"'
+      replace: 'SOLR_HOST="{{ internal_host }}"'
+
+- name: add extra properties to solr start script
+  become: yes
+  become_user: alfresco-search
+  lineinfile:
+    backup: yes
+    path: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr.in.sh"
+    insertafter: EOF
+    state: present
+    line: "{{ item }}"
+  loop:
+    - "SOLR_SOLR_HOST={{ internal_host }}"
+    - "SOLR_ALFRESCO_HOST={{ external_host }}"
+ 
+- name: keystore passwords file
+  become: yes
+  become_user: alfresco-search
+  template:
+    backup: yes
+    src: "password-file.properties"
+    dest: "{{ root_folder }}/app/alfresco-search/ssl-keystore-passwords.properties"
+
+- name: truststore passwords file
+  become: yes
+  become_user: alfresco-search
+  template:
+    backup: yes
+    src: "password-file.properties"
+    dest: "{{ root_folder }}/app/alfresco-search/ssl-truststore-passwords.properties" 
+
+- name: link log4j.properties
+  become: yes
+  become_user: alfresco-search
+  file: 
+    path: "{{ root_folder }}/log/alfresco-search/log4j.properties"
+    src: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/logs/log4j.properties"
+    state: link   
+
+- name: see if search services was already started
+  become: yes
+  become_user: alfresco-search
+  changed_when: false
+  stat:
+    path: "{{ root_folder }}/data/alfresco-search/alfresco"
+  register: first_time_startup
+
+- name: first-time startup (if needed)
+  become: yes
+  become_user: alfresco-search
+  command: '{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr/bin/solr start -a "-Dcreate.alfresco.defaults=alfresco"'
+  when: not first_time_startup.stat.exists
+
+- name: wait for first-time startup to finish
+  wait_for:
+    port: 8984
+    delay: 5
+    timeout: 180
+  when: not first_time_startup.stat.exists
+
+- name: Wait for URI
+  uri:
+    url: http://localhost:8984/solr
+    validate_certs: false
+    follow_redirects: all
+  register: _result
+  until: _result.status == 200
+  retries: 100
+  delay: 5
+  when: not first_time_startup.stat.exists
+
+- name: stop after first-time startup (if needed)
+  become: yes
+  become_user: alfresco-search
+  command: '{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr/bin/solr stop'
+  when: not first_time_startup.stat.exists
+
+- name: Alfresco Search Services systemd unit file
+  become: yes
+  template:
+    src: alfresco-search.service
+    dest: /etc/systemd/system/alfresco-search.service
+
+- name: enable Alfresco Search Services to start on boot
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: alfresco-search
+    enabled: yes
+    masked: no
+
+- name: start Alfresco Search Services, if not already started
+  become: yes
+  systemd:
+    name: alfresco-search
+    state: started
