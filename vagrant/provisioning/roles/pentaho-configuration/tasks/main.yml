@@ -2,8 +2,8 @@
   become: yes
   become_user: pentaho
   file:
-    src: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
-    dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+    dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/lib/{{ jdbc_driver_jar_filename }}"
     state: link
 
 - name: LDAP application context

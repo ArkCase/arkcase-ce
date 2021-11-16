@@ -4,6 +4,7 @@
   copy:
     src: "quartz-create-db.sql"
     dest: "{{ root_folder }}/install/pentaho/"
+  when: db_engine == 'mariadb'
     
 - name: create hibernate schema (ansible will always report quartz as changed)
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema_specific_user.yml"
@@ -19,4 +20,28 @@
       script: "quartz-create-db.sql"
   loop_control:
     loop_var: s
-    
+  when: db_engine == 'mariadb'
+
+- name: copy quartz DDL for PostgreSQL
+  become: yes
+  become_user: pentaho
+  copy:
+    src: "quartz-create-db-postgres.sql"
+    dest: "{{ root_folder }}/install/pentaho/"
+  when: db_engine == 'postgresql'
+
+- name: create hibernate schema (ansible will always report quartz as changed)
+  include_tasks: "{{ role_path }}/../postgresql/tasks/create_schema.yml"
+  loop:
+    - schema: "hibernate"
+      user: "hibuser"
+      script: ""
+    - schema: "jackrabbit"
+      user: "jcr_user"
+      script: ""
+    - schema: "quartz"
+      user: "pentaho_user"
+      script: "quartz-create-db.sql"
+  loop_control:
+    loop_var: s
+  when: db_engine == 'postgresql'
