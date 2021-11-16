@@ -31,6 +31,12 @@
       tags: [core, alfresco]
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
+    - role: alfresco7-setup
+      tags: [alfresco7, alfresco7-setup]
+    - role: alfresco7-ce
+      tags: [alfresco7, alfresco7-ce]
+    - role: alfresco7
+      tags: [alfresco7]
     - role: solr
       tags: [core, solr]
     - role: pentaho-setup

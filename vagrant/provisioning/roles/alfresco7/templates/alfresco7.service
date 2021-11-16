@@ -1,0 +1,19 @@
+[Unit]
+Description=Alfresco service
+After={{ 'postgresql-13.service' if db_engine == "postgresql" else 'mariadb.service' }}
+BindsTo={{ 'postgresql-13.service' if db_engine == "postgresql" else 'mariadb.service' }}
+
+[Service]
+Type=forking
+ExecStart={{ root_folder }}/app/alfresco7/bin/startup.sh
+ExecStop={{ root_folder }}/app/alfresco7/bin/shutdown.sh -force
+User=alfresco7
+Group=alfresco7
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=alfresco
+
+[Install]
+WantedBy=multi-user.target

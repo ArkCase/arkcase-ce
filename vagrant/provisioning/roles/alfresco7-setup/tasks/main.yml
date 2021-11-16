@@ -1,0 +1,36 @@
+- name: Ensure group alfresco7 exists
+  become: yes
+  group:
+    name: alfresco7
+    state: present
+
+- name: alfresco7 user
+  become: yes
+  user:
+    name: alfresco7
+    shell: /bin/false
+    state: present
+    group: alfresco7
+
+- name: alfresco7 folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: alfresco7
+    owner: alfresco7
+  loop:
+    - "{{ root_folder }}/data/alfresco7"
+    - "{{ root_folder }}/data/alfresco7/alf_data"
+    - "{{ root_folder }}/log/alfresco7"
+    - "{{ root_folder }}/app/alfresco7"    
+    - "{{ root_folder }}/app/alfresco7/alfresco7-pdf-renderer"
+    - "{{ root_folder }}/install/alfresco7"
+    - "{{ root_folder }}/tmp/alfresco7"
+  register: alfresco7_folder_structure
+
+- name: enable logrotate for alfresco7 log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  loop:
+    - alfresco7
+
