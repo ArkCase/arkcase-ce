@@ -351,6 +351,9 @@ jdbc_validation_query: "select 1"
 jdbc_driver_jar_filename: "{{ 'postgresql-' + postgresql_jdbc_version + '.jar' if db_engine == 'postgresql' else  'mariadb-java-client-' + mariadb_jdbc_version + '.jar' }}"
 database_list_tables_command: "{{ postgresql_list_tables_command if db_engine == 'postgresql' else mariadb_list_tables_command }}"
 jdbc_url_xml: "{{ 'jdbc:postgresql://' + database_host + ':5432/SCHEMA?' + postgresql_jdbc_url_option_xml_string if db_engine == 'postgresql' else 'jdbc:mysql://' + database_host_name +':3306/SCHEMA?' + database_mysql_jdbc_url_option_xml_string }}"
+hibernate_dialect: "{{ 'org.hibernate.dialect.PostgreSQLDialect' if db_engine == 'postgresql' else 'org.hibernate.dialect.MySQL5InnoDBDialect' }}"
+pentaho_ce_mapping_resource: "{{ 'hibernate/postgresql.hbm.xml' if db_engine == 'postgresql' else 'hibernate/mysql5innodb.hbm.xml' }}"
+pentaho_ee_mapping_resource: "{{ 'hibernate/postgresql.EE.hbm.xml' if db_engine== 'postgresql' else 'hibernate/mysql5innodb.EE.hbm.xml' }}"
 
 database_pentaho_hibernate_schema: hibernate
 database_pentaho_hibernate_user: hibuser

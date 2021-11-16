@@ -33,7 +33,22 @@
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/META-INF/context.xml"
     - src: mysql5.hibernate.cfg.xml
       dest: "{{ root_folder}}/app/pentaho/pentaho-server/pentaho-solutions/system/hibernate/mysql5.hibernate.cfg.xml"
-  
+  when: db_engine == 'mariadb'
+
+- name: database configuration templates for PostgreSQL
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - src: context.xml
+      dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/META-INF/context.xml"
+    - src: mysql5.hibernate.cfg.xml
+      dest: "{{ root_folder}}/app/pentaho/pentaho-server/pentaho-solutions/system/hibernate/postgresql.hibernate.cfg.xml"
+  when: db_engine == 'postgresql'
+
 - name: server properties
   become: yes
   become_user: pentaho
