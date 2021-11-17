@@ -668,6 +668,7 @@
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<')
 
 - name: see if we have a camel alfresco cmis properties file
   become: yes
