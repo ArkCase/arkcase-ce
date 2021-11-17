@@ -143,22 +143,21 @@
   become: yes
   become_user: alfresco-search
   changed_when: false
-  stat:
-    path: "{{ root_folder }}/data/alfresco-search/alfresco"
+  shell: "systemctl status alfresco-search | grep Active | awk -v N=2 '{print $N}'"
   register: first_time_startup
 
 - name: first-time startup (if needed)
   become: yes
   become_user: alfresco-search
   command: '{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr/bin/solr start -a "-Dcreate.alfresco.defaults=alfresco"'
-  when: not first_time_startup.stat.exists
+  when: first_time_startup.stdout != 'active'
 
 - name: wait for first-time startup to finish
   wait_for:
     port: 8984
     delay: 5
     timeout: 180
-  when: not first_time_startup.stat.exists
+  when: first_time_startup.stdout != 'active'
 
 - name: Wait for URI
   uri:
@@ -169,13 +168,13 @@
   until: _result.status == 200
   retries: 100
   delay: 5
-  when: not first_time_startup.stat.exists
+  when: first_time_startup.stdout != 'active'
 
 - name: stop after first-time startup (if needed)
   become: yes
   become_user: alfresco-search
   command: '{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr/bin/solr stop'
-  when: not first_time_startup.stat.exists
+  when: first_time_startup.stdout != 'active'
 
 - name: Alfresco Search Services systemd unit file
   become: yes
