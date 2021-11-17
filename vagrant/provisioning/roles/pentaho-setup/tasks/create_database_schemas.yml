@@ -41,7 +41,7 @@
       script: ""
     - schema: "quartz"
       user: "pentaho_user"
-      script: "quartz-create-db.sql"
+      script: "quartz-create-db-postgres.sql"
   loop_control:
-    loop_var: s
+    loop_var: item
   when: db_engine == 'postgresql'
