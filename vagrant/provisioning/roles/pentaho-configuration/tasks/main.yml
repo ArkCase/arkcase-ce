@@ -118,15 +118,6 @@
   loop:
     - src: "repository.xml"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/jackrabbit/repository.xml"
-
-- name: database configuration files
-  become: yes
-  become_user: pentaho
-  copy:
-    backup: yes
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-  loop:
     - src: "quartz.properties"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/quartz/"
     - src: "hibernate-settings.xml"
