@@ -31,17 +31,20 @@
   when: db_engine == 'postgresql'
 
 - name: create hibernate schema (ansible will always report quartz as changed)
-  include_tasks: "{{ role_path }}/../postgresql/tasks/create_schema.yml"
+  include_tasks: "{{ role_path }}/../postgresql/tasks/create_specific_schema.yml"
   loop:
     - schema: "hibernate"
       user: "hibuser"
       script: ""
+      dbname: "hibernate"
     - schema: "jackrabbit"
       user: "jcr_user"
       script: ""
+      dbname: "jackrabbit"
     - schema: "quartz"
       user: "pentaho_user"
       script: "quartz-create-db-postgres.sql"
+      dbname: "quartz"
   loop_control:
-    loop_var: item
+    loop_var: s
   when: db_engine == 'postgresql'

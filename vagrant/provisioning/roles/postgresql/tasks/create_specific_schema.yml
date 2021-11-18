@@ -1,0 +1,62 @@
+---
+- name: Create specific users
+  postgresql_user:
+    name: "{{ s.user | string }}"
+    password: "{{ default_database_password }}"
+    login_host: "{{ s.login_host | default('localhost') }}"
+    login_password: "{{ s.login_password | default(default_database_password) }}"
+    login_user: "{{ s.login_user | default('postgres') }}"
+    login_unix_socket: "{{ s.login_unix_socket | default(postgresql_unix_socket_folder) }}"
+    port: "{{ s.port | default(omit) }}"
+    ssl_mode: require
+    ca_cert: "{{ ssl_cert }}"
+  no_log: false
+  become: true
+  become_user: postgres
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+
+- name: create postgres schema if script is empty
+  postgresql_schema:
+    database: "{{ s.dbname | string }}"
+    name: "{{ s.schema | string }}"
+    owner: "{{ s.user | string }}"
+    login_host: "{{ s.login_host | default('127.0.0.1') }}"
+    login_password: "{{ default_database_password }}"
+    login_user: "{{ s.user }}"
+    login_unix_socket: "{{ postgresql_unix_socket_folder }}"
+    port: "{{ s.port | default(omit) }}"
+  no_log: false
+  become: true
+  become_user: postgres
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+  when: s.script | length == 0
+
+- name: create postgres schema if script is empty
+  postgresql_db:
+    maintenance_db: "{{ s.dbname | string }}"
+    name: "{{ s.schema | string }}"
+    owner: "{{ s.user | string }}"
+    login_host: "{{ s.login_host | default('127.0.0.1') }}"
+    login_password: "{{ default_database_password }}"
+    login_user: "{{ s.user }}"
+    login_unix_socket: "{{ postgresql_unix_socket_folder }}"
+    port: "{{ s.port | default(omit) }}"
+    state: restore
+    target: "{{ root_folder }}/install/pentaho/{{ s.script }}"
+  no_log: false
+  become: true
+  become_user: postgres
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+  when: s.script | length > 0

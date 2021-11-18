@@ -19,6 +19,12 @@
       password: "{{ default_database_password }}"
     - name: activemq
       password: "{{ default_database_password }}"
+    - name: hibuser
+      password: "{{ default_database_password }}"
+    - name: jcr_user
+      password: "{{ default_database_password }}"
+    - name: pentaho_user
+      password: "{{ default_database_password }}"
   no_log: false
   become: true
   become_user: postgres
