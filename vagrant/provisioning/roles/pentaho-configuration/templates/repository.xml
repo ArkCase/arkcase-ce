@@ -271,7 +271,7 @@
           NOTE: The database must be pre-created in and match the parameters.  See Jackrabbit
           documentation for further explanation.
         -->
-    <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.MySqlPersistenceManager">
+    <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.{{ pentaho_persistance_manager }}">
       <param name="driver" value="{{ jdbc_driver_class_name }}"/>
       <param name="url" value="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_jackrabbit_schema)) }}"/>
       <param name="user" value="{{ database_pentaho_jackrabbit_user }}" />
@@ -406,7 +406,7 @@
           NOTE: The database must be pre-created in and match the parameters.  See Jackrabbit
           documentation for further explanation.
         -->
-    <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.MySqlPersistenceManager">
+    <PersistenceManager class="org.apache.jackrabbit.core.persistence.bundle.{{ pentaho_persistance_manager }}">
       <param name="driver" value="{{ jdbc_driver_class_name }}"/>
       <param name="url" value="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_jackrabbit_schema)) }}"/>
       <param name="user" value="{{ database_pentaho_jackrabbit_user }}" />

@@ -360,6 +360,8 @@ pentaho_ee_mapping_resource: "{{ 'hibernate/postgresql.EE.hbm.xml' if db_engine=
 hibernate_settings: "{{ 'system/hibernate/postgresql.hibernate.cfg.xml' if db_engine== 'postgresql' else 'system/hibernate/mysql5.hibernate.cfg.xml' }}"
 # pentaho schema and pentaho databaseType in repository.xml use the same values either postgresql or mysql
 pentaho_repository_schema: "{{ 'postgresql'  if db_engine== 'postgresql' else 'mysql' }}"
+pentaho_driver_delegate_class: "{{ 'PostgreSQLDelegate' if db_engine =='postgresql' else 'StdJDBCDelegate' }}"
+pentaho_persistance_manager: "{{ 'PostgreSQLPersistenceManager' if db_engine =='postgresql' else 'MySqlPersistenceManager' }}"
 
 database_pentaho_hibernate_schema: hibernate
 database_pentaho_hibernate_user: hibuser
