@@ -264,6 +264,8 @@
     path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco-global.properties"
     insertbefore: BOF
     block: |
+      transform.service.enabled=false
+      local.transform.service.enabled=false
       dir.keystore={{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/keystore
       messaging.broker.url=ssl://{{ activemq_host }}:61616
       index.subsystem.name=solr6
