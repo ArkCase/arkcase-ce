@@ -245,7 +245,7 @@
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:
-    arkcase_required_services: "{{ 'mariadb.service activemq.service alfresco.service samba.service solr.service config-server.service' if ldap_type=='samba' else 'mariadb.service activemq.service alfresco.service solr.service config-server.service' }}"
+    arkcase_required_services: "{{ (db_engine == 'postgresql') | ternary('postgresql-13.service', 'mariadb.service') }} {{'activemq.service alfresco.service samba.service solr.service config-server.service' if ldap_type=='samba' else 'activemq.service alfresco.service solr.service config-server.service' }}"
 
 - name: copy ArkCase and config server systemd unit files
   become: yes

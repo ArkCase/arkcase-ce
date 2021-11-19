@@ -356,12 +356,13 @@ jdbc_url_xml: "{{ 'jdbc:postgresql://' + database_host + ':5432/SCHEMA?' + postg
 jdbc_url_properties: "{{ 'jdbc:postgresql://' + database_host + ':5432/SCHEMA?' + postgresql_jdbc_url_option_properties_string if db_engine == 'postgresql' else 'jdbc:mysql://' + database_host_name +':3306/SCHEMA?' + database_mysql_jdbc_url_option_properties_string }}"
 hibernate_dialect: "{{ 'org.hibernate.dialect.PostgreSQLDialect' if db_engine == 'postgresql' else 'org.hibernate.dialect.MySQL5InnoDBDialect' }}"
 pentaho_ce_mapping_resource: "{{ 'hibernate/postgresql.hbm.xml' if db_engine == 'postgresql' else 'hibernate/mysql5innodb.hbm.xml' }}"
-pentaho_ee_mapping_resource: "{{ 'hibernate/postgresql.EE.hbm.xml' if db_engine== 'postgresql' else 'hibernate/mysql5innodb.EE.hbm.xml' }}"
-hibernate_settings: "{{ 'system/hibernate/postgresql.hibernate.cfg.xml' if db_engine== 'postgresql' else 'system/hibernate/mysql5.hibernate.cfg.xml' }}"
+pentaho_ee_mapping_resource: "{{ 'hibernate/postgresql.EE.hbm.xml' if db_engine == 'postgresql' else 'hibernate/mysql5innodb.EE.hbm.xml' }}"
+hibernate_settings: "{{ 'system/hibernate/postgresql.hibernate.cfg.xml' if db_engine == 'postgresql' else 'system/hibernate/mysql5.hibernate.cfg.xml' }}"
 # pentaho schema and pentaho databaseType in repository.xml use the same values either postgresql or mysql
 pentaho_repository_schema: "{{ 'postgresql'  if db_engine== 'postgresql' else 'mysql' }}"
 pentaho_driver_delegate_class: "{{ 'PostgreSQLDelegate' if db_engine =='postgresql' else 'StdJDBCDelegate' }}"
 pentaho_persistance_manager: "{{ 'PostgreSQLPersistenceManager' if db_engine =='postgresql' else 'MySqlPersistenceManager' }}"
+arkcase_db_platform: "{{ 'PostgreSQLPlatform' if db_engine == 'postgresql'  else 'MySQLPlatform' }}"
 
 database_pentaho_hibernate_schema: hibernate
 database_pentaho_hibernate_user: hibuser
