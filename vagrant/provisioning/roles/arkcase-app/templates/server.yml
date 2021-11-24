@@ -4,7 +4,7 @@ database:
   encryption_supported: "{{ (db_engine == 'postgresql') | ternary('true', 'false') }}"
 acm:
   driverClassName: "{{ jdbc_driver_class_name }}"
-  url: "{{ jdbc_url_xml | replace('SCHEMA', (database_arkcase_schema)) }}"
+  url: "{{ jdbc_url_properties | replace('SCHEMA', (database_arkcase_schema)) }}"
   password: "ENC({{ encrypted_default_database }})"
 ##activiti engine database properties
 activiti.db.type: "{{ (db_engine == 'postgresql') | ternary('postgres', 'mysql') }}"
