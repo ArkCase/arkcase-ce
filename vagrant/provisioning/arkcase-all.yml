@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: all, localhost
   roles:
     - role: common
       tags: [core, common, upgrade, marketplace]
