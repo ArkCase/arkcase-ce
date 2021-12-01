@@ -1,0 +1,78 @@
+- name: ensure Pentaho is stopped
+  become: yes
+  systemd:
+    name: pentaho
+    state: stopped
+
+- name: download Pentaho service pack 15
+  become: yes
+  become_user: pentaho
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_pentaho_user }}@{{ sftp_service_base_url }}:{{ sftp_pentaho_folder }}/PentahoServer-SP-8.3.0.15-993.bin
+  args:
+    chdir: "{{ root_folder }}/install/pentaho"
+    creates: "{{ root_folder }}/install/pentaho/PentahoServer-SP-8.3.0.15-993.bin"
+  environment:
+    SSHPASS: "{{ sftp_pentaho_password }}"
+
+- name: write expect script for installation of Pentaho service pack 15
+  become: yes
+  become_user: pentaho
+  template:
+    src: expect-script-sp15.txt
+    dest: /home/pentaho/expect-script-sp15
+
+- name: install Pentaho service pack 15
+  become: yes
+  become_user: pentaho
+  shell: expect -f /home/pentaho/expect-script-sp15
+
+- name: make sure everything in pentaho has proper ownership
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/pentaho"
+    state: directory
+    group: pentaho
+    owner: pentaho
+
+- name: Pentaho UI need to be re-applied on top of service pack 15
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ item.path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: ";null!=r.errorMessage&&(M=r.errorMessage),"
+      line: ';null!=r.errorMessage&&(M="An error has occurred. Please contact support."),'
+    - regexp: 't.hideBackgroundBtn()):t.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
+      line: 't.hideBackgroundBtn()):false&&t.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
+    - regexp: 't.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
+      line: 'false&&t.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
+    - regexp: 'this.view._isInsideDashboard()||inMobile||!this._hasSchedulePermission||s.byId("feedbackScreen").showBackgroundBtn(i.getString("FeedbackScreenBackground"))'
+      line: 'this.view._isInsideDashboard()||inMobile||!this._hasSchedulePermission||false&&s.byId("feedbackScreen").showBackgroundBtn(i.getString("FeedbackScreenBackground"))'
+  with_items: 
+    - "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-main-module.js"
+    - "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-app.js"
+
+- name: Update Pentaho to support report designer within ArkCase iframe
+  shell: "{{ item }}" 
+  become: yes
+  become_user: pentaho
+  with_items:
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/content {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/css {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/js {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/images/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/images/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/lib {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/css/browser.css {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/css/
+    - cp -prf {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+
+- name: start Pentaho
+  become: yes
+  systemd:
+    name: pentaho
+    state: started

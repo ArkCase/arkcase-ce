@@ -1,0 +1,9 @@
+set timeout 7
+spawn ./{{ root_folder }}/install/pentaho/PentahoServer-SP-8.3.0.15-993.bin -i console
+
+expect "More--"  { send "\n" ; exp_continue }
+expect -ex "DO YOU ACCEPT THE TERMS OF THIS LICENSE AGREEMENT? (Y/N)" { send "Y\n" ; exp_continue }
+expect -ex "ENTER AN ABSOLUTE PATH, OR PRESS <ENTER> TO ACCEPT THE DEFAULT" { send "{{ root_folder }}/app/pentaho/pentaho-server\n" ; exp_continue }
+expect -ex "IS THIS CORRECT? (Y/N)" { send "Y\n" ; exp_continue }
+
+wait

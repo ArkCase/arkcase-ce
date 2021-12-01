@@ -45,6 +45,8 @@
       tags: [core, pentaho, pentaho-ce]
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
+    - role: pentaho-service-pack-15
+      tags: [pentaho-service-pack-15]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app
