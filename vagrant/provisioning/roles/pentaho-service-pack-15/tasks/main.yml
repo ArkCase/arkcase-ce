@@ -1,3 +1,10 @@
+- name: install expect
+  become: yes
+  yum:
+    state: installed
+    name:
+      - expect
+
 - name: ensure Pentaho is stopped
   become: yes
   systemd:
@@ -14,6 +21,9 @@
   environment:
     SSHPASS: "{{ sftp_pentaho_password }}"
 
+- name: Ensure that the file has the right privileges
+  command: chmod 775 {{ root_folder }}/install/pentaho/PentahoServer-SP-8.3.0.15-993.bin
+
 - name: write expect script for installation of Pentaho service pack 15
   become: yes
   become_user: pentaho
@@ -24,7 +34,9 @@
 - name: install Pentaho service pack 15
   become: yes
   become_user: pentaho
-  shell: expect -f /home/pentaho/expect-script-sp15
+  shell: |
+    cd {{ root_folder}}/install/pentaho/
+    expect -f /home/pentaho/expect-script-sp15
 
 - name: make sure everything in pentaho has proper ownership
   become: yes
