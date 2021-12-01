@@ -1,0 +1,20 @@
+---
+- name: Install PostgreSQL yum repository.
+  become: yes
+  yum: 
+    name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+
+- name: Ensure PostgreSQL packages are installed.
+  become: yes
+  yum:
+    name: 
+      - postgresql13
+    state: present
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "PostgreSQL JDBC Driver"
+      dest: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+      owner: "root"
+      url: "https://jdbc.postgresql.org/download/{{ jdbc_driver_jar_filename }}"

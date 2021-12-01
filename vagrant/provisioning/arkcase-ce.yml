@@ -13,6 +13,8 @@
       tags: [core, ldap]
     - role: mariadb
       tags: [core, mariadb]
+    - role: postgresql-client
+      tags: [postgresql-client]
     - role: postgresql
       tags: [postgresql]
     - role: httpd
