@@ -46,27 +46,17 @@
     group: pentaho
     owner: pentaho
 
-- name: Pentaho UI need to be re-applied on top of service pack 15
-  become: yes
-  become_user: pentaho
-  lineinfile:
+- name: Ensure changes in reportviewer-app.js are made
+  copy:
+    src: "{{ item }}"
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed"
+    owner: pentaho
+    group: pentaho
+    mode: 0777
     backup: yes
-    backrefs: yes
-    path: "{{ item.path }}"
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-  loop:
-    - regexp: ";null!=r.errorMessage&&(M=r.errorMessage),"
-      line: ';null!=r.errorMessage&&(M="An error has occurred. Please contact support."),'
-    - regexp: 't.hideBackgroundBtn()):t.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
-      line: 't.hideBackgroundBtn()):false&&t.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
-    - regexp: 't.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
-      line: 'false&&t.showBackgroundBtn(i.getString("FeedbackScreenBackground")),'
-    - regexp: 'this.view._isInsideDashboard()||inMobile||!this._hasSchedulePermission||s.byId("feedbackScreen").showBackgroundBtn(i.getString("FeedbackScreenBackground"))'
-      line: 'this.view._isInsideDashboard()||inMobile||!this._hasSchedulePermission||false&&s.byId("feedbackScreen").showBackgroundBtn(i.getString("FeedbackScreenBackground"))'
-  with_items: 
-    - "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-main-module.js"
-    - "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed/reportviewer-app.js"
+  with_items:
+    - reportviewer-app.js
+    - reportviewer-main-module.js
 
 - name: Update Pentaho to support report designer within ArkCase iframe
   shell: "{{ item }}" 
