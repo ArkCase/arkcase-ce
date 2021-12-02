@@ -90,12 +90,23 @@
     group: postgres
   register: postgresql_conf
 
+- name: PostgreSQL host-based-access (HBA file) - allow remote connections
+  become: yes
+  become_user: postgres
+  lineinfile:
+    backup: yes
+    path: "{{ postgresql_data_dir }}/pg_hba.conf"
+    insertafter: EOF
+    state: present
+    line: "host    all             all             0.0.0.0/0          scram-sha-256"
+  register: pg_hba_conf
+
 - name: restart PostgreSQL if needed
   become: yes
   systemd:
     name: postgresql-13
     state: restarted
-  when: postgresql_conf is changed 
+  when: postgresql_conf is changed or pg_hba_conf is changed
 
 - name: Ensure PostgreSQL is started and enabled on boot.
   become: yes
