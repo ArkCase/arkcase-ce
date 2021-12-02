@@ -52,64 +52,15 @@
   set_fact:
     csrftoken: "{{ csrftoken_parsed.stdout|urldecode }}"
 
-- name: create acm share site
+- name: create share sites
   include_tasks: create-site.yml
-  vars:
-    s_title: "acm"
-    s_name: "acm"
-    s_description: "ArkCase Collaboration Site"
-    s_preset: "site-dashboard"
-    s_type: "{http://www.alfresco.org/model/site/1.0}site"
-    s_compliance: "{http://www.alfresco.org/model/recordsmanagement/1.0}rmsite"
-    s_csrftoken: "{{ csrftoken }}"
+  loop: "{{ alfresco_sites }}"
 
-- name: list the document library, so we can then add some folders
-  uri:
-    url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/container/acm/documentlibrary"
-    user: admin
-    password: admin
-    validate_certs: no
-    return_content: yes
-  register: doclib_out
-  failed_when: '"nodeRef" not in doclib_out.content'
-
-- name: see what folders already exist
-  uri:
-    url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/treenode/site/acm/documentLibrary?perms=false&children=false&max=1000"
-    user: admin
-    password: admin
-    validate_certs: no
-    return_content: yes
-  register: existing_folders_out
-
-- name: ensure the right folders are in the document library
-  uri:
-    url: "{{ alfresco_url }}/alfresco/s/api/site/folder/acm/documentlibrary"
-    method: POST
-    timeout: 120
-    user: admin
-    password: admin
-    validate_certs: no
-    return_content: yes
-    body_format: json
-    body:
-      name: "{{ item }}"
-      title: "{{ item }}"
-  register: folder_create_out
-  failed_when: '"site" not in folder_create_out.content'
-  loop: "{{ content_management_folders }}"
-  when: 'item not in existing_folders_out.content'
-
-- name: create records management share site
-  include_tasks: create-site.yml
-  vars:
-    s_title: "Records Management"
-    s_name: "rm"
-    s_description: "Records Management Site"
-    s_preset: "rm-site-dashboard"
-    s_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
-    s_compliance: "{http://www.alfresco.org/model/dod5015/1.0}site"
-    s_csrftoken: "{{ csrftoken }}"
+- name: create content management folders
+  include_tasks: create-content-folders.yml
+  loop: "{{ site_folders }}"
+  loop_control:
+    loop_var: site
 
 - name: fetch the RM container
   uri:
@@ -132,9 +83,9 @@
   include_tasks: create-category.yml
   vars:
     c_container_noderef: "{{ container_noderef }}"
-    c_name: "ACM"
+    c_name: "{{ records_management_root | default('ACM') }}"
 
-- name: get the RM site containers, so we can find the ACM noderef
+- name: get the RM site containers, so we can find the root noderef
   uri:
     url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
@@ -142,11 +93,11 @@
     validate_certs: no
   register: rm_existing_folders_out
 
-- name: find the ACM folder noderef
+- name: find the root folder noderef
   set_fact:
     acm_category_noderef: "{{ rm_existing_folders_out.json | json_query(rm_noderef_query) | join(',') }}"
   vars:
-    rm_noderef_query: "items[?name=='ACM'].nodeRef"
+    rm_noderef_query: "items[?name=='{{ records_management_root | default('ACM') }}'].nodeRef"
 
 - name: create record manager categories
   include_tasks: create-category.yml
@@ -155,6 +106,7 @@
     c_name: "{{ item }}"
   loop: "{{ records_management_categories }}"
 
+# TODO: groups per site, not hardcoding acm
 - name: add groups to acm site
   uri: 
     url: "{{ alfresco_url }}/alfresco/s/api/sites/acm/memberships"
@@ -171,6 +123,7 @@
   register: group_add_out
   failed_when: '"authority" not in group_add_out.content'
   loop: "{{ ldap_groups|flatten }}"
+  when: alfresco_add_groups_to_sites | default(true)
 
 - name: add groups to records management admin role
   uri: 
@@ -185,6 +138,7 @@
   register: rma_admin_add_out
   failed_when: '"{}" not in rma_admin_add_out.content'
   loop: "{{ ldap_groups|flatten }}"
+  when: alfresco_add_groups_to_sites | default(true)
 
 - name: add groups to records management site
   uri: 
@@ -202,10 +156,4 @@
   register: rma_group_add_out
   failed_when: '"authority" not in rma_group_add_out.content'
   loop: "{{ ldap_groups|flatten }}"
-
-
-# Alfresco CE 6.1 download... but, there is no compatible RMA yet,
-# so we can't use it
-#https://download.alfresco.com/cloudfront/release/community/201901-GA-build-205/alfresco-content-services-community-distribution-6.1.2-ga.zip
-
-# install docs: https://docs.alfresco.com/community/concepts/install-community-intro.html
+  when: alfresco_add_groups_to_sites | default(true)
