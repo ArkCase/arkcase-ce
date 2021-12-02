@@ -4,3 +4,4 @@ expect "PRESS <ENTER> TO CONTINUE:"  { send "\n" ; exp_continue }
 expect -ex "DO YOU ACCEPT THE TERMS OF THIS LICENSE AGREEMENT? (Y/N)" { send "Y\n" ; exp_continue }
 expect -ex "ENTER AN ABSOLUTE PATH, OR PRESS <ENTER> TO ACCEPT THE DEFAULT" { send "{{ root_folder }}/app/pentaho/pentaho-server\n" ; exp_continue }
 expect -ex "IS THIS CORRECT? (Y/N)" { send "Y\n" ; exp_continue }
+sleep 60
