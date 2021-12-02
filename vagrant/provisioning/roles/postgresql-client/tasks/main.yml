@@ -10,6 +10,7 @@
   yum:
     name: 
       - postgresql13
+      - python-psycopg2
     state: present
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
