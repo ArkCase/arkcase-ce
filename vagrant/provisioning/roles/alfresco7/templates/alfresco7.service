@@ -1,7 +1,7 @@
 [Unit]
 Description=Alfresco service
-After={{ 'postgresql-13.service' if db_engine == "postgresql" else 'mariadb.service' }}
-BindsTo={{ 'postgresql-13.service' if db_engine == "postgresql" else 'mariadb.service' }}
+After=activemq {{ (db_engine == 'postgresql') | ternary('postgresql-13.service', 'mariadb.service') if alfresco_host == database_host else ''}}
+BindsTo=activemq {{ (db_engine == 'postgresql') | ternary('postgresql-13.service', 'mariadb.service') if alfresco_host == database_host else ''}}
 
 [Service]
 Type=forking
