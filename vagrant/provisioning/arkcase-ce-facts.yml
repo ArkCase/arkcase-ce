@@ -424,29 +424,53 @@ alfresco_governance_services_version: 3.2.0
 # whether to enable sync from alfresco to arkcase
 enable_alfresco_sync: true
 
+# whether to add ldap groups to Alfresco sites
+alfresco_add_groups_to_sites: false
+
+alfresco_sites:
+  - s_title: "ACM"
+    s_name: "acm"
+    s_description: "ArkCase Collaboration Site"
+    s_preset: "site-dashboard"
+    s_type: "{http://www.alfresco.org/model/site/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/recordsmanagement/1.0}rmsite"
+  - s_title: "REPS"
+    s_name: "reps"
+    s_description: "MDSAP Collaboration Site"
+    s_preset: "site-dashboard"
+    s_type: "{http://www.alfresco.org/model/site/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/recordsmanagement/1.0}rmsite"
+  - s_title: "Records Management"
+    s_name: "rm"
+    s_description: "Records Management Site"
+    s_preset: "rm-site-dashboard"
+    s_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/dod5015/1.0}site"
+
+records_management_root: "REPS"
 records_management_categories:
-  - "Case Files"
-  - "Complaints"
-  - "Document Repositories"
-  - "Requests"
-  - "Tasks"
-  - "Consultations"
-  - "SAR"
-content_management_folders:
-  - "Case Files"
-  - "Complaints"
-  - "Document Repositories"
-  - "Expenses"
-  - "People"
-  - "Recycle Bin"
-  - "Tasks"
-  - "Timesheets"
-  - "User Profile"
-  - "Business Processes"
-  - "Consultations"
-  - "SAR"
-  - "Requests" 
-  
+  - "Technical Reviews"
+  - "Policies and Procedures"
+  - "Nonconformities"
+  - "Assessments"
+
+site_folders:
+  - s_name: reps
+    content_management_folders:
+      - "User Profile"
+      - "TRRC"
+      - "temp"
+      - "Tasks"
+      - "NonconformityPackage"
+      - "Document Repositories"
+      - "Audit Report"
+      - "Assessment"
+      - "AO Profiles"
+  - s_name: acm
+    content_management_folders:
+      - "User Profile"
+      - "Document Repositories"
+
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
 # from https://social.technet.microsoft.com/wiki/contents/articles/29480.active-directory-fun-with-maximum-password-age.aspx... just under 30,000 years from now
