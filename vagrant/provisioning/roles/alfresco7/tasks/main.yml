@@ -264,6 +264,8 @@
     path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco-global.properties"
     insertbefore: BOF
     block: |
+      # post-Alfresco-6.3, folowing property needed to enable basic auth on CMIS endpoints
+      alfresco.restApi.basicAuthScheme=true
       transform.service.enabled=false
       local.transform.service.enabled=false
       dir.keystore={{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/keystore
