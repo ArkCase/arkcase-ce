@@ -20,7 +20,7 @@
     
 # note, can't use get_uri here since we need to keep the cookie jar
 - name: login to Share
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data "password=admin" -X POST "{{ alfresco_url }}/share/page/dologin"
+  command: curl -k -sS --user admin:"{{ alfresco_admin_password }}" --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data password="{{ alfresco_admin_password }}" -X POST "{{ alfresco_url }}/share/page/dologin"
   args:
     warn: false
   changed_when: false
@@ -32,7 +32,7 @@
   changed_when: false
 
 - name: get the CSRFToken
-  command: curl -k -sS --user admin:admin --cookie cookie.txt --cookie-jar cookie.txt "{{ alfresco_url }}/share/service/modules/authenticated?a=user"
+  command: curl -k -sS --user admin:"{{ alfresco_admin_password }}" --cookie cookie.txt --cookie-jar cookie.txt "{{ alfresco_url }}/share/service/modules/authenticated?a=user"
   args:
     warn: false
   changed_when: false
@@ -67,7 +67,7 @@
     url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/containers/rm"
     validate_certs: false
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
   register: rm_container_out
 
 # the join filter is just to lift the only array member into a string...
@@ -89,7 +89,7 @@
   uri:
     url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/treenode/site/rm/documentLibrary?perms=false&children=false&max=1000"
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: no
   register: rm_existing_folders_out
 
@@ -112,7 +112,7 @@
     url: "{{ alfresco_url }}/alfresco/s/api/sites/acm/memberships"
     method: POST
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: no
     return_content: yes
     body_format: json
@@ -130,7 +130,7 @@
     url: "{{ alfresco_url }}/alfresco/s/api/rm/roles/{{ item.alfresco_rma_role}}/authorities/GROUP_{{ item.name | urlencode }}"
     method: POST
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: no
     return_content: yes
     body_format: json
@@ -145,7 +145,7 @@
     url: "{{ alfresco_url }}/alfresco/s/api/sites/rm/memberships"
     method: POST
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: no
     return_content: yes
     body_format: json

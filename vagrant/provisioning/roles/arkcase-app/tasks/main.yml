@@ -23,8 +23,8 @@
         value: "{{ default_database_password }}"
       - name: default_user
         value: "{{ default_user_password }}"
-      - name: default_alfresco
-        value: admin
+      - name: alfresco_admin_password
+        value: "{{ alfresco_admin_password }}"
       - name: old_default_user
         value: AcMd3v$
       - name: activemq_password
@@ -613,9 +613,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -657,9 +657,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -687,9 +687,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -699,7 +699,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: camel_alfresco_cmis_properties.stat.exists
 
 - name: see if we have a camel opencmis cmis properties file
@@ -720,9 +720,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -732,7 +732,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: camel_open_cmis_properties.stat.exists
 
 
@@ -764,9 +764,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -776,7 +776,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: alfresco_cmis_properties.stat.exists
 
 - name: see if we have an opencmis cmis properties file
@@ -797,9 +797,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -809,7 +809,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: open_cmis_properties.stat.exists
 
 # this template includes encrypted passwords

@@ -39,6 +39,8 @@
       tags: [alfresco7, alfresco7-ce]
     - role: alfresco7
       tags: [alfresco7]
+    - role: alfresco-change-password
+      tags: [alfresco-change-password]
     - role: solr
       tags: [core, solr]
     - role: pentaho-setup
