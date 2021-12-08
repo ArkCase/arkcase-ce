@@ -60,7 +60,7 @@
     - role: microservices
       tags: [microservices]
     - role: pentaho-license
-      tags: [pentaho-license, pentaho-ee, arkcase-ee]   
+      tags: [pentaho-license, arkcase-ee]   
     - role: arkcase-prerequisites
       tags: [arkcase-prerequisites, core, arkcase, upgrade, marketplace]
     - role: arkcase-app

@@ -23,6 +23,8 @@ expect {
   { sleep 0.5 ; send -- "{{ root_folder }}/app/pentaho/pentaho-server\r" ; sleep 0.5 ; exp_continue }
   "IS THIS CORRECT*"
   { sleep 0.5 ; send -- "Y\r" ; sleep 0.5 ; exp_continue }
+  "PRESS <ENTER> TO EXIT THE INSTALLER*"
+  { puts "all done!" ; exit 0 }
   "This installer can only update version*"
   { puts "Service Pack 15 already installed!" ; exit 0 }
   eof
