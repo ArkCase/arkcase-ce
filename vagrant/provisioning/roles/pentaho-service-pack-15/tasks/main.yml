@@ -22,6 +22,8 @@
     SSHPASS: "{{ sftp_pentaho_password }}"
 
 - name: Ensure that the file has the right privileges
+  become: yes
+  become_user: pentaho
   command: chmod 775 {{ root_folder }}/install/pentaho/PentahoServer-SP-8.3.0.15-993.bin
 
 - name: write expect script for installation of Pentaho service pack 15
@@ -47,6 +49,8 @@
     owner: pentaho
 
 - name: Ensure changes in reportviewer-app.js are made
+  become: yes
+  become_user: pentaho
   copy:
     src: "{{ item }}"
     dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed"

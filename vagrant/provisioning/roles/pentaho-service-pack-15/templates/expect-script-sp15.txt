@@ -1,7 +1,39 @@
+set timeout 30
+
+set force_conservative 1  ;# set to 1 to force conservative mode even if
+                          ;# script wasn't run conservatively originally
+if {$force_conservative} {
+        set send_slow {1 .1}
+        proc send {ignore arg} {
+                sleep .1
+                exp_send -s -- $arg
+        }
+}
+
+set env(IATEMPDIR) {{ root_folder }}/tmp/pentaho
 spawn ./PentahoServer-SP-8.3.0.15-993.bin -i console
 
-expect "PRESS <ENTER> TO CONTINUE:"  { send "\n" ; exp_continue }
-expect -ex "DO YOU ACCEPT THE TERMS OF THIS LICENSE AGREEMENT? (Y/N)" { send "Y\n" ; exp_continue }
-expect -ex "ENTER AN ABSOLUTE PATH, OR PRESS <ENTER> TO ACCEPT THE DEFAULT" { send "{{ root_folder }}/app/pentaho/pentaho-server\n" ; exp_continue }
-expect -ex "IS THIS CORRECT? (Y/N)" { send "Y\n" ; exp_continue }
-sleep 60
+expect {
+  timeout { send_user "\nFailed to get expected prompt\n"; exit 1 }
+  "PRESS <ENTER> TO CONT*"
+  { sleep 0.5 ; send -- "\r" ; sleep 0.5 ; exp_continue }
+  "DO YOU ACCEPT THE TERMS*"
+  { sleep 0.5 ; send -- "Y\r" ; sleep 0.5 ; exp_continue }
+  "ENTER AN ABSOLUTE PATH*"
+  { sleep 0.5 ; send -- "{{ root_folder }}/app/pentaho/pentaho-server\r" ; sleep 0.5 ; exp_continue }
+  "IS THIS CORRECT*"
+  { sleep 0.5 ; send -- "Y\r" ; sleep 0.5 ; exp_continue }
+  "This installer can only update version*"
+  { puts "Service Pack 15 already installed!" ; exit 0 }
+  eof
+}
+
+foreach {pid spawnid os_error_flag value} [wait] break
+
+if {$os_error_flag == 0} {
+    puts "exit status: $value"
+    exit $value
+} else {
+    puts "errno: $value"
+    exit $value
+}

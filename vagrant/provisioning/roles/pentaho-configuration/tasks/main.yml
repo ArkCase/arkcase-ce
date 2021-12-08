@@ -1,4 +1,4 @@
-- name: link MariaDB jar file
+- name: link JDBC jar file
   become: yes
   become_user: pentaho
   file:
@@ -125,13 +125,22 @@
     - src: "activemq.xml"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/karaf/etc/"
 
+- name: hibernate template (postgresql only)
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    src: applicationContext-security-hibernate_postgresql.properties
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dialects/postgresql/applicationContext-spring-security-hibernate.properties"
+  when: db_engine == 'postgresql'
+
 - name: copy audit_sql.xml (local file)
   become: yes
   become_user: pentaho
   copy:
     backup: yes
     remote_src: yes
-    src: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dialects/mysql5/audit_sql.xml"
+    src: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/dialects/{{ (db_engine == 'postgresql') | ternary('postgresql', 'mysql5') }}/audit_sql.xml"
     dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/audit_sql.xml"
 
 - name: add resource-refs to web.xml
@@ -227,7 +236,7 @@
     backup: yes
 
 # Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
-- name: Pentaho systemd unit file (local MariaDB)
+- name: Pentaho systemd unit file (local database)
   become: yes
   template:
     src: "pentaho.service"

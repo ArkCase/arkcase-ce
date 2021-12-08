@@ -37,14 +37,23 @@
       user: "hibuser"
       script: ""
       dbname: "hibernate"
+      login_host: "{{ database_host }}"
+      login_user: arkcase-root
+      login_password: "{{ default_database_password }}"
     - schema: "jackrabbit"
       user: "jcr_user"
       script: ""
       dbname: "jackrabbit"
+      login_host: "{{ database_host }}"
+      login_user: arkcase-root
+      login_password: "{{ default_database_password }}"
     - schema: "quartz"
       user: "pentaho_user"
       script: "quartz-create-db-postgres.sql"
       dbname: "quartz"
+      login_host: "{{ database_host }}"
+      login_user: arkcase-root
+      login_password: "{{ default_database_password }}"
   loop_control:
     loop_var: s
   when: db_engine == 'postgresql'
