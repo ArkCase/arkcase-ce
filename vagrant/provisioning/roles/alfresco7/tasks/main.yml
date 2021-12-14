@@ -45,7 +45,6 @@
     recurse: yes
   loop:
     - "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1"
-
     - "{{ root_folder }}/app/alfresco7/shared/lib"
     - "{{ root_folder }}/app/alfresco7/modules/platform"
     - "{{ root_folder }}/app/alfresco7/modules/share"
@@ -105,7 +104,6 @@
     src: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/web-server/webapps/_vti_bin.war"
     dest: "{{ root_folder }}/app/alfresco7/webapps/_vti_bin.war"
   when: vti_bin_stat.stat.exists
-
 
 - name: copy alfresco.xml and share.xml conf files
   block:
@@ -181,13 +179,6 @@
     replace: 'https://{{ alfresco_host }}:{{ alfresco_tls_port }}'
 
 - include_tasks: csrf_filter.yml
-
-- name: create alfresco database schema
-  include_tasks: "{{ role_path }}/../{{ db_engine }}/tasks/create_schema.yml"
-  args:
-    apply:
-      vars:
-        item: alfresco
 
 - name: copy alfresco-mmt.jar
   become: yes
@@ -327,7 +318,7 @@
       ldap.authentication.java.naming.read.timeout=0
       #################################################################
       #      # For Active Directory / Samba
-      authentication.chain={{ alfresco_enable_early_auth | default(true) | ternary('external1:external,', '') }}ldap1:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+      authentication.chain={{ alfresco_enable_external_auth | default(true) | ternary('external1:external,', '') }}ldap1:ldap-ad,alfrescoNtlm1:alfrescoNtlm
       ldap.synchronization.groupQuery=objectClass\=group
       ldap.synchronization.groupDifferentialQuery=(&(objectclass\=group)(!(whenChanged<\={0})))
       ldap.synchronization.personQuery=objectClass\=user

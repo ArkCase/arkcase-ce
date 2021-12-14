@@ -2,7 +2,7 @@
   uri:
     url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/container/{{ site.s_name }}/documentlibrary"
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: no
     return_content: yes
   register: doclib_out
@@ -12,7 +12,7 @@
   uri:
     url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/treenode/site/{{ site.s_name }}/documentLibrary?perms=false&children=false&max=1000"
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: no
     return_content: yes
   register: existing_folders_out
@@ -23,7 +23,7 @@
     method: POST
     timeout: 120
     user: admin
-    password: admin
+    password: "{{ alfresco_admin_password }}"
     validate_certs: no
     return_content: yes
     body_format: json

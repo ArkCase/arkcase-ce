@@ -110,11 +110,6 @@
     - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
   when: activemq_unarchived is changed
 
-- name: create activemq database schema
-  include_tasks: "{{ role_path }}/../{{ db_engine }}/tasks/create_schema.yml"
-  loop:
-    - activemq
-    
 - name: jdbc support and dead letter queue policy
   block:
     - name: read activemq.xml

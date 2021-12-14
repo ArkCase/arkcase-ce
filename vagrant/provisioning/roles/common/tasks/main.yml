@@ -122,3 +122,11 @@
     minute: "5"
     job: 'find {{ root_folder }}/data/arkcase-home/fileserver -mtime +6 -type f -exec rm {} \;'
     state: present
+
+- name: Get the RDS common certifcate
+  become: yes
+  uri:
+    creates: "{{ root_folder }}/common/rds-ca-2019-root.pem"
+    dest: "{{ root_folder }}/common/rds-ca-2019-root.pem"
+    url: https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+    

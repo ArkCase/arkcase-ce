@@ -3,6 +3,10 @@
   roles:
     - role: common
       tags: [core, common]
+    - role: pki-aws-csr
+      tags: [pki-aws-csr]
+    - role: pki-aws-client
+      tags: [pki-aws-client]
     - role: pki
       tags: [core, pki]
     - role: pki_client

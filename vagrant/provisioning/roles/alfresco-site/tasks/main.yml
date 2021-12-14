@@ -12,6 +12,10 @@
   set_fact:
     alfresco_url: "{{ alfresco_protocol }}://{{ alfresco_host }}:{{ alfresco_port }}"
 
+- name: echo url
+  debug:
+    msg: "{{ alfresco_url }}"
+
 - name: remove the cookie.txt file if it exists
   file:
     path: cookie.txt

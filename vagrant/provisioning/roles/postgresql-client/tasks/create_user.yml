@@ -1,0 +1,34 @@
+---
+- name: Ensure standard PostgreSQL users are present.
+  postgresql_user:
+    name: "{{ item.name }}"
+    db: "postgres"
+    password: "{{ item.password | default(omit) }}"
+    login_host: "{{ database_host }}"
+    login_password: "{{ item.login_password | default(database_root_password) }}"
+    login_user: "{{ item.login_user | default('arkcaseroot') }}"
+    port: "{{ item.port | default(omit) }}"
+    ssl_mode: require
+    ca_cert: "{{ database_server_ssl_cert }}"
+  with_items: 
+    - name: arkcase
+      password: "{{ default_database_password }}"
+    - name: alfresco
+      password: "{{ default_database_password }}"
+    - name: pentaho
+      password: "{{ default_database_password }}"
+    - name: activemq
+      password: "{{ default_database_password }}"
+    - name: hibuser
+      password: "{{ default_database_password }}"
+    - name: jcr_user
+      password: "{{ default_database_password }}"
+    - name: pentaho_user
+      password: "{{ default_database_password }}"
+  no_log: false
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+

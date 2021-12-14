@@ -19,3 +19,11 @@
       dest: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
       owner: "root"
       url: "https://jdbc.postgresql.org/download/{{ jdbc_driver_jar_filename }}"
+
+- name: create PostgreSQL users
+  include_tasks: "create_user.yml"
+
+- name: create PostgreSQL databases
+  include_tasks: "create_database.yml"
+
+
