@@ -271,11 +271,11 @@
       synchronization.import.cron=0 0/5 * * * ? *
       csrf.filter.enabled=false
       dir.root={{ root_folder }}/data/alfresco7/alf_data
-      db.name=alfresco
-      db.username=alfresco
+      db.name={{ database_alfresco_schema | default('alfresco') }}
+      db.username={{ database_alfresco_user | default('alfresco') }}
       db.password={{ default_database_password }}
       db.driver={{ jdbc_driver_class_name }}
-      db.url={{ jdbc_url_properties | replace('SCHEMA', 'alfresco') }}
+      db.url={{ jdbc_url_properties | replace('SCHEMA', database_alfresco_schema | default('alfresco') ) }}
       db.schema.update=true
       db.pool.max=50
       db.pool.validate.query={{ jdbc_validation_query }}

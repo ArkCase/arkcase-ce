@@ -11,19 +11,19 @@
     ssl_mode: require
     ca_cert: "{{ database_server_ssl_cert }}"
   with_items: 
-    - name: arkcase
+    - name: "{{ database_arkcase_user | default('arkcase') }}"
       password: "{{ default_database_password }}"
-    - name: alfresco
+    - name: "{{ database_alfresco_user | default('alfresco') }}"
       password: "{{ default_database_password }}"
-    - name: pentaho
+    - name: "{{ database_pentaho_user | default('pentaho') }}"
       password: "{{ default_database_password }}"
-    - name: activemq
+    - name: "{{ database_activemq_user | default('activemq') }}"
       password: "{{ default_database_password }}"
-    - name: hibuser
+    - name: "{{ database_pentaho_hibernate_user | default('hibuser') }}"
       password: "{{ default_database_password }}"
-    - name: jcr_user
+    - name: "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
       password: "{{ default_database_password }}"
-    - name: pentaho_user
+    - name: "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
       password: "{{ default_database_password }}"
   no_log: false
   # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509

@@ -126,8 +126,8 @@
         block: |
               <bean id="jdbc-ds" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">
                   <property name="driverClassName" value="{{ jdbc_driver_class_name }}"/>
-                  <property name="url" value="{{ jdbc_url_xml | replace('SCHEMA', 'activemq') }}"/>
-                  <property name="username" value="activemq"/>
+                  <property name="url" value="{{ jdbc_url_xml | replace('SCHEMA', database_activemq_schema | default('activemq') ) }}"/>
+                  <property name="username" value="{{ database_activemq_user }}"/>
                   <property name="password" value="{{ default_database_password }}"/>
                   <property name="initialSize" value="5"/>
                   <property name="maxTotal" value="20"/>
@@ -217,7 +217,7 @@
   block:
     - name: check whether the ActiveMQ tables were already created
       become: yes
-      command: "{{ database_list_tables_command | replace('SCHEMA', 'activemq') }}"
+      command: "{{ database_list_tables_command | replace('SCHEMA', database_activemq_schema | default('activemq') ) }}"
       register: show_tables
       changed_when: false
       environment:
@@ -244,12 +244,12 @@
   block:
     - name: find current datatype for activemq_msgs.msg
       become: yes
-      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = 'activemq' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
+      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = '{{ database_activemq_schema | default('activemq') }}' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
       register: find_data_type
       changed_when: false
     - name: update data type, if necessary
       become: yes
-      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
+      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock {{ database_activemq_schema | default('activemq') }} -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
       when: "'blob' == find_data_type.stdout"
   when: db_engine == 'mariadb'
 
