@@ -4,7 +4,7 @@
     "connectSql":"",
     "databaseName":"arkcase",
     "databasePort":"3306",
-    "hostname":"{{ database_host }}",
+    "hostname":"{{ database_host_replica | default(database_host) }}",
     "name":"MariaDB Local",
     "password":"{{ rds_password | default(default_database_password) }}",
     "username":"{{ rds_user | default('arkcase') }}",
