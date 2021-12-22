@@ -1059,5 +1059,5 @@
   become: yes
   file:
     src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
-    dest: absent
+    dest: "{{ root_folder }}/arkcase/webapps/arkcase/WEB-INF/lib/{{ jdbc_driver_jar_filename }}"
   when: postgresql_jdbc_version is version('42.3.1')
