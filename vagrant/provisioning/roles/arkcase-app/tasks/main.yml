@@ -80,10 +80,6 @@
       dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
       owner: arkcase
       url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
-    - name: config-server jar file
-      dest: "{{ root_folder }}/app/config-server/config-server.jar"
-      owner: arkcase
-      url: https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar
   when: arkcase_retrieve_strategy == "github"
 
 - name: download arkcase war file (if using sftp)
@@ -109,33 +105,6 @@
 - name: format config server version
   set_fact:
     arkcase_config_server_version_formatted: "{{ '-' ~ arkcase_config_server_version if arkcase_config_server_version != '' else '' }}"
-
-- name: download config server jar file (if using sftp)
-  become: yes
-  become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/config-server{{ arkcase_config_server_version_formatted }}.jar
-  args:
-    chdir: "{{ root_folder }}/tmp/config-server"
-  environment:
-    SSHPASS: "{{ sftp_arkcase_password }}"
-  when: arkcase_retrieve_strategy == "sftp"
-
-- name: copy config server jar file to app folder (this will tell us if it actually changed)
-  become: yes
-  become_user: arkcase
-  copy:
-    remote_src: yes
-    src: "{{ root_folder }}/tmp/config-server/config-server{{ arkcase_config_server_version_formatted }}.jar"
-    dest: "{{ root_folder }}/app/config-server/config-server.jar"
-  register: config_server_jar
-  when: arkcase_retrieve_strategy == "sftp"
-
-- name: ensure config server jar is executable
-  become: yes
-  become_user: arkcase
-  file:
-    path: "{{ root_folder }}/app/config-server/config-server.jar"
-    mode: "u=rwx,g=r,o=r"
 
 - name: format extension version
   set_fact:
@@ -241,11 +210,10 @@
     dest: "/etc/logrotate.d/{{ item }}"
   loop:
     - "arkcase"
-    - "config-server"
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:
-    arkcase_required_services: "{{ (db_engine == 'postgresql') | ternary('postgresql-13.service alfresco7.service', 'mariadb.service alfresco.service') }} {{'activemq.service samba.service solr.service config-server.service' if ldap_type=='samba' else 'activemq.service solr.service config-server.service' }}"
+    arkcase_required_services: "{{ (db_engine == 'postgresql') | ternary('postgresql-13.service alfresco7.service', 'mariadb.service alfresco.service') }} {{'activemq.service samba.service solr.service' if ldap_type=='samba' else 'activemq.service solr.service' }}"
 
 - name: copy ArkCase and config server systemd unit files
   become: yes
@@ -255,16 +223,6 @@
   loop:
     - src: arkcase.service
       dest: /etc/systemd/system/arkcase.service
-    - src: config-server.service
-      dest: /etc/systemd/system/config-server.service
-
-- name: copy config-server configuration file
-  become: yes
-  become_user: arkcase
-  template:
-    src: config-server.conf
-    dest: "{{ root_folder }}/app/config-server/config-server.conf"
-    force: yes
 
 ##### Mule TLS fixes #####
 - name: ensure custom/WEB-INF/classes exists
@@ -338,23 +296,6 @@
     warn: false
   when: tls_default_removed_from_service is changed
 
-- name: application.yaml file
-  become: yes
-  become_user: arkcase
-  template:
-    src: application.yaml
-    dest: "{{ root_folder }}/app/config-server/application.yaml"
-    backup: yes
-
-- name: run config-server with application.yaml file
-  become: yes
-  replace:
-    backup: yes
-    path: "/etc/systemd/system/config-server.service"
-    regexp: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp"
-    replace: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp -Dspring.config.location={{ root_folder }}/app/config-server/application.yaml"
-  when: arkcase_version == "" or arkcase_version is version('2021.02', '>=')
-
 - name: enable ArkCase 
   become: yes
   systemd:
@@ -362,41 +303,6 @@
     name: arkcase
     enabled: yes
     masked: no
-
-- name: enable config-server
-  become: yes
-  systemd:
-    daemon_reload: yes
-    name: config-server
-    enabled: yes
-    masked: no
-
-- name: check config-server is active
-  shell: systemctl status config-server.service | grep Active | awk -v N=2 '{print $N}'
-  register: output
-
-- name: restart config-server to bring the changes in the service file
-  service:
-    name: config-server
-    state: restarted
-  when: output.stdout == 'active'
-
-- name: capture current arkcase.yaml
-  become: yes
-  become_user: arkcase
-  shell: cat /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
-  register: arkcase_yaml_contents
-  changed_when: false
-
-- name: insert suggest handler in arkcase.yaml, if needed
-  become: yes
-  become_user: arkcase
-  lineinfile:
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
-    state: present
-    insertafter: 'updateHandler: "update"'
-    line: '  suggestHandler: "suggest"'
-  when: arkcase_yaml_contents.stdout.find('suggestHandler') == -1
 
 - name: check whether the symmetric key is a symlink
   become: yes
@@ -472,7 +378,6 @@
     path: /home/arkcase/.arkcase/acm/private/acm-arkcase.crt
     state: absent
   when: acmarkcase_stat.stat.exists and not acmarkcase_stat.stat.islnk
-
 
 - name: list certs in the key store
   become: yes
@@ -563,23 +468,6 @@
     path: /home/arkcase/.arkcase/acm/auditPatterns.properties
   register: audit_patterns
 
-- name: ensure config server spring folder exists
-  become: yes
-  become_user: arkcase
-  file:
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring
-    state: directory
-
-- name: copy audit patterns if necessary
-  become: yes
-  become_user: arkcase
-  copy: 
-    remote_src: yes
-    backup: yes
-    src: /home/arkcase/.arkcase/acm/auditPatterns.properties
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring/auditPatterns.properties
-  when: audit_patterns.stat.exists
-
 - name: copy the script to update rules spreadsheets
   become: yes
   become_user: arkcase
@@ -602,50 +490,6 @@
   loop_control:
     loop_var: s
 
-- name: plaintext passwords (yaml)
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase.yaml
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  loop:
-# note, using dot to match regexp special chars
-    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_alfresco_admin_password }})"
-    - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_alfresco_admin_password }})"
-    - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
-      replace: "ENC({{ encrypted_old_default_user }})"
-    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_password }})"
-    - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
-      replace: "ENC({{ encrypted_default_database }})"
-    - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
-      replace: "ENC({{ encrypted_snowbound_key }})"
-
-- name: see if arkcase-activemq.yaml exists
-  become: yes
-  become_user: arkcase
-  stat:
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
-  register: arkcase_activemq_xml
-  
-- name: plaintext passwords (arkcase-activemq.yaml)
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  loop:
-# note, using dot to match regexp special chars
-    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_password }})"
-  when: arkcase_activemq_xml.stat.exists
-      
 - name: plaintext passwords (forms properties)
   become: yes
   become_user: arkcase
@@ -812,41 +656,6 @@
       replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: open_cmis_properties.stat.exists
 
-# this template includes encrypted passwords
-# so it must be run after we encrypt the passwords
-- name: server-specific configuration for version 3.3.2
-  become: yes
-  become_user: arkcase
-  template:
-    backup: yes
-    src: server.yml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-
-# the rolesToGroups format changed during the 3.3.3 release cycle, so we need 
-# one format for pre-3.3.3 versions, and another format for 3.3.3+
-- name: roles to groups mapping (3.3.2 and below)
-  become: yes
-  become_user: arkcase
-  blockinfile:
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - ROLES TO GROUPS"
-    block: |
-      application.roles_to_groups: "{{ roles_to_groups }}"
-  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
-
-# the rolesToGroups format changed during the 3.3.3 release cycle, so we need 
-# one format for pre-3.3.3 versions, and another format for 3.3.3+
-- name: roles to groups mapping (3.3.3 and above)
-  become: yes
-  become_user: arkcase
-  blockinfile:
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-    marker: "# {mark} ANSIBLE MANAGED BLOCK - ROLES TO GROUPS"
-    block: |
-      application.rolesToGroups:
-        {{ roles_to_groups_yaml | to_nice_yaml | indent(2) }}
-  when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
-
 - name: cmis host name
   become: yes
   become_user: arkcase
@@ -897,33 +706,6 @@
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
       replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
-
-- name: copy arkcase-activemq.yaml if necessary
-  become: yes
-  become_user: arkcase
-  copy: 
-    src: arkcase-activemq.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
-    force: no
-  when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
-
-- name: update existing arkcase-activemq.yaml
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
-    regexp: acm-arkcase
-    replace: "{{ activemq_host }}"
-  when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
-
-- name: copy quartz.properties if necessary
-  become: yes
-  become_user: arkcase
-  copy: 
-    src: quartz.properties
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring/quartz.properties
-    force: no
 
 - name: set private key alias (client ssl key)
   set_fact:
@@ -1034,16 +816,3 @@
     remote_src: yes
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
-
-- name: replace values in "conf.yml" using yq tool
-  become: yes
-  become_user: arkcase
-  shell: yq e -i '{{item}}' /home/arkcase/.arkcase/acm/conf.yml
-  with_items:
-    - .vault.host = "{{ arkcase_vault_host | default('127.0.0.1', true) }}"
-    - .vault.port = {{ arkcase_vault_port | default(8200, true) }}
-    - .vault.scheme = "{{ arkcase_vault_scheme | default('http', true) }}"
-    - .vault.appRole = "{{ arkcase_vault_appRole | default('arkcase', true) }}"
-    - .vault.authMethod = "{{ arkcase_vault_authMethod | default('approle', true) }}"
-    - .vault.username = "{{ arkcase_vault_username | default('arkcase', true) }}"
-    - .vault.password = "{{ arkcase_vault_password | default('arkcase', true) }}"
