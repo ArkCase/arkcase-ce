@@ -158,7 +158,7 @@
     immediate: yes
   register: zookeeper_ports
   loop:
-    - "2181/tcp"
+    - "2182/tcp"
     - "2281/tcp"
     - "2888/tcp"
     - "3888/tcp"
