@@ -31,28 +31,28 @@
   when: db_engine == 'postgresql'
 
 - name: create hibernate schema (ansible will always report quartz as changed)
-  include_tasks: "{{ role_path }}/../postgresql/tasks/create_specific_schema.yml"
+  include_tasks: "{{ role_path }}/../postgresql-client/tasks/create_specific_schema.yml"
   loop:
     - schema: "hibernate"
       user: "hibuser"
       script: ""
       dbname: "hibernate"
       login_host: "{{ database_host }}"
-      login_user: arkcase-root
+      login_user: arkcaseroot
       login_password: "{{ default_database_password }}"
     - schema: "jackrabbit"
       user: "jcr_user"
       script: ""
       dbname: "jackrabbit"
       login_host: "{{ database_host }}"
-      login_user: arkcase-root
+      login_user: arkcaseroot
       login_password: "{{ default_database_password }}"
     - schema: "quartz"
       user: "pentaho_user"
       script: "quartz-create-db-postgres.sql"
       dbname: "quartz"
       login_host: "{{ database_host }}"
-      login_user: arkcase-root
+      login_user: arkcaseroot
       login_password: "{{ default_database_password }}"
   loop_control:
     loop_var: s

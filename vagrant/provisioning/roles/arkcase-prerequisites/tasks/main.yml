@@ -49,11 +49,26 @@
     - config-server
 
 - name: create arkcase database schema
+  include_tasks: "{{ role_path }}/../{{ db_engine }}-client/tasks/create_specific_schema.yml"
+  loop:
+    - schema: "arkcase"
+      user: "arkcase"
+      script: ""
+      dbname: "arkcase"
+      login_host: "{{ database_host }}"
+      login_user: arkcaseroot
+      login_password: "{{ default_database_password }}"
+  loop_control:
+    loop_var: s
+  when: db_engine=="postgresql"
+
+- name: create arkcase database schema
   include_tasks: "{{ role_path }}/../{{ db_engine }}/tasks/create_schema.yml"
   args:
     apply:
       vars:
         item: arkcase
+  when: db_engine=="mariadb"
 
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"

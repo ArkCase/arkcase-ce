@@ -431,35 +431,18 @@
   set_fact:
     autogenerate_user_id: "{{ autogenerate_user_id | default('false') }}"
 
-- name: configure LDAP
-  include_role: 
-    name: arkcase-ldap-config
-  vars:
-    old_config_id: armedia
-    new_config_id: "{{ ldap_user_domain_bean_name }}"
-    autogenerate_user_id: false
-    ldap_user_domain_bean_name: "{{ ldap_user_domain_bean }}"
-    ldap_authentication_service_class: "com.armedia.acm.services.users.service.ldap.LdapAuthenticateService"
-    portal_prefix: ""
-    # until our Active Directory authenticator works with AD 2016 we will stick with our old LDAP authenticator
-    ldap_template_name: "spring-config-ldap-pre-3.3.3.xml"
-
-- name: read current config server configuration
-  become: yes
-  become_user: arkcase
-  command: cat /home/arkcase/.arkcase/acm/conf.yml
-  register: conf_yml
-  changed_when: false
-
-- name: update config server configuration
-  become: yes
-  become_user: arkcase
-  replace:
-    backup: yes
-    path: /home/arkcase/.arkcase/acm/conf.yml
-    regexp: "runtime"
-    replace: "server,runtime"
-  when: "'server,runtime' not in conf_yml.stdout"
+#- name: configure LDAP
+#  include_role: 
+#    name: arkcase-ldap-config
+#  vars:
+#    old_config_id: armedia
+#    new_config_id: "{{ ldap_user_domain_bean_name }}"
+#    autogenerate_user_id: false
+#    ldap_user_domain_bean_name: "{{ ldap_user_domain_bean }}"
+#    ldap_authentication_service_class: "com.armedia.acm.services.users.service.ldap.LdapAuthenticateService"
+#    portal_prefix: ""
+#    # until our Active Directory authenticator works with AD 2016 we will stick with our old LDAP authenticator
+#    ldap_template_name: "spring-config-ldap-pre-3.3.3.xml"
 
 - name: see if audit patterns is in the main folder
   become: yes
@@ -817,6 +800,30 @@
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
 
+- name: start arkcase
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: "arkcase"
+    state: started
+
+- name: wait for arkcase to create the tables in the database
+  pause:
+    minutes: 1
+
+- name: stop arkcase
+  become: yes
+  systemd:
+    name: arkcase
+    state: stopped
+
+- name: copy the new version of PostgreSQL JDBC Driver
+  become: yes
+  copy:
+    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+    dest: "{{ root_folder }}/app/arkcase/webapps/arkcase/WEB-INF/lib/{{ jdbc_driver_jar_filename }}"
+    remote_src: true
+  when: postgresql_jdbc_version is version('42.3.1')
 
 - name: remove the old version of PostgreSQL JDBC Driver
   become: yes
@@ -824,10 +831,3 @@
     path: "{{ root_folder }}/arkcase/webapps/arkcase/WEB-INF/lib/postgresql-9.3-1100-jdbc41.jar"
     state: absent
   when: postgresql_jdbc_version is version('9.4', '>')
-
-- name: copy the new version of PostgreSQL JDBC Driver
-  become: yes
-  file:
-    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
-    dest: "{{ root_folder }}/arkcase/webapps/arkcase/WEB-INF/lib/{{ jdbc_driver_jar_filename }}"
-  when: postgresql_jdbc_version is version('42.3.1')
