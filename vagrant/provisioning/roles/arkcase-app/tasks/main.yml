@@ -816,3 +816,18 @@
     remote_src: yes
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
+
+
+- name: remove the old version of PostgreSQL JDBC Driver
+  become: yes
+  file:
+    path: "{{ root_folder }}/arkcase/webapps/arkcase/WEB-INF/lib/postgresql-9.3-1100-jdbc41.jar"
+    state: absent
+  when: postgresql_jdbc_version is version('9.4', '>')
+
+- name: copy the new version of PostgreSQL JDBC Driver
+  become: yes
+  file:
+    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+    dest: "{{ root_folder }}/arkcase/webapps/arkcase/WEB-INF/lib/{{ jdbc_driver_jar_filename }}"
+  when: postgresql_jdbc_version is version('42.3.1')

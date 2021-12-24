@@ -17,16 +17,15 @@
     url: "{{ alfresco_url }}/alfresco/s/api/person/changepassword/admin"
     method: POST
     user: admin
-    password: "{{ old_alfresco_admin_password }}"
+    password: "{{ old_alfresco_admin_password | default('admin') }}"
     validate_certs: no
     return_content: yes
     body_format: json
     body:
-      oldpw: "{{ old_alfresco_admin_password }}"
+      oldpw: "{{ old_alfresco_admin_password | default('admin') }}"
       newpw: "{{ alfresco_admin_password }}"
   register: change_password_out
   when: old_alfresco_admin_password is defined
-  #command: curl -k -sS --user admin:"{{ old_alfresco_admin_password }}" --cookie cookie.txt --cookie-jar cookie.txt --data '{"template_x002e_change-password_x002e_change-password_x0023_default-oldpassword":"{{ old_alfresco_admin_password }}","template_x002e_change-password_x002e_change-password_x0023_default-newpassword1":"{{ alfresco_admin_password }}","template_x002e_change-password_x002e_change-password_x0023_default-newpassword2":"{{ alfresco_admin_password }}"}' "{{ alfresco_url }}/share/service/components/profile/change-password"a
 
 - name: results
   debug:
