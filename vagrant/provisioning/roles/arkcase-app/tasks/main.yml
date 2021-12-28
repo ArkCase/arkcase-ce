@@ -831,3 +831,83 @@
     path: "{{ root_folder }}/arkcase/webapps/arkcase/WEB-INF/lib/postgresql-9.3-1100-jdbc41.jar"
     state: absent
   when: postgresql_jdbc_version is version('9.4', '>')
+
+- name: encrypt password, fix cannot decrypt issue
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/alfrescoRmaPlugin.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+# note, using dot to match regexp special chars
+    - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
+
+- name: read current setenv.sh
+  become: yes
+  become_user: arkcase
+  command: cat {{ root_folder }}/app/arkcase/bin/setenv.sh
+  register: setenv_contents
+  changed_when: false
+
+- name: ensure mfa is in the profile
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=mfa-okta,ldap"
+  when: 
+    - '"-Dspring.profiles.active" not in setenv_contents.stdout'
+    - ldap_type == "ad"
+
+- name: datasource.properties updates to connect to PostgreSQL
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/datasource.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: '^acm.url=.*$', replace: "acm.url={{ jdbc_url_properties | replace('SCHEMA', database_arkcase_schema | default('arkcase') ) }}" }
+    - { regexp: 'acm.password=arkcase', replace: 'acm.password=ENC({{ encrypted_default_database }})' }
+
+- name: solr.properties updates to connect to solr host
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/solr.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: 'solr.host=acm-solr', replace: "solr.host={{ solr_host }}" }
+
+- name: fix solr SSL Handshake
+  become: yes
+  become_user: solr
+  blockinfile:
+    backup: yes
+    path: "{{ root_folder }}/app/solr/server/etc/jetty-ssl.xml"
+    insertbefore: "</Configure>"
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: SOLR TLSv1.2 -->"
+    block: |
+      <Set name="excludeCipherSuites">
+        <Array type="java.lang.String">
+        <Item>.*NULL.*</Item>
+        <Item>.*RC4.*</Item>
+        <Item>.*MD5.*</Item>
+        <Item>.*DES.*</Item>
+        <Item>.*DSS.*</Item>
+        </Array>
+      </Set>
+
+- name: remove TLSv1, TLSv1.1 from java.security
+  become: yes
+  replace:
+    path: "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.312.b07-1.el7_9.x86_64/jre/lib/security/java.security"
+    regexp: 'dk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1,'
+    replace: 'dk.tls.disabledAlgorithms=SSLv3,'
