@@ -1,0 +1,80 @@
+- name: Set some base variables
+  set_fact:
+   src_dir: "{{ root_folder }}"
+   tgt_dir: "{{ root_folder }}/backups-{{ ansible_date_time.iso8601 }}"
+
+- name: ensure Solr is stopped
+  become: yes
+  systemd:
+    name: solr
+    state: stopped
+
+- name: ensure Alfresco is stopped
+  become: yes
+  systemd:
+    name: alfresco
+    state: stopped
+
+- name: ensure Snowbound is stopped
+  become: yes
+  systemd:
+    name: snowbound
+    state: stopped    
+    
+- name: backup data folders 
+  become: yes
+  file:
+    path: "{{ tgt_dir }}/data"
+    state: present
+
+- name: Solr data backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/data/solr"
+    dest: "{{ tgt_dir }}/data/solr"
+    directory_mode: yes
+    owner: solr
+    group: solr
+    backup: yes
+
+- name: Alfresco data backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/data/alfresco"
+    dest: "{{ tgt_dir }}/data/alfresco"
+    directory_mode: yes
+    owner: alfresco
+    group: alfresco
+    backup: yes
+
+- name: Snowbound docs backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/data/snowbound/snowbound-docs"
+    dest: "{{ tgt_dir }}/data/snowbound/snowbound-docs"
+    directory_mode: yes
+    owner: snowbound
+    group: snowbound
+    backup: yes
+
+- name: External-portal-api files backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/data/arkcase-home/.external-portal-api/files"
+    dest: "{{ tgt_dir }}/data/arkcase-home/.external-portal-api-files"
+    directory_mode: yes
+    owner: arkcase
+    group: arkcase
+    backup: yes
+  when: foia_portal_context is defined
+
+- name: External-portal http context backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/data/httpd/htdocs/foia"
+    dest: "{{ tgt_dir }}/data/httpd/htdocs/foia"
+    directory_mode: yes
+    owner: arkcase
+    group: arkcase
+    backup: yes
+  when: foia_portal_context is defined
