@@ -908,9 +908,9 @@
     replace: "{{ item.replace }}"
   loop:
     - { regexp: '^acm.websockets.stomp_broker_relay.keystore=.*$', replace: "acm.websockets.stomp_broker_relay.keystore={{ root_folder }}/common/arkcase.ks" }
-    - { regexp: '^acm.websockets.stomp_broker_relay.keystore_pass=.*$', replace: 'acm.websockets.stomp_broker_relay.keystore_pass=ENC({{ encrypted_old_default_user }})' }
+    - { regexp: '^acm.websockets.stomp_broker_relay.keystore_pass=.*$', replace: 'acm.websockets.stomp_broker_relay.keystore_pass=ENC({{ encrypted_default_user }})' }
     - { regexp: '^acm.websockets.stomp_broker_relay.truststore=.*$', replace: "acm.websockets.stomp_broker_relay.truststore={{ root_folder }}/common/arkcase.ts" }
-    - { regexp: '^acm.websockets.stomp_broker_relay.truststore_pass=.*$', replace: "acm.websockets.stomp_broker_relay.truststore_pass=ENC({{ encrypted_old_default_user }})" }
+    - { regexp: '^acm.websockets.stomp_broker_relay.truststore_pass=.*$', replace: "acm.websockets.stomp_broker_relay.truststore_pass=ENC({{ encrypted_default_user }})" }
 
 - name: pentaho change url
   become: yes
@@ -929,3 +929,10 @@
     path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/ecmFileService.properties"
     regexp: 'ecm.viewer.snowbound=https://acm-arkcase'
     replace: 'ecm.viewer.snowbound=https://{{ external_host }}'
+
+- name: change alfresco host
+  become: yes
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/cmis/mule-config-opencmis-cmis.properties"
+    regexp: 'cmis.baseUrl=https://acm-arkcase/opencmis/atom'
+    replace: 'cmis.baseUrl=https://{{ alfresco_host }}/opencmis/atom'
