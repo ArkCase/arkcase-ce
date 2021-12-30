@@ -800,38 +800,6 @@
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
 
-- name: start arkcase
-  become: yes
-  systemd:
-    daemon_reload: true
-    name: "arkcase"
-    state: started
-
-- name: wait for arkcase to create the tables in the database
-  pause:
-    minutes: 1
-
-- name: stop arkcase
-  become: yes
-  systemd:
-    name: arkcase
-    state: stopped
-
-- name: copy the new version of PostgreSQL JDBC Driver
-  become: yes
-  copy:
-    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
-    dest: "{{ root_folder }}/app/arkcase/webapps/arkcase/WEB-INF/lib/{{ jdbc_driver_jar_filename }}"
-    remote_src: true
-  when: postgresql_jdbc_version is version('42.3.1')
-
-- name: remove the old version of PostgreSQL JDBC Driver
-  become: yes
-  file:
-    path: "{{ root_folder }}/arkcase/webapps/arkcase/WEB-INF/lib/postgresql-9.3-1100-jdbc41.jar"
-    state: absent
-  when: postgresql_jdbc_version is version('9.4', '>')
-
 - name: encrypt password, fix cannot decrypt issue
   become: yes
   become_user: arkcase
@@ -911,3 +879,53 @@
     path: "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.312.b07-1.el7_9.x86_64/jre/lib/security/java.security"
     regexp: 'dk.tls.disabledAlgorithms=SSLv3, TLSv1, TLSv1.1,'
     replace: 'dk.tls.disabledAlgorithms=SSLv3,'
+
+- name: change activemq host
+  become: yes
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/websockets.properties"
+    regexp: 'acm.websockets.stomp_broker_relay.relay_host=acm-activemq'
+    replace: 'acm.websockets.stomp_broker_relay.relay_host={{ activemq_host }}'
+
+- name: change activemq host and auth credentials for arkcase
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/activemq.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: 'activemq.broker.url=ssl://acm-activemq:61616', replace: "activemq.broker.url=ssl://{{ activemq_host }}:61616" }
+    - { regexp: 'activemq.username=admin', replace: "activemq.username={{ activemq_user | default('guest', true) }}" }
+    - { regexp: '^activemq.password=.*$', replace: "activemq.password={{ activemq_password | default('guest', true) }}" }
+
+- name: fix ssl issue and adjust the paths for trustStore and keyStore together with password
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/websockets.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: '^acm.websockets.stomp_broker_relay.keystore=.*$', replace: "acm.websockets.stomp_broker_relay.keystore={{ root_folder }}/common/arkcase.ks" }
+    - { regexp: '^acm.websockets.stomp_broker_relay.keystore_pass=.*$', replace: 'acm.websockets.stomp_broker_relay.keystore_pass=ENC({{ encrypted_old_default_user }})' }
+    - { regexp: '^acm.websockets.stomp_broker_relay.truststore=.*$', replace: "acm.websockets.stomp_broker_relay.truststore={{ root_folder }}/common/arkcase.ts" }
+    - { regexp: '^acm.websockets.stomp_broker_relay.truststore_pass=.*$', replace: "acm.websockets.stomp_broker_relay.truststore_pass=ENC({{ encrypted_old_default_user }})" }
+
+- name: pentaho change url
+  become: yes
+  become_user: arkcase
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-reports-server-config.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - { regexp: 'PENTAHO_SERVER_URL=https://acm-arkcase', replace: "PENTAHO_SERVER_URL=https://{{ external_host }}" }
+    - { regexp: 'PENTAHO_SERVER_INTERNAL_URL=https://acm-arkcase', replace: 'PENTAHO_SERVER_INTERNAL_URL=https://{{ pentaho_host }}' }
+
+- name: change snowbound host
+  become: yes
+  replace:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/ecmFileService.properties"
+    regexp: 'ecm.viewer.snowbound=https://acm-arkcase'
+    replace: 'ecm.viewer.snowbound=https://{{ external_host }}'
