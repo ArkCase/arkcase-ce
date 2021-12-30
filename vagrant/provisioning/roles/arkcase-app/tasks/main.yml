@@ -908,9 +908,9 @@
     replace: "{{ item.replace }}"
   loop:
     - { regexp: '^acm.websockets.stomp_broker_relay.keystore=.*$', replace: "acm.websockets.stomp_broker_relay.keystore={{ root_folder }}/common/arkcase.ks" }
-    - { regexp: '^acm.websockets.stomp_broker_relay.keystore_pass=.*$', replace: 'acm.websockets.stomp_broker_relay.keystore_pass=ENC({{ encrypted_default_user }})' }
+    - { regexp: '^acm.websockets.stomp_broker_relay.keystore_pass=.*$', replace: 'acm.websockets.stomp_broker_relay.keystore_pass={{ default_user_password }}' }
     - { regexp: '^acm.websockets.stomp_broker_relay.truststore=.*$', replace: "acm.websockets.stomp_broker_relay.truststore={{ root_folder }}/common/arkcase.ts" }
-    - { regexp: '^acm.websockets.stomp_broker_relay.truststore_pass=.*$', replace: "acm.websockets.stomp_broker_relay.truststore_pass=ENC({{ encrypted_default_user }})" }
+    - { regexp: '^acm.websockets.stomp_broker_relay.truststore_pass=.*$', replace: "acm.websockets.stomp_broker_relay.truststore_pass={{ default_user_password }}" }
 
 - name: pentaho change url
   become: yes
