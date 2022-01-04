@@ -71,6 +71,12 @@
       - yarn
       - npm
       - nodejs
+
+- name: install the npm module 'husky' which seems required by some ArkCase versions
+  npm:
+    name: husky
+    global: yes
+    state: present
     
 - include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
   args:
