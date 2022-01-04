@@ -107,14 +107,7 @@ This image will be a plain CentOS minimal install, updated to work well with Vag
 
 3. Examine the file `centos7.json`.  This file sets the new VM to have 8G RAM (do not lessen this value, but you can make it higher if you want) and 128G disk space (again, you can choose  higher value, but do not choose a lower one).
 
-4. Examine the file `http/ks.cfg`.  This file configures the new VM to have a static IP address of `192.168.56.15`, with a gateway of `192.168.56.1`.  To verify this will work on your host desktop, run this command on your host:
-
-   `VBoxManage list hostonlyifs | grep "IPAddress"`  (for Linux or MacOS)
-   `VBoxManage list hostonlyifs | findstr "IPAddress"`  (for Windows)
-   
-If you see `192.168.56.1` in the output, the default settings shown above will work fine for you.  If you don't see any output at all, then use the VirtualBox user interface to create a new hostonly network, and then run the above command again.  If you see one or more IP addresses, but do not see `192.168.56.1`, then choose one of them, and update `http/ks.cfg` and replace `192.168.56.1` with the selected address, and replace `192.168.56.15` with a valid IP address from your selected hostonly network; also, replace all other occurrences within this entire repository of `192.168.56.1` and `192.168.56.15` with these same values.  (This means: search for all files containing the strings `192.168.56.1` or `192.156.56.15`, and edit those files to replace these strings with your new IP addresses).
-
-5. Run the command `/path/to/packer build centos7.json` (being careful replace `/path/to` with the actual path to your `packer` installation, from step 1 above). After some time it should create a Vagrant box image based on the minimal CentOS 7.5 distribution.
+4. Run the command `/path/to/packer build centos7.json` (being careful replace `/path/to` with the actual path to your `packer` installation, from step 1 above). After some time it should create a Vagrant box image based on the minimal CentOS 7.5 distribution.
 
 # Start and Provision the ArkCase CE Vagrant VM
 
@@ -124,7 +117,7 @@ First, decide whether you want to include the ArkCase web application in the Vag
 
 1. Select the ArkCase version to deploy, by following this link, https://github.com/ArkCase/ArkCase/releases, to see the list of supported ArkCase versions.  
 
-2. Update the file `vagrant/Vagrantfile` in this repository, ensuring that the path to the box image is the same image that you just built in Step 5.  The value should already be correct, if you built according to these instructions, but make sure anyway.
+2. Update the file `vagrant/Vagrantfile` in this repository, ensuring that the path to the box image is the same image that you just built in Step 4 of "How to Create the Base CentOS Image and Install ArkCase Yourself" above.  The value should already be correct, if you built according to these instructions, but make sure anyway.
 
 3. Use the commands below to create the Vagrant box.  These commands use Asible to provision all the ArkCase services; it will take some time.
 
@@ -135,13 +128,71 @@ vagrant plugin install vagrant-hostsupdater
 export VAGRANT_DEFAULT_PROVIDER=virtualbox # for Linux or MacOS
 set VAGRANT_DEFAULT_PROVIDER=virtualbox # for Windows
 # NOTE: Linux/MacOS users, use export
-export ARKCASE_WEBAPP_VERSION=[Your desired version]  # example: export ARKCASE_WEBAPP_VERSION=3.3.0
+export ARKCASE_WEBAPP_VERSION=[Your desired version]  # example: export ARKCASE_WEBAPP_VERSION=2021.02
 # NOTE: Windows users use set
-set ARKCASE_WEBAPP_VERSION=[Your desired version] # example: set ARKCASE_WEBAPP_VERSION=3.3.0
+set ARKCASE_WEBAPP_VERSION=[Your desired version] # example: set ARKCASE_WEBAPP_VERSION=2021.02
 vagrant up
 ```
 
 You may see errors from file downloads timing out; if you see these errors, just run `vagrant provision` and Vagrant will try again; usually it will work the second time.  If you see any other errors please raise a GitHub issue.
+
+When `vagrant up` finishes, the end of the output should look something like this:
+
+```
+    default: TASK [Reload firewalld] ********************************************************
+    default: skipping: [localhost]
+    default: 
+    default: PLAY RECAP *********************************************************************
+    default: localhost                  : ok=794  changed=501  unreachable=0    failed=0    skipped=148  rescued=0    ignored=1  
+```
+
+4. Ensure that the hostname `arkcase-ce.local` is mapped to the correct IP address.
+
+First, run the following command to find your VirtualBox host only network IP range:
+
+```bash
+VBoxManage list hostonlyifs | grep "IPAddress"
+```
+
+Example output, showing that on this system, the host-only network has IP addresses starting with 172.28.
+
+```
+david@david-ubuntu:~/git/arkcase-ce/vagrant$ VBoxManage list hostonlyifs | grep "IPAddress"
+IPAddress:       172.28.128.1
+```
+
+Next, list the IP addresses assigned to your Vagrant VM:
+
+```bash
+vagrant ssh -c "ifconfig | grep inet | grep -v inet6"
+```
+
+Example output:
+
+```
+david@david-ubuntu:~/git/arkcase-ce/vagrant$ vagrant ssh -c "ifconfig | grep inet | grep -v inet6"
+        inet 10.0.2.15  netmask 255.255.255.0  broadcast 10.0.2.255
+        inet 172.28.128.5  netmask 255.255.255.0  broadcast 172.28.128.255
+        inet 127.0.0.1  netmask 255.0.0.0
+Connection to 127.0.0.1 closed.
+```
+
+The above output means that arkcase-ce.local should be mapped to `172.28.128.5` since that is the IP address assigned to the VM that starts with the IP address of the VirtualBox host-only network.
+
+Using whichever way is appropriate for your operating system (e.g. on Linux, update `/etc/hosts`, make sure the IP address is mapped correctly.
+
+5. Start the ArkCase application
+
+To start the ArkCase web application, run the following command, from the same folder where you ran `vagrant up`:
+
+```bash
+# the next two commands start arkcase
+vagrant ssh -c "sudo systemctl start config-server"
+vagrant ssh -c "sudo systemctl start arkcase"
+
+# this command lets you see the ArkCase log output.  First-time startup will take 10 - 15 minutes.
+vagrant ssh -c "sudo tail -f /opt/arkcase/log/arkcase/catalina.out"
+```
 
 ## Option 2: Create the Vagrant VM Without the ArkCase Webapp (for Developers to Build ArkCase from Source Locally)
 
