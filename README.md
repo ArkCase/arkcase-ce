@@ -54,44 +54,26 @@ Now you should be able to open the web site `https://arkcase-ce.local/arkcase` i
 
 The default admin user is `arkcase-admin@arkcase.org`, password `@rKc@3e`.
 
-## Temporary Fix for Outgoing Email
+## Set Up Outgoing Email
 
-When you create a new user, the new user will receive an email including a reset-password link.  This means that outgoing email must be configured correctly: you must configure ArkCase with a known good email account.  In this release of ArkCase you must take some manual steps:
+When you create a new user, the new user will receive an email including a reset-password link.  This means that outgoing email must be configured correctly: you must configure ArkCase with a known good email account.  
 
-1. Run the command `vagrant ssh` from the same folder as the Vagrantfile, this will start a command session inside the vm.
-2. Run the command `sudo su - arkcase -s /bin/bash` to become the ArkCase user.
-3. Copy the below text to a working file using the editor of your choice, and replace the `encryption`, `host`, `userFrom`, `port`, `username`, and `password` elements with the correct information for your mail system.  The values for `encryption`, `host`, and `port` are valid for Outlook 365; so if you are using Outlook 365 you only need to update `userFrom`, `username` and `password`:
-```
-cat <<EOF > /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-runtime.yaml
-email:
-  sender:
-    type: "smtp"
-    encryption: starttls
-    allowAttachments: true
-    allowDocuments: true
-    host: "smtp.office365.com"
-    allowHyperlinks: true
-    userFrom: "david.miller@armedia.com"
-    port: 587
-    username: "dmiller@armedia.com"
-    password: ""
-    convertDocumentsToPdf: false
-EOF
-```
-4. Copy the updated text above (now including the username, password, and email host information that is valid for your system) to your command terminal from Step 2 above, and press `Enter` key; this will copy the text to the file /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-runtime.yaml.
-5. Run the command `exit` to exit your session as `arkcase` and return to your session as `vagrant`.
-6. Restart ArkCase by running this command: `sudo systemctl stop arkcase ; sudo systemctl start arkcase`
+1. Login to ArkCase as the default admin user (arkase-admin@arkcase.org, @rKc@3e)
+2. Click the Admin navigator tag in the left-hand list of modules
+3. Click the Security / Document Delivery Policy link (NOT the "Email Configuration" link)
+4. Leave the `Server Type` as `SMTP`
+5. Update the `Server Address`, `Port`, `Encryption`, `Username`, `Password`, and `From` fields to values that work with your email provider.  If you are an Office 365 user, you only need to update `Username`, `Password`, and `From`.
+6. Click the `Validate` button to be sure the new settings work.  If they work OK, click the `Save` button.
 
 ## How to Add a New User
 
-Before adding a new user, you must follow the above instructions to configure ArkCase with a working email configuration.
-
-1. Login to ArkCase as the default admin user (arkcase-admin@arkcase.org, @rKc@3e)
-2. Click the Admin navigator tab in the left-hand list of modules
-3. Click the Security / Organizational Hierarchy link
-4. Click the name of the group to which you want to add the new user (for example, to add another administrator, click the ARKCASE_ADMINISTRATOR@ARKCASE.ORG group
-5. Click the "Add New Member" icon (the one with the plus sign)
-6. Fill out and submit the form
+1. First, be sure to follow the above instructions to configure ArkCase with a working email configuration.
+2. Login to ArkCase as the default admin user (arkcase-admin@arkcase.org, @rKc@3e)
+3. Click the Admin navigator tab in the left-hand list of modules
+4. Click the Security / Organizational Hierarchy link
+5. Click the name of the group to which you want to add the new user (for example, to add another administrator, click the ARKCASE_ADMINISTRATOR@ARKCASE.ORG group
+6. Click the "Add New Member" icon (the one with the plus sign)
+7. Fill out and submit the form
 
 The new user will get an email with a button to reset their password; after which they can login to ArkCase.
 
@@ -124,7 +106,6 @@ First, decide whether you want to include the ArkCase web application in the Vag
 ```bash
 # replace /path/to/this/repository with the folder where you cloned this repository
 cd /path/to/this/repository/vagrant
-vagrant plugin install vagrant-hostsupdater
 export VAGRANT_DEFAULT_PROVIDER=virtualbox # for Linux or MacOS
 set VAGRANT_DEFAULT_PROVIDER=virtualbox # for Windows
 # NOTE: Linux/MacOS users, use export
@@ -203,7 +184,6 @@ vagrant ssh -c "sudo tail -f /opt/arkcase/log/arkcase/catalina.out"
 ```bash
 # replace /path/to/this/repository with the folder where you cloned this repository
 cd /path/to/this/repository/vagrant
-vagrant plugin install vagrant-hostsupdater
 export VAGRANT_DEFAULT_PROVIDER=virtualbox # for Linux or MacOS
 set VAGRANT_DEFAULT_PROVIDER=virtualbox # for Windows
 vagrant up
