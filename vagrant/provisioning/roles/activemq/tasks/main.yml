@@ -307,6 +307,11 @@
     enabled: yes
     masked: no
 
+- name: set ActiveMQ service SELinux context
+  become: yes
+  command: chcon -v --type=bin_t {{ root_folder }}/app/activemq/bin/linux-x86-64/activemq
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
 - name: start ActiveMQ
   become: yes
   systemd:

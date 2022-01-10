@@ -1,13 +1,56 @@
+- name: set Alfresco facts (CentOS 7)
+  set_fact:
+    pkg_python_jmespath: python2-jmespath
+    path_libreoffice: /usr/lib64/libreoffice
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: set Alfresco facts (RHEL 8)
+  set_fact:
+    pkg_python_jmespath: python3-jmespath
+    path_libreoffice: /opt/libreoffice5.4
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
 - name: Alfresco packages
   become: yes
   yum:
     state: installed
     name:
-      - libreoffice
       - ImageMagick
       - ImageMagick-devel
-      - python2-jmespath
+      - "{{ pkg_python_jmespath }}"
 
+- name: install LibreOffice (CentOS 7)
+  become: yes
+  yum:
+    state: installed
+    name:
+      - libreoffice
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: install LibreOffice (RHEL 8)
+  block:
+    - name: download LibreOffice ... Alfresco CE 2018-06 is compatible with LibreOffice 5.4.6
+      include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+      loop:
+        - name: LibreOffice 5.4.6
+          dest: "{{ root_folder }}/install/alfresco/LibreOffice_5.4.6.2_Linux_x86-64_rpm.tar.gz"
+          owner: alfresco
+          url: https://downloadarchive.documentfoundation.org/libreoffice/old/5.4.6.2/rpm/x86_64/LibreOffice_5.4.6.2_Linux_x86-64_rpm.tar.gz
+    - name: unarchive libreoffice
+      become: yes
+      become_user: alfresco
+      unarchive:
+        src: "{{ root_folder }}/install/alfresco/LibreOffice_5.4.6.2_Linux_x86-64_rpm.tar.gz"
+        remote_src: yes
+        dest: "{{ root_folder }}/install/alfresco"
+        creates: "{{ root_folder }}/install/alfresco/LibreOffice_5.4.6.2_Linux_x86-64_rpm/readmes/README_en-US"
+    - name: install libreoffice
+      become: yes
+      shell: yum -y install {{ root_folder }}/install/alfresco/LibreOffice_5.4.6.2_Linux_x86-64_rpm/RPMS/*.rpm
+      args:
+        warn: false
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+      
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later
   set_fact:
     alfresco_tls_port: 7070
@@ -299,7 +342,7 @@
       audit.enabled=true
       # libreoffice, for file format conversions, per https://docs.alfresco.com/6.1/tasks/lo-install.html
       jodconverter.enabled=true
-      jodconverter.officeHome=/usr/lib64/libreoffice
+      jodconverter.officeHome={{ path_libreoffice }}
       ooo.enabled=false
       # imagemagick, for image manipulation, per https://docs.alfresco.com/6.1/tasks/imagemagick-config.html
       img.root=/usr/lib64/{{ imagemagick_home.stdout }}
