@@ -82,6 +82,11 @@
   become: yes
   command: systemctl daemon-reload
   when: systemd_solr_updated is changed
+
+- name: set Solr service SELinux context (RHEL 8)
+  become: yes
+  command: chcon -v --type=bin_t {{ root_folder }}/app/solr/bin/solr
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
     
 - name: enable Solr to start on boot
   become: yes
