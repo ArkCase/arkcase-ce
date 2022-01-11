@@ -66,6 +66,7 @@
   become: yes
   pip:
     requirements: /tmp/requirements.txt
+    executable: pip3
     extra_args: --upgrade
 
 - name: install firewalld

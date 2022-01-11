@@ -19,6 +19,7 @@
 - name: install cryptography
   become: yes
   pip:
+    executable: pip3
     name: cryptography
 
 - name: list certs in the key store
