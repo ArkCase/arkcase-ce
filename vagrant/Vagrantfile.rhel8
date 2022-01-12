@@ -35,6 +35,12 @@ Vagrant.configure("2") do |config|
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
+ 
+  # we set insert_key to false since we are developing a box to be
+  # published for others to use; and this published box should have the
+  # default insecure key.  Hence we do NOT want Vagrant to create a new
+  # secure key since no one else will ever have that key.
+  config.ssh.insert_key=false
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
@@ -103,7 +109,7 @@ Vagrant.configure("2") do |config|
   # NOTE, the generic/rhel8 box provides extra, unused space in LVM, so 
   # to use this space, we only have to create a logical volume, format it 
   # and mount it.
-  $script = <<-SCRIPT
+  $provision_script = <<-SCRIPT
     export OPT_EXISTS=`sudo lvscan | grep /opt | grep 50`
     if [ "$OPT_EXISTS" = "" ]
     then 
@@ -122,7 +128,17 @@ Vagrant.configure("2") do |config|
   
   config.vm.provision "shell", inline: register_script
   
-  config.vm.provision "shell", inline: $script
+  config.vm.provision "shell", inline: $provision_script
+
+  # copy the provisioning folder so we can run ansible locally
+  config.vm.provision "file", source: "provisioning", destination: "provisioning"
+
+  $install_script = <<-SCRIPT
+    cd /home/vagrant/provisioning
+    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" arkcase-ce.yml
+  SCRIPT
+
+  config.vm.provision "shell", inline: $install_script
 
   config.trigger.before :destroy do |trigger|
     trigger.name = "Before Destroy trigger"

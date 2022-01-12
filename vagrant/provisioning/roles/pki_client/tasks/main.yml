@@ -72,6 +72,12 @@
           command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
       when: "arkcase_ks_stat.stat.exists == False"
 
+- name: ensure shared permissions on the p12 key store
+  become: yes
+  file:
+    path: "{{ java_p12_store }}"
+    mode: 0644
+
 - name: write encrypted symmetric key file for use in ArkCase webapp
   block:
     - name: check if symmetric key file exists

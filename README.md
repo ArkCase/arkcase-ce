@@ -79,7 +79,11 @@ The new user will get an email with a button to reset their password; after whic
 
 Note, no matter what the user's email address is, they must login as `userid@arkcase.org` where `userid` is the user id you entered into the add-user form.  Users are not able to login using their email address.
 
-# How to Create the Base CentOS Image and Install ArkCase Yourself
+# How to Create a New VM and Install ArkCase Yourself
+
+You can install ArkCase on CentOS 7, and on RHEL 8.  For RHEL 8, you must have at least a developer support account with Red Hat (developer accounts are free, but you do need a developer account).
+
+## CentOS 7
 
 This image will be a plain CentOS minimal install, updated to work well with Vagrant and Ansible.  
 
@@ -91,17 +95,11 @@ This image will be a plain CentOS minimal install, updated to work well with Vag
 
 4. Run the command `/path/to/packer build centos7.json` (being careful replace `/path/to` with the actual path to your `packer` installation, from step 1 above). After some time it should create a Vagrant box image based on the minimal CentOS 7.5 distribution.
 
-# Start and Provision the ArkCase CE Vagrant VM
+5. Select the ArkCase version to deploy, by following this link, https://github.com/ArkCase/ArkCase/releases, to see the list of supported ArkCase versions.  
 
-First, decide whether you want to include the ArkCase web application in the Vagrant VM.  To quickly try ArkCase without having to build from source and install the ArkCase webapp locally, then take the first option below to deploy ArkCase within the Vagrant VM.  To develop with the ArkCase source code and build and deploy the ArkCase webapp locally, take the second option below to deploy all other services (Solr, ActiveMQ, Alfresco, etc.), excluding the ArkCase webapp.
+6. Copy the file `vagrant/Vagrantfile.centos7` to `vagrant/Vagrantfile`
 
-## Option 1: Deploy the ArkCase Webapp in the Vagrant VM (self-contained image)
-
-1. Select the ArkCase version to deploy, by following this link, https://github.com/ArkCase/ArkCase/releases, to see the list of supported ArkCase versions.  
-
-2. Update the file `vagrant/Vagrantfile` in this repository, ensuring that the path to the box image is the same image that you just built in Step 4 of "How to Create the Base CentOS Image and Install ArkCase Yourself" above.  The value should already be correct, if you built according to these instructions, but make sure anyway.
-
-3. Use the commands below to create the Vagrant box.  These commands use Asible to provision all the ArkCase services; it will take some time.
+7. Use the commands below to create the Vagrant box.  These commands use Asible to provision all the ArkCase services; it will take some time.
 
 ```bash
 # replace /path/to/this/repository with the folder where you cloned this repository
@@ -127,7 +125,47 @@ When `vagrant up` finishes, the end of the output should look something like thi
     default: localhost                  : ok=794  changed=501  unreachable=0    failed=0    skipped=148  rescued=0    ignored=1  
 ```
 
-4. Ensure that the hostname `arkcase-ce.local` is mapped to the correct IP address.
+From here, please skip the below RHEL 8 instructions, and continue with the hostname setup section.
+
+## RHEL 8
+
+1. Clone this repository (the one that contains this README file, namely, https://github.com/ArkCase/arkcase-ce), if you haven't already done so, then open a command line terminal window and cd (change directory) to the `vagrant` folder of this repository.
+
+2. Select the ArkCase version to deploy, by following this link, https://github.com/ArkCase/ArkCase/releases, to see the list of supported ArkCase versions.
+
+3. Copy the file `vagrant/Vagrantfile.rhel8` to `vagrant/Vagrantfile`
+
+4. Use the commands below to create the Vagrant box.  These commands use Asible to provision all the ArkCase services; it will take some time.
+
+```bash
+export RH_SUBSCRIPTION_MANAGER_USER="YOUR RED HAT USER ID GOES HERE"
+export RH_SUBSCRIPTION_MANAGER_PW="YOUR RED HAT USER PASSWORD GOES HERE"
+# replace /path/to/this/repository with the folder where you cloned this repository
+cd /path/to/this/repository/vagrant
+export VAGRANT_DEFAULT_PROVIDER=virtualbox # for Linux or MacOS
+set VAGRANT_DEFAULT_PROVIDER=virtualbox # for Windows
+# NOTE: Linux/MacOS users, use export
+export ARKCASE_WEBAPP_VERSION=[Your desired version]  # example: export ARKCASE_WEBAPP_VERSION=2021.02
+# NOTE: Windows users use set
+set ARKCASE_WEBAPP_VERSION=[Your desired version] # example: set ARKCASE_WEBAPP_VERSION=2021.02
+vagrant up
+```
+
+You may see errors from file downloads timing out; if you see these errors, just run `vagrant provision` and Vagrant will try again; usually it will work the second time.  If you see any other errors please raise a GitHub issue.
+
+When `vagrant up` finishes, the end of the output should look something like this:
+
+```
+    default: TASK [Reload firewalld] ********************************************************
+    default: skipping: [localhost]
+    default:
+    default: PLAY RECAP *********************************************************************
+    default: localhost                  : ok=794  changed=501  unreachable=0    failed=0    skipped=148  rescued=0    ignored=1
+```
+
+## Hostname setup
+
+On your host desktop, ensure that the hostname `arkcase-ce.local` is mapped to the correct IP address.
 
 First, run the following command to find your VirtualBox host only network IP range:
 
@@ -162,9 +200,9 @@ The above output means that arkcase-ce.local should be mapped to `172.28.128.5` 
 
 Using whichever way is appropriate for your operating system (e.g. on Linux, update `/etc/hosts`, make sure the IP address is mapped correctly.
 
-5. Start the ArkCase application
+## Start ArkCase
 
-To start the ArkCase web application, run the following command, from the same folder where you ran `vagrant up`:
+To start the ArkCase web application, run the following commands, from the same folder where you ran `vagrant up`:
 
 ```bash
 # the next two commands start arkcase
@@ -174,20 +212,4 @@ vagrant ssh -c "sudo systemctl start arkcase"
 # this command lets you see the ArkCase log output.  First-time startup will take 10 - 15 minutes.
 vagrant ssh -c "sudo tail -f /opt/arkcase/log/arkcase/catalina.out"
 ```
-
-## Option 2: Create the Vagrant VM Without the ArkCase Webapp (for Developers to Build ArkCase from Source Locally)
-
-1. Update the file `vagrant/Vagrantfile` in this repository, ensuring that the path to the box image is the same image that you just built in Step 5.  The value should already be correct, if you built according to these instructions, but make sure anyway.
-
-2. Use the commands below to create the Vagrant box.  These commands use Asible to provision all the ArkCase services; it will take some time.
-
-```bash
-# replace /path/to/this/repository with the folder where you cloned this repository
-cd /path/to/this/repository/vagrant
-export VAGRANT_DEFAULT_PROVIDER=virtualbox # for Linux or MacOS
-set VAGRANT_DEFAULT_PROVIDER=virtualbox # for Windows
-vagrant up
-```
-
-You may see errors from file downloads timing out; if you see these errors, just run `vagrant provision` and Vagrant will try again; usually it will work the second time.  If you see any other errors please raise a GitHub issue.
 
