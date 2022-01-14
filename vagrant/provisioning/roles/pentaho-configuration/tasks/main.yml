@@ -235,14 +235,14 @@
     state: present
     backup: yes
 
-- name: set Pentaho startup SELinux context (RHEL 8)
+- name: set Pentaho script SELinux context
   become: yes
-  command: chcon -v --type=bin_t {{ root_folder }}/app/pentaho/pentaho-server/start-pentaho.sh
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
-- name: set Pentaho shutdown SELinux context (RHEL 8)
-  become: yes
-  command: chcon -v --type=bin_t {{ root_folder }}/app/pentaho/pentaho-server/stop-pentaho.sh
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  file:
+    path: "{{ item }}"
+    setype: bin_t
+  loop:
+    - "{{ root_folder }}/app/pentaho/pentaho-server/start-pentaho.sh"
+    - "{{ root_folder }}/app/pentaho/pentaho-server/stop-pentaho.sh"
 
 # Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
 - name: Pentaho systemd unit file (local MariaDB)

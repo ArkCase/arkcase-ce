@@ -203,8 +203,9 @@
 
 - name: set Samba service SELinux context
   become: yes
-  command: chcon -v --type=bin_t {{ root_folder }}/app/samba/sbin/samba
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  file: 
+    path: "{{ root_folder }}/app/samba/sbin/samba"
+    setype: bin_t
 
 - name: start Samba
   become: yes
