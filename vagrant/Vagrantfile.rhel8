@@ -120,10 +120,11 @@ Vagrant.configure("2") do |config|
       sudo mount /opt/arkcase
     fi
 
-    yum -y install epel-release
+    sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
     yum -y upgrade
     yum -y group install "Development Tools"
-    yum -y install drpm ansible bzip2 tar vim
+    yum -y install ansible drpm bzip2 tar vim
   SCRIPT
   
   config.vm.provision "shell", inline: register_script
@@ -135,7 +136,7 @@ Vagrant.configure("2") do |config|
 
   $install_script = <<-SCRIPT
     cd /home/vagrant/provisioning
-    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" arkcase-ce.yml
+    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" arkcase-ce.yml | tee /tmp/ansible-install.log
   SCRIPT
 
   config.vm.provision "shell", inline: $install_script
