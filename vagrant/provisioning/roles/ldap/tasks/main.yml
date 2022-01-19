@@ -1,14 +1,25 @@
+- name: python LDAP package (RHEL 8)
+  set_fact:
+    pkg_python_ldap: python3-ldap
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: python LDAP package (CentOS 7)
+  set_fact:
+    pkg_python_ldap: python-ldap
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
 - name: LDAP required packages
   become: yes
   yum:
     state: installed
     name: 
       - openldap-clients
-      - python-ldap
+      - "{{ pkg_python_ldap }}"
 
 - name: install cryptography
   become: yes
   pip:
+    executable: pip3
     name: cryptography
 
 - name: list certs in the key store

@@ -1,9 +1,32 @@
+- name: System details
+  debug: msg="{{ item }}"
+  with_items: 
+    - "{{ ansible_distribution }}"
+    - "{{ ansible_distribution_version }}"
+    - "{{ ansible_distribution_major_version }}"
+
+- name: set package names if we are on RHEL 8
+  set_fact:
+    pkg_policycoreutils: "policycoreutils-python-utils"
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: set package names if we are on CentOS 7
+  set_fact:
+    pkg_policycoreutils: "policycoreutils-python"
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: list OS dependent package names
+  debug:
+    msg: "policycoreutils: {{ pkg_policycoreutils }}"
+
+
 - name: install epel (needed first)
   become: yes
   yum:
     state: installed
     name: 
       - epel-release        
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: remove pip2 that might come up along OS        
   become: yes
@@ -21,14 +44,12 @@
       - java-11-openjdk-devel
       - java-1.8.0-openjdk
       - java-1.8.0-openjdk-devel
-      - policycoreutils-python
+      - "{{ pkg_policycoreutils }}"
       - zip
       - unzip
       - git
       - net-tools
-      - python-pip
       - "@Development Tools"
-      - deltarpm
       - bzip2
       - tar
       - wget
@@ -46,6 +67,7 @@
   become: yes
   pip:
     requirements: /tmp/requirements.txt
+    executable: pip3
     extra_args: --upgrade
 
 - name: install firewalld

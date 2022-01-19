@@ -307,6 +307,12 @@
     enabled: yes
     masked: no
 
+- name: set ActiveMQ service SELinux context
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/activemq"
+    setype: bin_t
+
 - name: start ActiveMQ
   become: yes
   systemd:

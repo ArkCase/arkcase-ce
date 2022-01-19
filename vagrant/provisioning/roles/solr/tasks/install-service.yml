@@ -82,6 +82,12 @@
   become: yes
   command: systemctl daemon-reload
   when: systemd_solr_updated is changed
+
+- name: set Solr service SELinux context
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/solr/bin/solr"
+    setype: bin_t
     
 - name: enable Solr to start on boot
   become: yes

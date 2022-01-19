@@ -16,7 +16,6 @@
     github_config_artifact: releases/download/{{ arkcase_version }}/arkcase-config-core-{{ arkcase_version }}.zip
   when: arkcase_version is version('2021', '>')
 
-
 - name: decrypt the symmetric key (using private key)
   become: yes
   command: openssl rsautl -decrypt -inkey {{ ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
@@ -151,6 +150,7 @@
   file:
     path: "{{ root_folder }}/app/config-server/config-server.jar"
     mode: "u=rwx,g=r,o=r"
+    setype: bin_t
 
 - name: format extension version
   set_fact:
