@@ -38,13 +38,11 @@
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site, marketplace]
     - role: remove-solr
-      tags: [core, solr]
+      tags: [core, remove-solr]
     - role: zookeeper
       tags: [core, zookeeper]
     - role: solr
       tags: [core, solr, marketplace]
-    - role: solr-cloud-collections
-      tags: [core, solr-cloud-collections]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup, marketplace]
     - role: pentaho-ce

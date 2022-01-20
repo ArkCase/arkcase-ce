@@ -11,6 +11,8 @@
       tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
+    - role: mongodb
+      tags: [core, mongodb]
     - role: mariadb
       tags: [core, mariadb]
     - role: httpd
@@ -27,6 +29,10 @@
       tags: [core, alfresco]
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
+    - role: remove-solr
+      tags: [core, remove-solr]
+    - role: zookeeper
+      tags: [core, zookeeper]
     - role: solr
       tags: [core, solr]
     - role: pentaho-setup
@@ -40,10 +46,8 @@
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
     - role: confluent-platform-install
-      when: enable_kafka is defined and enable_kafka == "yes"
       tags: [confluent]
     - role: elasticsearch-install
-      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
       tags: [elasticsearch]
     - role: microservices
       tags: [microservices]
@@ -57,5 +61,3 @@
       tags: [core, foia, reports, foia-dev-reports]
     - role: arkcase-developer
       tags: [core, arkcase, arkcase-developer]
-
-    

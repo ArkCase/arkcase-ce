@@ -328,11 +328,12 @@ arkcase_core_reports:
   - path: "arkcase-audit"
     definition: "AuditReport.prpt"
 
+# arkcase extension 
+arkcase_extension_install: no
+arkcase_extension_version: ""
 # extension reports... each different extension may or may not have its own path 
 # in the jar file where report definitions are stored
-arkcase_extension_install: no
 arkcase_extension_install_reports: no
-arkcase_extension_version: ""
 arkcase_extension_reports:
   - name: ""
     jar_path: ""
@@ -374,6 +375,9 @@ snowbound_vendor_version: "5.6.2"
 snowbound_arkcase_version: ""
 snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
+
+# Mongodb port
+mongodb_port: "27017"
 
 ### default values that shouldn't have to change
 arkcase_host_name: "{{ arkcase_host }}"
@@ -445,6 +449,7 @@ pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
 
 solr_version: 8.8.2
 solr_jmx_enabled: true
+# Cores are only needed for Solr before 8.8.2
 solr_cores:
   - "acmAdvancedSearch"
   - "acmQuickSearch"
@@ -523,10 +528,10 @@ confluent_scala_version: 2.12
 
 zipkin_version: 2.21.4
 # Enable these for Arkcase.NEXT development
-enable_elasticsearch: "no"
-enable_kafka: "no"
-enable_zipkin: "no"
-enable_eureka: "no"
+enable_elasticsearch: "yes"
+enable_kafka: "yes"
+enable_zipkin: "yes"
+enable_eureka: "yes"
 
 #AWS Credentials
 aws_access_key_id: ""

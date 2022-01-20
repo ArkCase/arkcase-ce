@@ -11,6 +11,8 @@
       tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
+    - role: mongodb
+      tags: [core, mongodb]
     - role: mariadb
       tags: [core, mariadb]
     - role: httpd
@@ -28,13 +30,11 @@
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
     - role: remove-solr
-      tags: [core, solr]
+      tags: [core, remove-solr]
     - role: zookeeper
       tags: [core, zookeeper]
     - role: solr
       tags: [core, solr]
-    - role: solr-cloud-collections
-      tags: [core, solr-cloud-collections]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
     - role: pentaho-ce
@@ -61,5 +61,3 @@
       tags: [core, privacy, reports, privacy-dev-reports]
     - role: arkcase-developer
       tags: [core, arkcase, arkcase-developer]
-
-    
