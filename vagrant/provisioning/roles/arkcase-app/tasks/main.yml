@@ -7,14 +7,14 @@
     github_arkcase_artifact: arkcase-{{ arkcase_version }}/acm-law-enforcement
     github_config_server_artifact: acm-config-server-{{ arkcase_config_server_version }}//config-server-{{ arkcase_config_server_version }}.jar
     github_config_artifact: archive/arkcase-{{ arkcase_version }}.zip
-  when: arkcase_version is version('2021', '<')
+  when: arkcase_version is version('2021.01', '<')
 
 - name: define GitHub download paths (modern versions)
   set_fact:
     github_arkcase_artifact: "{{ arkcase_version }}/arkcase"
     github_config_server_artifact: "{{ arkcase_version }}/config-server-{{ arkcase_version }}.jar"
     github_config_artifact: releases/download/{{ arkcase_version }}/arkcase-config-core-{{ arkcase_version }}.zip
-  when: arkcase_version is version('2021', '>')
+  when: arkcase_version is version('2021.01', '>')
 
 - name: decrypt the symmetric key (using private key)
   become: yes
