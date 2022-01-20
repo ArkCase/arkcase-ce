@@ -63,6 +63,18 @@
       owner: root
       url: https://dl.yarnpkg.com/rpm/yarn.repo
 
+- name: ensure the nvm install script is downloaded
+  command: sudo curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash
+
+- name: Export Vars to run npm without the need to logout
+  command: export NVM_DIR="$HOME/.nvm" [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+- name: Install nodejs using nvm
+  command: sudo nvm install node
+
+- name: Make sure correct (6.17.1) version of npm is installed
+  command: sudo nvm install 6.17.1
+
 - name: required packages to run ArkCase webapp
   become: yes
   yum:
@@ -70,7 +82,6 @@
     name:
       - yarn
       - npm
-      - nodejs
 
 - name: install python2 (needed on RHEL8)
   become: yes
