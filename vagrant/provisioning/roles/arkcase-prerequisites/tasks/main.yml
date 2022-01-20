@@ -55,38 +55,27 @@
       vars:
         item: arkcase
 
-- name: get yarn repository definition
-  include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  loop:
-    - name: Yarn repository
-      dest: /etc/yum.repos.d/yarn.repo
-      owner: root
-      url: https://dl.yarnpkg.com/rpm/yarn.repo
-
 - name: ensure the nvm install script is downloaded
   become: yes
   shell: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash"
 
-- name: Export Vars to run npm without the need to logout
+- name: install node, npm and set version
   become: yes
-  shell: |
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-    nvm install node
-    nvm install 6.17.1
-    nvm alias default v6.17.1
+  become_user: root
+  shell: "source /root/.nvm/nvm.sh && nvm install 6.17.1 && nvm alias default v6.17.1"
+  args:
+    executable: /bin/bash
 
-- name: Ensure the repo for nodejs is downloaded
+- name: install the module 'yarn' with npm required by ArkCase
   become: yes
-  shell: curl --silent --location https://rpm.nodesource.com/setup_12.x | sudo bash -
-
-- name: required packages to run ArkCase webapp
-  become: yes
-  yum:
+  npm:
+    name: yarn
+    global: yes
     state: present
-    name:
-      - yarn
+
+- name: ensure node, npm and yarn are available for all users
+  become: yes
+  shell: "n=$(which node);n=${n%/bin/node}; chmod -R 755 $n/bin/*; sudo cp -r $n/{bin,lib,share} /usr/local"
 
 - name: install python2 (needed on RHEL8)
   become: yes
