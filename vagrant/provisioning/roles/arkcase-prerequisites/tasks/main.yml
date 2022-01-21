@@ -55,9 +55,16 @@
       vars:
         item: arkcase
 
+- name: "Check if node is installed"
+  become: yes
+  shell: "node --version"
+  register: is_present
+  ignore_errors: true
+
 - name: ensure the nvm install script is downloaded
   become: yes
   shell: "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash"
+  when: is_present.stdout == ""
 
 - name: install node, npm and set version
   become: yes
@@ -65,6 +72,7 @@
   shell: "source /root/.nvm/nvm.sh && nvm install 6.17.1 && nvm alias default v6.17.1"
   args:
     executable: /bin/bash
+  when: is_present.stdout == ""
 
 - name: install the module 'yarn' with npm required by ArkCase
   become: yes
@@ -72,10 +80,12 @@
     name: yarn
     global: yes
     state: present
+  when: is_present.stdout == ""
 
 - name: ensure node, npm and yarn are available for all users
   become: yes
   shell: "n=$(which node);n=${n%/bin/node}; chmod -R 755 $n/bin/*; sudo cp -r $n/{bin,lib,share} /usr/local"
+  when: is_present.stdout == ""
 
 - name: install python2 (needed on RHEL8)
   become: yes
