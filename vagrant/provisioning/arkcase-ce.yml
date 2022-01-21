@@ -28,8 +28,9 @@
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
     - role: remove-solr
-      tags: [core, remove-solr]
+      tags: [remove-solr]
     - role: zookeeper
+      when: zookeeper_version is defined
       tags: [core, zookeeper]
     - role: solr
       tags: [core, solr]

@@ -30,7 +30,7 @@
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
     - role: remove-solr
-      tags: [core, remove-solr]
+      tags: [remove-solr]
     - role: zookeeper
       tags: [core, zookeeper]
     - role: solr
@@ -49,6 +49,8 @@
       tags: [confluent]
     - role: elasticsearch-install
       tags: [elasticsearch]
+    - role: microservices
+      tags: [microservices]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
