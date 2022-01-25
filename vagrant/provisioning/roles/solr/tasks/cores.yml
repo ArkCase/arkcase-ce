@@ -15,3 +15,17 @@
   become_user: solr
   shell: "{{ root_folder }}/app/solr/bin/solr create -c {{ item }} -d {{ root_folder }}/app/solr/server/solr/configsets/arkcase"
   when: not solr_cloud and core_stat.stat.exists == False
+
+- name: see if {{ item }} collection already created (Solr Cloud)
+  become: yes
+  become_user: solr
+  stat:
+    path: "{{ root_folder }}/data/solr/{{ item }}_shard1_replica_n1"
+  register: collection_stat
+  when: solr_cloud 
+
+- name: Create {{ item }} collection (Solr Cloud)
+  become: yes
+  become_user: solr
+  shell: "{{ root_folder }}/app/solr/bin/solr create -c {{ item }} -n arkcaseConfig"
+  when: solr_cloud and collection_stat.stat.exists == False

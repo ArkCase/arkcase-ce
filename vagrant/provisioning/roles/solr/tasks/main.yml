@@ -85,10 +85,10 @@
     delay: 5
     timeout: 60
 
-- name: Create ArkCase cores
+- name: Create ArkCase cores/collections
   include_tasks: cores.yml
   loop: "{{ solr_cores }}"
-  when: not enable_solr_cloud and not initial_node is defined or initial_node
+  when: not initial_node is defined or initial_node
 
 - name: Expose required ports for solr
   include_tasks: firewall.yml

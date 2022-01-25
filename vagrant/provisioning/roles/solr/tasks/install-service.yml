@@ -65,7 +65,7 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - SOLR CLOUD"
     block: |
-      ZK_HOST={{ solr_node_1 }},{{ solr_node_2 }},{{ solr_node_3 }}
+      ZK_HOST=localhost:2182
   when: enable_solr_cloud is defined and enable_solr_cloud
 
 - name: configure Solr to use TLS with Zookeeper, if Solr Cloud is enabled
