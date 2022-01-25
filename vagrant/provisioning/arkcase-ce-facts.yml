@@ -188,11 +188,12 @@ arkcase_webapp_supported_versions:
   - "3.3.1"
   - "3.3.1-r1"
   - "2021.02"
+  - "2021.03"
 
 # arkcase_version is either a maven version (for SFTP download) 
 # or a github release version (for github downloads). 
 # Leave blank to get latest Maven snapshot from SFTP.
-arkcase_version: "3.3.1-r1"
+arkcase_version: "2021.03"
 arkcase_version_formatted: "{{ '-' ~ arkcase_version if arkcase_version != '' else '' }}"
 
 # arkcase extension 
