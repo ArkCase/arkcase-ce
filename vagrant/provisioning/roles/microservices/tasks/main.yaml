@@ -47,6 +47,15 @@
   when: enable_kafka is defined and enable_kafka == "yes"
   register: control_center_httpd 
 
+- name: replace original '00-base.conf' file with upgraded one to prevent conflict during start
+  copy:
+  remote_src: yes
+  force: yes
+  backup: yes
+    src: /etc/httpd/conf.modules.d/00-base.conf.rpmnew
+    dest: /etc/httpd/conf.modules.d/00-base.conf
+  when: httpd_upgrade is changed or control_center_httpd is changed
+
 - name: name restart HTTPD
   become: yes
   systemd:
