@@ -16,7 +16,7 @@
   firewalld:
     immediate: yes
     permanent: yes
-    port: "{{ mongodb_port }}/tcp"
+    port: "{{ mongodb_port | default(27017) }}/tcp"
     state: enabled
 
 - name: install Mongodb
@@ -54,6 +54,7 @@
 - name: enable Mongodb to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: mongod
     enabled: yes
     masked: no

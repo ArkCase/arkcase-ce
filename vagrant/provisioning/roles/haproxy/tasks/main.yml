@@ -1,3 +1,17 @@
+- name: set haproxy facts for RHEL 8
+  set_fact:
+    pkg_haproxy: haproxy
+    path_haproxy_cfg: "/etc/haproxy/haproxy.cfg"
+    path_stats_socket: "/var/lib/haproxy/stats"
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: set haproxy facts CentOS 7
+  set_fact:
+    pkg_haproxy: "rh-haproxy18-haproxy"
+    path_haproxy_cfg: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    path_stats_socket: "/var/opt/rh/rh-haproxy18/lib/haproxy/stats"
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
 - name: ensure web and proxy ports
   become: yes
   firewalld:
@@ -15,17 +29,19 @@
   yum:
     name: epel-release
     state: present
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: install software collections
   become: yes
   yum:
     name: centos-release-scl
     state: present
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: install haproxy 1.8
   become: yes
   yum: 
-    name: rh-haproxy18-haproxy
+    name: "{{ pkg_haproxy }}"
     state: present
 
 - name: haproxy folders
@@ -75,7 +91,7 @@
 - name: remove default TLS policies
   become: yes
   lineinfile:
-    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+    path: "{{ path_haproxy_cfg }}"
     backup: yes
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
@@ -85,14 +101,28 @@
     - regexp: '^    ssl-default-server-ciphers PROFILE=SYSTEM'
       line: '   # ssl-default-server-ciphers PROFILE=SYSTEM'
   register: default_tls_options
-  
+ 
+- name: increase 'timeout server' and 'timeout client'
+  become: yes
+  lineinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: 'timeout client          1m'
+      line: 'timeout client          3m'
+    - regexp: 'timeout server          1m'
+      line: 'timeout server          3m'
+  register: timeout_settings
+
 - name: establish our preferred default policies
   become: yes
   lineinfile:
-    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+    path: "{{ path_haproxy_cfg }}"
     backup: yes
     line: "{{ item }}"
-    insertafter: stats socket /var/opt/rh/rh-haproxy18/lib/haproxy/stats
+    insertafter: stats socket {{ path_stats_socket }}
   loop:
     - "    ssl-default-server-options   force-tlsv12"
     - "    ssl-default-bind-ciphers  ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS"
@@ -103,13 +133,13 @@
   
 - name: read current config
   become: yes
-  command: cat /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+  command: cat {{ path_haproxy_cfg }}
   register: current_config
   changed_when: false
   
 - name: remove default frontend/backend configuration
   become: yes
-  command: sed -i '/^# main frontend which proxys to the backends$/,$d' /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+  command: sed -i '/^# main frontend which proxys to the backends$/,$d' {{ path_haproxy_cfg }}
   when: '"main frontend which proxys to the backends" in current_config.stdout'
   register: remove_default_config
   
@@ -120,7 +150,7 @@
 - name: ArkCase configuration
   become: yes
   blockinfile:
-    path: /etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg
+    path: "{{ path_haproxy_cfg }}"
     backup: yes
     block: |
       frontend stats
@@ -149,6 +179,10 @@
         acl acl_snowbound path_beg /VirtualViewerJavaHTML5
         acl acl_arkcase path_beg /arkcase
         acl acl_config path_beg /config
+        acl acl_root path -i /
+
+        # redirections
+        redirect code 301 location /arkcase if acl_root
         
         #arkcase.next services
 
@@ -213,20 +247,20 @@
   
   register: arkcase_config
 
-- name: FOIA fronted part
+- name: FOIA frontend part
   become: yes
   lineinfile:
     backup: yes      
-    path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    path: "{{ path_haproxy_cfg }}"
     insertafter: "acl acl_arkcase path_beg /arkcase"
     line: "  acl acl_foia path_beg /foia"
   when: foia_portal_context is defined
 
-- name: Tell FOIA fronted which backend will use
+- name: Tell FOIA frontend which backend will use
   become: yes
   lineinfile:
     backup: yes
-    path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    path: "{{ path_haproxy_cfg }}"
     insertafter: "# backend uses"
     line: "  use_backend be_foia if acl_foia"
   when: foia_portal_context is defined  
@@ -237,7 +271,7 @@
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK FOIA CONTEXT"
     insertafter: "#backend servers"
-    path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    path: "{{ path_haproxy_cfg }}"
     block: |
        backend be_foia
         http-response add-header X-FOIA-Node %s
@@ -248,23 +282,23 @@
 
 - name: Set up proxies to Confluent Platform services
   block:
-    - name: Populate haproxy.conf with fronted part 
+    - name: Populate haproxy.conf with frontend part 
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL CONFLUENT PLATFORM CONTEXT"
         insertafter: "#arkcase.next services"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             acl acl_schema-registry path_beg /schema-registry
             acl acl_control-center path_beg /control-center
             acl acl_control-center-ws path_beg /ws    
 
-    - name: Tell fronted part which backend servers will use
+    - name: Tell frontend part which backend servers will use
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND CONFLUENT PLATFORM CONTEXT"
         insertafter: "# backend uses"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             use_backend be_schema-registry if acl_schema-registry
             use_backend be_control-center if acl_control-center            
@@ -275,7 +309,7 @@
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND CONFLUENT PLATFORM CONTEXT"
         insertafter: "#backend servers"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
           backend be_schema-registry
             http-response add-header X-Schema-registry %s
@@ -300,21 +334,21 @@
 
 - name: Set up proxies to Elasticsearch
   block:
-    - name: Populate haproxy.conf with fronted part
+    - name: Populate haproxy.conf with frontend part
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ELASTICSEARCH CONTEXT"
         insertafter: "#arkcase.next services"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             acl acl_elasticsearch path_beg /elasticsearch
 
-    - name: Tell fronted part which backend servers will use
+    - name: Tell frontend part which backend servers will use
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ELASTICSEARCH CONTEXT"
         insertafter: "# backend uses"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             use_backend be_elasticsearch if acl_elasticsearch
 
@@ -323,7 +357,7 @@
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ELASTICSEARCH CONTEXT"
         insertafter: "#backend servers"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
           backend be_elasticsearch
             http-response add-header X-Elasticsearch %s
@@ -336,23 +370,23 @@
 
 - name: Set up proxies to Zipkin
   block:
-    - name: Populate haproxy.conf with fronted part
+    - name: Populate haproxy.conf with frontend part
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ZIPKIN CONTEXT"
         insertafter: "#arkcase.next services"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             acl acl_zipkin-health path_beg /zipkin/health
             acl acl_zipkin-api path_beg /zipkin/api
             acl acl_zipkin path_beg /zipkin
 
-    - name: Tell fronted part which backend servers will use
+    - name: Tell frontend part which backend servers will use
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ZIPKIN CONTEXT"
         insertafter: "# backend uses"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             use_backend be_zipkin-health if acl_zipkin-health
             use_backend be_zipkin-api if acl_zipkin-api
@@ -363,7 +397,7 @@
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ZIPKIN CONTEXT"
         insertafter: "#backend servers"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
           backend be_zipkin-health
             http-response add-header X-Zipkin-Health %s
@@ -389,23 +423,23 @@
 
 - name: Set up proxies to Eureka
   block:
-    - name: Populate haproxy.conf with fronted part
+    - name: Populate haproxy.conf with frontend part
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL EUREKA CONTEXT"
         insertafter: "#arkcase.next services"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             acl acl_gateway path_beg /adk
             acl acl_eureka path_beg /eureka
             acl acl_eureka-dashboard path_beg /eureka-dashboard
 
-    - name: Tell fronted part which backend servers will use
+    - name: Tell frontend part which backend servers will use
       become: yes
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND EUREKA CONTEXT"
         insertafter: "# backend uses"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
             use_backend be_gateway if acl_gateway
             use_backend be_eureka if acl_eureka
@@ -416,7 +450,7 @@
       blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND EUREKA CONTEXT"
         insertafter: "#backend servers"
-        path: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+        path: "{{ path_haproxy_cfg }}"
         block: |
           backend be_gateway
             http-response add-header X-Gateway %s
@@ -474,6 +508,7 @@
 - name: enable and start haproxy
   become: yes
   systemd:
+    daemon_reload: true
     name: haproxy
     enabled: yes
     state: started
@@ -483,7 +518,7 @@
   systemd:
     name: haproxy
     state: restarted
-  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed
+  when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed or timeout_settings is changed
 
 - name: Restart rsyslog service if needed
   become: yes

@@ -113,7 +113,7 @@
     - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/plugin/cda/api/clearCache</nullif>"
       line: "<nullif>https://{{ internal_host }}:2002/pentaho/plugin/cda/api/clearCache</nullif>"
     - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
-      line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
+      line: "  <httpLogin>{{ arkcase_admin_user }}</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
 
@@ -130,7 +130,7 @@
     - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
       line: "<nullif>https://{{ internal_host }}:2002/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
     - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
-      line: "  <httpLogin>{{ ldap_user_prefix }}arkcase-admin</httpLogin>"
+      line: "  <httpLogin>{{ arkcase_admin_user }}</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
 
@@ -159,6 +159,16 @@
       line: "TRUSTSTORE_PATH={{ java_trust_store }}"
     - regexp: "TRUSTSTORE_PASSWORD=password"
       line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
+
+- name: setup arkcase admin user in stg_foia_organization.ktr
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION.ktr
+
+- name: setup arkcase admin user in stg_foia_organization_consultation.ktr
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION_CONSULTATION.ktr
 
 - name: run the job to create and populate the mondrian cubes
   become: yes
@@ -203,7 +213,7 @@
   become: yes
   become_user: pentaho
   command: 
-    cmd: 'wget --no-check-certificate -O {{ root_folder }}/install/pentaho/datasources-list.json --user={{ ldap_user_prefix }}arkcase-admin --password "{{ arkcase_admin_password }}" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
+    cmd: 'wget --no-check-certificate -O {{ root_folder }}/install/pentaho/datasources-list.json --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
     warn: no
   changed_when: false
 
@@ -225,7 +235,7 @@
 # the ansible uri module causes a timeout for some reason but wget works fine
 - name: create the ArkCase JDBC data source for analytical reports
   command: 
-    cmd: 'wget --no-check-certificate --user={{ ldap_user_prefix }}arkcase-admin --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
+    cmd: 'wget --no-check-certificate --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
     warn: no
   register: create_datasource_rest_call
   when: not '"MariaDB Local"' in data_source_list.stdout
@@ -234,7 +244,7 @@
   become: yes
   become_user: pentaho
   command:
-    cmd: 'curl -k -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ ldap_user_prefix }}arkcase-admin:{{ arkcase_admin_password }} https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
+    cmd: 'curl -k -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
     warn: no
 
 #########################################################
@@ -242,5 +252,5 @@
 #########################################################
 
 - name: import reports from the zip file archive
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ ldap_user_prefix }}arkcase-admin --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
 

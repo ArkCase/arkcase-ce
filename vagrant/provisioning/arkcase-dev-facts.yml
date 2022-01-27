@@ -342,6 +342,7 @@ arkcase_extension_reports:
 foia_portal_context: foia
 foia_portal_group: "{{ ldap_prefix }}ARKCASE_PORTAL_USER"
 foia_portal_id: "8c41ee4e-49d4-4acb-8bce-866e52de3e4e"
+portal_authenticated: true
 
 # foia reports
 arkcase_foia_reports:
@@ -537,8 +538,6 @@ enable_eureka: "yes"
 aws_access_key_id: ""
 aws_secret_access_key: ""
 
-ldap_type: "samba"
-
 # OIDC authentication properties
 #oidc_registrationId: ""
 #oidc_clientId: ""
@@ -562,12 +561,12 @@ ldap_type: "samba"
 #zylab_clientId: ""
 #zylab_clientSecret: ""
 #zylab_tokenUri: ""
-#zylab_systemUserEmail: ""
-#zylab_systemUserPassword: ""
+#zylab_tenant: ""
 
 #touchnet_username: ""
 #touchnet_password: ""
 #touchnet_securelinkendpoint: ""
+#touchnet_securepaylinkendpoint: ""
 #touchnet_upaysiteid: ""
 
 #Put your outlook credentials below if you want to use Email receiver in Arkcase, depending on your case
@@ -585,3 +584,30 @@ email_receiver_consultation_password: ""
 
 # specify zookeeper version
 zookeeper_version: "3.6.3"
+
+# define username and password for ActiveMQ authentication between apps
+activemq_user: ""
+activemq_password: ""
+
+# missing fact during vagrant provisioning 
+arkcase_version: ""
+
+# define arkcase_log_level core/foia with one of thge following valid values: trace, debug, info, warn, error
+# if not defined default value will be info
+arkcase_log_level: ""
+
+# when defining multiple notifications_groups the flow shoud be
+# notifications_groups:
+# - group@example.com
+# - group1@example.com
+notifications_groups:
+  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain }}"
+
+# Vault configuration for "conf.yml"
+arkcase_vault_host: ""
+arkcase_vault_port: ""
+arkcase_vault_scheme: ""
+arkcase_vault_appRole: ""
+arkcase_vault_authMethod: ""
+arkcase_vault_username: ""
+arkcase_vault_password: ""

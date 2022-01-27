@@ -47,6 +47,7 @@
     - name: enable ElasticSearch to start on boot
       become: yes
       systemd:
+        daemon_reload: true
         name: elasticsearch
         enabled: yes
         masked: no

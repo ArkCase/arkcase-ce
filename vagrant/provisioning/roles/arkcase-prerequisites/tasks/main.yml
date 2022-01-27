@@ -1,11 +1,16 @@
+- name: Ensure group arkcase exists
+  become: yes
+  group:
+    name: arkcase
+    state: present
+
 - name: arkcase user
   become: yes
   user:
     name: arkcase
     shell: /bin/false
     state: present
-    create_home: yes
-    home: /home/arkcase
+    group: arkcase
 
 - name: arkcase folders
   become: yes
@@ -66,7 +71,22 @@
       - yarn
       - npm
       - nodejs
-    
+
+- name: install python2 (needed on RHEL8)
+  become: yes
+  yum:
+    state: present
+    name:
+      - python2
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: install the npm module 'husky' which seems required by some ArkCase versions
+  become: yes
+  npm:
+    name: husky
+    global: yes
+    state: present
+
 - include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
   args:
     apply:
@@ -131,3 +151,11 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - EXTERNAL-PORTAL LOGGING"
     block: |
       export LOGGING_FILE_NAME={{ root_folder }}/log/arkcase/externalPortal.log
+
+- name: install "yq" cli yaml/json editing tool
+  become: yes
+  get_url:
+    url: "https://github.com/mikefarah/yq/releases/download/v4.13.2/yq_linux_amd64"
+    dest: /usr/bin/yq
+    mode: '0755'
+

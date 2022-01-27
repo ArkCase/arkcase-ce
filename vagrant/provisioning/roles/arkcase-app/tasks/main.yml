@@ -1,6 +1,20 @@
-- name: define bean name
+- name: define LDAP user domain bean name
   set_fact:
     ldap_user_domain_bean: "{{ ldap_user_domain | replace('.', '_') }}"
+
+- name: define GitHub download paths (old versions)
+  set_fact:
+    github_arkcase_artifact: arkcase-{{ arkcase_version }}/acm-law-enforcement
+    github_config_server_artifact: acm-config-server-{{ arkcase_config_server_version }}//config-server-{{ arkcase_config_server_version }}.jar
+    github_config_artifact: archive/arkcase-{{ arkcase_version }}.zip
+  when: arkcase_version != "" and arkcase_version is version('2021', '<')
+
+- name: define GitHub download paths (modern versions)
+  set_fact:
+    github_arkcase_artifact: "{{ arkcase_version }}/arkcase"
+    github_config_server_artifact: "{{ arkcase_version }}/config-server-{{ arkcase_version }}.jar"
+    github_config_artifact: releases/download/{{ arkcase_version }}/arkcase-config-core-{{ arkcase_version }}.zip
+  when: arkcase_version != "" and arkcase_version is version('2021', '>')
 
 - name: decrypt the symmetric key (using private key)
   become: yes
@@ -27,8 +41,8 @@
         value: admin
       - name: old_default_user
         value: AcMd3v$
-      - name: activemq_guest
-        value: guest
+      - name: activemq_password
+        value: "{{ activemq_password | default('guest', true) }}"
       - name: snowbound_key
         value: armediaaeskey123
       - name: admin_user_password
@@ -75,15 +89,15 @@
     - name: ArkCase war file
       dest: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
       owner: arkcase
-      url: https://github.com/ArkCase/ArkCase/releases/download/arkcase-{{ arkcase_version }}/acm-law-enforcement-{{ arkcase_version }}.war
+      url: https://github.com/ArkCase/ArkCase/releases/download/{{ github_arkcase_artifact }}-{{ arkcase_version }}.war
     - name: ArkCase configuration
       dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
       owner: arkcase
-      url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
+      url: https://github.com/ArkCase/.arkcase/{{ github_config_artifact }}
     - name: config-server jar file
       dest: "{{ root_folder }}/app/config-server/config-server.jar"
       owner: arkcase
-      url: https://github.com/ArkCase/acm-config-server/releases/download/acm-config-server-{{ arkcase_config_server_version }}/config-server-{{ arkcase_config_server_version }}.jar
+      url: https://github.com/ArkCase/acm-config-server/releases/download/{{ github_config_server_artifact }}
   when: arkcase_retrieve_strategy == "github"
 
 - name: download arkcase war file (if using sftp)
@@ -136,6 +150,7 @@
   file:
     path: "{{ root_folder }}/app/config-server/config-server.jar"
     mode: "u=rwx,g=r,o=r"
+    setype: bin_t
 
 - name: format extension version
   set_fact:
@@ -338,6 +353,23 @@
     warn: false
   when: tls_default_removed_from_service is changed
 
+- name: application.yaml file
+  become: yes
+  become_user: arkcase
+  template:
+    src: application.yaml
+    dest: "{{ root_folder }}/app/config-server/application.yaml"
+    backup: yes
+
+- name: run config-server with application.yaml file
+  become: yes
+  replace:
+    backup: yes
+    path: "/etc/systemd/system/config-server.service"
+    regexp: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp"
+    replace: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp -Dspring.config.location={{ root_folder }}/app/config-server/application.yaml"
+  when: arkcase_version == "" or arkcase_version is version('2021.02', '>=')
+
 - name: enable ArkCase 
   become: yes
   systemd:
@@ -353,7 +385,17 @@
     name: config-server
     enabled: yes
     masked: no
-  
+
+- name: check config-server is active
+  shell: systemctl status config-server.service | grep Active | awk -v N=2 '{print $N}'
+  register: output
+
+- name: restart config-server to bring the changes in the service file
+  service:
+    name: config-server
+    state: restarted
+  when: output.stdout == 'active'
+
 - name: capture current arkcase.yaml
   become: yes
   become_user: arkcase
@@ -592,7 +634,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -616,7 +658,7 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_activemq_xml.stat.exists
       
 - name: plaintext passwords (forms properties)
@@ -636,11 +678,12 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<')
 
 - name: see if we have a camel alfresco cmis properties file
   become: yes
@@ -666,7 +709,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -699,7 +742,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -743,7 +786,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -776,7 +819,7 @@
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
     - regexp: "ENC.U2FsdGVkX1/Byxn9VvOcopumBXAHXig.63j4n4SAJ3w=."
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
@@ -868,7 +911,7 @@
     - regexp: "acm-arkcase"
       replace: "{{ activemq_host }}"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
-      replace: "ENC({{ encrypted_activemq_guest }})"
+      replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
 
 - name: copy arkcase-activemq.yaml if necessary
@@ -963,6 +1006,26 @@
     - regexp: 'filePattern="\$\{sys\:catalina.base\}/logs'
       replace: 'filePattern="{{ root_folder}}/log/arkcase'
 
+- name: replace arkcase core log level if variable defined in facts file
+  become: yes
+  become_user: arkcase
+  replace:
+    path: /home/arkcase/.arkcase/acm/log4j2.xml
+    after: '<Logger name="com.armedia" '
+    before: ' additivity="false">'
+    regexp: '^(.+)$'
+    replace: "level=\"{{ arkcase_log_level | default('info', true) }}\""
+
+- name: replace arkcase foia log level if variable defined in facts file
+  become: yes
+  become_user: arkcase
+  replace:
+    path: /home/arkcase/.arkcase/acm/log4j2.xml
+    after: '<Logger name="gov.foia" '
+    before: ' additivity="false">'
+    regexp: '^(.+)$'
+    replace: "level=\"{{ arkcase_log_level | default('info', true) }}\""
+
 - name: install any extra artifacts
   include_tasks: extra_artifacts.yml
   loop: "{{ arkcase_extra_artifacts }}"
@@ -988,3 +1051,15 @@
     src: "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/arkcase/webapps/arkcase.war"
 
+- name: replace values in "conf.yml" using yq tool
+  become: yes
+  become_user: arkcase
+  shell: yq e -i '{{item}}' /home/arkcase/.arkcase/acm/conf.yml
+  with_items:
+    - .vault.host = "{{ arkcase_vault_host | default('127.0.0.1', true) }}"
+    - .vault.port = {{ arkcase_vault_port | default(8200, true) }}
+    - .vault.scheme = "{{ arkcase_vault_scheme | default('http', true) }}"
+    - .vault.appRole = "{{ arkcase_vault_appRole | default('arkcase', true) }}"
+    - .vault.authMethod = "{{ arkcase_vault_authMethod | default('approle', true) }}"
+    - .vault.username = "{{ arkcase_vault_username | default('arkcase', true) }}"
+    - .vault.password = "{{ arkcase_vault_password | default('arkcase', true) }}"

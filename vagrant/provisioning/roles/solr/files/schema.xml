@@ -154,6 +154,7 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
        EXAMPLE:  name="*_i" will match any field ending in _i (like myid_i, z_i)
        RESTRICTION: the glob-like pattern in the name attribute must have a "*" only at the start or the end.  -->
    
+    <dynamicField name="ignored_doubles_*" type="ignoredDoubles" multiValued="true"/>
     <dynamicField name="*_i"  type="pint"    indexed="true"  stored="true"/>
     <dynamicField name="*_is" type="pints"    indexed="true"  stored="true"/>
     <dynamicField name="*_s"  type="string"  indexed="true"  stored="true" />
@@ -314,6 +315,8 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
     
     <!-- Backwards compatibility, use as "ignore all unnamed fields in schema" -->
     <fieldType name="ignored" indexed="false" stored="false" class="solr.StrField" docValues="false" />
+	
+	<fieldType name="ignoredDoubles" indexed="false" stored="false" class="solr.DoublePointField" docValues="false" />
     
     <!-- Un-stored fieldType for *_facet fields -->
     <fieldType name="acmFacet" indexed="true" stored="false" class="solr.StrField" docValues="false" multiValued="true" />
@@ -565,7 +568,7 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
       The subFields are an implementation detail of the fieldType, and end
       users normally should not need to know about them.
      -->
-    <dynamicField name="*_point" type="point"  indexed="true"  stored="true"/>
+    <dynamicField name="*_point" type="point"  indexed="false"  stored="false"/>
     <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
 
     <!-- A specialized field for geospatial search filters and distance sorting. -->

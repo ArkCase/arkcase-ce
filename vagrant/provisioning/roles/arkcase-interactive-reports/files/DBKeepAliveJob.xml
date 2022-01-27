@@ -1,0 +1,22 @@
+<jobScheduleRequest>
+  <jobName>KeepAliveJob</jobName>
+  <simpleJobTrigger>
+    <uiPassParam>SECONDS</uiPassParam>
+    <repeatInterval>1800</repeatInterval>
+    <repeatCount>-1</repeatCount>
+    <startTime>2015-01-10T01:00:00.000</startTime>
+    <endTime />
+  </simpleJobTrigger>
+  <inputFile>/public/DBKeepAlive.prpti</inputFile>
+  <outputFile>/public/DBKeepAlive.*</outputFile>
+  <jobParameters>
+    <name>autoCreateUniqueFilename</name>
+    <type>boolean</type>
+    <stringValue>false</stringValue>
+  </jobParameters>
+  <jobParameters>
+    <name>output-target</name>
+    <type>string</type>
+    <stringValue>pageable/pdf</stringValue>
+  </jobParameters>
+</jobScheduleRequest>

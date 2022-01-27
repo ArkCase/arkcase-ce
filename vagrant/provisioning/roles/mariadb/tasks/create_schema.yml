@@ -1,4 +1,37 @@
-- name: create {{ item }} MariaDB database and user
+- name: create {{ item }} MariaDB database and user with (ansible>2.9)
+  block:
+    - name: create {{ item }} database
+      become: yes
+      mysql_db:
+        login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+        name: "{{ item }}"
+        encoding: utf8
+        state: present
+    - name: create {{ item }} MySQL user
+      become: yes
+      mysql_user:
+        login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+        host: "%"
+        name: "{{ item }}"
+        password: "{{ default_database_password }}" 
+        tls_requires:
+          SSL:
+        priv: '{{ item }}.*:ALL'
+        state: present 
+    - name: create {{ item }} MySQL user (IP address)
+      become: yes
+      mysql_user:
+        login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+        host: "127.0.0.1"
+        name: "{{ item }}"
+        password: "{{ default_database_password }}" 
+        tls_requires:
+          SSL:
+        priv: '{{ item }}.*:ALL'
+        state: present
+  when: ansible_version.full is version('2.10.0', '>=')
+
+- name: create {{ item }} MariaDB database and user with ansible<=2.9
   block:
     - name: create {{ item }} database
       become: yes
@@ -25,6 +58,4 @@
         password: "{{ default_database_password }}" 
         priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
         state: present
-    
-
-  
+  when: ansible_version.full is version('2.10.1', '<')

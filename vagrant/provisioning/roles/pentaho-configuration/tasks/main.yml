@@ -18,18 +18,16 @@
     - src: "repository.spring.properties"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/repository.spring.properties"
 
+- name: delete alias tomcat from keystore if exists
+  become: yes
+  become_user: pentaho
+  command: keytool -delete -alias tomcat -keystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore --deststorepass password
+  ignore_errors: true
+
 - name: import arkcase keystore
   become: yes
   become_user: pentaho
-  java_cert:
-    pkcs12_alias: "{{ keystore_alias | default('arkcase_server') }}"
-    pkcs12_path: "{{ java_p12_store | default(root_folder + '/common/arkcase-client.p12') }}"
-    pkcs12_password: "{{ java_key_store_pass }}"
-    keystore_create: yes
-    keystore_pass: password
-    keystore_path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
-    state: present
-    cert_alias: tomcat
+  command: keytool -importkeystore -srckeystore {{ java_p12_store | default(root_folder + '/common/arkcase-client.p12') }} -srcstoretype pkcs12 -srcalias {{ keystore_alias | default('arkcase_server') }} -destkeystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore -deststoretype jks -deststorepass password -destalias tomcat -destkeypass password -srcstorepass {{ java_key_store_pass }}
 
 - name: ensure proper permissions on pentaho keystore
   become: yes
@@ -237,6 +235,15 @@
     state: present
     backup: yes
 
+- name: set Pentaho script SELinux context
+  become: yes
+  file:
+    path: "{{ item }}"
+    setype: bin_t
+  loop:
+    - "{{ root_folder }}/app/pentaho/pentaho-server/start-pentaho.sh"
+    - "{{ root_folder }}/app/pentaho/pentaho-server/stop-pentaho.sh"
+
 # Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
 - name: Pentaho systemd unit file (local MariaDB)
   become: yes
@@ -262,6 +269,7 @@
 - name: enable Pentaho to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: pentaho
     enabled: yes
     masked: no

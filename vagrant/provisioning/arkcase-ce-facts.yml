@@ -25,6 +25,7 @@ activemq_host: "{{ internal_host }}"
 alfresco_host: "{{ internal_host }}"
 arkcase_host: "{{ internal_host }}"
 database_host: "{{ internal_host }}"
+database_host_replica: "{{ database_host }}"
 mariadb_host: "{{ internal_host }}"
 pentaho_host: "{{ internal_host }}"
 snowbound_host: "{{ internal_host }}"
@@ -148,10 +149,7 @@ ldap_users:
     nonexpiring_password: yes
 
 # for each spreadsheet to be udpated, first give the path WITHOUT the .xlsx extension, then give a list of pairs of "string to be replaced", "replacement string"
-rules_spreadsheet_updates:
-  - base_path_no_xlsx: /home/arkcase/.arkcase/acm/rules/drools-assignment-rules
-    replacements: '"owning group, ARKCASE_SUPERVISOR@ARMEDIA.COM" "owning group, {{ ldap_prefix }}ARKCASE_SUPERVISOR@ARMEDIA.COM" "owning group, ARKCASE_ENTITY_ADMINISTRATOR@ARMEDIA.COM" "owning group, {{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARMEDIA.COM"'
-
+rules_spreadsheet_updates: []
 
 
 ########################################
@@ -189,11 +187,13 @@ arkcase_webapp_supported_versions:
   - "3.3.0"
   - "3.3.1"
   - "3.3.1-r1"
+  - "2021.02"
+  - "2021.03"
 
 # arkcase_version is either a maven version (for SFTP download) 
 # or a github release version (for github downloads). 
 # Leave blank to get latest Maven snapshot from SFTP.
-arkcase_version: "3.3.1-r1"
+arkcase_version: "2021.03"
 arkcase_version_formatted: "{{ '-' ~ arkcase_version if arkcase_version != '' else '' }}"
 
 # arkcase extension 
@@ -284,8 +284,8 @@ arkcase_config_server_version: "0.0.1"
 
 # retrieve snowbound from GitHub ("github") or SFTP ("sftp")
 snowbound_retrieve_strategy: "github"
-snowbound_vendor_version: "4.10"
-snowbound_arkcase_version: "3.3.2"
+snowbound_vendor_version: "5.6.2"
+snowbound_arkcase_version: "{{ arkcase_version }}"
 snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
 
@@ -467,12 +467,12 @@ ldap_type: samba
 #zylab_clientId: ""
 #zylab_clientSecret: ""
 #zylab_tokenUri: ""
-#zylab_systemUserEmail: ""
-#zylab_systemUserPassword: ""
+#zylab_tenant: ""
 
 #touchnet_username: ""
 #touchnet_password: ""
 #touchnet_securelinkendpoint: ""
+#touchnet_securepaylinkendpoint: ""
 #touchnet_upaysiteid: ""
 
 #Put your outlook credentials below if you want to use Email receiver in Arkcase, depending on your case
@@ -490,3 +490,27 @@ email_receiver_consultation_password: ""
 
 # specify zookeeper version
 zookeeper_version: "3.6.3"
+
+# define username and password for ActiveMQ authentication between apps
+activemq_user: ""
+activemq_password: ""
+
+# define arkcase_log_level core/foia with one of thge following valid values: trace, debug, info, warn, error
+# if not defined default value will be info
+arkcase_log_level: ""
+
+# when defining multiple notifications_groups the flow shoud be
+# notifications_groups:
+# - group@example.com
+# - group1@example.com
+notifications_groups:
+  - "{{ ldap_prefix }}OFFICERS@{{ ldap_user_domain }}"
+
+# Vault configuration for "conf.yml"
+arkcase_vault_host: ""
+arkcase_vault_port: ""
+arkcase_vault_scheme: ""
+arkcase_vault_appRole: ""
+arkcase_vault_authMethod: ""
+arkcase_vault_username: ""
+arkcase_vault_password: ""

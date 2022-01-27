@@ -1,11 +1,16 @@
+- name: Ensure group alfresco exists
+  become: yes
+  group:
+    name: alfresco
+    state: present
+
 - name: alfresco user
   become: yes
   user:
     name: alfresco
     shell: /bin/false
     state: present
-    create_home: yes
-    home: /home/alfresco
+    group: alfresco
 
 - name: alfresco folders
   become: yes

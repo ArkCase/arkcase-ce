@@ -34,7 +34,7 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - JMX"
     block: |
-      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file={{ root_folder }}/app/solr/access.file -Dcom.sun.management.jmxremote.password.file={{ root_folder }}/app/solr/password.file -Djava.rmi.server.hostname={{ internal_host }}"
+      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file={{ root_folder }}/app/solr/access.file -Dcom.sun.management.jmxremote.password.file={{ root_folder }}/app/solr/password.file -Djava.rmi.server.hostname={{ internal_host }} -Dlog4j.formatMsgNoLookups=true"
   when: solr_jmx_enabled|bool
 
 - name: update environment file - TLS
@@ -107,10 +107,17 @@
   become: yes
   command: systemctl daemon-reload
   when: systemd_solr_updated is changed
+
+- name: set Solr service SELinux context
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/solr/bin/solr"
+    setype: bin_t
     
 - name: enable Solr to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: solr
     enabled: yes
     masked: no

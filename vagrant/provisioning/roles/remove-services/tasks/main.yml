@@ -1,0 +1,63 @@
+#remove solr data and start solr to recreate cores
+- name: stop solr
+  become: yes
+  systemd:
+    name: solr
+    state: stopped
+  ignore_errors: true
+
+- name: remove solr data
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ root_folder }}/data/solr/acmQuickSearch/data/"
+    - "{{ root_folder }}/data/solr/acmAdvancedSearch/data/"
+
+- name: start Solr
+  become: yes
+  systemd:
+    name: solr
+    state: started
+
+#remove alfresco data
+- name: stop alfresco
+  become: yes
+  systemd:
+    name: alfresco
+    state: stopped
+  ignore_errors: true
+
+- name: remove alfresco config files and folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+    group: alfresco
+    owner: alfresco
+  loop:
+    - "{{ root_folder }}/data/alfresco"
+    - "{{ root_folder }}/app/alfresco"
+    - "{{ root_folder }}/log/alfresco"
+    - "/etc/systemd/system/alfresco.service"
+
+- name: delete database with name 'alfresco'
+  become: yes
+  mysql_db:
+    login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+    name: alfresco
+    state: absent
+
+#delete arkcase database and recreate it
+- name: delete database with name 'arkcase'
+  become: yes
+  mysql_db:
+    login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+    name: arkcase
+    state: absent
+
+- name: create arkcase database schema
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
+  loop:
+    - arkcase

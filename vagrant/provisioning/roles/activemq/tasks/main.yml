@@ -1,11 +1,16 @@
+- name: Ensure group activemq exists
+  become: yes
+  group:
+    name: activemq
+    state: present
+
 - name: activemq user
   become: yes
   user:
     name: activemq
     shell: /bin/false
     state: present
-    create_home: yes
-    home: /home/activemq
+    group: activemq
 
 - name: ActiveMQ folders
   become: yes
@@ -170,6 +175,35 @@
         dest: "{{ root_folder }}/app/activemq/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
         state: link
 
+- name: enable authentication for ActiveMQ in activemq.xml
+  become: yes
+  become_user: activemq
+  blockinfile:
+    path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
+    insertafter: "        </persistenceAdapter>"
+    marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: Authentication -->"
+    block: |
+      <plugins>    
+          <!-- Configure authentication; Username, passwords and groups -->
+          <simpleAuthenticationPlugin>
+              <users>
+                  <authenticationUser username="${arkcase.user}" password="${arkcase.password}" groups="users,admins"/>
+              </users>
+          </simpleAuthenticationPlugin>
+      </plugins>
+  when: arkcase_version == "" or arkcase_version is version('2021.02', '>=')
+
+- name: put authentication credentials in credentials.properties file
+  become: yes
+  become_user: activemq
+  blockinfile:
+    path: "{{ root_folder }}/app/activemq/conf/credentials.properties"
+    insertafter: "# Defines credentials that will be used by components (like web console) to access the broker"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK: Authentication"
+    block: |
+      arkcase.user={{ activemq_user | default('guest', true) }}
+      arkcase.password={{ activemq_password | default('guest', true) }}
+  when: arkcase_version == "" or arkcase_version is version('2021.02', '>=')
 
 - name: sslContext in activemq.xml
   become: yes
@@ -268,9 +302,16 @@
 - name: enable ActiveMQ to start on boot
   become: yes
   systemd:
+    daemon_reload: true
     name: activemq
     enabled: yes
     masked: no
+
+- name: set ActiveMQ service SELinux context
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/activemq"
+    setype: bin_t
 
 - name: start ActiveMQ
   become: yes

@@ -1,0 +1,34 @@
+- name: add hr extension to JAVA_OPTS
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - HR EXTENSION"
+    block: |
+      export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=extension-hr,ldap"
+
+- name: HR server-specific configuration
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: hr.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-HR_server.yaml
+
+- name: read current config server configuration
+  become: yes
+  become_user: arkcase
+  command: cat /home/arkcase/.arkcase/acm/conf.yml
+  register: hr_conf_yml
+  changed_when: false
+
+- name: update config server configuration for HR
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "server,runtime"
+    replace: "HR_server,server,runtime"
+  when: "'HR_server,server,runtime' not in hr_conf_yml.stdout"

@@ -12,6 +12,6 @@ ark.activemq:
   #Maximum number of connections to ActiveMQ.
   maxConnections: 10
   #username to connect to the ActiveMQ instance
-  username: "guest"
+  username: "{{ activemq_user | default('guest', true) }}"
   #password for the ActiveMQ user identified by ark.activemq.username
-  password: "guest"
+  password: "ENC({{ encrypted_activemq_password }})"
