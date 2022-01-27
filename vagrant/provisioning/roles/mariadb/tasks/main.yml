@@ -1,4 +1,4 @@
-- name: configure MariaDB v10 repository
+- name: configure MariaDB v10 repository (CentOS 7)
   become: yes
   copy:
     dest: /etc/yum.repos.d/mariadb.repo
@@ -11,6 +11,33 @@
       baseurl = http://yum.mariadb.org/10.4/centos7-amd64
       gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: configure MariaDB v10 repository (RHEL 8)
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mariadb.repo
+    force: no
+    content: |
+      # MariaDB 10.4 RedHat repository list - created  2022-01-07
+      # https://mariadb.org/download/
+      [mariadb]
+      name = MariaDB
+      baseurl = https://mirror.jaleco.com/mariadb/yum/10.4/rhel8-amd64
+      module_hotfixes=1
+      gpgkey=https://mirror.jaleco.com/mariadb/yum/RPM-GPG-KEY-MariaDB
+      gpgcheck=1
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: MySQL python package name (CentOS 7)
+  set_fact:
+    pkg_mysql_python: MySQL-python
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: MySQL python package name (RHEL 8)
+  set_fact:
+    pkg_mysql_python: python3-mysql
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
 - name: install MariaDB packages
   become: yes
@@ -20,7 +47,7 @@
     name:
       - MariaDB-server
       - MariaDB-client
-      - MySQL-python
+      - "{{ pkg_mysql_python }}"
   register: mariadb_install
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"

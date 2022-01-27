@@ -1,9 +1,32 @@
+- name: System details
+  debug: msg="{{ item }}"
+  with_items: 
+    - "{{ ansible_distribution }}"
+    - "{{ ansible_distribution_version }}"
+    - "{{ ansible_distribution_major_version }}"
+
+- name: set package names if we are on RHEL 8
+  set_fact:
+    pkg_policycoreutils: "policycoreutils-python-utils"
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: set package names if we are on CentOS 7
+  set_fact:
+    pkg_policycoreutils: "policycoreutils-python"
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: list OS dependent package names
+  debug:
+    msg: "policycoreutils: {{ pkg_policycoreutils }}"
+
+
 - name: install epel (needed first)
   become: yes
   yum:
     state: installed
     name: 
       - epel-release        
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: remove pip2 that might come up along OS        
   become: yes
@@ -21,14 +44,12 @@
       - java-11-openjdk-devel
       - java-1.8.0-openjdk
       - java-1.8.0-openjdk-devel
-      - policycoreutils-python
+      - "{{ pkg_policycoreutils }}"
       - zip
       - unzip
       - git
       - net-tools
-      - python-pip
       - "@Development Tools"
-      - deltarpm
       - bzip2
       - tar
       - wget
@@ -46,6 +67,7 @@
   become: yes
   pip:
     requirements: /tmp/requirements.txt
+    executable: pip3
     extra_args: --upgrade
 
 - name: install firewalld
@@ -96,8 +118,9 @@
     path: /etc/hosts
     line: "{{ item }}"
   loop:
-    - "127.0.0.1 {{ internal_host }}"
     - "{{ arkcase_host_address | default('127.0.0.1') }} arkcase-host"
+    - "127.0.0.1 {{ internal_host }}"
+    - "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }} {{ internal_host }}"
   # Don't try to modify the `/etc/hosts` file when running inside
   # Docker, this is not possible. Instead, use `--add-host` on the
   # `docker run` command line.
@@ -122,3 +145,27 @@
     minute: "5"
     job: 'find {{ root_folder }}/data/arkcase-home/fileserver -mtime +6 -type f -exec rm {} \;'
     state: present
+
+- name: Import server certificates to JDK truststore 
+  block:
+    - name: see if the Java truststore exists
+      become: yes
+      stat:
+        path: "{{ java_trust_store }}"
+      register: arkcase_ts_stat
+      changed_when: false
+    - name: write Java key store and trust store
+      block:
+        - name: add JDK 11 certs to Java trust store
+          become: yes
+          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+        - name: add JDK 8 certs to Java trust store
+          become: yes
+          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+        - name: add Arkcase server certs to Java 11 trust store
+          become: yes
+          command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -deststorepass changeit -noprompt
+        - name: add Arkcase server certs to Java 8 trust store
+          become: yes
+          command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -deststorepass changeit -noprompt
+      when: "arkcase_ts_stat.stat.exists == True"

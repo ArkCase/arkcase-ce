@@ -65,6 +65,7 @@
     remote_src: yes
     src: "{{ root_folder }}/tmp/snowbound/snowbound-integration-{{ snowbound_vendor_version }}{{ snowbound_arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/install/snowbound/snowbound-integration-{{ snowbound_vendor_version }}{{ snowbound_arkcase_version_formatted }}.war"
+    force: yes
   register: snowbound_war
 
 - name: expand the WEB-INF/web.xml file
@@ -111,6 +112,7 @@
     remote_src: yes
     src: "{{ root_folder }}/install/snowbound/snowbound-integration-{{ snowbound_vendor_version }}{{ snowbound_arkcase_version_formatted }}.war"
     dest: "{{ root_folder }}/app/snowbound/webapps/VirtualViewerJavaHTML5.war"
+    force: yes
   register: snowbound_war_copied
 
 - name: start Snowbound

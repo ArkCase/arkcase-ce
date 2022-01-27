@@ -11,6 +11,8 @@
       tags: [core, samba]
     - role: ldap
       tags: [core, ldap]
+    - role: mongodb
+      tags: [core, mongodb]
     - role: mariadb
       tags: [core, mariadb]
     - role: httpd
@@ -27,6 +29,10 @@
       tags: [core, alfresco]
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
+    - role: remove-solr
+      tags: [remove-solr]
+    - role: zookeeper
+      tags: [core, zookeeper]
     - role: solr
       tags: [core, solr]
     - role: pentaho-setup
@@ -43,6 +49,8 @@
       tags: [confluent]
     - role: elasticsearch-install
       tags: [elasticsearch]
+    - role: microservices
+      tags: [microservices]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
@@ -55,5 +63,3 @@
       tags: [core, privacy, reports, privacy-dev-reports]
     - role: arkcase-developer
       tags: [core, arkcase, arkcase-developer]
-
-    

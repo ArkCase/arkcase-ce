@@ -235,6 +235,15 @@
     state: present
     backup: yes
 
+- name: set Pentaho script SELinux context
+  become: yes
+  file:
+    path: "{{ item }}"
+    setype: bin_t
+  loop:
+    - "{{ root_folder }}/app/pentaho/pentaho-server/start-pentaho.sh"
+    - "{{ root_folder }}/app/pentaho/pentaho-server/stop-pentaho.sh"
+
 # Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
 - name: Pentaho systemd unit file (local MariaDB)
   become: yes
