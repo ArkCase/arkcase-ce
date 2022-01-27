@@ -26,6 +26,7 @@ mariadb_host: "{{ internal_host }}"
 pentaho_host: "{{ internal_host }}"
 snowbound_host: "{{ internal_host }}"
 solr_host: "{{ internal_host }}"
+kafka_host: "{{ internal_host }}"
 
 
 ### Define LDAP Version for the ArkCase service file

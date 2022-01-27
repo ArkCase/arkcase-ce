@@ -1,0 +1,32 @@
+logging:
+  level:
+    com.arkcase.portal: debug
+    org:
+      springframework: warn
+      apache: warn
+    springfox: warn
+
+portal:
+  uiApplicationUrl: "https://{{ external_host }}/{{ foia_portal_context }}"
+  uiApplicationHost: "https://{{ external_host }}"
+  id: "{{ foia_portal_id }}"
+  url: "https://{{ external_host }}/{{ foia_portal_context }}"
+  arkcaseUrl: "https://{{ internal_host }}/arkcase"
+  groupName: "{{ foia_portal_group }}@{{ ldap_portal_user_domain | default(ldap_user_domain) | upper}}"
+  # authentication type, possible values (basic, external)
+  authenticationType: {{ portal_authentication_type | default ('basic') }}
+  userId: "{{ arkcase_admin_user }}@{{ ldap_portal_user_domain | default(ldap_user_domain) }}"
+  password: "{{ arkcase_admin_password }}"
+  # portal configuration type
+  externalConfiguration: true
+  authenticatedMode: {{ portal_authenticated_mode | default (false) }}
+  kafkaURL: {{ kafka_host }}:{{ kafka_port | default(9092) }}
+  serviceProvider:
+    directory.name: "foiaportal"
+  keystoreFilename: arkcase.ks
+  keystorePassword: "{{ java_key_store_pass }}"
+  truststoreFilename: arkcase.ts
+  truststorePassword: "{{ java_trust_store_pass }}"
+  security.authentication:
+    header.parameter.name: foia-api-secret
+    token:  "{{ portal_foiagov_token | default ('') }}"

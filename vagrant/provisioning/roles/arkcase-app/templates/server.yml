@@ -39,6 +39,8 @@ notification:
 onlyoffice.plugin:
   #base url used for sending to onlyoffice to be able to perform callbacks
   arkcase.baseurl: "https://{{ external_host }}/arkcase"
+kafka:
+ bootStrapServers: {{ kafka_host }}:{{ kafka_port | default(9092) }}
 wopi.plugin:
   tenant:
     domain: "{{ external_host }}"
