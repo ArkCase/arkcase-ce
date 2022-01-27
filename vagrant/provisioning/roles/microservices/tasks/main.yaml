@@ -87,6 +87,7 @@
   become: yes
   become_user: zipkin
   copy:
+    remote_src: yes
     src: "{{ root_folder }}/install/zipkin/zipkin-server-{{ zipkin_version }}.jar"
     dest: "{{ root_folder }}/app/zipkin/"
 
