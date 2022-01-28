@@ -70,6 +70,9 @@
   pip:
     executable: pip3
     name: pymongo
+    version: 3.12.3
 
 - name: create arkcase mongo database
   include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"
+  vars:
+    ansible_python_interpreter: /bin/python3
