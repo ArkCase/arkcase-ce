@@ -59,7 +59,7 @@
     backup: yes
     src: /etc/httpd/conf.modules.d/00-base.conf.rpmnew
     dest: /etc/httpd/conf.modules.d/00-base.conf
-  when: httpd_upgrade is changed or control_center_httpd is changed and stat_result.stat.exists
+  when: (httpd_upgrade is changed or control_center_httpd is changed) and stat_result.stat.exists
 
 - name: name restart HTTPD
   become: yes
