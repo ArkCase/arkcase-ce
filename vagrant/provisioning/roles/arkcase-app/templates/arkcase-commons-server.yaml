@@ -1,0 +1,3 @@
+arkcase:
+  kafka:
+    bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
