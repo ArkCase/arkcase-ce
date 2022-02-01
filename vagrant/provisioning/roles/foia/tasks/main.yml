@@ -111,7 +111,7 @@
     force: yes
     src: arkcase-portal-server-2020.16.yaml
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
-  when: arkcase_version != "" and arkcase_version is version('2020.16', '>=')
+  when: arkcase_version == "" or arkcase_version is version('2020.16', '>=')
 
 - name: encrypt passwords
   include_tasks: encrypt_password.yml
