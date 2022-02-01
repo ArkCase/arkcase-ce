@@ -1,3 +1,8 @@
+- name: Check systemd solr file exists
+  stat:
+    path: /etc/systemd/system/solr.service
+  register: service_file
+
 # get solr mode it's either std - standalone or solrcloud
 - name: get solr mode
   become: yes
@@ -6,14 +11,10 @@
     url: https://{{ solr_host }}:8983/solr/admin/info/system?wt=json
     return_content: yes
   register: current_solr_mode
+  when: service_file.stat.exists
 
 - set_fact:
     solr_mode: "{{ current_solr_mode | json_query('json.mode') }}"
-
-- name: Check systemd solr file exists
-  stat:
-    path: /etc/systemd/system/solr.service
-  register: service_file
 
 - name: Stop solr
   become: yes
@@ -34,4 +35,4 @@
     - "{{ root_folder }}/app/solr"
     - "{{ root_folder }}/install/solr"
     - "/etc/systemd/system/solr.service"
-  when: solr_mode == "std"
+  when: service_file.stat.exists and solr_mode == "std"
