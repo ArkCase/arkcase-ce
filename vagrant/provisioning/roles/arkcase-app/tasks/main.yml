@@ -855,7 +855,7 @@
     backup: yes
     src: arkcase-commons-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-commons-server.yaml
-  when: arkcase_version != "" and arkcase_version is version('2021.04', '>=')
+  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
 
 # the rolesToGroups format changed during the 3.3.3 release cycle, so we need 
 # one format for pre-3.3.3 versions, and another format for 3.3.3+
