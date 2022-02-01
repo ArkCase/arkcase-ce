@@ -104,23 +104,14 @@
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
   when: arkcase_version != "" and arkcase_version is version('2020.14', '>=') and arkcase_version is version('2020.16', '<')
 
-- name: server configuration from version 2020.16 to version less than 2021.04
+- name: server configuration from version 2020.16
   become: yes
   become_user: arkcase
   template:
     force: yes
     src: arkcase-portal-server-2020.16.yaml
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
-  when: arkcase_version != "" and arkcase_version is version('2020.16', '>=') and arkcase_version is version('2021.04', '<')
-
-- name: server configuration from 2021.04
-  become: yes
-  become_user: arkcase
-  template:
-    force: yes
-    src: arkcase-portal-server-2021.04.yaml
-    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
-  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
+  when: arkcase_version != "" and arkcase_version is version('2020.16', '>=')
 
 - name: encrypt passwords
   include_tasks: encrypt_password.yml
