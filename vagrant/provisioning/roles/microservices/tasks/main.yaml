@@ -47,6 +47,20 @@
   when: enable_kafka is defined and enable_kafka == "yes"
   register: control_center_httpd 
 
+- name: Check that the '00-base.conf.rpmnew' exists
+  stat:
+    path: /etc/httpd/conf.modules.d/00-base.conf.rpmnew
+  register: stat_result
+
+- name: replace original '00-base.conf' file with upgraded one to prevent conflict during start
+  copy:
+    remote_src: yes
+    force: yes
+    backup: yes
+    src: /etc/httpd/conf.modules.d/00-base.conf.rpmnew
+    dest: /etc/httpd/conf.modules.d/00-base.conf
+  when: (httpd_upgrade is changed or control_center_httpd is changed) and stat_result.stat.exists
+
 - name: name restart HTTPD
   become: yes
   systemd:
@@ -87,6 +101,7 @@
   become: yes
   become_user: zipkin
   copy:
+    remote_src: yes
     src: "{{ root_folder }}/install/zipkin/zipkin-server-{{ zipkin_version }}.jar"
     dest: "{{ root_folder }}/app/zipkin/"
 

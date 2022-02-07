@@ -30,6 +30,7 @@ mariadb_host: "{{ internal_host }}"
 pentaho_host: "{{ internal_host }}"
 snowbound_host: "{{ internal_host }}"
 solr_host: "{{ internal_host }}"
+kafka_host: "{{ internal_host }}"
 
 ### ensure samba domain is based on the internal_host
 samba_domain: "DC.ARKCASE-CE"
@@ -187,11 +188,12 @@ arkcase_webapp_supported_versions:
   - "3.3.1"
   - "3.3.1-r1"
   - "2021.02"
+  - "2021.03"
 
 # arkcase_version is either a maven version (for SFTP download) 
 # or a github release version (for github downloads). 
 # Leave blank to get latest Maven snapshot from SFTP.
-arkcase_version: "3.3.1-r1"
+arkcase_version: "2021.03"
 arkcase_version_formatted: "{{ '-' ~ arkcase_version if arkcase_version != '' else '' }}"
 
 # arkcase extension 
@@ -391,11 +393,18 @@ pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
 
 pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
 
-solr_version: 7.7.2
+solr_version: 8.8.2
 solr_jmx_enabled: true
+# Cores are only needed for Solr before 8.8.2
 solr_cores:
   - "acmAdvancedSearch"
   - "acmQuickSearch"
+
+# enable solr cloud and define it's nodes
+enable_solr_cloud: true
+solr_node_1: "localhost"
+solr_node_2: ""
+solr_node_3: ""
 
 # NOTE: Alfresco CE 2018-06 does NOT work with
 # higher versions of Maria JDBC; specifically it does NOT
@@ -540,6 +549,9 @@ email_receiver_complaint_password: ""
 email_receiver_consultation_account: ""
 email_receiver_consultation_account_escaped: "{{ email_receiver_consultation_account | replace('@', '%40') }}"
 email_receiver_consultation_password: ""
+
+# specify zookeeper version
+zookeeper_version: "3.6.3"
 
 # define username and password for ActiveMQ authentication between apps
 activemq_user: ""

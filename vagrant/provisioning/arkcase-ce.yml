@@ -42,6 +42,11 @@
       tags: [core, alfresco, alfresco-site]
     - role: alfresco-change-password
       tags: [alfresco-change-password]
+    - role: remove-solr
+      tags: [remove-solr]
+    - role: zookeeper
+      when: zookeeper_version is defined
+      tags: [core, zookeeper]
     - role: solr
       tags: [core, solr]
     - role: pentaho-setup

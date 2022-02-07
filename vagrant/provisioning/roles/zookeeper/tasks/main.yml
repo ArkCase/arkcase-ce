@@ -1,0 +1,169 @@
+- name: zookeeper user
+  become: yes
+  user:
+    name: zookeeper
+    shell: /bin/false
+    state: present
+    create_home: yes
+    home: /home/zookeeper
+
+- name: Zookeeper folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: zookeeper
+    owner: zookeeper
+  loop:
+    - "{{ root_folder }}/data/zookeeper"
+    - "{{ root_folder }}/log/zookeeper"
+    - "{{ root_folder }}/app/zookeeper"
+    - "{{ root_folder }}/install/zookeeper"
+    - "{{ root_folder }}/tmp/zookeeper"
+  register: zookeeper_folder_structure
+
+- name: enable logrotate for zookeeper log folder if necessary
+  include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
+  args:
+    apply:
+      vars:
+        item: zookeeper
+
+- name: set downloadable archive name
+  set_fact:
+    zk_archive_name: apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "Zookeeper"
+      dest: "{{ root_folder }}/install/zookeeper/{{ zk_archive_name }}"
+      owner: "zookeeper"
+      url: "https://archive.apache.org/dist/zookeeper/zookeeper-{{ zookeeper_version | default('3.6.3') }}/{{ zk_archive_name }}"
+
+- name: unarchive Zookeeper distribution
+  become: yes
+  become_user: zookeeper
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/zookeeper/{{ zk_archive_name }}"
+    dest: "{{ root_folder }}/app/zookeeper"
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ root_folder }}/app/zookeeper/LICENSE.txt"
+  register: zookeeper_unarchived
+
+- name: Zookeeper config file
+  become: yes
+  become_user: zookeeper
+  template:
+    src: zoo.cfg
+    dest: "{{ root_folder }}/app/zookeeper/conf/zoo.cfg"
+    backup: yes
+
+- name: insert solr_node_2 in zoo.cfg, if defined
+  become: yes
+  become_user: zookeeper
+  lineinfile:
+    path: "{{ root_folder }}/app/zookeeper/conf/zoo.cfg"
+    state: present
+    insertafter: "server.1={{ solr_node_1 }}:2888:3888"
+    line: "server.2={{ solr_node_2 }}:2888:3888"
+  when: (solr_node_2 is defined) and (solr_node_2|length > 0)
+
+- name: insert solr_node_3 in zoo.cfg, if defined
+  become: yes
+  become_user: zookeeper
+  lineinfile:
+    path: "{{ root_folder }}/app/zookeeper/conf/zoo.cfg"
+    state: present
+    insertafter: "server.2={{ solr_node_2 }}:2888:3888"
+    line: server.3={{ solr_node_3 }}:2888:3888
+  when: (solr_node_3 is defined) and (solr_node_3|length > 0)
+
+- name: Zookeeper node id file
+  become: yes
+  become_user: zookeeper
+  template:
+    src: myid
+    dest: "{{ root_folder }}/data/zookeeper/myid"
+    backup: yes
+
+- name: Zookeeper environment
+  become: yes
+  become_user: zookeeper
+  template:
+    src: zookeeper-env.sh
+    dest: "{{ root_folder }}/app/zookeeper/conf/zookeeper-env.sh"
+    backup: yes
+
+- name: Zookeeper logging
+  become: yes
+  become_user: zookeeper
+  lineinfile:
+    path: "{{ root_folder }}/app/zookeeper/conf/log4j.properties"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: 'zookeeper\.log\.dir=\.'
+      line: "zookeeper.log.dir={{ root_folder }}/log/zookeeper"
+    - regexp: 'zookeeper\.tracelog\.dir=\.'
+      line: "zookeeper.tracelog.dir={{ root_folder }}/log/zookeeper"
+
+- name: Zookeeper SystemD service file
+  become: yes
+  template:
+    src: zoo.service
+    dest: /etc/systemd/system/zookeeper.service
+    backup: yes
+  register: systemd_zookeeper_updated
+
+- name: reload daemon files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: systemd_zookeeper_updated is changed
+    
+- name: enable Zookeeper to start on boot
+  become: yes
+  systemd:
+    name: zookeeper
+    enabled: yes
+    masked: no
+  
+- name: start Zookeeper
+  become: yes
+  systemd:
+    name: zookeeper
+    state: started
+
+- name: logrotate
+  become: yes
+  template:
+    src: zookeeper
+    dest: /etc/logrotate.d/zookeeper
+    backup: yes
+
+- name: enable firewall
+  become: yes
+  service:
+    name: firewalld
+    state: started
+
+- name: Expose Zookeeper app port
+  become: yes
+  firewalld:
+    port: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: yes
+  register: zookeeper_ports
+  loop:
+    - "2182/tcp"
+    - "2281/tcp"
+    - "2888/tcp"
+    - "3888/tcp"
+
+- name: Reload firewalld
+  become: yes
+  command: firewall-cmd --reload
+  when: zookeeper_ports is changed
