@@ -17,7 +17,6 @@
   pip:
     executable: pip3
     name: cryptography
-    extra_args: --upgrade
 
 - name: create pki folder structure
   become: yes

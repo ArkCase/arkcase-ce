@@ -63,13 +63,6 @@
     src: requirements.txt
     dest: /tmp/
         
-- name: upgrade pip2 in order to support installation of cryptography
-  become: yes
-  pip:
-    requirements: /tmp/requirements.txt
-    executable: pip3
-    extra_args: --upgrade
-
 - name: install firewalld
   become: yes
   yum:

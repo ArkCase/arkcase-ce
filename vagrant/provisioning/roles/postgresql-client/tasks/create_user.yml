@@ -8,8 +8,6 @@
     login_password: "{{ item.login_password | default(database_root_password) }}"
     login_user: "{{ item.login_user | default('arkcaseroot') }}"
     port: "{{ item.port | default(omit) }}"
-    ssl_mode: require
-    ca_cert: "{{ database_server_ssl_cert }}"
   with_items: 
     - name: "{{ database_arkcase_user | default('arkcase') }}"
       password: "{{ default_database_password }}"

@@ -1,22 +1,40 @@
----
-- name: Install PostgreSQL yum repository.
+- name: Install PostgreSQL yum repository (CentOS 7)
   become: yes
-  yum: 
+  yum:
     name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
     state: present
+    disable_gpg_check: yes
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: Disable built-in module (RHEL 8)
+  become: yes
+  command: dnf -qy module disable postgresql
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: Install PostgreSQL yum repository (RHEL 8)
+  become: yes
+  package:
+    name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+    disable_gpg_check: yes
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: configure package names (CentOS 7)
+  set_fact:
+    pkg_python_psychopg: python-psycopg2
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: configure package names (RHEL 8)
+  set_fact:
+    pkg_python_psychopg: python3-psycopg2
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
 - name: Ensure PostgreSQL packages are installed.
   become: yes
   yum:
-    name: 
-      - postgresql13
-      - postgresql13-server
-    state: present
-
-- name: Ensure PostgreSQL Python libraries are installed
-  become: yes
-  yum:
-    name: python-psycopg2
+    name:
+      - postgresql{{ postgresql_server_version }}-server
+      - "{{ pkg_python_psychopg }}"
     state: present
 
 - name: PostgreSQL folders
@@ -34,17 +52,17 @@
       setype: "postgresql_log_t"
   register: postgres_folder_structure
 
-- name: SystemD override folder for postgresql-13
+- name: SystemD override folder for postgresql-{{ postgresql_server_version }}
   become: yes
   file:
-    path: /etc/systemd/system/postgresql-13.service.d
+    path: /etc/systemd/system/postgresql-{{ postgresql_server_version }}.service.d
     state: directory
 
 - name: PostgreSQL systemd unit file (override default conf)
   become: yes
   template:
     src: "override.conf"
-    dest: /etc/systemd/system/postgresql-13.service.d/override.conf
+    dest: /etc/systemd/system/postgresql-{{ postgresql_server_version }}.service.d/override.conf
   register: postgresql_systemd
 
 - name: reload daemon-files if needed
@@ -60,7 +78,7 @@
   register: pgdata_dir_version
 
 - name: Ensure PostgreSQL database is initialized.
-  command: "/usr/pgsql-13/bin/postgresql-13-setup initdb postgresql-13"
+  command: "/usr/pgsql-{{ postgresql_server_version }}/bin/postgresql-{{ postgresql_server_version }}-setup initdb postgresql-{{ postgresql_server_version }}"
   when: not pgdata_dir_version.stat.exists
   become: true
   vars:
@@ -84,7 +102,7 @@
 - name: PostgreSQL conf file
   become: yes
   template:
-    src: "postgresql-13.conf"
+    src: "postgresql-{{ postgresql_server_version }}.conf"
     dest: "{{ postgresql_data_dir }}/postgresql.conf"
     owner: postgres
     group: postgres
@@ -104,14 +122,14 @@
 - name: restart PostgreSQL if needed
   become: yes
   systemd:
-    name: postgresql-13
+    name: postgresql-{{ postgresql_server_version }}
     state: restarted
   when: postgresql_conf is changed or pg_hba_conf is changed
 
 - name: Ensure PostgreSQL is started and enabled on boot.
   become: yes
   service:
-    name: postgresql-13
+    name: postgresql-{{ postgresql_server_version }}
     state: started
     enabled: true
 

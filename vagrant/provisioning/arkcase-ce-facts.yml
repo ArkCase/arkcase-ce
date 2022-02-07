@@ -327,6 +327,7 @@ samba_server_role: dc
 
 database_host_name: "{{ database_host }}"
 database_server_ssl_cert: "{{ ssl_cert }}"
+database_root_password: "{{ default_user_password }}"
 
 database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
 database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites={{ ssl_cipher }}&amp;trustServerCertificate=false&amp;serverSslCert={{ database_server_ssl_cert }}"
@@ -337,9 +338,13 @@ mariadb_list_tables_command: "mysql -uroot --socket={{ mariadb_data_folder }}/my
 
 database_arkcase_schema: arkcase
 database_arkcase_user: arkcase
+database_activemq_user: activemq
+database_activemq_schema: activemq
 
 ## postgresql-specific
+postgresql_server_version: 14
 postgresql_jdbc_version: "42.3.1"
+postgresql_service_file_name: "postgresql-{{ postgresql_server_version }}.service"
 # Note, PostgreSQL JDBC driver forces UTF character set internally and you can't set your own.  So no reason to specify characterEncoding here.
 postgresql_jdbc_url_option_xml_string: "ssl=true&amp;sslmode=require&amp;sslcert={{ database_server_ssl_cert }}"
 postgresql_jdbc_url_option_properties_string: "ssl=true&sslmode=require&sslcert={{ database_server_ssl_cert }}"
