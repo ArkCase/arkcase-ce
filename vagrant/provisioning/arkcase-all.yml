@@ -70,6 +70,39 @@
       tags: [arkcase-prerequisites, core, arkcase, upgrade, marketplace]
     - role: arkcase-app
       tags: [arkcase-app, core, arkcase, upgrade, marketplace]
+    - role: arkcase-api-gateway
+      tags: [core, upgrade, arkcase-api-gateway, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-audit
+      tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
+    - role: arkcase-authority
+      tags: [core, upgrade, arkcase-authority, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-ldap-authority
+      tags: [core, upgrade, arkcase-ldap-authority, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-saml-authority
+      tags: [saml-authority]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-portal
+      tags: [core, upgrade, arkcase-portal, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-schema
+      tags: [core, upgrade, arkcase-schema, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-sse
+      tags: [core, upgrade, arkcase-sse, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-email
+      tags: [core, upgrade, arkcase-email, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-file-management
+      tags: [core, upgrade, arkcase-file-management, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes"
+    - role: arkcase-extra-microservices
+      tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
+      when: enable_kafka is defined and enable_kafka == "yes" and arkcase_extra_microservices is defined
     - role: foia
       tags: [foia]
     - role: privacy

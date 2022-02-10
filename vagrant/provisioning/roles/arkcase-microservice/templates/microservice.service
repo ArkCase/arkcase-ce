@@ -1,0 +1,19 @@
+[Unit]
+Description={{ microservice.name }}
+After=syslog.target
+
+[Service]
+ExecStart={{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar
+SuccessExitStatus=143
+WorkingDirectory={{ root_folder }}/app/{{ microservice.name }}
+User=arkcase
+Group=arkcase
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier={{ microservice.name }}
+
+
+[Install]
+WantedBy=multi-user.target

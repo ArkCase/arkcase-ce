@@ -1,0 +1,10 @@
+{{ root_folder }}/log/{{ microservice.name }}/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 10k
+  dateext
+  dateyesterday
+}
