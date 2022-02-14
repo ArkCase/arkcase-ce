@@ -56,6 +56,8 @@
       - sshpass
       - python3
       - python3-pip
+      - python-setuptools
+      - python-cryptography
 
 - name: copy requirements.txt needed for pip2 upgrade
   become: yes
