@@ -4,3 +4,18 @@
     apply:
       vars:
         item: arkcase
+
+- name: transfer start services script
+  become: yes
+  template:
+    src: "start_services.sh"
+    dest: /bin/start_services.sh
+    mode: "+x"
+
+- name: run CRON job to invoke the script after VM boot
+  become: yes
+  become_method: sudo
+  cron:
+    name: "start services that are required for ArkCase to work"
+    special_time: reboot
+    job: "/bin/start_services.sh"
