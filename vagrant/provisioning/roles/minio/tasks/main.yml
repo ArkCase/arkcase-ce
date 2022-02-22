@@ -1,0 +1,52 @@
+
+- name: create minio group
+  become: yes
+  group:
+    name: minio
+    gid: 9002
+    state: present
+- name: create minio user
+  become: yes
+  user:
+    name: minio
+    group: minio
+    shell: /sbin/nologin
+    home: /opt/minio
+- name: create minio directories
+  become: yes
+  file:
+    path: /opt/minio/{{item}}
+    state: directory
+    owner: minio
+  with_items:
+    - 'bin'
+    - 'data'
+- name: download minio file from internet
+  become: yes
+  get_url:
+    url: "https://dl.minio.io/server/minio/release/linux-amd64/minio"
+    dest: /opt/minio/bin/
+    mode: '0777'
+- name: create minio config file
+  become: yes
+  copy:
+    dest: /opt/minio/minio.conf
+    content: |
+     MINIO_VOLUMES= /opt/minio/data
+- name: create systemd file
+  become: yes
+  template:
+    src: "minio.service"
+    dest: /etc/systemd/system/minio.service
+- name: enable minio service
+  become: yes
+  systemd:
+    name: minio
+    enabled: yes
+    masked: no
+- name: start minio
+  become: yes
+  systemd:
+    name: minio
+    state: started
+
