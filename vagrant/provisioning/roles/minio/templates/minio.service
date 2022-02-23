@@ -3,17 +3,17 @@ Description=Minio
 Documentation=https://docs.minio.io
 Wants=network-online.target
 After=network-online.target
-AssertFileIsExecutable=/opt/minio/bin/minio
+AssertFileIsExecutable={{root_folder}}/minio/bin/minio
 
 [Service]
-WorkingDirectory=/opt/minio
+WorkingDirectory={{root_folder}}/minio
 
 User=minio
 Group=minio
 
 PermissionsStartOnly=true
 
-EnvironmentFile=-/opt/minio/minio.conf
+EnvironmentFile=-{{root_folder}}/minio/minio.conf
 ExecStartPre=/bin/bash -c "[ -n \"${MINIO_VOLUMES}\" ] || echo \"Variable MINIO_VOLUMES not set in /opt/minio/minio.conf\""
 
 ExecStart=/opt/minio/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
