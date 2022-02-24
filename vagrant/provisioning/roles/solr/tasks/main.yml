@@ -126,6 +126,7 @@
   with_items: "{{ log4j_srv_jar.files }}"
 
 - name: download and install log4j-api jar
+  become: yes
   get_url:
     url: https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-api/{{ solr_log4j_version | default('2.17.1', true) }}/log4j-api-{{ solr_log4j_version | default('2.17.1', true) }}.jar
     dest: "{{ item }}"
@@ -137,6 +138,7 @@
     - "{{ root_folder }}/app/solr/server/lib/ext/log4j-api-{{ solr_log4j_version | default ('2.17.1', true) }}.jar"
 
 - name: download and install log4j-core jar
+  become: yes
   get_url:
     url: https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-core/{{ solr_log4j_version | default ('2.17.1', true) }}/log4j-core-{{ solr_log4j_version | default ('2.17.1', true) }}.jar
     dest: "{{ item }}"
@@ -148,6 +150,7 @@
     - "{{ root_folder }}/app/solr/server/lib/ext/log4j-core-{{ solr_log4j_version | default ('2.17.1', true) }}.jar"
 
 - name: download and install log4j-slf4j-impl jar
+  become: yes
   get_url:
     url: https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-slf4j-impl/{{ solr_log4j_version | default ('2.17.1', true) }}/log4j-slf4j-impl-{{ solr_log4j_version | default ('2.17.1', true) }}.jar
     dest: "{{ item }}"
@@ -159,6 +162,7 @@
       - "{{ root_folder }}/app/solr/server/lib/ext/log4j-slf4j-impl-{{ solr_log4j_version | default ('2.17.1', true) }}.jar"
 
 - name: download and install log4j-1.2-api jar
+  become: yes
   get_url:
     url: https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-1.2-api/{{ solr_log4j_version | default ('2.17.1', true) }}/log4j-1.2-api-{{ solr_log4j_version | default ('2.17.1', true) }}.jar
     dest: "{{ root_folder }}/app/solr/server/lib/ext/log4j-1.2-api-{{ solr_log4j_version | default ('2.17.1', true) }}.jar"
@@ -167,6 +171,7 @@
     mode: '0644'
 
 - name: download and install log4j-web jar
+  become: yes
   get_url:
     url: https://repo1.maven.org/maven2/org/apache/logging/log4j/log4j-web/{{ solr_log4j_version | default ('2.17.1', true) }}/log4j-web-{{ solr_log4j_version | default ('2.17.1', true) }}.jar
     dest: "{{ root_folder }}/app/solr/server/lib/ext/log4j-web-{{ solr_log4j_version | default ('2.17.1', true) }}.jar"
