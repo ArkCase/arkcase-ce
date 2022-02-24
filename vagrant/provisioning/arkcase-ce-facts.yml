@@ -515,3 +515,5 @@ arkcase_vault_appRole: ""
 arkcase_vault_authMethod: ""
 arkcase_vault_username: ""
 arkcase_vault_password: ""
+
+solr_log4j_version: ""
