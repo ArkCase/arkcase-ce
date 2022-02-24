@@ -463,29 +463,32 @@ alfresco_sites:
     s_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
     s_compliance: "{http://www.alfresco.org/model/dod5015/1.0}site"
 
-records_management_root: "REPS"
+records_management_root: "ACM"
 records_management_categories:
-  - "Technical Reviews"
-  - "Policies and Procedures"
-  - "Nonconformities"
-  - "Assessments"
+  - "Case Files"
+  - "Complaints"
+  - "Document Repositories"
+  - "Requests"
+  - "Tasks"
+  - "Consultations"
+  - "SAR"
 
 site_folders:
-  - s_name: reps
+  - s_name: acm 
     content_management_folders:
-      - "User Profile"
-      - "TRRC"
-      - "temp"
+      - "Case Files"
+      - "Complaints"
+      - "Document Repositories"
+      - "Expenses"
+      - "People"
+      - "Recycle Bin"
       - "Tasks"
-      - "NonconformityPackage"
-      - "Document Repositories"
-      - "Audit Report"
-      - "Assessment"
-      - "AO Profiles"
-  - s_name: acm
-    content_management_folders:
+      - "Timesheets"
       - "User Profile"
-      - "Document Repositories"
+      - "Business Processes"
+      - "Consultations"
+      - "Requests"
+      - "SAR"
 
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users

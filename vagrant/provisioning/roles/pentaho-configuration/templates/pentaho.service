@@ -1,7 +1,7 @@
 [Unit]
 Description=Pentaho service
-After={{ (db_engine == 'postgresql') | ternary('postgresql-13.service', 'mariadb.service') if pentaho_host == database_host else ''}}
-BindsTo={{ (db_engine == 'postgresql') | ternary('postgresql-13.service', 'mariadb.service') if pentaho_host == database_host else ''}}
+After={{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if pentaho_host == database_host else '' }}
+BindsTo={{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if pentaho_host == database_host else '' }}
 
 [Service]
 Type=forking

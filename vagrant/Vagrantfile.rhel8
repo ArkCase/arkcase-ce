@@ -136,7 +136,7 @@ Vagrant.configure("2") do |config|
 
   $install_script = <<-SCRIPT
     cd /home/vagrant/provisioning
-    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" arkcase-ce.yml | tee /tmp/ansible-install.log
+    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" --tags core arkcase-ce.yml | tee /tmp/ansible-install.log
   SCRIPT
 
   config.vm.provision "shell", inline: $install_script

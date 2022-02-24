@@ -54,6 +54,7 @@
     apply:
       vars:
         item: arkcase
+  when: db_engine | default('mariadb') == "mariadb"
 
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"

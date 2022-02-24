@@ -6,7 +6,6 @@
     login_host: "{{ s.login_host | default('localhost') }}"
     login_password: "{{ s.login_password | default(default_database_password) }}"
     login_user: "{{ s.login_user | default('postgres') }}"
-    login_unix_socket: "{{ s.login_unix_socket | default(postgresql_unix_socket_folder) }}"
     port: "{{ s.port | default(omit) }}"
   no_log: false
   # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
@@ -23,7 +22,6 @@
     login_host: "{{ s.login_host | default('127.0.0.1') }}"
     login_password: "{{ default_database_password }}"
     login_user: "{{ s.user }}"
-    login_unix_socket: "{{ postgresql_unix_socket_folder }}"
     port: "{{ s.port | default(omit) }}"
   no_log: false
   # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
@@ -41,7 +39,6 @@
     login_host: "{{ s.login_host | default('127.0.0.1') }}"
     login_password: "{{ default_database_password }}"
     login_user: "{{ s.user }}"
-    login_unix_socket: "{{ postgresql_unix_socket_folder }}"
     port: "{{ s.port | default(omit) }}"
     state: restore
     target: "{{ root_folder }}/install/pentaho/{{ s.script }}"

@@ -65,6 +65,8 @@
         value: "{{ email_receiver_complaint_password | default('') }}"
       - name: email_receiver_consultation_password
         value: "{{ email_receiver_consultation_password | default('') }}"
+      - name: default_alfresco
+        value: admin
   loop_control:
     loop_var: p
 
@@ -258,9 +260,23 @@
     - "arkcase"
     - "config-server"
 
+- name: check for Alfresco 7 folder
+  stat:
+    path: "{{ root_folder }}/app/alfresco7"
+  register: alfresco7_path
+
+- name: service facts
+  set_fact:
+    db_service_name: "{{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if arkcase_host == database_host else '' }}"
+    activemq_service_name: "{{ 'activemq.service' if activemq_host == arkcase_host else '' }}"
+    samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
+    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host else '' }}"
+    alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
+    alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
+
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:
-    arkcase_required_services: "{{ (db_engine == 'postgresql') | ternary('postgresql-13.service alfresco7.service', 'mariadb.service alfresco.service') }} {{'activemq.service samba.service solr.service config-server.service' if ldap_type=='samba' else 'activemq.service solr.service config-server.service' }}"
+    arkcase_required_services: "{{ db_service_name + ' ' + activemq_service_name + ' ' + solr_service_name + ' ' + samba_service_name + ' ' + alfresco7_service_name + ' ' + alfresco_service_name + ' config-server.service' }}"
 
 - name: copy ArkCase and config server systemd unit files
   become: yes
@@ -324,6 +340,21 @@
   file:
     path: "{{ root_folder }}/install/arkcase/WEB-INF"
     state: absent
+
+- name: Remove embedded postgres JDBC driver, if running under PostgreSQL
+  become: yes
+  become_user: arkcase
+  shell: zip -d {{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war  WEB-INF/lib/postgresql-9.3-1100-jdbc41.jar
+  when: db_engine == 'postgresql'
+
+- name: Link the desired postgres JDBC driver, if running under PostgreSQL
+  become: yes
+  become_user: arkcase
+  file:
+    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+    dest: "{{ root_folder }}/app/arkcase/lib/{{ jdbc_driver_jar_filename }}"
+    state: link
+  when: db_engine == 'postgresql'
 
 - name: unarchive ArkCase search service jar
   become: yes

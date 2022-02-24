@@ -1,9 +1,19 @@
+- name: set Alfresco facts (CentOS 7)
+  set_fact:
+    pkg_python_jmespath: python2-jmespath
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: set Alfresco facts (RHEL 8)
+  set_fact:
+    pkg_python_jmespath: python3-jmespath
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
 - name: Alfresco packages
   become: yes
   yum:
     state: installed
     name:
-      - python2-jmespath
+      - "{{ pkg_python_jmespath }}"
 
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later
   set_fact:

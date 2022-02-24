@@ -110,6 +110,13 @@
     - regexp: 'zookeeper\.tracelog\.dir=\.'
       line: "zookeeper.tracelog.dir={{ root_folder }}/log/zookeeper"
 
+- name: ensure Zookeeper start script SELinux mode
+  become: yes
+  become_user: zookeeper
+  file:
+    path: "{{ root_folder }}/app/zookeeper/bin/zkServer.sh"
+    setype: bin_t
+
 - name: Zookeeper SystemD service file
   become: yes
   template:
