@@ -516,4 +516,4 @@ arkcase_vault_authMethod: ""
 arkcase_vault_username: ""
 arkcase_vault_password: ""
 
-log4j_version: ""
+solr_log4j_version: ""
