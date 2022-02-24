@@ -106,6 +106,7 @@
   register: log4j_prom_exp
 
 - name: remove prometheus-exporter vulnerable log4j jars
+  become: yes
   file:
     path: "{{ item.path }}"
     state: absent
@@ -118,6 +119,7 @@
   register: log4j_srv_jar
 
 - name: remove solr server vulnerable log4j jars
+  become: yes
   file:
     path: "{{ item.path }}"
     state: absent
