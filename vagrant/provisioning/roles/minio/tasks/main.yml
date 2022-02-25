@@ -1,0 +1,58 @@
+
+- name: create minio group
+  become: yes
+  group:
+    name: minio
+    state: present
+- name: create minio user
+  become: yes
+  user:
+    name: minio
+    group: minio
+    shell: /sbin/nologin
+    home: /home/minio
+- name: create minio bin directory
+  become: yes
+  file:
+    path: "{{root_folder}}/minio/{{item}}"
+    state: directory
+    owner: minio
+  with_items:
+    - "bin"
+    - "data"
+- name: check if minio file exists
+  become: yes
+  stat: 
+   path: "{{root_folder}}/minio/bin/minio"
+  register: minio_file
+- name: download minio file from internet
+  become: yes
+  get_url:
+    url: "https://dl.minio.io/server/minio/release/linux-amd64/minio"
+    dest: "{{root_folder}}/minio/bin/"
+    mode: '0777'
+  when: not minio_file.stat.exists
+- name: create minio config file
+  become: yes
+  copy:
+    dest: "{{root_folder}}/minio/minio.conf"
+    content: |
+     MINIO_VOLUMES= "{{root_folder}}/minio/data"
+- name: create systemd file
+  become: yes
+  template:
+    src: "minio.service"
+    dest: /etc/systemd/system/minio.service
+- name: enable minio service
+  become: yes
+  systemd:
+    name: minio
+    enabled: yes
+    masked: no
+    daemon_reload: yes
+- name: start minio
+  become: yes
+  systemd:
+    name: minio
+    state: started
+ 
