@@ -139,6 +139,12 @@
     src: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/logs/log4j.properties"
     state: link   
 
+- name: set search services startup SELinux context
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr/bin/solr"
+    setype: bin_t
+
 - name: see if search services was already started
   become: yes
   become_user: alfresco-search
