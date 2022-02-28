@@ -8,11 +8,15 @@
 - name: set package names if we are on RHEL 8
   set_fact:
     pkg_policycoreutils: "policycoreutils-python-utils"
+    pkg_python_setuptools: "python3-setuptools"
+    pkg_python_cryptography: "python3-cryptography"
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
 - name: set package names if we are on CentOS 7
   set_fact:
     pkg_policycoreutils: "policycoreutils-python"
+    pkg_python_setuptools: "python-setuptools"
+    pkg_python_cryptography: "python-cryptography"
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: list OS dependent package names
@@ -56,14 +60,14 @@
       - sshpass
       - python3
       - python3-pip
-      - python-setuptools
-      - python-cryptography
+      - "{{ pkg_python_setuptools }}"
+      - "{{ pkg_python_cryptography }}"
 
-- name: copy requirements.txt needed for pip2 upgrade
-  become: yes
-  copy:
-    src: requirements.txt
-    dest: /tmp/
+- name: update pip
+  pip:
+    executable: pip3
+    name: pip
+    extra_args: --upgrade
         
 - name: install firewalld
   become: yes
