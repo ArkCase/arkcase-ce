@@ -2,7 +2,7 @@
 - hosts: all
   roles:
     - role: minio
-      tags: [minio]
+      tags: [microservices, minio]
     - role: common
       tags: [core, common, upgrade, marketplace]
     - role: arkcase-pre-upgrade

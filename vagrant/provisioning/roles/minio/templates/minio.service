@@ -3,20 +3,20 @@ Description=Minio
 Documentation=https://docs.minio.io
 Wants=network-online.target
 After=network-online.target
-AssertFileIsExecutable={{root_folder}}/minio/bin/minio
+AssertFileIsExecutable={{root_folder}}/app/minio/bin/minio
 
 [Service]
-WorkingDirectory={{root_folder}}/minio
+WorkingDirectory={{root_folder}}/app/minio
 
 User=minio
 Group=minio
 
 PermissionsStartOnly=true
 
-EnvironmentFile=-{{root_folder}}/minio/minio.conf
-ExecStartPre=/bin/bash -c "[ -n \"${MINIO_VOLUMES}\" ] || echo \"Variable MINIO_VOLUMES not set in {{root_folder}}/minio/minio.conf\""
+EnvironmentFile=-{{root_folder}}/app/minio/minio.conf
+ExecStartPre=/bin/bash -c "[ -n \"${MINIO_VOLUMES}\" ] || echo \"Variable MINIO_VOLUMES not set in {{root_folder}}/app/minio/minio.conf\""
 
-ExecStart={{root_folder}}/minio/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
+ExecStart={{root_folder}}/app/minio/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
 
 StandardOutput=journal
 StandardError=inherit
