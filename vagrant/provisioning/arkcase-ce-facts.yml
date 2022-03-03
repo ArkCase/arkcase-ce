@@ -353,7 +353,7 @@ postgresql_jdbc_url_option_properties_string: "ssl=true&sslmode=require&sslcert=
 postgresql_list_tables_command: "psql -U SCHEMA -h {{ database_host }} -qAntc '\\dt'"
 
 # db_engine: either mariadb or postgresql
-db_engine: postgresql
+db_engine: mariadb
 jdbc_driver_class_name: "{{ 'org.postgresql.Driver' if db_engine == 'postgresql' else 'org.mariadb.jdbc.Driver' }}"
 jdbc_validation_query: "select 1"
 jdbc_driver_jar_filename: "{{ 'postgresql-' + postgresql_jdbc_version + '.jar' if db_engine == 'postgresql' else  'mariadb-java-client-' + mariadb_jdbc_version + '.jar' }}"

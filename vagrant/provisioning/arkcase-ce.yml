@@ -18,6 +18,9 @@
     - role: mariadb
       tags: [core, mariadb]
       when: db_engine | default('mariadb') == 'mariadb'
+    - role: mariadb-client
+      tags: [core, mariadb]
+      when: db_engine | default('mariadb') == 'mariadb'
     - role: postgresql
       tags: [core, postgresql]
       when: db_engine | default('mariadb') == 'postgresql'
