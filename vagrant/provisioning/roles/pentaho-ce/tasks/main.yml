@@ -21,7 +21,7 @@
 #### pentaho-ce specific updates... all updates common
 #### to both pentaho-ce and pentaho-ee are in the
 #### pentaho-configuration role
-- name: database configuration templates
+- name: database configuration templates for MariaDB
   become: yes
   become_user: pentaho
   template:

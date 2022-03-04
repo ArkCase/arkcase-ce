@@ -1,53 +1,67 @@
 ---
 - hosts: all
   roles:
-    - role:common
+    - role: common
       tags: [core, common]
-    - role:pki_client
+    - role: pki_client
       tags: [core, pki_client]
-    - role:ldap
+    - role: ldap
       tags: [core, ldap]
-    - role:mariadb
+    - role: mariadb
       tags: [core, mariadb]
-    - role:httpd
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: mariadb-client
+      tags: [core, mariadb]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: postgresql
+      tags: [core, postgresql]
+      when: db_engine | default('mariadb') == 'postgresql'
+    - role: postgresql-client
+      tags: [core, postgresql, postgresql-client]
+      when: db_engine | default('mariadb') == 'postgresql'
+    - role: httpd
       tags: [core, httpd]
-    - role:haproxy
+    - role: haproxy
       tags: [core, haproxy]
-    - role:activemq
+    - role: activemq
       tags: [core, activemq]
-    - role:alfresco-setup
+    - role: alfresco-search-services
+      tags: [alfresco-search-services]
+    - role: alfresco7-setup
       tags: [core, alfresco, alfresco-setup]
-    - role:alfresco-ce
+    - role: alfresco7-ce
       tags: [core, alfresco, alfresco-ce]
-    - role:alfresco
+    - role: alfresco7
       tags: [core, alfresco]
-    - role: alfresco-site
+    - role:  alfresco-site
       tags: [core, alfresco, alfresco-site]
-    - role:solr
+    - role: alfresco-change-password
+      tags: [alfresco-change-password]
+    - role: solr
       tags: [core, core]
-    - role:pentaho-setup
+    - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
-    - role:pentaho-ee
+    - role: pentaho-ee
       tags: [core, pentaho, pentaho-ee]
-    - role:pentaho-configuration
+    - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
-    - role:snowbound
+    - role: snowbound
       tags: [core, snowbound]
-    - role:snowbound-app
+    - role: snowbound-app
       tags: [core, snowbound, snowbound-app]
-    - role:pentaho-license
+    - role: pentaho-license
       tags: [core, pentaho, pentaho-license]
-    - role:arkcase-prerequisites
+    - role: arkcase-prerequisites
       tags: [core, arkcase]
-    - role:arkcase-app
+    - role: arkcase-app
       tags: [core, arkcase]
-    - role:privacy
+    - role: privacy
       tags: [core, privacy]
-    - role:tesseract
+    - role: tesseract
       tags: [core, arkcase, tesseract]
-    - role:firewall
+    - role: firewall
       tags: [core, firewall]
-    - role:start-arkcase
+    - role: start-arkcase
       tags: [core, arkcase]
 
     

@@ -21,22 +21,41 @@
       tags: [microservices, mongodb]  
     - role: mariadb
       tags: [core, mariadb, marketplace]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: mariadb-client
+      tags: [core, mariadb, marketplace]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: postgresql
+      tags: [core, postgresql, marketplace]
+      when: db_engine | default('mariadb') == 'postgresql'
+    - role: postgresql-client
+      tags: [core, postgresql, postgresql-client, marketplace]
+      when: db_engine | default('mariadb') == 'postgresql'
     - role: httpd
       tags: [core, httpd, marketplace]
     - role: haproxy
       tags: [core, haproxy, marketplace]
     - role: activemq
       tags: [core, activemq, marketplace]
-    - role: alfresco-setup
+    - role: alfresco-search-services
+      tags: [alfresco-search-services]
+    - role: alfresco7-setup
       tags: [core, alfresco, alfresco-setup, marketplace]
-    - role: alfresco-ce
-      tags: [alfresco-ce, arkcase-ce, arkcase-ee]
+    - role: alfresco7-ce
+      tags: [core, alfresco, alfresco-ce, arkcase-ce, marketplace]
     - role: alfresco-ee
       tags: [alfresco-ee]
-    - role: alfresco
+    - role: alfresco7
       tags: [core, alfresco, marketplace]
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site, marketplace]
+    - role: alfresco-change-password
+      tags: [alfresco-change-password]
+    - role: remove-solr
+      tags: [remove-solr]
+    - role: zookeeper
+      when: zookeeper_version is defined
+      tags: [core, zookeeper]
     - role: solr
       tags: [core, solr, marketplace]
     - role: pentaho-setup
@@ -60,7 +79,7 @@
     - role: microservices
       tags: [microservices]
     - role: pentaho-license
-      tags: [pentaho-license, arkcase-ee]   
+      tags: [pentaho-license, pentaho-ee, arkcase-ee]   
     - role: arkcase-prerequisites
       tags: [arkcase-prerequisites, core, arkcase, upgrade, marketplace]
     - role: arkcase-app
