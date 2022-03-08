@@ -32,12 +32,16 @@
       - epel-release        
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
+# At least on CentOS 7, we need to remove python3-pip, to get a clean 
+# install of python3-pip in the next task, which will actually create 
+# /usr/bin/pip3.
 - name: remove pip2 that might come up along OS        
   become: yes
   yum:
     state: absent
     name:
       - python-pip
+      - python3-pip
 
 - name: install required packages
   become: yes
