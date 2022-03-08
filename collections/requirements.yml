@@ -4,4 +4,6 @@ collections:
 - community.crypto
 - community.mysql
 - community.mongodb
-- community.postgresql
+- community.postgresql.postgresql_user
+- community.postgresql.postgresql_db
+- community.postgresql.postgresql_schema
