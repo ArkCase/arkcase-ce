@@ -1,0 +1,34 @@
+- name: set alfresco port, if necessary
+  set_fact:
+    alfresco_port: 7070
+  when: alfresco_port is not defined
+
+- name: set alfresco protocol, if necessary
+  set_fact:
+    alfresco_protocol: "https"
+  when: alfresco_protocol is not defined
+
+- name: set alfresco URL
+  set_fact:
+    alfresco_url: "{{ alfresco_protocol }}://{{ alfresco_host }}:{{ alfresco_port }}"
+
+- name: change alfresco admin password
+  uri:
+    url: "{{ alfresco_url }}/alfresco/s/api/person/changepassword/admin"
+    method: POST
+    user: admin
+    password: "{{ old_alfresco_admin_password }}"
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      oldpw: "{{ old_alfresco_admin_password }}"
+      newpw: "{{ alfresco_admin_password }}"
+  register: change_password_out
+  when: old_alfresco_admin_password is defined
+  #command: curl -k -sS --user admin:"{{ old_alfresco_admin_password }}" --cookie cookie.txt --cookie-jar cookie.txt --data '{"template_x002e_change-password_x002e_change-password_x0023_default-oldpassword":"{{ old_alfresco_admin_password }}","template_x002e_change-password_x002e_change-password_x0023_default-newpassword1":"{{ alfresco_admin_password }}","template_x002e_change-password_x002e_change-password_x0023_default-newpassword2":"{{ alfresco_admin_password }}"}' "{{ alfresco_url }}/share/service/components/profile/change-password"a
+
+- name: results
+  debug:
+    msg: "{{ change_password_out.content }}"
+ 

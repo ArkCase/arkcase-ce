@@ -1,0 +1,179 @@
+- name: Install PostgreSQL yum repository (CentOS 7)
+  become: yes
+  yum:
+    name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+    disable_gpg_check: yes
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: Disable built-in module (RHEL 8)
+  become: yes
+  command: dnf -qy module disable postgresql
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: Install PostgreSQL yum repository (RHEL 8)
+  become: yes
+  package:
+    name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+    state: present
+    disable_gpg_check: yes
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: configure package names (CentOS 7)
+  set_fact:
+    pkg_python_psychopg: python-psycopg2
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: configure package names (RHEL 8)
+  set_fact:
+    pkg_python_psychopg: python3-psycopg2
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: Ensure PostgreSQL packages are installed.
+  become: yes
+  yum:
+    name:
+      - postgresql{{ postgresql_server_version }}-server
+      - "{{ pkg_python_psychopg }}"
+    state: present
+
+- name: PostgreSQL folders
+  become: yes
+  file:
+    path: "{{ item.name }}"
+    state: directory
+    group: postgres
+    owner: postgres
+    setype: "{{ item.setype }}"
+  loop:
+    - name: "{{ postgresql_data_dir }}"
+      setype: "postgresql_db_t"
+    - name: "{{ postgres_log_folder }}"
+      setype: "postgresql_log_t"
+  register: postgres_folder_structure
+
+- name: SystemD override folder for postgresql-{{ postgresql_server_version }}
+  become: yes
+  file:
+    path: /etc/systemd/system/postgresql-{{ postgresql_server_version }}.service.d
+    state: directory
+
+- name: PostgreSQL systemd unit file (override default conf)
+  become: yes
+  template:
+    src: "override.conf"
+    dest: /etc/systemd/system/postgresql-{{ postgresql_server_version }}.service.d/override.conf
+  register: postgresql_systemd
+
+- name: reload daemon-files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: postgresql_systemd is changed
+
+- name: Check if PostgreSQL database is initialized.
+  become: yes
+  become_user: postgres
+  stat:
+    path: "{{ postgresql_data_dir }}/PG_VERSION"
+  register: pgdata_dir_version
+
+- name: Ensure PostgreSQL database is initialized.
+  command: "/usr/pgsql-{{ postgresql_server_version }}/bin/postgresql-{{ postgresql_server_version }}-setup initdb postgresql-{{ postgresql_server_version }}"
+  when: not pgdata_dir_version.stat.exists
+  become: true
+  vars:
+    ansible_ssh_pipelining: true
+
+- name: copy private keys for PostgreSQL use
+  become: yes
+  copy: 
+    remote_src: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: postgres
+    group: postgres
+    mode: 0600
+  loop:
+    - src: "{{ ssl_key_rsa }}"
+      dest: "{{ postgresql_data_dir }}/server.key"
+    - src: "{{ ssl_cert }}"
+      dest: "{{ postgresql_data_dir }}/server.crt"
+
+- name: PostgreSQL conf file
+  become: yes
+  template:
+    src: "postgresql-{{ postgresql_server_version }}.conf"
+    dest: "{{ postgresql_data_dir }}/postgresql.conf"
+    owner: postgres
+    group: postgres
+  register: postgresql_conf
+
+- name: PostgreSQL host-based-access (HBA file) - allow remote connections
+  become: yes
+  become_user: postgres
+  lineinfile:
+    backup: yes
+    path: "{{ postgresql_data_dir }}/pg_hba.conf"
+    insertafter: EOF
+    state: present
+    line: "host    all             all             0.0.0.0/0          scram-sha-256"
+  register: pg_hba_conf
+
+- name: restart PostgreSQL if needed
+  become: yes
+  systemd:
+    name: postgresql-{{ postgresql_server_version }}
+    state: restarted
+  when: postgresql_conf is changed or pg_hba_conf is changed
+
+- name: Ensure PostgreSQL is started and enabled on boot.
+  become: yes
+  service:
+    name: postgresql-{{ postgresql_server_version }}
+    state: started
+    enabled: true
+
+- name: Ensure arkcaseroot superuser PostgreSQL user is present.
+  postgresql_user:
+    name: "{{ item.name }}"
+    role_attr_flags: SUPERUSER
+    password: "{{ item.password | default(omit) }}"
+    login_host: "{{ item.login_host | default('localhost') }}"
+    login_password: "{{ item.login_password | default('postgres') }}"
+    login_user: "{{ item.login_user | default('postgres') }}"
+    login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
+    port: "{{ item.port | default(omit) }}"
+    ssl_mode: require
+    ca_cert: "{{ ssl_cert }}"
+  with_items:
+    - name: arkcaseroot
+      password: "{{ database_root_password }}"
+  no_log: false
+  become: true
+  become_user: postgres
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+
+- name: Ensure arkcaseroot database is present.
+  postgresql_db:
+    name: "{{ item.name }}"
+    lc_collate: "{{ item.lc_collate | default('en_US.UTF-8') }}"
+    lc_ctype: "{{ item.lc_ctype | default('en_US.UTF-8') }}"
+    encoding: "{{ item.encoding | default('UTF-8') }}"
+    template: "{{ item.template | default('template0') }}"
+    login_host: "{{ database_host }}"
+    login_password: "{{ item.login_password | default(database_root_password) }}"
+    login_user: "{{ item.login_user | default('arkcaseroot') }}"
+    login_unix_socket: "{{ item.login_unix_socket | default(postgresql_unix_socket_folder) }}"
+    port: "{{ item.port | default(omit) }}"
+    owner: "{{ item.owner | default(item.name) }}"
+    ca_cert: "{{ database_server_ssl_cert }}"
+    state: present
+  with_items:
+    - name: arkcaseroot
+      owner: arkcaseroot
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true

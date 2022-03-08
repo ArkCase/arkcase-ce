@@ -1,0 +1,36 @@
+- name: list the {{ site.s_name }} document library, so we can then add some folders
+  uri:
+    url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/container/{{ site.s_name }}/documentlibrary"
+    user: admin
+    password: "{{ alfresco_admin_password }}"
+    validate_certs: no
+    return_content: yes
+  register: doclib_out
+  failed_when: '"nodeRef" not in doclib_out.content'
+
+- name: see what folders already exist in {{ site.s_name }}
+  uri:
+    url: "{{ alfresco_url }}/alfresco/s/slingshot/doclib/treenode/site/{{ site.s_name }}/documentLibrary?perms=false&children=false&max=1000"
+    user: admin
+    password: "{{ alfresco_admin_password }}"
+    validate_certs: no
+    return_content: yes
+  register: existing_folders_out
+
+- name: ensure the right folders are in the {{ site.s_name }} document library
+  uri:
+    url: "{{ alfresco_url }}/alfresco/s/api/site/folder/{{ site.s_name}}/documentlibrary"
+    method: POST
+    timeout: 120
+    user: admin
+    password: "{{ alfresco_admin_password }}"
+    validate_certs: no
+    return_content: yes
+    body_format: json
+    body:
+      name: "{{ item }}"
+      title: "{{ item }}"
+  register: folder_create_out
+  failed_when: '"site" not in folder_create_out.content'
+  loop: "{{ site.content_management_folders }}"
+  when: 'item not in existing_folders_out.content'

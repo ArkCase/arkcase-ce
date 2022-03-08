@@ -41,17 +41,17 @@ explicitly covering such access.
       maxWaitMillis="10000"
       username="{{ database_arkcase_user }}"
       password="{{ default_database_password }}"
-      driverClassName="{{ database_mysql_jdbc_driver }}"
-      validationQuery="select 1"
+      driverClassName="{{ jdbc_driver_class_name }}"
+      validationQuery="{{ jdbc_validation_query }}"
       testOnBorrow="true"
-      url="jdbc:mysql://{{ database_host_name }}:3306/{{ database_arkcase_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}"
+      url="{{ jdbc_url_xml | replace('SCHEMA', (database_arkcase_schema)) }}"
       />
 
   <Resource
-      validationQuery="select 1"
+      validationQuery="{{ jdbc_validation_query }}"
       testOnBorrow="true"
-      url="jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_hibernate_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}"
-      driverClassName="{{ database_mysql_jdbc_driver }}" 
+      url="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_hibernate_schema)) }}"
+      driverClassName="{{ jdbc_driver_class_name }}" 
       password="{{ default_database_password }}" 
       username="{{ database_pentaho_hibernate_user }}" 
       maxWaitMillis="10000"
@@ -76,10 +76,10 @@ explicitly covering such access.
 
 
   <Resource
-      validationQuery="select 1"
+      validationQuery="{{ jdbc_validation_query }}"
       testOnBorrow="true"
-      url="jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_quartz_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}"
-      driverClassName="{{ database_mysql_jdbc_driver }}" 
+      url="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_quartz_schema)) }}"
+      driverClassName="{{ jdbc_driver_class_name }}" 
       password="{{ default_database_password }}" 
       username="{{ database_pentaho_quartz_user }}" 
       maxWaitMillis="10000"
@@ -103,10 +103,10 @@ explicitly covering such access.
       name="jdbc/Quartz"/>
 
   <Resource
-      validationQuery="select 1"
+      validationQuery="{{ jdbc_validation_query }}"
       testOnBorrow="true"
-      url="jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_hibernate_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}"
-      driverClassName="{{ database_mysql_jdbc_driver }}" 
+      url="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_hibernate_schema)) }}"
+      driverClassName="{{ jdbc_driver_class_name }}" 
       password="{{ default_database_password }}" 
       username="{{ database_pentaho_hibernate_user }}" 
       maxWaitMillis="10000"
@@ -130,10 +130,10 @@ explicitly covering such access.
       name="jdbc/Audit"/>
 
   <Resource
-      validationQuery="select 1"
+      validationQuery="{{ jdbc_validation_query }}"
       testOnBorrow="true"
-      url="jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_hibernate_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}"
-      driverClassName="{{ database_mysql_jdbc_driver }}" 
+      url="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_hibernate_schema)) }}"
+      driverClassName="{{ jdbc_driver_class_name }}" 
       password="{{ default_database_password }}" 
       username="{{ database_pentaho_hibernate_user }}" 
       maxWaitMillis="10000"
@@ -157,10 +157,10 @@ explicitly covering such access.
       name="jdbc/PDI_Operations_Mart"/>
 
   <Resource
-      validationQuery="select 1"
+      validationQuery="{{ jdbc_validation_query }}"
       testOnBorrow="true"
-      url="jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_hibernate_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}"
-      driverClassName="{{ database_mysql_jdbc_driver }}" 
+      url="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_hibernate_schema)) }}"
+      driverClassName="{{ jdbc_driver_class_name }}" 
       password="{{ default_database_password }}" 
       username="{{ database_pentaho_hibernate_user }}" 
       maxWaitMillis="10000"
@@ -184,10 +184,10 @@ explicitly covering such access.
       name="jdbc/pentaho_operations_mart"/>
 
   <Resource
-      validationQuery="select 1"
+      validationQuery="{{ jdbc_validation_query }}"
       testOnBorrow="true"
-      url="jdbc:mysql://{{ database_host_name }}:3306/{{ database_pentaho_hibernate_schema }}?{{ database_mysql_jdbc_url_option_xml_string }}"
-      driverClassName="{{ database_mysql_jdbc_driver }}" 
+      url="{{ jdbc_url_xml | replace('SCHEMA', (database_pentaho_hibernate_schema)) }}"
+      driverClassName="{{ jdbc_driver_class_name }}" 
       password="{{ default_database_password }}" 
       username="{{ database_pentaho_hibernate_user }}" 
       maxWaitMillis="10000"
@@ -224,7 +224,7 @@ explicitly covering such access.
       password="password"
       driverClassName="org.hsqldb.jdbcDriver" 
       url="jdbc:hsqldb:hsql://localhost/sampledata"
-      validationQuery="select 1"/>
+      validationQuery="{{ jdbc_validation_query }}"/>
 
   <Resource 
       name="jdbc/SampleDataAdmin" 
@@ -240,6 +240,6 @@ explicitly covering such access.
       password="password"
       driverClassName="org.hsqldb.jdbcDriver" 
       url="jdbc:hsqldb:hsql://localhost/sampledata"
-      validationQuery="select 1"/>
+      validationQuery="{{ jdbc_validation_query }}"/>
 
 </Context>

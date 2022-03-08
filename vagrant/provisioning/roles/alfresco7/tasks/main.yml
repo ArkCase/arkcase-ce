@@ -1,0 +1,516 @@
+- name: set Alfresco facts (CentOS 7)
+  set_fact:
+    pkg_python_jmespath: python2-jmespath
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: set Alfresco facts (RHEL 8)
+  set_fact:
+    pkg_python_jmespath: python3-jmespath
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: Alfresco packages
+  become: yes
+  yum:
+    state: installed
+    name:
+      - "{{ pkg_python_jmespath }}"
+
+- name: record Alfresco https port, so as to fix the share-config-custom.xml later
+  set_fact:
+    alfresco_tls_port: 7070
+
+- include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
+  args:
+    apply:
+      vars:
+        tc:
+          service: alfresco7
+          user: alfresco7
+          tomcat_home: "{{ root_folder }}/app/alfresco7"
+          tls_port: "{{ alfresco_tls_port }}"
+          shutdown_port: 7005
+          jmx_remote_port: 50506
+          jmx_rmi_port: 50507
+          http_port: 7080
+          redirect_port: 7443
+          ajp_port: 7009
+          catalina_out: "{{ root_folder }}/log/alfresco7/catalina.out"
+          catalina_temp: "{{ root_folder }}/tmp/alfresco7"
+          log_folder: "{{ root_folder }}/log/alfresco7"
+          java_home: "{{ alfresco_java_home }}"
+  register: tomcat_unarchived
+
+- name: remove all files under /webapp, if needed
+  become: yes
+  become_user: alfresco7
+  shell: rm -rf "{{ root_folder }}/app/alfresco7/webapps/*"
+  when: tomcat_unarchived is changed
+
+- name: Tomcat shared and modules folders
+  become: yes
+  become_user: alfresco7
+  file:
+    path: "{{ item }}"
+    state: directory
+    recurse: yes
+  loop:
+    - "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1"
+    - "{{ root_folder }}/app/alfresco7/shared/lib"
+    - "{{ root_folder }}/app/alfresco7/modules/platform"
+    - "{{ root_folder }}/app/alfresco7/modules/share"
+
+- name: configure Tomcat shared loader
+  become: yes
+  become_user: alfresco7
+  replace:
+    path: "{{ root_folder }}/app/alfresco7/conf/catalina.properties"
+    regexp: '^shared.loader=$'
+    replace: 'shared.loader=${catalina.base}/shared/classes,${catalina.base}/shared/lib/*.jar'
+
+- name: link jdbc driver
+  become: yes
+  become_user: alfresco7
+  file:
+    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+    dest: "{{ root_folder }}/app/alfresco7/lib/{{ jdbc_driver_jar_filename }}"
+    state: link
+
+- name: unzip content services
+  become: yes
+  become_user: alfresco7
+  unarchive:
+    src: "{{ alfresco_zip_path }}"
+    remote_src: true
+    dest: "{{ root_folder }}/install/alfresco7"
+    creates: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/README.txt"
+
+- name: copy alfresco war files
+  become: yes
+  become_user: alfresco7
+  copy:
+    remote_src: yes
+    force: no
+    src: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/web-server/webapps/{{ item }}"
+    dest: "{{ root_folder }}/app/alfresco7/webapps/{{ item }}"
+  register: war_file_copy
+  loop:
+    - alfresco.war
+    - ROOT.war
+    - share.war
+
+- name: see if the distribution has a _vti_bin.war
+  become: yes
+  become_user: alfresco7
+  stat:
+    path: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/web-server/webapps/_vti_bin.war"
+  register: vti_bin_stat
+
+- name: copy _vti_bin war if it exists
+  become: yes
+  become_user: alfresco7
+  copy:
+    remote_src: yes
+    force: no
+    src: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/web-server/webapps/_vti_bin.war"
+    dest: "{{ root_folder }}/app/alfresco7/webapps/_vti_bin.war"
+  when: vti_bin_stat.stat.exists
+
+- name: copy alfresco.xml and share.xml conf files
+  block:
+    - name: ensure conf/Catalina/localhost exists
+      become: yes
+      become_user: alfresco7
+      file:
+        path: "{{ root_folder }}/app/alfresco7/conf/Catalina/localhost"
+        state: directory
+    - name: see if alfresco.xml already exists
+      become: yes
+      become_user: alfresco7
+      stat:
+        path: "{{ root_folder }}/app/alfresco7/conf/Catalina/localhost/alfresco.xml"
+      register: alfresco_xml
+    - name: copy alfresco.xml and share.xml if needed
+      become: yes
+      become_user: alfresco7
+      copy:
+        remote_src: yes
+        src: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/web-server/conf/Catalina/localhost/{{item}}"
+        dest: "{{ root_folder }}/app/alfresco7/conf/Catalina/localhost/{{ item }}"
+      loop:
+        - alfresco.xml
+        - share.xml
+      when: alfresco_xml.stat.exists == False
+    - name: fix defective paths in alfresco.xml and share.xml
+      become: yes
+      become_user: alfresco7
+      replace:
+        path: "{{ root_folder }}/app/alfresco7/conf/Catalina/localhost/{{ item }}"
+        regexp: "\\.\\.\\/"
+        replace: ""
+      loop:
+        - alfresco.xml
+        - share.xml
+
+- name: copy shared resources
+  block:
+    - name: see if shared resources already copied
+      become: yes
+      become_user: alfresco7
+      stat:
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/web-extension/share-config-custom.xml"
+      register: share_config_custom_xml
+    - name: copy shared resources if needed
+      become: yes
+      become_user: alfresco7
+      shell: cp -a {{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/web-server/shared/classes/* {{ root_folder }}/app/alfresco7/shared/classes/
+      when: share_config_custom_xml.stat.exists == False
+
+- name: copy metadata keystore
+  block:
+    - name: see if metadata keystore already copied
+      become: yes
+      become_user: alfresco7
+      stat:
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/keystore"
+      register: metadata_keystore
+    - name: copy metadata keystore if needed
+      become: yes
+      become_user: alfresco7
+      shell: cp -a {{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/keystore {{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/
+      when: metadata_keystore.stat.exists == False
+
+- name: fix alfresco location in share-config-custom.xml
+  become: yes
+  become_user: alfresco7
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/web-extension/share-config-custom.xml"
+    regexp: 'http://localhost:8080'
+    replace: 'https://{{ alfresco_host }}:{{ alfresco_tls_port }}'
+
+- include_tasks: csrf_filter.yml
+
+- name: copy alfresco-mmt.jar
+  become: yes
+  become_user: alfresco7
+  copy:
+    remote_src: true
+    src: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/bin/alfresco-mmt.jar"
+    dest: "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar"
+
+- name: unzip RMA zip file if needed
+  become: yes
+  become_user: alfresco7
+  unarchive:
+    src: "{{ alfresco_rma_zip_path }}"
+    remote_src: yes
+    dest: "{{ root_folder }}/install/alfresco7"
+    creates: "{{ alfresco_rma_repo_amp }}"
+
+- name: apply alfresco modules
+  include_tasks: "apply-amp.yml"
+  loop:
+    - title: Alfresco Share Services AMP
+      amp_path: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/amps/alfresco-share-services.amp"
+      target_war: alfresco.war
+    - title: Governance Services
+      amp_path: "{{ alfresco_rma_repo_amp }}"
+      target_war: alfresco.war
+    - title: AGS Share
+      amp_path: "{{ alfresco_rma_share_amp}}"
+      target_war: share.war
+  loop_control:
+    loop_var: amp
+
+- name: copy alfreco-global-properties sample file
+  become: yes
+  become_user: alfresco7
+  copy:
+    remote_src: yes
+    force: no
+    src: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco-global.properties.sample"
+    dest: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco-global.properties"
+
+# in Alfresco CE, no support for encrypting property values
+- name: protect alfresco-global.properties file
+  become: yes
+  become_user: alfresco7
+  file:
+    path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco-global.properties"
+    mode: 0600
+
+- name: ensure audit app folder exists
+  become: yes
+  become_user: alfresco7
+  file:
+    path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/audit"
+    state: directory
+  when: enable_alfresco_sync | bool
+
+- name: copy alfresco audit app xml
+  become: yes
+  become_user: alfresco7
+  copy:
+    src: alfresco-audit-arkcase-extractors.xml
+    dest: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/audit"
+  when: enable_alfresco_sync | bool
+
+# NOTE: alfresco-pdf-renderer, imagemagick and friends are all handled by 
+# Alfresco Transformation Services now; no longer part of Content Services.
+
+- name: populate alfresco-global.properties
+  become: yes
+  become_user: alfresco7
+  blockinfile:
+    path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco-global.properties"
+    insertbefore: BOF
+    block: |
+      # post-Alfresco-6.3, folowing property needed to enable basic auth on CMIS endpoints
+      alfresco.restApi.basicAuthScheme=true
+      transform.service.enabled=false
+      local.transform.service.enabled=false
+      dir.keystore={{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/keystore
+      messaging.broker.url=ssl://{{ activemq_host }}:61616
+      index.subsystem.name=solr6
+      solr.secureComms=none
+      solr.host={{ internal_host }}
+      solr.port=8984
+      synchronization.syncOnStartup=true
+      synchronization.syncWhenMissingPeopleLogIn=true
+      synchronization.autoCreatePeopleOnLogin=false
+      synchronization.import.cron=0 0/5 * * * ? *
+      csrf.filter.enabled=false
+      dir.root={{ root_folder }}/data/alfresco7/alf_data
+      db.name={{ database_alfresco_schema | default('alfresco') }}
+      db.username={{ database_alfresco_user | default('alfresco') }}
+      db.password={{ default_database_password }}
+      db.driver={{ jdbc_driver_class_name }}
+      db.url={{ jdbc_url_properties | replace('SCHEMA', database_alfresco_schema | default('alfresco') ) }}
+      db.schema.update=true
+      db.pool.max=50
+      db.pool.validate.query={{ jdbc_validation_query }}
+      alfresco.context=alfresco
+      alfresco.host={{ alfresco_host }}
+      alfresco.port={{ alfresco_tls_port }}
+      alfresco.protocol=https
+      share.context=share
+      share.host={{ alfresco_host }}
+      share.port={{ alfresco_tls_port }}
+      share.protocol=https
+      audit.enabled=true
+      external.authentication.proxyUserName=
+      external.authentication.enabled=true
+      external.authentication.defaultAdministratorUserNames=
+      external.authentication.proxyHeader=X-Alfresco-Remote-User
+      synchronization.synchronizeChangesOnly=false
+      ldap.authentication.active=true
+      ldap.authentication.allowGuestLogin=false
+      ldap.authentication.java.naming.factory.initial=com.sun.jndi.ldap.LdapCtxFactory
+      ldap.authentication.java.naming.security.authentication=simple
+      ldap.synchronization.java.naming.security.authentication=simple
+      ldap.authentication.escapeCommasInBind=false
+      ldap.authentication.escapeCommasInUid=false
+      ldap.authentication.defaultAdministratorUserNames=
+      ldap.authentication.authenticateFTP=false
+      ldap.synchronization.active=true
+      ldap.synchronization.queryBatchSize=0
+      ldap.synchronization.attributeBatchSize=0
+      ldap.synchronization.modifyTimestampAttributeName=whenChanged
+      ldap.synchronization.userFirstNameAttributeName=givenName
+      ldap.synchronization.userLastNameAttributeName=sn
+      ldap.synchronization.userEmailAttributeName=mail
+      ldap.synchronization.userOrganizationalIdAttributeName=o
+      ldap.synchronization.defaultHomeFolderProvider=largeHomeFolderProvider
+      ldap.synchronization.groupIdAttributeName=cn
+      ldap.synchronization.groupDisplayNameAttributeName=displayName
+      ldap.synchronization.groupMemberAttributeName=member
+      ldap.synchronization.enableProgressEstimation=true
+      ldap.authentication.java.naming.read.timeout=0
+      #################################################################
+      #      # For Active Directory / Samba
+      authentication.chain={{ alfresco_enable_external_auth | default(true) | ternary('external1:external,', '') }}ldap1:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+      ldap.synchronization.groupQuery=objectClass\=group
+      ldap.synchronization.groupDifferentialQuery=(&(objectclass\=group)(!(whenChanged<\={0})))
+      ldap.synchronization.personQuery=objectClass\=user
+      ldap.synchronization.personDifferentialQuery=(&(objectClass\=user)(!(whenChanged<\={0})))
+      ldap.synchronization.timestampFormat=yyyyMMddHHmmss'.0Z'
+      ldap.synchronization.groupType=group
+      ldap.synchronization.personType=user
+      ldap.synchronization.userIdAttributeName=samAccountName
+      # remove unneeded Alfresco activity
+      system.usages.enabled=false
+      cifs.enabled=false
+      sync.mode=OFF
+      syncService.mode=OFF
+      activities.feed.notifier.enabled=false
+      sync.pullJob.enabled=false
+      sync.pushJob.enabled=false
+      alfresco.cluster.enabled=false
+      # Chemistry fixes
+      opencmis.context.override=true
+      opencmis.context.value=
+      opencmis.servletpath.override=true
+      opencmis.servletpath.value=
+      opencmis.server.override=true
+      opencmis.server.value=https://{{ external_host }}/alfresco/api
+
+- name: create and populate ldap1-ad.properties
+  become: yes
+  become_user: alfresco7
+  copy:
+    dest: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1/ldap-ad.properties"
+    content: |
+      ldap.authentication.java.naming.provider.url={{ ldap_url }}
+      ldap.synchronization.java.naming.security.principal={{ ldap_bind_user }}
+      ldap.synchronization.java.naming.security.credentials={{ ldap_bind_password }}
+      ldap.synchronization.groupSearchBase={{ ldap_group_base }}
+      ldap.synchronization.userSearchBase={{ ldap_user_base }}
+      ldap.authentication.userNameFormat=%s@{{ active_directory_domain }}
+
+- name: LDAP portal context, if we have a FOIA portal
+  block:
+    - name: add ldap2 in AD/Samba section
+      become: yes
+      become_user: alfresco7
+      replace:
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco-global.properties"
+        regexp: authentication\.chain=external1:external,ldap1:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+        replace: authentication.chain=external1:external,ldap1:ldap-ad,ldap2:ldap-ad,alfrescoNtlm1:alfrescoNtlm
+    - name: create ldap-ad folder structure for ldap2
+      become: yes
+      become_user: alfresco7
+      file:
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap2"
+        state: directory
+        recurse: yes
+    - name: create ldap2-ad.properties file and populate it
+      become: yes
+      become_user: alfresco7
+      copy:
+        dest: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap2/ldap-ad.properties"
+        content: |
+          ldap.authentication.java.naming.provider.url={{ ldap_portal_url | default(ldap_url) }}
+          ldap.synchronization.java.naming.security.principal={{ ldap_portal_bind_user | default(ldap_bind_user) }}
+          ldap.synchronization.java.naming.security.credentials={{ ldap_portal_bind_password | default(ldap_bind_password) }}
+          ldap.synchronization.groupSearchBase={{ ldap_portal_group_no_base }},{{ ldap_base }}
+          ldap.synchronization.userSearchBase={{ ldap_portal_user_no_base }},{{ ldap_base }}
+          ldap.authentication.userNameFormat=%s@{{ ldap_portal_user_domain | default(active_directory_domain) }}
+  when: foia_portal_context is defined
+
+- name: configure alfresco.log location
+  block:
+    - name: see if ce-log4j.properties already exists
+      become: yes
+      become_user: alfresco7
+      stat:
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-log4j.properties"
+      register: log4j_exists
+    - name: unzip default log4j.properties
+      become: yes
+      become_user: alfresco7
+      command: unzip -d "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension" -j "{{ root_folder }}/app/alfresco7/webapps/alfresco.war" WEB-INF/classes/log4j.properties
+      when: log4j_exists.stat.exists == False
+      register: log4j_unzipped
+    - name: configure alfresco.log location
+      become: yes
+      become_user: alfresco7
+      replace:
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/log4j.properties"
+        regexp: log4j.appender.File.File=alfresco.log
+        replace: log4j.appender.File.File={{ root_folder }}/log/alfresco7/alfresco.log
+      when: log4j_unzipped is changed
+    - name: rename log4j.properties
+      become: yes
+      become_user: alfresco7
+      command: mv "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/log4j.properties" "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-log4j.properties"
+      when: log4j_unzipped is changed
+    - name: remove default log4j.properties
+      become: yes
+      become_user: alfresco7
+      command: zip -d "{{ root_folder }}/app/alfresco7/webapps/alfresco.war" WEB-INF/classes/log4j.properties
+      when: log4j_unzipped is changed
+
+- name: configure share.log location
+  block:
+    - name: see if temp share log4j.properties already exists
+      become: yes
+      become_user: alfresco7
+      stat:
+        path: "{{ root_folder }}/tmp/alfresco7/WEB-INF/classes/log4j.properties"
+      register: share_log4j_exists
+    - name: unzip share default log4j.properties
+      become: yes
+      become_user: alfresco7
+      command: unzip -d {{ root_folder }}/tmp/alfresco7 {{ root_folder }}/app/alfresco7/webapps/share.war WEB-INF/classes/log4j.properties
+      when: share_log4j_exists.stat.exists == False
+      register: share_log4j_unzipped
+    - name: configure share.log location
+      become: yes
+      become_user: alfresco7
+      replace:
+        path: "{{ root_folder }}/tmp/alfresco7/WEB-INF/classes/log4j.properties"
+        regexp: log4j.appender.File.File=share.log
+        replace: log4j.appender.File.File={{ root_folder }}/log/alfresco7/share.log
+      when: share_log4j_unzipped is changed
+      register: share_log4j_updated
+    - name: update share.war with new share location
+      become: yes
+      become_user: alfresco7
+      command: zip -r "{{ root_folder }}/app/alfresco7/webapps/share.war" WEB-INF
+      args:
+        chdir: "{{ root_folder }}/tmp/alfresco7"
+      when: share_log4j_updated is changed
+
+- name: metadata keystore settings
+  become: yes
+  become_user: alfresco7
+  blockinfile:
+    path: "{{ root_folder }}/app/alfresco7/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - METADATA KEY STORE SETTINGS"
+    block: |
+      export JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location={{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/keystore/metadata-keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"
+
+- name: Alfresco systemd unit file
+  become: yes
+  template:
+    src: "alfresco7.service"
+    dest: /etc/systemd/system/alfresco7.service
+
+- name: alfresco logrotate
+  become: yes
+  template:
+    src: "alfresco7"
+    dest: /etc/logrotate.d/alfresco7
+
+- name: enable Alfresco to start on boot
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: alfresco7
+    enabled: yes
+    masked: no
+
+- name: start Alfresco
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: alfresco7
+    state: started
+
+- name: wait for Alfresco startup to finish
+  wait_for:
+    port: 7070
+    delay: 5
+    timeout: 180
+
+- name: Wait for URI
+  uri:
+    url: https://localhost:7070/share/page/
+    validate_certs: false
+    follow_redirects: all
+  register: _result
+  until: _result.status == 200
+  retries: 100
+  delay: 5
+

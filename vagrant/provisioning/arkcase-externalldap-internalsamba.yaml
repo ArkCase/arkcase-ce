@@ -13,20 +13,34 @@
       tags: [core, ldap]
     - role: mariadb
       tags: [core, mariadb]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: mariadb-client
+      tags: [core, mariadb]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: postgresql
+      tags: [core, postgresql]
+      when: db_engine | default('mariadb') == 'postgresql'
+    - role: postgresql-client
+      tags: [core, postgresql, postgresql-client]
+      when: db_engine | default('mariadb') == 'postgresql'
     - role: httpd
       tags: [core, httpd]
     - role: haproxy
       tags: [core, haproxy]
     - role: activemq
       tags: [core, activemq]
-    - role: alfresco-setup
+    - role: alfresco-search-services
+      tags: [alfresco-search-services]
+    - role: alfresco7-setup
       tags: [core, alfresco, alfresco-setup]
-    - role: alfresco-ce
+    - role: alfresco7-ce
       tags: [core, alfresco, alfresco-ee]
-    - role: alfresco
+    - role: alfresco7
       tags: [core, alfresco]
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
+    - role: alfresco-change-password
+      tags: [alfresco-change-password]
     - role: solr
       tags: [core, solr]
     - role: pentaho-setup

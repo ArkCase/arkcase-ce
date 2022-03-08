@@ -1,0 +1,96 @@
+---
+# RDS makes you jump through some hoops for some reason
+- name: create database roles
+  command: psql -U arkcaseroot -h {{ database_host }} -d postgres -c "CREATE ROLE {{ item }};"
+  environment:
+    PGPASSWORD: "{{ database_root_password }}"
+  with_items:
+    - "{{ database_activemq_schema | default('activemq') }}"
+    - "{{ database_arkcase_schema | default('arkcase') }}"
+    - "{{ database_alfresco_schema | default('alfresco') }}"
+    - "{{ database_pentaho_jackrabbit_schema | default('jackrabbit') }}"
+    - "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
+    - "{{ database_pentaho_hibernate_schema | default('hibernate') }}"
+    - "{{ database_pentaho_quartz_schema | default('quartz') }}"
+    - "{{ database_pentaho_hibernate_user | default('hibuser') }}"
+    - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
+  register: create_role_result
+  failed_when: create_role_result.rc != 0 and 'already exists' not in create_role_result.stderr
+  changed_when: create_role_result.rc == 0
+
+- name: assign roles to arkcaseroot
+  command: psql -U arkcaseroot -h {{ database_host }} -d postgres -c "GRANT {{ item }} to arkcaseroot;"
+  environment:
+    PGPASSWORD: "{{ database_root_password }}"
+  with_items:
+    - "{{ database_activemq_schema | default('activemq') }}"
+    - "{{ database_arkcase_schema | default('arkcase') }}"
+    - "{{ database_alfresco_schema | default('alfresco') }}"
+    - "{{ database_pentaho_jackrabbit_schema | default('jackrabbit') }}"
+    - "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
+    - "{{ database_pentaho_hibernate_schema | default('hibernate') }}"
+    - "{{ database_pentaho_quartz_schema | default('quartz') }}"
+    - "{{ database_pentaho_hibernate_user | default('hibuser') }}"
+    - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
+
+- name: Ensure PostgreSQL databases are present.
+  postgresql_db:
+    name: "{{ item.name }}"
+    lc_collate: "{{ item.lc_collate | default('en_US.UTF-8') }}"
+    lc_ctype: "{{ item.lc_ctype | default('en_US.UTF-8') }}"
+    encoding: "{{ item.encoding | default('UTF-8') }}"
+    template: "{{ item.template | default('template0') }}"
+    login_host: "{{ database_host }}"
+    login_password: "{{ item.login_password | default(database_root_password) }}"
+    login_user: "{{ item.login_user | default('arkcaseroot') }}"
+    port: "{{ item.port | default(omit) }}"
+    owner: "{{ item.owner | default(item.name) }}"
+    ca_cert: "{{ database_server_ssl_cert }}"
+    state: present
+  with_items: 
+    - name: "{{ database_activemq_schema | default('activemq') }}"
+      owner: "{{ database_activemq_schema | default('activemq') }}"
+    - name: "{{ database_arkcase_schema | default('arkcase') }}"
+      owner: "{{ database_arkcase_schema | default('arkcase') }}"
+    - name: "{{ database_alfresco_schema | default('alfresco') }}"
+      owner: "{{ database_alfresco_schema | default('alfresco') }}"
+    - name: "{{ database_pentaho_jackrabbit_schema | default('jackrabbit') }}"
+      owner: "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
+    - name: "{{ database_pentaho_hibernate_schema | default('hibernate') }}"
+      owner: "{{ database_pentaho_hibernate_user | default('hibuser') }}"
+    - name: "{{ database_pentaho_quartz_schema | default('quartz') }}"
+      owner: "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+
+- name: create postgres schema for {{ item.name | default(item) }}
+  postgresql_schema:
+    name: "{{ item.name | default(item) }}"
+    owner: "{{ item.owner | default(item) }}"
+    db: "postgres"
+    login_host: "{{ item.login_host | default(database_host) }}"
+    login_password: "{{ item.login_password | default(database_root_password) }}"
+    login_user: "{{ item.login_user | default('arkcaseroot') }}"
+    port: "{{ item.port | default(omit) }}"
+    ca_cert: "{{ database_server_ssl_cert }}"
+  no_log: false
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+  with_items:
+    - name: "{{ database_activemq_schema | default('activemq') }}"
+      owner: "{{ database_activemq_schema | default('activemq') }}"
+    - name: "{{ database_arkcase_schema | default('arkcase') }}"
+      owner: "{{ database_arkcase_schema | default('arkcase') }}"
+    - name: "{{ database_alfresco_schema | default('alfresco') }}"
+      owner: "{{ database_alfresco_schema | default('alfresco') }}"
+    - name: "{{ database_pentaho_jackrabbit_schema | default('jackrabbit') }}"
+      owner: "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
+    - name: "{{ database_pentaho_hibernate_schema | default('hibernate') }}"
+      owner: "{{ database_pentaho_hibernate_user | default('hibuser') }}"
+    - name: "{{ database_pentaho_quartz_schema | default('quartz') }}"
+      owner: "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
+ 

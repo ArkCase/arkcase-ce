@@ -3,6 +3,10 @@
   roles:
     - role: common
       tags: [core, common]
+    - role: pki-aws-csr
+      tags: [pki-aws-csr]
+    - role: pki-aws-client
+      tags: [pki-aws-client]
     - role: pki
       tags: [core, pki]
     - role: pki_client
@@ -13,20 +17,34 @@
       tags: [core, ldap]
     - role: mariadb
       tags: [core, mariadb]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: mariadb-client
+      tags: [core, mariadb]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: postgresql
+      tags: [core, postgresql]
+      when: db_engine | default('mariadb') == 'postgresql'
+    - role: postgresql-client
+      tags: [core, postgresql, postgresql-client]
+      when: db_engine | default('mariadb') == 'postgresql'
     - role: httpd
       tags: [core, httpd]
     - role: haproxy
       tags: [core, haproxy]
     - role: activemq
       tags: [core, activemq]
-    - role: alfresco-setup
+    - role: alfresco-search-services
+      tags: [alfresco-search-services]
+    - role: alfresco7-setup
       tags: [core, alfresco, alfresco-setup]
-    - role: alfresco-ce
+    - role: alfresco7-ce
       tags: [core, alfresco, alfresco-ce]
-    - role: alfresco
+    - role: alfresco7
       tags: [core, alfresco]
     - role: alfresco-site
       tags: [core, alfresco, alfresco-site]
+    - role: alfresco-change-password
+      tags: [alfresco-change-password]
     - role: remove-solr
       tags: [remove-solr]
     - role: zookeeper
@@ -40,6 +58,8 @@
       tags: [core, pentaho, pentaho-ce]
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
+    - role: pentaho-service-pack-15
+      tags: [pentaho-service-pack-15]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app

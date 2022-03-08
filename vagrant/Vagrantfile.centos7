@@ -22,7 +22,7 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://vagrantcloud.com/search.
-  config.vm.box = "../packer/builds/hyperv-centos7-20191129.box"
+  config.vm.box = "../packer/builds/virtualbox-centos7-20190925.box"
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -80,7 +80,7 @@ Vagrant.configure("2") do |config|
   $script = <<-SCRIPT 
     sudo yum -y install ansible
     cd /home/vagrant/provisioning
-    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" arkcase-ce.yml
+    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" --tags core arkcase-ce.yml | tee /tmp/ansible-install.log
   SCRIPT
   config.vm.provision "shell", inline: $script
 end

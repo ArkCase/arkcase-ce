@@ -142,11 +142,30 @@
   command: sed -i '/^# main frontend which proxys to the backends$/,$d' {{ path_haproxy_cfg }}
   when: '"main frontend which proxys to the backends" in current_config.stdout'
   register: remove_default_config
-  
-- name: generate cert/key file that haproxy can read
+ 
+- name: see if we already have a cert file named for this host
   become: yes
-  shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/{{ internal_host }}.pem
-  
+  stat:
+    path: /etc/pki/tls/certs/{{ internal_host }}.pem
+  register: host_pem_stat
+  changed_when: false
+
+- name: count the subjects in the cert file for this host, if it exists
+  become: yes
+  shell: grep subject /etc/pki/tls/certs/{{ internal_host }}.pem | wc -l
+  register: subject_count
+  changed_when: false
+ 
+- name: generate cert/key file that haproxy can read (Let's Encrypt-style setup)
+  become: yes
+  shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
+  when: not host_pem_stat.stat.exists or subject_count.stdout != '3'
+
+- name: generate cert/key file that haproxy can read (ADCS setup)
+  become: yes
+  shell: cat {{ ssl_cert }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
+  when: host_pem_stat.stat.exists and subject_count.stdout == '3'
+    
 - name: ArkCase configuration
   become: yes
   blockinfile:
@@ -165,7 +184,7 @@
         mode http
         bind *:80
 
-        bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/{{ internal_host }}.pem
+        bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/haproxy.pem
         redirect scheme https code 301 if !{ ssl_fc }
         
         # for URLs that should not be called from outside, 
