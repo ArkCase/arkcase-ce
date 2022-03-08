@@ -1,6 +1,6 @@
 ---
 - name: Create specific users
-  postgresql_user:
+  community.postgresql.postgresql_user:
     name: "{{ s.user | string }}"
     password: "{{ default_database_password }}"
     login_host: "{{ s.login_host | default('localhost') }}"
@@ -15,7 +15,7 @@
     PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
 
 - name: create postgres schema if script is empty
-  postgresql_schema:
+  community.postgresql.postgresql_schema:
     database: "{{ s.dbname | string }}"
     name: "{{ s.schema | string }}"
     owner: "{{ s.user | string }}"
@@ -32,7 +32,7 @@
   when: s.script | length == 0
 
 - name: create postgres schema if script is not empty
-  postgresql_db:
+  community.postgresql.postgresql_db:
     maintenance_db: "{{ s.dbname | string }}"
     name: "{{ s.schema | string }}"
     owner: "{{ s.user | string }}"

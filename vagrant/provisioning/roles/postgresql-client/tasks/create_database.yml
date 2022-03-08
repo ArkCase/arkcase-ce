@@ -34,7 +34,7 @@
     - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
 
 - name: Ensure PostgreSQL databases are present.
-  postgresql_db:
+  community.postgresql.postgresql_db:
     name: "{{ item.name }}"
     lc_collate: "{{ item.lc_collate | default('en_US.UTF-8') }}"
     lc_ctype: "{{ item.lc_ctype | default('en_US.UTF-8') }}"
@@ -65,7 +65,7 @@
     ansible_ssh_pipelining: true
 
 - name: create postgres schema for {{ item.name | default(item) }}
-  postgresql_schema:
+  community.postgresql.postgresql_schema:
     name: "{{ item.name | default(item) }}"
     owner: "{{ item.owner | default(item) }}"
     db: "postgres"
