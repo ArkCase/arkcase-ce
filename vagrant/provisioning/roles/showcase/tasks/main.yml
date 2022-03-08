@@ -1,0 +1,99 @@
+### Showcase UI
+- name: download showcase app 
+  become: yes
+  become_user: apache
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/showcase{{ showcase_version_formatted | default('') }}.zip
+  args:
+    chdir: "{{ root_folder }}/install/httpd"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
+
+- name: Remove old showcase UI folder
+  file:
+    state: absent
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ showcase_context | default('showcase') }}/"
+
+- name: ensure showcase web folder exists
+  become: yes
+  become_user: apache
+  file:
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ showcase_context | default('showcase') }}"
+    state: directory
+
+- name: unzip showcase UI
+  become: yes
+  become_user: apache
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/httpd/showcase{{ showcase_version_formatted }}.zip"
+    dest: "{{ root_folder }}/data/httpd/htdocs/{{ showcase_context | default('showcase') }}/"
+
+# Showcase mock server
+- name: Remove old showcase mock server folder
+  file:
+    state: absent
+    path: "{{ root_folder }}/app/showcase-mock-server"
+
+- name: ensure showcase mock server folders exists
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: arkcase
+    owner: arkcase
+  loop:
+    - "{{ root_folder }}/install/showcase-mock-server"
+    - "{{ root_folder }}/app/showcase-mock-server"
+
+- name: download showcase mock server 
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-mock-server{{ showcase_version_formatted | default('') }}.zip
+  args:
+    chdir: "{{ root_folder }}/install/showcase-mock-server"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
+
+- name: unzip showcase mock server
+  become: yes
+  become_user: arkcase
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/showcase-mock-server/arkcase-mock-server{{ showcase_version_formatted }}.zip"
+    dest: "{{ root_folder }}/app/showcase-mock-server/"
+
+- name: copy startup.sh for showcase mock server
+  become: yes
+  become_user: arkcase
+  template:
+    src: startup.sh
+    dest: "{{ root_folder }}/app/showcase-mock-server/startup.sh"
+
+- name: ensure executable on startup.sh
+  become: yes
+  file: 
+    path: "{{ root_folder }}/app/showcase-mock-server/startup.sh"
+    mode: 0744
+
+- name: copy showcase mock server systemd unit file
+  become: yes
+  template:
+    src: showcase-mock-server.service
+    dest: /etc/systemd/system/showcase-mock-server.service
+    group: arkcase
+    owner: arkcase
+
+- name: enable showcase mock server
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: showcase-mock-server
+    enabled: yes
+    masked: no
+
+- name: restart showcase mock server
+  service:
+    name: showcase-mock-server
+    state: restarted

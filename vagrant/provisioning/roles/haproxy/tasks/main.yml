@@ -280,6 +280,76 @@
         server foia0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   when: foia_portal_context is defined
 
+### Showcase frontend
+- name: Showcase frontend part
+  become: yes
+  lineinfile:
+    backup: yes      
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    line: "  acl acl_showcase path_beg /showcase"
+  when: deploy_showcase | default(false)
+
+- name: Tell Showcase frontend which backend will use
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_showcase if acl_showcase"
+  when: deploy_showcase | default(false)
+
+- name: Showcase context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK SHOWCASE CONTEXT"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+       backend be_showcase
+        http-response add-header X-SHOWCASE-Node %s
+        mode http
+        option tcp-check
+        server showcase0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  when: deploy_showcase | default(false)
+
+# Showcase backend / mock server
+- name: Showcase-backend frontend part
+  become: yes
+  lineinfile:
+    backup: yes      
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    line: "  acl acl_showcase_backend path_beg /showcase/api"
+  when: deploy_showcase | default(false)
+
+- name: Tell Showcase-backend frontend which backend will use
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_showcase_backend if acl_showcase_backend"
+  when: deploy_showcase | default(false)
+
+- name: Showcase-backend context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK SHOWCASE CONTEXT"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+       backend be_showcase_backend
+        http-response add-header X-SHOWCASE-BACKEND-Node %s
+        mode http
+        option tcp-check
+        server showcase_backend0 {{ internal_host }}:3000
+        http-request set-path %[path,regsub(^/showcase/,/)] 
+  when: deploy_showcase | default(false)
+
+# Confluent platform
 - name: Set up proxies to Confluent Platform services
   block:
     - name: Populate haproxy.conf with frontend part 

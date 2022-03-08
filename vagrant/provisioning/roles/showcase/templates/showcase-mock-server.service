@@ -1,0 +1,19 @@
+[Unit]
+Description=Showcase Mock server
+After=syslog.target
+
+[Service]
+ExecStart={{ root_folder }}/app/showcase-mock-server/startup.sh
+SuccessExitStatus=143
+WorkingDirectory={{ root_folder }}/app/showcase-mock-server
+User=arkcase
+Group=arkcase
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=showcase-mock-server
+
+
+[Install]
+WantedBy=multi-user.target
