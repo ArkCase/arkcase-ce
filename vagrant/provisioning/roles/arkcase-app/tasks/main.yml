@@ -38,7 +38,7 @@
       - name: default_user
         value: "{{ default_user_password }}"
       - name: alfresco_admin_password
-        value: "{{ alfresco_admin_password }}"
+        value: "{{ alfresco_admin_password | default('admin') }}"
       - name: old_default_user
         value: AcMd3v$
       - name: activemq_password
