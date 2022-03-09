@@ -41,7 +41,7 @@
     state: absent
     name:
       - python-pip
-      - python3-pip
+      #- python3-pip
 
 - name: install required packages
   become: yes
