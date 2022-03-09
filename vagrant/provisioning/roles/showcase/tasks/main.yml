@@ -76,6 +76,7 @@
   file: 
     path: "{{ root_folder }}/app/showcase-mock-server/startup.sh"
     mode: 0744
+    setype: bin_t
 
 - name: copy showcase mock server systemd unit file
   become: yes

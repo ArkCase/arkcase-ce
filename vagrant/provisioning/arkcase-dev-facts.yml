@@ -28,7 +28,10 @@ snowbound_host: "{{ internal_host }}"
 solr_host: "{{ internal_host }}"
 kafka_host: "{{ internal_host }}"
 elasticsearch_host: "{{ internal_host }}"
-
+zipkin_host: "{{ internal_host }}"
+schema_registry_host: "{{ internal_host }}"
+config_server_host: "{{ internal_host }}"
+eureka_host: "{{ internal_host }}"
 
 ### Define LDAP Version for the ArkCase service file
 ### It should be "samba" for development vagrant boxes, where we have the LDAP localy and AWS instances
@@ -614,6 +617,8 @@ arkcase_vault_authMethod: ""
 arkcase_vault_username: ""
 arkcase_vault_password: ""
 
+enable_saml_microservice: false
+enable_microservices: true
 # Extra microservices for extensions. You can add any number of microservices in the list. Example:
 #arkcase_extra_microservices:
 #  - name: extra-microservice

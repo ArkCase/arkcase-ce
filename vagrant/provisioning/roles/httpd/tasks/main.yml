@@ -84,6 +84,24 @@
     src: arkcase-httpd
     dest: /etc/logrotate.d/arkcase-httpd
 
+- name: SHOWCASE context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK SHOWCASE CONTEXT"
+    insertbefore: "</VirtualHost>"
+    path: "/etc/httpd/conf.d/ssl.conf"
+    block: |
+      <Directory "{{ root_folder }}/data/httpd/htdocs/{{ showcase_context }}">
+        RewriteEngine On
+        RewriteBase "/{{ showcase_context }}/"
+        RewriteRule ^index\.html$ - [L]
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule . /{{ showcase_context }}/index.html [L]
+      </Directory>
+  when: showcase_context is defined
+
 - name: see if mod_security.conf exists, possibly from an earlier installation of httpd
   become: yes
   stat:

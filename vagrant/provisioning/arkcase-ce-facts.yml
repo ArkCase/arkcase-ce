@@ -32,7 +32,10 @@ snowbound_host: "{{ internal_host }}"
 solr_host: "{{ internal_host }}"
 kafka_host: "{{ internal_host }}"
 elasticsearch_host: "{{ internal_host }}"
-
+zipkin_host: "{{ internal_host }}"
+schema_registry_host: "{{ internal_host }}"
+config_server_host: "{{ internal_host }}"
+eureka_host: "{{ internal_host }}"
 
 ### ensure samba domain is based on the internal_host
 samba_domain: "DC.ARKCASE-CE"
@@ -517,6 +520,8 @@ arkcase_vault_authMethod: ""
 arkcase_vault_username: ""
 arkcase_vault_password: ""
 
+enable_saml_microservice: false
+enable_microservices: false
 # Extra microservices for extensions. You can add any number of microservices in the list. Example:
 #arkcase_extra_microservices:
 #  - name: extra-microservice

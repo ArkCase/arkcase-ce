@@ -4,4 +4,4 @@
     microservice:
       name: arkcase-api-gateway
       version: "{{ arkcase_api_gateway_version | default(arkcase_version) }}"
-      java_opts: "-Dserver.port=9000 -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include=server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Dlogging.file.name={{ root_folder }}/log/arkcase-api-gateway/arkcase-api-gateway.log -Djava.io.tmpdir={{ root_folder }}/data/arkcase-api-gateway/tmp"
+      java_opts: "-Dserver.port=9000 -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include=server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
