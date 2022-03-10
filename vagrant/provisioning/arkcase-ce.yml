@@ -5,8 +5,10 @@
       tags: [core, common]
     - role: pki-aws-csr
       tags: [pki-aws-csr]
+      when: aws_client is undefined or aws_client
     - role: pki-aws-client
       tags: [pki-aws-client]
+      when: aws_client is undefined or aws_client
     - role: pki
       tags: [core, pki]
     - role: pki_client
@@ -33,8 +35,6 @@
       tags: [core, haproxy]
     - role: activemq
       tags: [core, activemq]
-    - role: alfresco-search-services
-      tags: [alfresco-search-services]
     - role: alfresco7-setup
       tags: [core, alfresco, alfresco-setup]
     - role: alfresco7-ce
@@ -58,8 +58,6 @@
       tags: [core, pentaho, pentaho-ce]
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration]
-    - role: pentaho-service-pack-15
-      tags: [pentaho-service-pack-15]
     - role: snowbound
       tags: [core, snowbound]
     - role: snowbound-app
