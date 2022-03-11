@@ -79,6 +79,7 @@ Vagrant.configure("2") do |config|
   $script = <<-SCRIPT 
     sudo yum -y install ansible
     cd /home/vagrant/provisioning
+    ansible-galaxy collection install community.postgresql
     ansible-playbook -e @arkcase-dev-facts.yml -e "sftp_arkcase_password=***" arkcase-dev.yml
   SCRIPT
 
