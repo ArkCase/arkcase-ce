@@ -3,7 +3,7 @@
 ##if the services are not running it will start the services
 
 ##list the services to check
-SERVICES=('haproxy' 'config-server' 'mariadb' 'httpd' 'pentaho' 'snowbound' 'solr' 'alfresco' 'activemq' 'confluent-kafka' 'confluent-zookeeper' 'confluent-control-center' 'confluent-kafka-connect' 'confluent-kafka-rest' 'confluent-ksql' 'confluent-kafka-connect' 'confluent-schema-registry' 'mongod' 'samba')
+SERVICES=('haproxy' 'config-server' 'mariadb' 'httpd' 'pentaho' 'snowbound' 'solr' 'alfresco' 'activemq' 'confluent-kafka' 'confluent-zookeeper' 'confluent-control-center' 'confluent-kafka-connect' 'confluent-kafka-rest' 'confluent-ksql' 'confluent-kafka-connect' 'confluent-schema-registry' 'mongod' 'samba' 'alfresco7')
 
  for i in "${SERVICES[@]}"
   do

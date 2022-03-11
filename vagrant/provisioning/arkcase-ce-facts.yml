@@ -583,3 +583,6 @@ postgresql_group: postgres
 postgresql_unix_socket_folder: /var/run/postgresql
 
 solr_log4j_version: ""
+
+# This should be true for roles: pki-aws-csr and pki-aws-client
+aws_client: false

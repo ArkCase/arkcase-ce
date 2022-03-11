@@ -31,4 +31,5 @@
 - name: results
   debug:
     msg: "{{ change_password_out.content }}"
+  when: old_alfresco_admin_password is defined  
  
