@@ -102,6 +102,24 @@
       </Directory>
   when: showcase_context is defined
 
+- name: ARKCASE PORTAL context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL CONTEXT"
+    insertbefore: "</VirtualHost>"
+    path: "/etc/httpd/conf.d/ssl.conf"
+    block: |
+      <Directory "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}">
+        RewriteEngine On
+        RewriteBase "/{{ arkcase_portal_context }}/"
+        RewriteRule ^index\.html$ - [L]
+        RewriteCond %{REQUEST_FILENAME} !-f
+        RewriteCond %{REQUEST_FILENAME} !-d
+        RewriteRule . /{{ arkcase_portal_context }}/index.html [L]
+      </Directory>
+  when: arkcase_portal_context is defined
+
 - name: see if mod_security.conf exists, possibly from an earlier installation of httpd
   become: yes
   stat:

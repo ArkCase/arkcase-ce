@@ -533,3 +533,10 @@ showcase_context: showcase
 showcase_version: "{{ arkcase_version }}"
 showcase_version_formatted: "{{ '-' ~ showcase_version if showcase_version != '' else '' }}"
 deploy_showcase: false
+
+arkcase_portal_context: portal
+arkcase_portal_version: "{{ arkcase_version }}"
+arkcase_portal_version_formatted: "{{ '-' ~ arkcase_portal_version if arkcase_portal_version != '' else '' }}"
+arkcase_portal_extension: core
+arkcase_portal_extension_formatted: "{{ '-' ~ arkcase_portal_extension if arkcase_portal_extension != '' else '' }}"
+deploy_arkcase_portal: false

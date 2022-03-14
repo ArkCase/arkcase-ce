@@ -1,0 +1,47 @@
+- name: download arkcase portal UI  
+  become: yes
+  become_user: apache
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip
+  args:
+    chdir: "{{ root_folder }}/tmp/httpd"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
+
+- name: copy arkcase portal UI to install folder (this will tell us if it actually changed)
+  become: yes
+  become_user: apache
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip"
+  register: arkcase_portal_zip
+
+- name: see if arkcase portal UI web folder exists
+  become: yes
+  become_user: apache
+  stat: 
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}"
+  register: arkcase_portal_web_folder
+
+- name: backup existing folder if necessary
+  become: yes
+  become_user: apache
+  command: mv "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}" "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}.{{ ansible_date_time.iso8601 }}"
+  when: arkcase_portal_web_folder.stat.exists and arkcase_portal_zip is changed
+
+- name: ensure arkcase portal UI web folder exists
+  become: yes
+  become_user: apache
+  file:
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}"
+    state: directory
+
+- name: unzip arkcase portal UI
+  become: yes
+  become_user: apache
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}/"
+  when: arkcase_portal_zip is changed

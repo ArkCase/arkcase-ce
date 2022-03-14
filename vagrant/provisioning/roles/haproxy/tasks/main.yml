@@ -280,6 +280,40 @@
         server foia0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   when: foia_portal_context is defined
 
+### Arkcase Portal frontend
+- name: ArkCase Portal frontend part
+  become: yes
+  lineinfile:
+    backup: yes      
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    line: "  acl acl_arkcase_portal path_beg /{{ arkcase_portal_context }}"
+  when: deploy_arkcase_portal | default(false)
+
+- name: Tell ArkCase Portal frontend which backend will use
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_arkcase_portal if acl_arkcase_portal"
+  when: deploy_arkcase_portal | default(false)
+
+- name: ArkCase Portal context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL CONTEXT"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+       backend be_arkcase_portal
+        http-response add-header X-ARKCASE-PORTAL-Node %s
+        mode http
+        option tcp-check
+        server arkcase_portal0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  when: deploy_arkcase_portal | default(false)
+
 ### Showcase frontend
 - name: Showcase frontend part
   become: yes
@@ -303,7 +337,7 @@
   become: yes
   blockinfile:
     backup: yes
-    marker: "# {mark} ANSIBLE MANAGED BLOCK SHOWCASE CONTEXT"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK SHOWCASE UI CONTEXT"
     insertafter: "#backend servers"
     path: "{{ path_haproxy_cfg }}"
     block: |

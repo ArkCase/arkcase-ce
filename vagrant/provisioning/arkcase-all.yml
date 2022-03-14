@@ -108,6 +108,9 @@
     - role: arkcase-extra-microservices
       tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
       when: enable_microservices | default(false) and arkcase_extra_microservices is defined
+    - role: arkcase-portal-ui
+      tags: [core, upgrade, arkcase-portal-ui, arkcase-microservices, marketplace]
+      when: deploy_arkcase_portal | default(false)
     - role: foia
       tags: [foia]
     - role: privacy
