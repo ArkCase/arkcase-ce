@@ -39,6 +39,14 @@
       tags: [core, activemq, marketplace]
     - role: alfresco-search-services
       tags: [alfresco-search-services]
+    - role: alfresco-setup
+      tags: [alfresco6]
+    - role: alfresco-ce
+      tags: [alfresco6]
+    - role: alfresco
+      tags: [alfresco6]
+    - role: alfresco-site
+      tags: [alfresco6]
     - role: alfresco7-setup
       tags: [core, alfresco, alfresco-setup, marketplace]
     - role: alfresco7-ce
