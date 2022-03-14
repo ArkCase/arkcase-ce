@@ -4,3 +4,4 @@ collections:
 - community.crypto
 - community.mysql
 - community.mongodb
+- community.postgresql

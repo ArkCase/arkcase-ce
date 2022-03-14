@@ -63,7 +63,7 @@ Vagrant.configure("2") do |config|
   # Example for VirtualBox:
   #
   config.vm.provider "hyperv" do |b|
-    b.memory = "4096"
+    b.memory = "8192"
 	b.cpus = 2
 	b.vmname = "arkcase-vagrant"
   end
@@ -96,7 +96,8 @@ Vagrant.configure("2") do |config|
   $script = <<-SCRIPT 
     sudo yum -y install ansible
     cd /home/vagrant/provisioning
-    ansible-playbook -e @arkcase-dev-facts.yml -e "sftp_arkcase_password=Ja7dai_pei" arkcase-dev.yml
+    ansible-galaxy collection install community.postgresql
+    ansible-playbook -e @arkcase-dev-facts.yml -e "sftp_arkcase_password=***" arkcase-dev.yml
   SCRIPT
 
   config.vm.provision "shell", inline: $script

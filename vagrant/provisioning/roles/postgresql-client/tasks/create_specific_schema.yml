@@ -1,0 +1,51 @@
+---
+- name: Create specific users
+  community.postgresql.postgresql_user:
+    name: "{{ s.user | string }}"
+    password: "{{ default_database_password }}"
+    login_host: "{{ s.login_host | default('localhost') }}"
+    login_password: "{{ s.login_password | default(default_database_password) }}"
+    login_user: "{{ s.login_user | default('postgres') }}"
+    port: "{{ s.port | default(omit) }}"
+  no_log: false
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+
+- name: create postgres schema if script is empty
+  community.postgresql.postgresql_schema:
+    database: "{{ s.dbname | string }}"
+    name: "{{ s.schema | string }}"
+    owner: "{{ s.user | string }}"
+    login_host: "{{ s.login_host | default('127.0.0.1') }}"
+    login_password: "{{ default_database_password }}"
+    login_user: "{{ s.user }}"
+    port: "{{ s.port | default(omit) }}"
+  no_log: false
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+  when: s.script | length == 0
+
+- name: create postgres schema if script is not empty
+  community.postgresql.postgresql_db:
+    maintenance_db: "{{ s.dbname | string }}"
+    name: "{{ s.schema | string }}"
+    owner: "{{ s.user | string }}"
+    login_host: "{{ s.login_host | default('127.0.0.1') }}"
+    login_password: "{{ default_database_password }}"
+    login_user: "{{ s.user }}"
+    port: "{{ s.port | default(omit) }}"
+    state: restore
+    target: "{{ root_folder }}/install/pentaho/{{ s.script }}"
+  no_log: false
+  # See: https://github.com/ansible/ansible/issues/16048#issuecomment-229012509
+  vars:
+    ansible_ssh_pipelining: true
+  environment:
+    PGOPTIONS: "{{ (postgresql_auth_method == 'scram-sha-256') | ternary('-c password_encryption=scram-sha-256', '') }}"
+  when: s.script | length > 0

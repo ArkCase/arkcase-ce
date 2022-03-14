@@ -1,0 +1,89 @@
+- name: install required packages
+  become: yes
+  yum:
+    state: installed
+    name:
+      - python3-pip
+
+- name: update PIP
+  become: yes
+  pip:
+    executable: pip3
+    name: pip
+    extra_args: --upgrade
+
+- name: install Python crypto library
+  become: yes
+  pip:
+    executable: pip3
+    name: cryptography
+
+- name: create pki folder structure
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "/etc/pki/tls"
+    - "/etc/pki/tls/private"
+    - "/etc/pki/tls/csr"
+    - "/etc/pki/tls/certs"
+
+# the passphrase and specific cipher are required
+# on CentOS FIPS mode; then we can remove the
+# passphrase and proceed as usual.
+- name: generate server private key
+  become: yes
+  openssl_privatekey:
+    path: "/etc/pki/tls/private/{{ internal_host }}-pp.pem"
+    type: RSA
+    size: 4096
+    cipher: "auto"
+    passphrase: "{{ internal_host }}"
+    select_crypto_backend: cryptography
+  register: server_private_key
+
+- name: remove passphrase from server key
+  become: yes
+  command: openssl rsa -in "/etc/pki/tls/private/{{ internal_host }}-pp.pem" -out "/etc/pki/tls/private/{{ internal_host }}.pem" -passin pass:'{{ internal_host }}'
+  when: server_private_key is changed
+
+- name: generate server csr
+  become: yes
+  openssl_csr:
+    basic_constraints_critical: no
+    basic_constraints:
+      - CA:FALSE
+    key_usage_critical: yes
+    key_usage:
+      - Digital Signature
+      - keyEncipherment
+    extended_key_usage_critical: no
+    extended_key_usage:
+      - serverAuth
+    digest: sha256
+    path: "/etc/pki/tls/csr/{{ internal_host }}.csr"
+    privatekey_path: "/etc/pki/tls/private/{{ internal_host }}.pem"
+    country_name: US
+    state_or_province_name: VA
+    locality_name: Vienna
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: "{{ internal_host }}"
+    subject_alt_name:
+      - DNS:{{ internal_host }}
+      - DNS:{{ internal_host.split(".")[0] }}
+      - DNS:{{ external_host }}
+      - IP:{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+
+- name: show next steps
+  debug:
+    msg:
+      - 'You must now authenticate as a domain admin using the "kinit" command, '
+      - 'and then invoke the submit_csr shell script: '
+      - '   sh submit_csr.sh /etc/pki/tls/csr/{{ internal_host }}.csr {{ internal_host }}.html {{ internal_host }}.p7b {{ internal_host }}.pem WebServerV2 https://URL_OF_THE_SUBORDINATE_CA/certsrv'
+      - 'Then copy the file {{ internal_host }}.pem to the folder /etc/pki/tls/certs'
+      - ''
+      - 'NOTE due to the requirement to authenticate as a domain admin, this step MUST'
+      - 'be done by you manually, and will not be automated in these Ansible roles.'

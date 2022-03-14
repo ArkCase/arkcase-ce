@@ -37,8 +37,8 @@
         value: "{{ default_database_password }}"
       - name: default_user
         value: "{{ default_user_password }}"
-      - name: default_alfresco
-        value: admin
+      - name: alfresco_admin_password
+        value: "{{ alfresco_admin_password | default('admin') }}"
       - name: old_default_user
         value: AcMd3v$
       - name: activemq_password
@@ -65,6 +65,8 @@
         value: "{{ email_receiver_complaint_password | default('') }}"
       - name: email_receiver_consultation_password
         value: "{{ email_receiver_consultation_password | default('') }}"
+      - name: default_alfresco
+        value: admin
   loop_control:
     loop_var: p
 
@@ -73,6 +75,20 @@
   file:
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
+
+- name: remove pip2 that might come up along OS        
+  become: yes
+  yum:
+    state: absent
+    name:
+      - python3-pip
+
+- name: install pip3        
+  become: yes
+  yum:
+    state: present
+    name:
+      - python3-pip      
 
 - name: install Python Excel module
   become: yes
@@ -258,9 +274,23 @@
     - "arkcase"
     - "config-server"
 
+- name: check for Alfresco 7 folder
+  stat:
+    path: "{{ root_folder }}/app/alfresco7"
+  register: alfresco7_path
+
+- name: service facts
+  set_fact:
+    db_service_name: "{{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if arkcase_host == database_host else '' }}"
+    activemq_service_name: "{{ 'activemq.service' if activemq_host == arkcase_host else '' }}"
+    samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
+    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host else '' }}"
+    alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
+    alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
+
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:
-    arkcase_required_services: "{{ 'mariadb.service activemq.service alfresco.service samba.service solr.service config-server.service' if ldap_type=='samba' else 'mariadb.service activemq.service alfresco.service solr.service config-server.service' }}"
+    arkcase_required_services: "{{ db_service_name + ' ' + activemq_service_name + ' ' + solr_service_name + ' ' + samba_service_name + ' ' + alfresco7_service_name + ' ' + alfresco_service_name + ' config-server.service' }}"
 
 - name: copy ArkCase and config server systemd unit files
   become: yes
@@ -323,6 +353,21 @@
   file:
     path: "{{ root_folder }}/install/arkcase/WEB-INF"
     state: absent
+
+- name: Remove embedded postgres JDBC driver, if running under PostgreSQL
+  become: yes
+  become_user: arkcase
+  shell: zip -d {{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war  WEB-INF/lib/postgresql-9.3-1100-jdbc41.jar
+  when: db_engine == 'postgresql'
+
+- name: Link the desired postgres JDBC driver, if running under PostgreSQL
+  become: yes
+  become_user: arkcase
+  file:
+    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+    dest: "{{ root_folder }}/app/arkcase/lib/{{ jdbc_driver_jar_filename }}"
+    state: link
+  when: db_engine == 'postgresql'
 
 - name: unarchive ArkCase search service jar
   become: yes
@@ -637,9 +682,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -681,9 +726,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -712,9 +757,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -724,7 +769,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: camel_alfresco_cmis_properties.stat.exists
 
 - name: see if we have a camel opencmis cmis properties file
@@ -745,9 +790,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -757,7 +802,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: camel_open_cmis_properties.stat.exists
 
 
@@ -789,9 +834,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -801,7 +846,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: alfresco_cmis_properties.stat.exists
 
 - name: see if we have an opencmis cmis properties file
@@ -822,9 +867,9 @@
   loop:
 # note, using dot to match regexp special chars
     - regexp: "ENC.U2FsdGVkX1/xhPRpzw95iNfLBLwieucwbQ0eg9woLOk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX1/ADLCgdmaKs9V7jL58/2khwFbgqAY7jVE=."
-      replace: "ENC{{ encrypted_default_alfresco }})"
+      replace: "ENC{{ encrypted_alfresco_admin_password }})"
     - regexp: "ENC.U2FsdGVkX18opRRmCattSZiUNjfr598Qq7P3DgZSwGw=."
       replace: "ENC({{ encrypted_old_default_user }})"
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
@@ -834,7 +879,7 @@
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
     - regexp: "ENC.U2FsdGVkX1.xMlwqvI2wwoWYIw6.wL6WMU3T4UfpKPk=."
-      replace: "ENC({{ encrypted_default_alfresco }})"
+      replace: "ENC({{ encrypted_alfresco_admin_password }})"
   when: open_cmis_properties.stat.exists
 
 # this template includes encrypted passwords

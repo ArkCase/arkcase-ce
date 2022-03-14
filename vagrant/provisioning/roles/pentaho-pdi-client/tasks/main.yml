@@ -146,8 +146,8 @@
   become: yes
   become_user: pentaho-pdi
   file:
-    src: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
-    dest: "{{ root_folder}}/app/pentaho-pdi/data-integration/lib/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+    src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
+    dest: "{{ root_folder}}/app/pentaho-pdi/data-integration/lib/{{ jdbc_driver_jar_filename }}"
     state: link
 
 

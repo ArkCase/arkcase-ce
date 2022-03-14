@@ -1,0 +1,41 @@
+{{ root_folder }}/log/alfresco7/*.log {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/alfresco7 -mtime +7 -delete
+  endscript
+}
+
+{{ root_folder }}/log/alfresco7/*.out {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/alfresco7 -mtime +7 -delete
+  endscript
+}
+
+{{ root_folder }}/log/alfresco7/*.txt {
+  copytruncate
+  daily
+  rotate 7
+  compress
+  missingok
+  size 10k
+  dateext
+  dateyesterday
+  lastaction
+    find {{ root_folder }}/log/alfresco7 -mtime +7 -delete
+  endscript
+}

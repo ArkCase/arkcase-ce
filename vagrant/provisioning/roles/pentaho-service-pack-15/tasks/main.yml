@@ -1,0 +1,84 @@
+- name: install expect
+  become: yes
+  yum:
+    state: installed
+    name:
+      - expect
+
+- name: ensure Pentaho is stopped
+  become: yes
+  systemd:
+    name: pentaho
+    state: stopped
+
+- name: download Pentaho service pack 15
+  become: yes
+  become_user: pentaho
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_pentaho_user }}@{{ sftp_service_base_url }}:{{ sftp_pentaho_folder }}/PentahoServer-SP-8.3.0.15-993.bin
+  args:
+    chdir: "{{ root_folder }}/install/pentaho"
+    creates: "{{ root_folder }}/install/pentaho/PentahoServer-SP-8.3.0.15-993.bin"
+  environment:
+    SSHPASS: "{{ sftp_pentaho_password }}"
+
+- name: Ensure that the file has the right privileges
+  become: yes
+  become_user: pentaho
+  command: chmod 775 {{ root_folder }}/install/pentaho/PentahoServer-SP-8.3.0.15-993.bin
+
+- name: write expect script for installation of Pentaho service pack 15
+  become: yes
+  become_user: pentaho
+  template:
+    src: expect-script-sp15.txt
+    dest: /home/pentaho/expect-script-sp15
+
+- name: install Pentaho service pack 15
+  become: yes
+  become_user: pentaho
+  shell: |
+    cd {{ root_folder}}/install/pentaho/
+    expect -f /home/pentaho/expect-script-sp15
+
+- name: make sure everything in pentaho has proper ownership
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/pentaho"
+    state: directory
+    group: pentaho
+    owner: pentaho
+
+- name: Ensure changes in reportviewer-app.js are made
+  become: yes
+  become_user: pentaho
+  copy:
+    src: "{{ item }}"
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/reporting/reportviewer/compressed"
+    owner: pentaho
+    group: pentaho
+    mode: 0777
+    backup: yes
+  with_items:
+    - reportviewer-app.js
+    - reportviewer-main-module.js
+
+- name: Update Pentaho to support report designer within ArkCase iframe
+  shell: "{{ item }}" 
+  become: yes
+  become_user: pentaho
+  with_items:
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/properties {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/content {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/css {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/js {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/home/images/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/images/
+    - cp -rp {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/lib {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+    - cp -p {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/css/browser.css {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/css/
+    - cp -prf {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/browser/* {{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/mantle/
+
+- name: start Pentaho
+  become: yes
+  systemd:
+    name: pentaho
+    state: started

@@ -33,7 +33,7 @@ explicitly covering such access.
   * system/hibernate/oracle10g.hibernate.cfg.xml
   *
   -->
-    <config-file>system/hibernate/mysql5.hibernate.cfg.xml</config-file>
+    <config-file>{{ hibernate_settings }}</config-file>
 
   <!--
   *

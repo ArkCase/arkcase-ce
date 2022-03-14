@@ -290,7 +290,7 @@ arkcase_config_server_version: "0.0.1"
 # retrieve snowbound from GitHub ("github") or SFTP ("sftp")
 snowbound_retrieve_strategy: "github"
 snowbound_vendor_version: "5.6.2"
-snowbound_arkcase_version: "{{ arkcase_version }}"
+snowbound_arkcase_version: "{{ arkcase_version | default('2021.03') }}"
 snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
 
@@ -334,11 +334,46 @@ samba_server_role: dc
 
 database_host_name: "{{ database_host }}"
 database_server_ssl_cert: "{{ ssl_cert }}"
+database_root_password: "{{ default_user_password }}"
 
 database_mysql_jdbc_driver: "org.mariadb.jdbc.Driver"
 database_mysql_jdbc_url_option_xml_string: "autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;useSsl=true&amp;requireSsl=true&amp;enabledSslProtocolSuites={{ ssl_cipher }}&amp;trustServerCertificate=false&amp;serverSslCert={{ database_server_ssl_cert }}"
+database_mysql_jdbc_url_option_properties_string: "autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_cipher }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
+# TODO I don't think the below list tables command will work against RDS.
+mariadb_list_tables_command: "mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock SCHEMA -Ns -e 'show tables;'"
+
+
 database_arkcase_schema: arkcase
 database_arkcase_user: arkcase
+database_activemq_user: activemq
+database_activemq_schema: activemq
+
+## postgresql-specific
+postgresql_server_version: 14
+postgresql_jdbc_version: "42.3.1"
+postgresql_service_file_name: "postgresql-{{ postgresql_server_version }}.service"
+# Note, PostgreSQL JDBC driver forces UTF character set internally and you can't set your own.  So no reason to specify characterEncoding here.
+postgresql_jdbc_url_option_xml_string: "ssl=true&amp;sslmode=require&amp;sslcert={{ database_server_ssl_cert }}"
+postgresql_jdbc_url_option_properties_string: "ssl=true&sslmode=require&sslcert={{ database_server_ssl_cert }}"
+postgresql_list_tables_command: "psql -U SCHEMA -h {{ database_host }} -qAntc '\\dt'"
+
+# db_engine: either mariadb or postgresql
+db_engine: mariadb
+jdbc_driver_class_name: "{{ 'org.postgresql.Driver' if db_engine == 'postgresql' else 'org.mariadb.jdbc.Driver' }}"
+jdbc_validation_query: "select 1"
+jdbc_driver_jar_filename: "{{ 'postgresql-' + postgresql_jdbc_version + '.jar' if db_engine == 'postgresql' else  'mariadb-java-client-' + mariadb_jdbc_version + '.jar' }}"
+database_list_tables_command: "{{ postgresql_list_tables_command if db_engine == 'postgresql' else mariadb_list_tables_command }}"
+jdbc_url_xml: "{{ 'jdbc:postgresql://' + database_host + ':5432/SCHEMA?' + postgresql_jdbc_url_option_xml_string if db_engine == 'postgresql' else 'jdbc:mysql://' + database_host_name +':3306/SCHEMA?' + database_mysql_jdbc_url_option_xml_string }}"
+jdbc_url_properties: "{{ 'jdbc:postgresql://' + database_host + ':5432/SCHEMA?' + postgresql_jdbc_url_option_properties_string if db_engine == 'postgresql' else 'jdbc:mysql://' + database_host_name +':3306/SCHEMA?' + database_mysql_jdbc_url_option_properties_string }}"
+hibernate_dialect: "{{ 'org.hibernate.dialect.PostgreSQLDialect' if db_engine == 'postgresql' else 'org.hibernate.dialect.MySQL5InnoDBDialect' }}"
+pentaho_ce_mapping_resource: "{{ 'hibernate/postgresql.hbm.xml' if db_engine == 'postgresql' else 'hibernate/mysql5innodb.hbm.xml' }}"
+pentaho_ee_mapping_resource: "{{ 'hibernate/postgresql.EE.hbm.xml' if db_engine == 'postgresql' else 'hibernate/mysql5innodb.EE.hbm.xml' }}"
+hibernate_settings: "{{ 'system/hibernate/postgresql.hibernate.cfg.xml' if db_engine == 'postgresql' else 'system/hibernate/mysql5.hibernate.cfg.xml' }}"
+# pentaho schema and pentaho databaseType in repository.xml use the same values either postgresql or mysql
+pentaho_repository_schema: "{{ 'postgresql'  if db_engine == 'postgresql' else 'mysql' }}"
+pentaho_driver_delegate_class: "{{ 'PostgreSQLDelegate' if db_engine == 'postgresql' else 'StdJDBCDelegate' }}"
+pentaho_persistance_manager: "{{ 'PostgreSQLPersistenceManager' if db_engine == 'postgresql' else 'MySqlPersistenceManager' }}"
+arkcase_db_platform: "{{ 'PostgreSQLPlatform' if db_engine == 'postgresql'  else 'MySQLPlatform' }}"
 
 database_pentaho_hibernate_schema: hibernate
 database_pentaho_hibernate_user: hibuser
@@ -388,11 +423,14 @@ default_database_password: "@rKc@3S!"
 tomcat_major_version: 9
 tomcat_version: 9.0.22
 
+# use more complicated password for Alfresco admin user before you start with the installation
+alfresco_admin_password: "admin"
+
 # Alfresco Community Edition
 alfresco_release_name: 201806-GA
 alfresco_build_number: "-build-00113"
-alfresco_content_services_version: 6.0.7-ga
-alfresco_records_management_version: 3.0.a
+alfresco_content_services_version: 7.1.0.1
+alfresco_records_management_version: "{{ alfresco_content_services_version }}"
 
 # Alfresco Enterprise Edition
 # for Alfresco EE you must have an Alfresco EE license file
@@ -401,12 +439,30 @@ alfresco_records_management_version: 3.0.a
 # them to an SFTP repository.  Also, run the `alfresco_ee` role instead of
 # `alfresco_ce`
 alfresco_ee_version: 6.1.1.1
-alfresco_install_governance_services: no
+alfresco_install_governance_services: yes
 alfresco_governance_services_version: 3.2.0
 
 # whether to enable sync from alfresco to arkcase
 enable_alfresco_sync: true
 
+# whether to add ldap groups to Alfresco sites
+alfresco_add_groups_to_sites: false
+
+alfresco_sites:
+  - s_title: "ACM"
+    s_name: "acm"
+    s_description: "ArkCase Collaboration Site"
+    s_preset: "site-dashboard"
+    s_type: "{http://www.alfresco.org/model/site/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/recordsmanagement/1.0}rmsite"
+  - s_title: "Records Management"
+    s_name: "rm"
+    s_description: "Records Management Site"
+    s_preset: "rm-site-dashboard"
+    s_type: "{http://www.alfresco.org/model/dod5015/1.0}site"
+    s_compliance: "{http://www.alfresco.org/model/dod5015/1.0}site"
+
+records_management_root: "ACM"
 records_management_categories:
   - "Case Files"
   - "Complaints"
@@ -415,21 +471,24 @@ records_management_categories:
   - "Tasks"
   - "Consultations"
   - "SAR"
-content_management_folders:
-  - "Case Files"
-  - "Complaints"
-  - "Document Repositories"
-  - "Expenses"
-  - "People"
-  - "Recycle Bin"
-  - "Tasks"
-  - "Timesheets"
-  - "User Profile"
-  - "Business Processes"
-  - "Consultations"
-  - "SAR"
-  - "Requests" 
-  
+
+site_folders:
+  - s_name: acm 
+    content_management_folders:
+      - "Case Files"
+      - "Complaints"
+      - "Document Repositories"
+      - "Expenses"
+      - "People"
+      - "Recycle Bin"
+      - "Tasks"
+      - "Timesheets"
+      - "User Profile"
+      - "Business Processes"
+      - "Consultations"
+      - "Requests"
+      - "SAR"
+
 # we don't use this value yet, but maybe it could be used to
 # set non-expiring passwords on AD users
 # from https://social.technet.microsoft.com/wiki/contents/articles/29480.active-directory-fun-with-maximum-password-age.aspx... just under 30,000 years from now
@@ -520,6 +579,19 @@ arkcase_vault_authMethod: ""
 arkcase_vault_username: ""
 arkcase_vault_password: ""
 
+# postgresql
+postgresql_data_dir: "{{ root_folder }}/data/postgresql/data"
+postgres_log_folder: "{{ root_folder }}/log/postgresql"
+postgresql_auth_method: "{{ ansible_fips  | ternary('scram-sha-256', 'md5') }}"
+postgresql_user: postgres
+postgresql_group: postgres
+postgresql_unix_socket_folder: /var/run/postgresql
+
+solr_log4j_version: ""
+
+# This should be true for roles: pki-aws-csr and pki-aws-client
+aws_client: false
+
 enable_saml_microservice: false
 enable_microservices: false
 # Extra microservices for extensions. You can add any number of microservices in the list. Example:
@@ -540,3 +612,4 @@ arkcase_portal_version_formatted: "{{ '-' ~ arkcase_portal_version if arkcase_po
 arkcase_portal_extension: core
 arkcase_portal_extension_formatted: "{{ '-' ~ arkcase_portal_extension if arkcase_portal_extension != '' else '' }}"
 deploy_arkcase_portal: false
+

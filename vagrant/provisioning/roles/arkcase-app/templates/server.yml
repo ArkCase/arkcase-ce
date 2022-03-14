@@ -1,7 +1,13 @@
+database:
+  platform: "org.eclipse.persistence.platform.database.{{ arkcase_db_platform }}"
+  #set this property to true if database platform is PostgreSQL
+  encryption_supported: "{{ (db_engine == 'postgresql') | ternary('true', 'false') }}"
 acm:
-  driverClassName: "{{ database_mysql_jdbc_driver }}"
-  url: "jdbc:mysql://{{ database_host }}:3306/arkcase?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useSsl=true&requireSsl=true&enabledSslProtocolSuites={{ ssl_version }}&trustServerCertificate=false&serverSslCert={{ database_server_ssl_cert }}"
+  driverClassName: "{{ jdbc_driver_class_name }}"
+  url: "{{ jdbc_url_properties | replace('SCHEMA', (database_arkcase_schema)) }}"
   password: "ENC({{ encrypted_default_database }})"
+##activiti engine database properties
+activiti.db.type: "{{ (db_engine == 'postgresql') | ternary('postgres', 'mysql') }}"
 elk:
   server:
     url: "https://{{ external_host }}/arkcase/acm-elastic"

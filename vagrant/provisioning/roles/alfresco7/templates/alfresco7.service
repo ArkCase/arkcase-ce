@@ -1,0 +1,19 @@
+[Unit]
+Description=Alfresco service
+After=activemq {{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if alfresco_host == database_host else '' }}
+BindsTo=activemq {{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if alfresco_host == database_host else '' }}
+
+[Service]
+Type=forking
+ExecStart={{ root_folder }}/app/alfresco7/bin/startup.sh
+ExecStop={{ root_folder }}/app/alfresco7/bin/shutdown.sh -force
+User=alfresco7
+Group=alfresco7
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=alfresco
+
+[Install]
+WantedBy=multi-user.target
