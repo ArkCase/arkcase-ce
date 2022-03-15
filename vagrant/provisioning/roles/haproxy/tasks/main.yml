@@ -217,7 +217,7 @@
         use_backend be_share if acl_share
         use_backend be_snowbound if acl_snowbound
         use_backend be_arkcase if acl_arkcase
-        use backend be_api_gateway if acl_api_gateway
+        use_backend be_api_gateway if acl_api_gateway
         use_backend be_config if acl_config
 
       #backend servers  
