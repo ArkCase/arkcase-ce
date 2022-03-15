@@ -1,0 +1,93 @@
+- name: "format {{ microservice.name }} version"
+  set_fact:
+    microservice_version_formatted: "{{ '-' ~ microservice.version if microservice.version != '' else '' }}"
+
+- name: microservice folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: arkcase
+    owner: arkcase
+  loop:
+    - "{{ root_folder }}/app/{{ microservice.name }}"
+    - "{{ root_folder }}/log/{{ microservice.name }}"
+    - "{{ root_folder }}/tmp/{{ microservice.name }}"
+    - "{{ root_folder }}/data/{{ microservice.name }}/tmp"
+  register: microservice_folder_structure
+
+- name: define GitHub download path
+  set_fact:
+    github_microservice_artifact: "{{ microservice.version }}/{{ microservice.name }}-{{ microservice.version }}.jar"
+
+- name: "download {{ microservice.name }} jar file (if using GitHub)"
+  include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: "{{ microservice.name }} jar file"
+      dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar"
+      owner: arkcase
+      url: "https://github.com/ArkCase/microservices/releases/download/{{ github_microservice_artifact }}"
+  when: arkcase_retrieve_strategy == "github"
+
+- name: "download {{ microservice.name }} jar file (if using sftp)"
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ microservice.name }}{{ microservice_version_formatted }}.jar
+  args:
+    chdir: "{{ root_folder }}/tmp/{{ microservice.name }}"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  when: arkcase_retrieve_strategy == "sftp"
+
+- name: "copy {{ microservice.name }} jar file to app folder"
+  become: yes
+  become_user: arkcase
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/{{ microservice.name }}/{{ microservice.name }}{{ microservice_version_formatted }}.jar"
+    dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar"
+  register: arkcase_api_gateway_jar
+  when: arkcase_retrieve_strategy == "sftp"
+
+- name: "ensure {{ microservice.name }} jar is executable"
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar"
+    mode: "u=rwx,g=r,o=r"
+    setype: bin_t
+
+- name: "{{ microservice.name }} server logrotate"
+  become: yes
+  template:
+    src: ../templates/microservice-log-rotate
+    dest: "/etc/logrotate.d/{{ microservice.name }}"
+
+- name: "copy {{ microservice.name }} systemd unit file"
+  become: yes
+  template:
+    src: ../templates/microservice.service
+    dest: "/etc/systemd/system/{{ microservice.name }}.service"
+
+- name: copy {{ microservice.name }} configuration file
+  become: yes
+  become_user: arkcase
+  template:
+    src: ../templates/microservice.conf
+    dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.conf"
+    force: yes
+
+- name: "enable {{ microservice.name }}"
+  become: yes
+  systemd:
+    daemon_reload: yes
+    name: "{{ microservice.name }}"
+    enabled: yes
+    masked: no
+
+- name: "restart {{ microservice.name }}"
+  service:
+    name: "{{ microservice.name }}"
+    state: restarted
+
+# TODO set haproxy to redirect on 9000 instead of 8843

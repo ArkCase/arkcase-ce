@@ -1,0 +1,5 @@
+- name: deploy arkcase-extra-microservices
+  include_tasks: "{{ role_path }}/../arkcase-microservice/tasks/deploy_microservice.yml"
+  loop: "{{ arkcase_extra_microservices }}"
+  loop_control:
+    loop_var: microservice

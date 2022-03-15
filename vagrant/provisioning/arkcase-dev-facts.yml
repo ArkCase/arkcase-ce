@@ -33,7 +33,11 @@ pentaho_host: "{{ internal_host }}"
 snowbound_host: "{{ internal_host }}"
 solr_host: "{{ internal_host }}"
 kafka_host: "{{ internal_host }}"
-
+elasticsearch_host: "{{ internal_host }}"
+zipkin_host: "{{ internal_host }}"
+schema_registry_host: "{{ internal_host }}"
+config_server_host: "{{ internal_host }}"
+eureka_host: "{{ internal_host }}"
 
 ### Define LDAP Version for the ArkCase service file
 ### It should be "samba" for development vagrant boxes, where we have the LDAP localy and AWS instances
@@ -686,3 +690,25 @@ postgresql_user: postgres
 postgresql_group: postgres
 
 solr_log4j_version: ""
+
+enable_saml_microservice: false
+enable_microservices: true
+# Extra microservices for extensions. You can add any number of microservices in the list. Example:
+#arkcase_extra_microservices:
+#  - name: extra-microservice
+#    version: "{{ arkcase_version }}"
+#    java_opts: "-Dserver.port=9100 -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include=server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Dlogging.file.name={{ root_folder }}/log/extra-microservice/extra-microservice.log -Djava.io.tmpdir={{ root_folder }}/data/extra-microservice/tmp"
+arkcase-extra_microservices: []
+
+showcase_context: showcase
+showcase_version: "{{ arkcase_version }}"
+showcase_version_formatted: "{{ '-' ~ showcase_version if showcase_version != '' else '' }}"
+deploy_showcase: true
+
+arkcase_portal_context: portal
+arkcase_portal_version: "{{ arkcase_version }}"
+arkcase_portal_version_formatted: "{{ '-' ~ arkcase_portal_version if arkcase_portal_version != '' else '' }}"
+arkcase_portal_extension: core
+arkcase_portal_extension_formatted: "{{ '-' ~ arkcase_portal_extension if arkcase_portal_extension != '' else '' }}"
+deploy_arkcase_portal: false
+
