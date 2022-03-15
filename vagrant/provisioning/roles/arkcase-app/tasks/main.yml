@@ -345,7 +345,7 @@
     src: tls-default.conf
     dest: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
   register: default_file_copied
-  when: tls_default_file.stat.exists == false and arkcase_version != "" and arkcase_version is version('3.3.3', '<')  
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')  
 
 - name: remove old WEB-INF folder
   become: yes
