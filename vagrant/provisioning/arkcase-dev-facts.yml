@@ -712,3 +712,4 @@ arkcase_portal_extension: core
 arkcase_portal_extension_formatted: "{{ '-' ~ arkcase_portal_extension if arkcase_portal_extension != '' else '' }}"
 deploy_arkcase_portal: false
 
+open_office_version: "4.1.11"
