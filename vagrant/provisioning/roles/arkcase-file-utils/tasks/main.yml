@@ -5,3 +5,59 @@
       name: arkcase-file-utils
       version: "{{ arkcase_file_utils_version | default(arkcase_version) }}"
       java_opts: "-Dserver.port=9068 -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include=server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
+
+- name: Check Open Office installed
+  become: yes
+  stat:
+    path: "/opt/openoffice4/program/soffice"
+  register: openoffice_bin 
+
+- name: Check Open Office version
+  become: yes
+  command: "/opt/openoffice4/program/soffice -h  2>&1 | head -n1"
+  register: openoffice_old_version
+
+- name: Set open_office_latest_version fact
+  set_fact:
+    open_office_latest_version: "{{ open_office_version | default('4.1.11') | string in openoffice_old_version.stdout }}"
+  when: openoffice_bin.stat.exists
+
+- name: Remove old Open Office and Libreoffice version, if necessary
+  become: yes
+  yum:
+    state: absent
+    name: 
+      - "openoffice*"
+      - "libreoffice*"
+  when: openoffice_bin.stat.exists and not open_office_latest_version
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: Open Office
+      dest: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+      owner: root
+      url: "https://sourceforge.net/projects/openofficeorg.mirror/files/{{ open_office_version | default('4.1.11') }}/binaries/en-US/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz --no-check-certificate"
+  when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: unpack Open Office RPM
+  become: yes
+  unarchive:
+    src: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+    remote_src: yes
+    dest: /tmp
+  when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: install Open Office
+  become: yes
+  command: 
+    cmd: rpm -Uvih /tmp/en-US/RPMS/*.rpm
+    warn: false
+  when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: remove tmp files
+  become: yes
+  file:
+    force: yes
+    state: absent
+    path: /tmp/en-US
+  when: open_office_latest_version is not defined or not open_office_latest_version
