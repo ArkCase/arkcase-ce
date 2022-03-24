@@ -16,6 +16,7 @@
   become: yes
   command: "/opt/openoffice4/program/soffice -h  2>&1 | head -n1"
   register: openoffice_old_version
+  when: openoffice_bin.stat.exists
 
 - name: Set open_office_latest_version fact
   set_fact:
