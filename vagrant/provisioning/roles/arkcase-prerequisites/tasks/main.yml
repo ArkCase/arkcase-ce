@@ -64,14 +64,47 @@
       owner: root
       url: https://dl.yarnpkg.com/rpm/yarn.repo
 
-- name: required packages to run ArkCase webapp
+- name: Get yarn version
+  become: yes
+  shell: "yarn -v"
+  register: yarn_version
+  ignore_errors: yes
+
+- name: get node_version
+  become: yes
+  shell: "node -v"
+  register: node_version
+  ignore_errors: yes
+
+- name: get npm version
+  become: yes
+  shell: "npm -v"
+  register: npm_version
+  ignore_errors: yes
+
+- name: required packages (yarn) to run ArkCase webapp
   become: yes
   yum:
     state: present
     name:
       - yarn
+  when: yarn_version.stdout == ""
+
+- name: required packages (npm) to run ArkCase webapp
+  become: yes
+  yum:
+    state: present
+    name:
       - npm
+  when: npm_version.stdout == ""
+
+- name: required packages (node) to run ArkCase webapp
+  become: yes
+  yum:
+    state: present
+    name:
       - nodejs
+  when: node_version.stdout == ""
 
 - name: install python2 (needed on RHEL8)
   become: yes
