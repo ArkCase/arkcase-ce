@@ -135,6 +135,7 @@
   with_items: "{{ interactive_reports_datasources.files }}"
   
 - name: Check if foia or core variant
+  become: yes
   stat: 
     path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-foia.yaml
   register: arkcase_foia_yaml
