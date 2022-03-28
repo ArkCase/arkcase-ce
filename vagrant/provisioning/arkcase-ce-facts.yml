@@ -614,7 +614,3 @@ arkcase_portal_extension_formatted: "{{ '-' ~ arkcase_portal_extension if arkcas
 deploy_arkcase_portal: false
 
 open_office_version: "4.1.11"
-
-# ArkCase memory size
-arkcase_mem_max: ""
-arkcase_mem_min: ""
