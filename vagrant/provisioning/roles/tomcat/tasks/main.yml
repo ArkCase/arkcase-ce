@@ -168,6 +168,19 @@
         marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
         block: |
           export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }} -Dlog4j.formatMsgNoLookups=true"
+      when: arkcase_extension_id != "victoria-pd" 
+    - name: set JAVA_OPTS
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/bin/setenv.sh"
+        create: yes
+        mode: u+x
+        insertbefore: EOF
+        marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
+        block: |
+          export JAVA_OPTS="-Xms1024m -Xmx8g -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }} -Dlog4j.formatMsgNoLookups=true"
+      when: arkcase_extension_id == "victoria-pd"    
     - name: set CATALINA_OPTS
       become: yes
       become_user: "{{ tc.user }}"
