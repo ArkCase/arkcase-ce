@@ -25,19 +25,24 @@
     - "log"
     - "tmp"
 
-- name: check if minio file exists
-  become: yes
-  stat: 
-   path: "{{root_folder}}/app/minio/minio"
-  register: minio_file
-
 - name: download minio file from internet
+  include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+   - name: minio
+     dest: "{{root_folder}}/app/minio/minio"
+     owner: minio
+     url: "https://dl.minio.io/server/minio/release/linux-amd64/minio"
+     setype: bin_t
+
+- name: change minio file permission
   become: yes
-  get_url:
-    url: "https://dl.minio.io/server/minio/release/linux-amd64/minio"
-    dest: "{{root_folder}}/app/minio/"
-    setype: bin_t
-  when: not minio_file.stat.exists
+  file:
+   path: "{{root_folder}}/app/minio/minio"
+   state: file
+   owner: minio
+   group: minio
+   mode: "0777"
+
 
 - name: create minio config file
   become: yes
