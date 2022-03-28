@@ -16,25 +16,27 @@
 - name: create minio bin directory
   become: yes
   file:
-    path: "{{root_folder}}/app/minio/{{ item }}"
+    path: "{{root_folder}}/{{ item }}/minio/"
     state: directory
     owner: minio
   with_items:
-    - "bin"
+    - "app"
     - "data"
+    - "log"
+    - "tmp"
 
 - name: check if minio file exists
   become: yes
   stat: 
-   path: "{{root_folder}}/app/minio/bin/minio"
+   path: "{{root_folder}}/app/minio/minio"
   register: minio_file
 
 - name: download minio file from internet
   become: yes
   get_url:
     url: "https://dl.minio.io/server/minio/release/linux-amd64/minio"
-    dest: "{{root_folder}}/app/minio/bin/"
-    mode: '0777'
+    dest: "{{root_folder}}/app/minio/"
+    setype: bin_t
   when: not minio_file.stat.exists
 
 - name: create minio config file
@@ -42,7 +44,7 @@
   copy:
     dest: "{{root_folder}}/app/minio/minio.conf"
     content: |
-     MINIO_VOLUMES= "{{root_folder}}/app/minio/data"
+     MINIO_VOLUMES= "{{root_folder}}/data/minio"
 
 - name: create systemd file
   become: yes
