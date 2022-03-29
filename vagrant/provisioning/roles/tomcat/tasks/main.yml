@@ -167,7 +167,7 @@
         insertbefore: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
         block: |
-          export JAVA_OPTS="-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }} -Dlog4j.formatMsgNoLookups=true"
+          export JAVA_OPTS="-Xms{{ arkcase_mem_min | default('1g',true)}} -Xmx{{ arkcase_mem_max | default('6g',true)}} -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }} -Dlog4j.formatMsgNoLookups=true"
     - name: set CATALINA_OPTS
       become: yes
       become_user: "{{ tc.user }}"
