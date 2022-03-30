@@ -1,0 +1,38 @@
+[Unit]
+Description=Minio
+Documentation=https://docs.minio.io
+Wants=network-online.target
+After=network-online.target
+AssertFileIsExecutable={{root_folder}}/app/minio/minio
+
+[Service]
+WorkingDirectory={{root_folder}}/app/minio
+
+User=minio
+Group=minio
+
+PermissionsStartOnly=true
+
+EnvironmentFile=-{{root_folder}}/app/minio/minio.conf
+ExecStartPre=/bin/bash -c "[ -n \"${MINIO_VOLUMES}\" ] || echo \"Variable MINIO_VOLUMES not set in {{root_folder}}/app/minio/minio.conf\""
+
+ExecStart={{root_folder}}/app/minio/minio server $MINIO_OPTS $MINIO_VOLUMES
+
+StandardOutput=journal
+StandardError=inherit
+
+# Specifies the maximum file descriptor number that can be opened by this process
+LimitNOFILE=65536
+
+# Disable timeout logic and wait until process is stopped
+TimeoutStopSec=0
+
+# SIGTERM signal is used to stop Minio
+KillSignal=SIGTERM
+
+SendSIGKILL=no
+
+SuccessExitStatus=0
+
+[Install]
+WantedBy=multi-user.target

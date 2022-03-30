@@ -1,6 +1,8 @@
 ---
 - hosts: localhost
   roles: 
+    - role: minio
+      tags: [microservices, minio]
     - role: common
       tags: [core, common]
     - role: pki-dev
