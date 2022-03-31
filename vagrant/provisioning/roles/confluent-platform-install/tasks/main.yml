@@ -153,6 +153,13 @@
     - "confluent.metrics.topic.replication=1"
   when: not control_center_production_properties_contents.stdout is match('^' + item)
 
+- name: change control center data directory
+  become: yes
+  replace:
+    path: "{{ root_folder }}/app/control-center/control-center-production.properties"
+    regexp: "confluent.controlcenter.data.dir=/var/lib/confluent/control-center"
+    replace: "confluent.controlcenter.data.dir={{ root_folder }}/data/control-center"
+
 - name: Change logrotation policy for Kafka app logs
   become: yes
   template:

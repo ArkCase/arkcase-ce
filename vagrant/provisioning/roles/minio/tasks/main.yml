@@ -31,7 +31,7 @@
    - name: minio
      dest: "{{root_folder}}/app/minio/minio"
      owner: minio
-     url: "https://dl.minio.io/server/minio/release/linux-amd64/minio
+     url: "https://dl.minio.io/server/minio/release/linux-amd64/minio"
 
 - name: change minio file permission
   become: yes
