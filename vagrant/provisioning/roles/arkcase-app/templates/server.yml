@@ -137,6 +137,7 @@ zylabIntegration:
   enabled: {{ zylab_integration_enabled | default(false) }}
   host: "{{ zylab_server_host | default('') }}"
   port: "{{ zylab_server_port | default('') }}"
+  defaultMatterTemplateId: "{{ zylab_default_mater_template_id | default('') }}"
   authentication:
     registrationId: "{{ zylab_registrationId | default('') }}"
     clientId: "{{ zylab_clientId | default('') }}"
