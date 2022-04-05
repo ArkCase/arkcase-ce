@@ -409,6 +409,40 @@
         http-request set-path %[path,regsub(^/showcase/,/)] 
   when: deploy_showcase | default(false)
 
+### Storybook frontend
+- name: Storybook frontend part
+  become: yes
+  lineinfile:
+    backup: yes      
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    line: "  acl acl_storybook path_beg /storybook"
+  when: deploy_storybook | default(false)
+
+- name: Tell Storybook frontend which backend will use
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_storybook if acl_storybook"
+  when: deploy_storybook | default(false)
+
+- name: Storybook context, if needed
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK STORYBOOK UI CONTEXT"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+       backend be_storybook
+        http-response add-header X-STORYBOOK-Node %s
+        mode http
+        option tcp-check
+        server storybook0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  when: deploy_storybook | default(false)
+
 # Confluent platform
 - name: Set up proxies to Confluent Platform services
   block:
