@@ -1,0 +1,30 @@
+### Storybook UI
+- name: download storybook app 
+  become: yes
+  become_user: apache
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/storybook{{ storybook_version_formatted | default('') }}.zip
+  args:
+    chdir: "{{ root_folder }}/install/httpd"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
+
+- name: Remove old storybook UI folder
+  file:
+    state: absent
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ storybook_context | default('storybook') }}/"
+
+- name: ensure storybook web folder exists
+  become: yes
+  become_user: apache
+  file:
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ storybook_context | default('storybook') }}"
+    state: directory
+
+- name: unzip storybook UI
+  become: yes
+  become_user: apache
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/httpd/storybook{{ storybook_version_formatted }}.zip"
+    dest: "{{ root_folder }}/data/httpd/htdocs/{{ storybook_context | default('storybook') }}/"
