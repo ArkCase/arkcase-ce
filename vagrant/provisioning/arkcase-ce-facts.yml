@@ -607,6 +607,11 @@ showcase_version: "{{ arkcase_version }}"
 showcase_version_formatted: "{{ '-' ~ showcase_version if showcase_version != '' else '' }}"
 deploy_showcase: false
 
+storybook_context: storybook
+storybook_version: "{{ arkcase_version }}"
+storybook_version_formatted: "{{ '-' ~ storybook_version if storybook_version != '' else '' }}"
+deploy_storybook: false
+
 arkcase_portal_context: portal
 arkcase_portal_version: "{{ arkcase_version }}"
 arkcase_portal_version_formatted: "{{ '-' ~ arkcase_portal_version if arkcase_portal_version != '' else '' }}"

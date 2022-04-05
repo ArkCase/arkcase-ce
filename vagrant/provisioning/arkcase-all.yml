@@ -1,5 +1,5 @@
 ---
-- hosts: all
+- hosts: localhost
   roles:
     - role: minio
       tags: [microservices, minio]
@@ -94,6 +94,8 @@
       tags: [arkcase-prerequisites, core, arkcase, upgrade, marketplace]
     - role: showcase
       tags: [showcase]
+    - role: storybook
+      tags: [storybook]
     - role: arkcase-app
       tags: [arkcase-app, core, arkcase, upgrade, marketplace]
     - role: arkcase-api-gateway
