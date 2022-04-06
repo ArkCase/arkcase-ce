@@ -26,7 +26,7 @@
   become_user: apache
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/install/httpd/showcase{{ showcase_version_formatted }}.zip"
+    src: "{{ root_folder }}/install/httpd/showcase{{ showcase_version_formatted | default('') }}.zip"
     dest: "{{ root_folder }}/data/httpd/htdocs/{{ showcase_context | default('showcase') }}/"
 
 # Showcase mock server
@@ -61,7 +61,7 @@
   become_user: arkcase
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/install/showcase-mock-server/arkcase-mock-server{{ showcase_version_formatted }}.zip"
+    src: "{{ root_folder }}/install/showcase-mock-server/arkcase-mock-server{{ showcase_version_formatted | default('') }}.zip"
     dest: "{{ root_folder }}/app/showcase-mock-server/"
 
 - name: copy startup.sh for showcase mock server
