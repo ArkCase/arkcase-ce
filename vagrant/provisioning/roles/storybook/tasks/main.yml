@@ -26,5 +26,5 @@
   become_user: apache
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/install/httpd/storybook{{ storybook_version_formatted }}.zip"
+    src: "{{ root_folder }}/install/httpd/storybook{{ storybook_version_formatted | default('') }}.zip"
     dest: "{{ root_folder }}/data/httpd/htdocs/{{ storybook_context | default('storybook') }}/"
