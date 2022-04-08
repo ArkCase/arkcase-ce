@@ -25,6 +25,22 @@
     - "log"
     - "tmp"
 
+- name: ensure minio port
+  become: yes
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ minio_port | default(9000) }}/tcp"
+    state: enabled
+
+- name: ensure minio console port
+  become: yes
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ minio_console_port | default(8001) }}/tcp"
+    state: enabled
+
 - name: download minio file from internet
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
@@ -43,13 +59,13 @@
    mode: "0777"
    setype: bin_t
 
-
 - name: create minio config file
   become: yes
   copy:
     dest: "{{root_folder}}/app/minio/minio.conf"
     content: |
-     MINIO_VOLUMES= "{{root_folder}}/data/minio"
+     MINIO_VOLUMES="{{root_folder}}/data/minio"
+     MINIO_OPTS="--console-address :{{ minio_console_port | default(8001) }}"
 
 - name: create systemd file
   become: yes

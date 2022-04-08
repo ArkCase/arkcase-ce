@@ -313,7 +313,7 @@
     backup: yes      
     path: "{{ path_haproxy_cfg }}"
     insertafter: "acl acl_arkcase path_beg /arkcase"
-    line: "  acl acl_arkcase_portal path_beg /{{ arkcase_portal_context }}"
+    line: "  acl acl_arkcase_portal path_beg /{{ arkcase_portal_context | default('portal') }}"
   when: deploy_arkcase_portal | default(false)
 
 - name: Tell ArkCase Portal frontend which backend will use

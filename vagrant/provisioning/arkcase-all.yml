@@ -3,6 +3,7 @@
   roles:
     - role: minio
       tags: [microservices, minio]
+      when: enable_minio | default(false)
     - role: common
       tags: [core, common, upgrade, marketplace]
     - role: arkcase-pre-upgrade
@@ -20,7 +21,8 @@
       tags: [ldap-portal]
       when: ldap_portal_url is defined
     - role: mongodb
-      tags: [microservices, mongodb]  
+      tags: [microservices, mongodb]
+      when: enable_mongo | default(false)
     - role: mariadb
       tags: [core, mariadb, marketplace]
       when: db_engine | default('mariadb') == 'mariadb'
