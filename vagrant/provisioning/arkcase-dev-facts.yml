@@ -390,6 +390,7 @@ snowbound_symmetric_key: ""
 
 # Mongodb port
 mongodb_port: "27017"
+enable_mongo: true
 
 ### default values that shouldn't have to change
 arkcase_host_name: "{{ arkcase_host }}"
@@ -719,3 +720,11 @@ arkcase_portal_extension_formatted: "{{ '-' ~ arkcase_portal_extension if arkcas
 deploy_arkcase_portal: false
 
 open_office_version: "4.1.11"
+
+enable_minio: true
+minio_console_port: 8001
+file_management_s3_url: "http://acm-arkcase:9000"
+file_management_s3_access_key: "minioadmin"
+file_management_s3_secret_key: "minioadmin"
+file_management_s3_buckets:
+  - arkcase-portal

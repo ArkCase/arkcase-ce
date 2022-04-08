@@ -5,3 +5,4 @@ collections:
 - community.mysql
 - community.mongodb
 - community.postgresql
+- amazon.aws

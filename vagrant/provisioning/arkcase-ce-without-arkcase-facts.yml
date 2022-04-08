@@ -381,6 +381,10 @@ snowbound_arkcase_version: "{{ arkcase_version | default('2021.03') }}"
 snowbound_arkcase_version_formatted: "{{ '-' ~ snowbound_arkcase_version if snowbound_arkcase_version != '' else '' }}"
 snowbound_symmetric_key: ""
 
+# Mongodb port
+mongodb_port: "27017"
+enable_mongo: false 
+
 ### default values that shouldn't have to change
 arkcase_host_name: "{{ arkcase_host }}"
 
@@ -648,3 +652,11 @@ postgresql_auth_method: "{{ ansible_fips  | ternary('scram-sha-256', 'md5') }}"
 postgresql_user: postgres
 postgresql_group: postgres
 postgresql_unix_socket_folder: /var/run/postgresql
+
+enable_minio: false
+minio_console_port: 8001
+file_management_s3_url: "http://acm-arkcase:9000"
+file_management_s3_access_key: "minioadmin"
+file_management_s3_secret_key: "minioadmin"
+file_management_s3_buckets:
+  - arkcase-portal
