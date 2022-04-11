@@ -626,7 +626,7 @@ open_office_version: "4.1.11"
 
 enable_minio: false
 minio_console_port: 8001
-file_management_s3_url: "http://acm-arkcase:9000
+file_management_s3_url: "http://acm-arkcase:9000"
 file_management_s3_access_key: "minioadmin"
 file_management_s3_secret_key: "minioadmin"
 file_management_s3_buckets:
