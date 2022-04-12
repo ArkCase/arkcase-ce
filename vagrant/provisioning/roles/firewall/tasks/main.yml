@@ -34,6 +34,7 @@
     - "61616/tcp"  # ActiveMQ JMS
     - "61613/tcp"  # ActiveMQ STOMP
     - "8161/tcp"   # ActiveMQ manager
+    - "9100/tcp"   # MinioUI
 
 - name: Reload firewalld
   become: yes
