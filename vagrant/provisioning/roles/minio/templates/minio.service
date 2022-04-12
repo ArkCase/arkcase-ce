@@ -16,7 +16,7 @@ PermissionsStartOnly=true
 EnvironmentFile=-{{root_folder}}/app/minio/minio.conf
 ExecStartPre=/bin/bash -c "[ -n \"${MINIO_VOLUMES}\" ] || echo \"Variable MINIO_VOLUMES not set in {{root_folder}}/app/minio/minio.conf\""
 
-ExecStart={{root_folder}}/app/minio/minio server $MINIO_OPTS $MINIO_VOLUMES
+ExecStart={{root_folder}}/app/minio/minio server $MINIO_OPTS $MINIO_VOLUMES --console-address ":9100"
 
 StandardOutput=journal
 StandardError=inherit
