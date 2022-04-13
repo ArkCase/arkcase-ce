@@ -89,5 +89,3 @@
   service:
     name: "{{ microservice.name }}"
     state: restarted
-
-# TODO set haproxy to redirect on 9000 instead of 8843

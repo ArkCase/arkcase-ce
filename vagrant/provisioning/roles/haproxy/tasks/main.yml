@@ -259,10 +259,10 @@
         server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
       backend be_api_gateway
-        http-response add-header X-APi-Gateway-Node %s
+        http-response add-header X-API-Gateway-Node %s
         mode http
         option tcp-check
-        server api_gateway0 {{ arkcase_host }}:8080
+        server api_gateway0 {{ arkcase_host }}:9002
 
       backend be_config
         http-response add-header X-Config %s
@@ -620,20 +620,20 @@
             http-response add-header X-Gateway %s
             mode http
             option tcp-check
-            server gateway {{ arkcase_host }}:9000
+            server gateway {{ arkcase_host }}:9002
             http-request set-path %[path,regsub(^/adk/,/)]
 
           backend be_eureka
             http-response add-header X-Eureka %s
             mode http
             option tcp-check
-            server eureka {{ arkcase_host }}:9000/eureka
+            server eureka {{ arkcase_host }}:9002/eureka
 
           backend be_eureka-dashboard
             http-response add-header X-Eureka-Dashboard %s
             mode http
             option tcp-check
-            server eureka-dashboard {{ arkcase_host }}:9000/eureka-dashboard
+            server eureka-dashboard {{ arkcase_host }}:9002/eureka-dashboard
   
   when: enable_eureka is defined and enable_eureka == 'yes'
 
