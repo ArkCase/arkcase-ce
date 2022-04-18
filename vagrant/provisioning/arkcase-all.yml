@@ -1,9 +1,6 @@
 ---
 - hosts: all
   roles:
-    - role: minio
-      tags: [microservices, minio]
-      when: enable_minio | default(false)
     - role: common
       tags: [core, common, upgrade, marketplace]
     - role: arkcase-pre-upgrade
@@ -90,6 +87,9 @@
       tags: [microservices, elasticsearch]
     - role: microservices
       tags: [microservices]
+    - role: minio
+      tags: [microservices, minio]
+      when: enable_minio | default(false)
     - role: pentaho-license
       tags: [pentaho-license, pentaho-ee, arkcase-ee]   
     - role: arkcase-prerequisites

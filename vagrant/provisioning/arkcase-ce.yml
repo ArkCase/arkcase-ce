@@ -1,8 +1,6 @@
 ---
 - hosts: localhost
   roles:
-    - role: minio
-      tags: [microservices, minio]
     - role: common
       tags: [core, common]
     - role: pki-aws-csr
@@ -66,6 +64,8 @@
       tags: [core, snowbound, snowbound-app]
     - role: confluent-platform-install
       tags: [confluent]
+    - role: minio
+      tags: [microservices, minio]
     - role: arkcase-prerequisites
       tags: [core, arkcase]
     - role: arkcase-app
