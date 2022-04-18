@@ -1,8 +1,6 @@
 ---
 - hosts: localhost
   roles: 
-    - role: minio
-      tags: [microservices, minio]
     - role: common
       tags: [core, common]
     - role: pki-dev
@@ -65,6 +63,8 @@
     #   tags: [elasticsearch]
     - role: microservices
       tags: [microservices]
+    - role: minio
+      tags: [microservices, minio]
     - role: tesseract
       tags: [core, arkcase, tesseract]
     - role: firewall
