@@ -20,12 +20,22 @@
     s3_url: "{{ file_management_s3_url }}"
     aws_access_key: "{{ file_management_s3_access_key }}"
     aws_secret_key: "{{ file_management_s3_secret_key }}"
-    name: "{{ item }}"
+    name: "{{ item.bucket_name }}"
     state: present
   with_items: "{{ file_management_s3_buckets }}"
   vars:
     ansible_python_interpreter: /usr/bin/python3
   when: file_management_s3_url is defined and file_management_s3_buckets is defined
+
+- name: setup configuration file
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: server.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-file-management-server.yaml
+  vars:
+    ansible_python_interpreter: /usr/bin/python2
 
 - name: deploy arkcase-file-management
   include_tasks: "{{ role_path }}/../arkcase-microservice/tasks/deploy_microservice.yml"

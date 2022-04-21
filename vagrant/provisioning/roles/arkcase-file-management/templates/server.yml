@@ -1,0 +1,17 @@
+arkcase:
+  fileManagement:
+    s3:
+      url: "{{ file_management_s3_url }}"
+      region: "{{ file_management_s3_region }}"
+      accessKey: "{{ file_management_s3_access_key }}"
+      secretKey: "{{ file_management_s3_secret_key }}"
+      buckets:
+{% for bucket in file_management_s3_buckets %}
+        "{{ bucket.config_name }}": "{{ bucket.bucket_name }}"
+{% endfor %}
+    mongodb:
+      database: "{{ file_management_mongodb_database }}"
+      username: "{{ file_management_mongodb_username }}"
+      password: "{{ file_management_mongodb_password }}"
+      host: "{{ file_management_mongodb_host }}"
+      port: "{{ file_management_mongodb_port }}"
