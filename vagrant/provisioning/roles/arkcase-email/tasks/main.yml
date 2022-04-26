@@ -1,3 +1,11 @@
+- name: setup configuration file
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: server.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-email-server.yaml
+
 - name: deploy arkcase-email
   include_tasks: "{{ role_path }}/../arkcase-microservice/tasks/deploy_microservice.yml"
   vars:

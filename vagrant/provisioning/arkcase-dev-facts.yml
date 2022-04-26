@@ -724,7 +724,15 @@ open_office_version: "4.1.11"
 enable_minio: true
 minio_console_port: 8001
 file_management_s3_url: "http://acm-arkcase:9000"
+file_management_s3_region: "us-east-1"
 file_management_s3_access_key: "minioadmin"
 file_management_s3_secret_key: "minioadmin"
 file_management_s3_buckets:
-  - arkcase-portal
+  - config_name: arkcaseBucket
+    bucket_name: arkcase-portal
+
+file_management_mongodb_host: acm-arkcase
+file_management_mongodb_port: "{{ mongodb_port }}"
+file_management_mongodb_database: arkcase
+file_management_mongodb_username: arkcase
+file_management_mongodb_password: AcMd3v$
