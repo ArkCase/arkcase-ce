@@ -114,10 +114,10 @@
       when: enable_microservices | default(false)
     - role: arkcase-ldap-authority
       tags: [core, upgrade, arkcase-ldap-authority, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false) and enable_saml_microservice | default(false)
+      when: enable_microservices | default(false) and not (enable_saml_microservice | default(false))
     - role: arkcase-saml-authority
-      tags: [saml-authority]
-      when: enable_microservices | default(false)
+      tags: [arkcase-saml-authority]
+      when: enable_microservices | default(false) and enable_saml_microservice | default(false)
     - role: arkcase-portal
       tags: [core, upgrade, arkcase-portal, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
