@@ -2,7 +2,7 @@ mail:
   addresses:
     from: "{{ email_user_from }}"
   host: "{{ email_smtp_host }}"
-  port: {{ email_sender_port|int }}
+  port: {{ email_sender_port | int }}
   username: "{{ email_smtp_username }}"
   password: "{{ email_smtp_password }}"
   protocol: "{{ email_sender_protocol }}""
