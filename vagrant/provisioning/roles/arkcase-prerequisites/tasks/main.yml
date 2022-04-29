@@ -24,6 +24,7 @@
     - "{{ root_folder }}/data/arkcase-home"
     - "{{ root_folder }}/data/arkcase-home/.arkcase"
     - "{{ root_folder }}/data/arkcase-home/.yarn"
+    - "{{ root_folder }}/data/arkcase-home/.npm"
     - "{{ root_folder }}/data/arkcase-home/.cache"
     - "{{ root_folder }}/log/arkcase"
     - "{{ root_folder }}/app/arkcase"

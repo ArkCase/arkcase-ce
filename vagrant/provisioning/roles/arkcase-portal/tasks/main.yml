@@ -4,4 +4,4 @@
     microservice:
       name: arkcase-portal
       version: "{{ arkcase_portal_version | default(arkcase_version) }}"
-      java_opts: "-Dserver.port=9040 -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Darkcase.portal.solr.configuration.host={{ internal_host }} -Darkcase.portal.solr.configuration.port=443"
+      java_opts: "-Dserver.port=9040 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Darkcase.portal.solr.configuration.host={{ internal_host }} -Darkcase.portal.solr.configuration.port=443 -Drecaptcha.configuration.secretKey={{ Drecaptcha_secretKey | default('6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe') }} -Drecaptcha.configuration.verifyUrl={{ Drecaptcha_verifyUrl | default('https://www.google.com/recaptcha/api/siteverify') }}"
