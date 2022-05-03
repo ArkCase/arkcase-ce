@@ -286,6 +286,21 @@
     delay: 5
     timeout: 300
 
+- name: restart pentaho if status 404
+  block:
+    - name: check for 404 pentaho
+      uri:
+        url: https://localhost:2002/pentaho
+        validate_certs: false
+      register: pentaho_status
+      ignore_errors: yes
+    - name: restart pentaho if status code 404
+      become: yes
+      systemd:
+        name: pentaho
+        state: restarted
+      when: pentaho_status.status == 404
+
 ## pentaho will redirect to the external host which 
 ## probably isn't working yet, so we will not follow 
 ## redirects, and count success when we get a 302
