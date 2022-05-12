@@ -1,19 +1,19 @@
 server.port: 9999
 spring:
   profiles.active: native
-  cloud:      cloud.config.server:
-    config.server:        native.searchLocations: file:${user.home}/.arkcase/acm/acm-config-server-repo,file:${user.home}/.arkcase/acm/acm-config-server-repo/labels,file:${user.home}/.arkcase/acm/acm-config-server-repo/ldap,file:${user.home}/.arkcase/acm/acm-config-server-repo/lookups,file:${user.home}/.arkcase/acm/acm-config-server-repo/rules
-      native.searchLocations: file:${user.home}/.arkcase/acm/acm-config-server-repo,file:${user.home}/.arkcase/acm/acm-config-server-repo/labels,file:${user.home}/.arkcase/acm/acm-config-server-repo/ldap,file:${user.home}/.arkcase/acm/acm-config-server-repo/lookups,file:${user.home}/.arkcase/acm/acm-config-server-repo/rules,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/form,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/menu,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/query     jms:
-    bus:        pub-sub-domain: true
-      env:    
-        enabled: true   
-  kafka:    
-    bootstrap-servers: acm-arkcase:9092   
-    producer:   
-      retries: 1    
-      bootstrap-servers:    
-      - acm-arkcase:9092    
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer    
+  cloud:
+    config.server:
+      native.searchLocations: file:${user.home}/.arkcase/acm/acm-config-server-repo,file:${user.home}/.arkcase/acm/acm-config-server-repo/labels,file:${user.home}/.arkcase/acm/acm-config-server-repo/ldap,file:${user.home}/.arkcase/acm/acm-config-server-repo/lookups,file:${user.home}/.arkcase/acm/acm-config-server-repo/rules,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/form,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/menu,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/query
+    bus:
+      env:
+        enabled: true
+  kafka:
+    bootstrap-servers: acm-arkcase:9092
+    producer:
+      retries: 1
+      bootstrap-servers:
+      - "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 properties.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo
 branding.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/branding
