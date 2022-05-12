@@ -620,6 +620,7 @@ arkcase_portal_version: "{{ arkcase_version }}"
 arkcase_portal_version_formatted: "{{ '-' ~ arkcase_portal_version if arkcase_portal_version != '' else '' }}"
 arkcase_portal_extension: core
 arkcase_portal_extension_formatted: "{{ '-' ~ arkcase_portal_extension if arkcase_portal_extension != '' else '' }}"
+arkcase_portal_group: "{{ ldap_prefix }}ARKCASE_PORTAL_USER@{{ ldap_user_domain | upper }}"
 deploy_arkcase_portal: false
 
 open_office_version: "4.1.11"

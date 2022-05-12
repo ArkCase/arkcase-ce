@@ -414,6 +414,16 @@
     src: application.yaml
     dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<')
+
+- name: application.yaml file after version 2021.04
+  become: yes
+  become_user: arkcase
+  template:
+    src: application.yaml
+    dest: "{{ root_folder }}/app/config-server/application-2201.04.yaml"
+    backup: yes
+  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
 
 - name: run config-server with application.yaml file
   become: yes
