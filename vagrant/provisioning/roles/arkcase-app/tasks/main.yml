@@ -420,8 +420,8 @@
   become: yes
   become_user: arkcase
   template:
-    src: application.yaml
-    dest: "{{ root_folder }}/app/config-server/application-2201.04.yaml"
+    src: application-2021.04.yaml
+    dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
   when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
 
