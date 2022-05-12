@@ -1,0 +1,4 @@
+arkcase:
+  portal:
+    url: "https://{{ external_host }}/api/arkcase-portal"
+    groupName: "{{ arkcase_portal_group }}"

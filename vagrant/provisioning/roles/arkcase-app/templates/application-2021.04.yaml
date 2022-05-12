@@ -1,0 +1,84 @@
+server.port: 9999
+spring:
+  profiles.active: native
+  cloud:
+    config.server:
+      native.searchLocations: file:${user.home}/.arkcase/acm/acm-config-server-repo,file:${user.home}/.arkcase/acm/acm-config-server-repo/labels,file:${user.home}/.arkcase/acm/acm-config-server-repo/ldap,file:${user.home}/.arkcase/acm/acm-config-server-repo/lookups,file:${user.home}/.arkcase/acm/acm-config-server-repo/rules,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/form,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/menu,file:${user.home}/.arkcase/acm/acm-config-server-repo/schemas/query
+    bus:
+      env:
+        enabled: true
+  kafka:
+    bootstrap-servers: "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
+    producer:
+      retries: 1
+      bootstrap-servers:
+      - "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+properties.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo
+branding.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/branding
+avro.schema.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/schemas/avro    
+schema.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/schemas    
+process.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/processes
+logging:
+  file.max-history: 10
+  file.max-size: 10MB
+  file: "{{ root_folder }}/log/config-server/acmConfigServer.log"
+  level:
+    com.armedia.acm.configserver: info
+    org.springframework.cloud.config: info
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss,SSS} [%thread] %-5level %logger.%M - %msg%n"
+arkcase:  
+  languages: "-de,-en,-en-in,-es,-fr,-hi,-ja,-pt,-ru,-zh-cn,-zh-tw" 
+  kafka:  
+    messageBufferWindow: 1  
+    bootstrapAddress: "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
+    configuration-changed-topic: ark-config-event-configuration 
+    configuration-changed-topic-replicas: 1 
+    configuration-changed-topic-partitions: 1 
+    labels-changed-topic: ark-config-event-labels 
+    labels-changed-topic-replicas: 1  
+    labels-changed-topic-partitions: 1  
+    ldap-changed-topic: ark-config-event-ldap 
+    ldap-changed-topic-replicas: 1  
+    ldap-changed-topic-partitions: 1  
+    lookups-changed-topic: ark-config-event-lookups 
+    lookups-changed-topic-replicas: 1 
+    lookups-changed-topic-partitions: 1 
+    rules-changed-topic: ark-config-event-rules 
+    rules-changed-topic-replicas: 1 
+    rules-changed-topic-partitions: 1 
+    forms-changed-topic: ark-config-event-forms 
+    forms-changed-topic-replicas: 1 
+    forms-changed-topic-partitions: 1 
+    menu-changed-topic: ark-config-event-menu 
+    menu-changed-topic-replicas: 1  
+    menu-changed-topic-partitions: 1  
+    query-changed-topic: ark-config-event-query 
+    query-changed-topic-replicas: 1 
+    query-changed-topic-partitions: 1 
+    configuration-file-created-topic: ark-config-event-configuration-file 
+    configuration-file-created-topic-replicas: 1  
+    configuration-file-created-topic-partitions: 1  
+    form-schema-file-topic: ark-event-form-schema 
+    form-schema-file-topic-replicas: 1  
+    form-schema-file-topic-partitions: 1  
+    menu-schema-file-topic: ark-event-menu-schema 
+    menu-schema-file-topic-replicas: 1  
+    menu-schema-file-topic-partitions: 1  
+    query-schema-file-topic: ark-event-query-schema 
+    query-schema-file-topic-replicas: 1 
+    query-schema-file-topic-partitions: 1 
+    avro-schema-file-topic: ark-event-avro-schema 
+    avro-schema-file-topic-replicas: 1  
+    avro-schema-file-topic-partitions: 1  
+    process-file-topic: ark-event-process 
+    process-file-topic-replicas: 1  
+    process-file-topic-partitions: 1  
+    retention-ms: "-1"  
+management: 
+  endpoints:  
+    web:  
+      exposure: 
+        include: '*'
