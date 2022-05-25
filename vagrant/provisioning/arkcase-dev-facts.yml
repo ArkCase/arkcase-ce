@@ -594,9 +594,9 @@ active_directory_non_expiring_password_age: -9223372036854775808
 activemq_version: 5.15.9
 
 # Confluent platform (with default version)
-confluent_major_version: 5.4
-confluent_minor_version: 7
-confluent_scala_version: 2.12
+confluent_major_version: 6.2
+confluent_minor_version: 8
+confluent_scala_version: 2.13
 
 zipkin_version: 2.21.4
 # Enable these for Arkcase.NEXT development

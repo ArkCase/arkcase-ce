@@ -1,0 +1,32 @@
+---
+- name: Stop confluent services
+  become: yes
+  command: systemctl stop confluent*
+
+- name: Remove confluent services
+  become: yes
+  yum: 
+    state: absent 
+    name:
+      - confluent-rebalancer
+      - confluent-schema-registry
+      - confluent-hub-client
+      - confluent-control-center
+      - confluent-common
+      - confluent-kafka-connect-storage-common-
+      - confluent-kafka-connect-s3
+      - confluent-kafka-rest
+      - confluent-kafka-connect-jdbc
+      - confluent-kafka-connect-jms
+      - confluent-kafka-connect-replicator
+      - confluent-control-center-fe
+      - confluent-kafka
+      - confluent-rest-utils
+      - confluent-ksql
+      - confluent-kafka-connect-elasticsearch
+      - confluent-kafka-mqtt
+      - confluent-platform
+
+- name: Clean yum caches
+  become: yes
+  command: yum clean all

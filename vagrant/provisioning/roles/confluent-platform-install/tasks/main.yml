@@ -1,5 +1,9 @@
 ---
 # tasks file for confluent-install
+- name: Upgrade confluent platform
+  import_tasks: upgrade-confluent.yml
+  when: confluent_major_version is version('6.3', '<')
+
 - name: Install curl and which
   become: yes
   yum:
@@ -13,16 +17,16 @@
   become: yes
   rpm_key:
     state: present
-    key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
+    key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
 
 - name: Create Confluent repo (1/2)
   become: yes
   yum_repository:
     name: Confluent.dist
     description: Confluent repository (dist)
-    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/{{ confluent_minor_version | default(7) }}
+    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/{{ confluent_minor_version | default(8) }}
     gpgcheck: yes
-    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
+    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
     enabled: yes
     file: confluent
 
@@ -31,9 +35,9 @@
   yum_repository:
     name: Confluent
     description: Confluent repository
-    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}
+    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}
     gpgcheck: yes
-    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
+    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
     enabled: yes
     file: confluent
 
@@ -47,7 +51,7 @@
 - name: Install Confluent Platform
   become: yes
   yum:
-    name: confluent-platform-{{ confluent_scala_version | default(2.12) }}
+    name: confluent-platform
     state: present
 
 - name: Kafka folders
