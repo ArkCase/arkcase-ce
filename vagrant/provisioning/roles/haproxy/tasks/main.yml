@@ -197,6 +197,7 @@
         acl acl_share path_beg /share
         acl acl_snowbound path_beg /VirtualViewerJavaHTML5
         acl acl_arkcase path_beg /arkcase
+        acl acl_sse path_beg /api/sse
         acl acl_api_gateway path_beg /api
         acl acl_config path_beg /config
         acl acl_root path -i /
@@ -217,6 +218,7 @@
         use_backend be_share if acl_share
         use_backend be_snowbound if acl_snowbound
         use_backend be_arkcase if acl_arkcase
+        use_backend be_sse if acl_sse
         use_backend be_api_gateway if acl_api_gateway
         use_backend be_config if acl_config
 
@@ -257,6 +259,13 @@
         mode http
         option tcp-check
         server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_sse
+        http-response add-header X-SSE-Node %s
+        mode http
+        option tcp-check
+        server sse0 arkcase-host:9050
+        http-request set-path %[path,regsub(^/api/sse/,/)]
 
       backend be_api_gateway
         http-response add-header X-API-Gateway-Node %s
