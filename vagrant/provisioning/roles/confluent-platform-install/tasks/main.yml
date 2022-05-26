@@ -2,7 +2,7 @@
 # tasks file for confluent-install
 - name: Upgrade confluent platform
   import_tasks: upgrade-confluent.yml
-  when: confluent_major_version is version('6.3', '<')
+  when: confluent_major_version is version('6.2', '<')
 
 - name: Install curl and which
   become: yes
