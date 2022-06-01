@@ -198,6 +198,7 @@
         acl acl_snowbound path_beg /VirtualViewerJavaHTML5
         acl acl_arkcase path_beg /arkcase
         acl acl_sse path_beg /api/sse
+        acl acl_minio path_beg /api/minio
         acl acl_api_gateway path_beg /api
         acl acl_config path_beg /config
         acl acl_root path -i /
@@ -219,6 +220,7 @@
         use_backend be_snowbound if acl_snowbound
         use_backend be_arkcase if acl_arkcase
         use_backend be_sse if acl_sse
+        use_backend be_minio if acl_minio
         use_backend be_api_gateway if acl_api_gateway
         use_backend be_config if acl_config
 
@@ -264,8 +266,15 @@
         http-response add-header X-SSE-Node %s
         mode http
         option tcp-check
-        server sse0 arkcase-host:9050
+        server sse0 {{ arkcase-host }}:9050
         http-request set-path %[path,regsub(^/api/sse/,/)]
+
+      backend be_minio
+        http-response add-header X-Minio-Node %s
+        mode http
+        option tcp-check
+        server minio0 {{ arkcase-host }}:9000
+        http-request set-path %[path,regsub(^/api/minio/,/)]
 
       backend be_api_gateway
         http-response add-header X-API-Gateway-Node %s
