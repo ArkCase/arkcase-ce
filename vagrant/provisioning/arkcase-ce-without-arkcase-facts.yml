@@ -667,3 +667,9 @@ file_management_mongodb_port: "{{ mongodb_port }}"
 file_management_mongodb_database: arkcase
 file_management_mongodb_username: arkcase
 file_management_mongodb_password: AcMd3v$
+
+enableSchemaSync: false
+enableCaseFileSync: false
+enableComplaintSync: false
+enablePersonSync: false
+enableOrganizationSync: false

@@ -1,6 +1,12 @@
 arkcase:
   baseURL: "https://{{ external_host }}/arkcase"
   basePortalURL: "https://{{ external_host }}/portal"
+  enableKafkaSync:
+    schema: {{ enableSchemaSync | default(false) }}
+    caseFile: {{ enableCaseFileSync | default(false) }}
+    complaint: {{ enableComplaintSync | default(false) }}
+    person: {{ enablePersonSync | default(false) }}
+    organization: {{ enableOrganizationSync | default(false) }}
   kafka:
     bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
     schemaRegistryAddress: https://{{ schema_registry_host | default(kafka_host) }}/schema-registry
