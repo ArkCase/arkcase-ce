@@ -1,6 +1,7 @@
 arkcase:
   baseURL: "https://{{ external_host }}/arkcase"
   basePortalURL: "https://{{ external_host }}/portal"
+  fileManagementURL: "https://{{ external_host }}"
   enableKafkaSync:
     schema: {{ enableSchemaSync | default(false) }}
     caseFile: {{ enableCaseFileSync | default(false) }}
