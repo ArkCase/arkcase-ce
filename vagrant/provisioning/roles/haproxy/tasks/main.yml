@@ -266,14 +266,14 @@
         http-response add-header X-SSE-Node %s
         mode http
         option tcp-check
-        server sse0 {{ arkcase-host }}:9050
+        server sse0 {{ arkcase_host }}:9050
         http-request set-path %[path,regsub(^/api/sse/,/)]
 
       backend be_minio
         http-response add-header X-Minio-Node %s
         mode http
         option tcp-check
-        server minio0 {{ arkcase-host }}:9000
+        server minio0 {{ arkcase_host }}:9000
         http-request set-path %[path,regsub(^/api/minio/,/)]
 
       backend be_api_gateway
