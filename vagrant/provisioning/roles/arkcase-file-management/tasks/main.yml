@@ -14,6 +14,12 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
 
+- name: install Python boto library
+  become: yes
+  pip:
+    executable: pip
+    name: ['boto3', 'botocore']
+
 - name: Create buckets
   become: yes
   s3_bucket:
