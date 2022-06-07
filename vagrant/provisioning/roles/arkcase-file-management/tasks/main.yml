@@ -24,7 +24,7 @@
     state: present
   with_items: "{{ file_management_s3_buckets }}"
   vars:
-    ansible_python_interpreter: /usr/bin/python3.6
+    ansible_python_interpreter: /usr/bin/python3.6m
   when: file_management_s3_url is defined and file_management_s3_buckets is defined
 
 - name: setup configuration file
