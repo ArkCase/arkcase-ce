@@ -14,12 +14,6 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
 
-- name: install Python boto library
-  become: yes
-  pip:
-    executable: pip
-    name: ['boto3', 'botocore']
-
 - name: Create buckets
   become: yes
   s3_bucket:
@@ -30,7 +24,7 @@
     state: present
   with_items: "{{ file_management_s3_buckets }}"
   vars:
-    ansible_python_interpreter: /usr/bin/python2.7
+    ansible_python_interpreter: /usr/bin/python3
   when: file_management_s3_url is defined and file_management_s3_buckets is defined
 
 - name: setup configuration file
