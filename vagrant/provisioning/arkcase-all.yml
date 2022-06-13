@@ -67,6 +67,8 @@
       tags: [core, zookeeper]
     - role: solr
       tags: [core, solr, marketplace]
+    - role: solr-replicas
+      tags: [solr-replicas]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup, marketplace]
     - role: pentaho-ce

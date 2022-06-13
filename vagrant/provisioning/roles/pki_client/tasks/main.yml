@@ -19,6 +19,43 @@
   command: openssl rsa -in {{ ssl_key }} -out {{ ssl_key_rsa }} -passin pass:'{{ ssl_key_passphrase }}'
   when: not ssl_key_rsa_stat.stat.exists|bool and ssl_key_passphrase is defined
 
+- name: see if the Java keystore exists
+  become: yes
+  stat:
+    path: "{{ java_p12_store }}"
+  register: arkcase_ks_stat
+  changed_when: false
+
+- name: generate PKCS12 key store
+  become: yes
+  command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key_rsa }} -out "{{ java_p12_store }}" -name arkcase_server -chain -CAfile {{ ssl_ca }} -certpbe AES-256-CBC -keypbe AES-256-CBC -macalg SHA512 -passout 'pass:{{ java_key_store_pass }}'
+  when: not arkcase_ks_stat.stat.exists
+
+- name: add ArkCase certs to Java truststore
+  become: yes
+  java_cert:
+    cert_alias: "{{ item.alias }}"
+    cert_path: "{{ item.path }}"
+    keystore_path: "{{ java_trust_store }}"
+    keystore_pass: "{{ java_trust_store_pass }}"
+    keystore_create: yes
+    state: present
+  loop:
+    - alias: "arkcase-server"
+      path: "{{ ssl_cert }}"
+    - alias: "arkcase-chain"
+      path: "{{ ssl_ca }}"
+
+- name: add JDK certs to Java trust store
+  become: yes
+  command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+
+- name: ensure shared permissions on the p12 key store
+  become: yes
+  file:
+    path: "{{ java_p12_store }}"
+    mode: 0644
+
 - name: ensure secure permissions on private keys
   become: yes
   file: 
@@ -27,56 +64,6 @@
   loop:
     - "{{ ssl_key }}"
     - "{{ ssl_key_rsa }}"
-
-- name: Java keystore and trust store
-  block:
-    - name: see if the Java keystore exists
-      become: yes
-      stat:
-        path: "{{ java_key_store }}"
-      register: arkcase_ks_stat
-      changed_when: false
-    - name: see if keys already added to the Java keystore
-      become: yes
-      command: keytool -v -list -keystore "{{ java_key_store }}" -storepass "{{ java_key_store_pass }}"
-      when: arkcase_ks_stat.stat.exists == True
-      register: key_out
-      changed_when: false
-    - name: write Java key store and trust store
-      block:
-        - name: write arkcase.p12 (used by Pentaho)
-          become: yes
-          command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key_rsa }} -out "{{ java_p12_store }}" -name arkcase_server -chain -CAfile {{ ssl_ca }} -passout 'pass:{{ java_key_store_pass }}'
-        - name: copy arkcase.p12 to key store format (PKCS12 format)
-          become: yes
-          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store }}" -deststoretype pkcs12 -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_server -noprompt
-        - name: copy arkcase.p12 to key store format (JKS format)
-          become: yes
-          command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ java_key_store_jks }}" -deststoretype JKS -srckeystore "{{ java_p12_store }}" -srcstoretype pkcs12 -srcstorepass '{{ java_key_store_pass }}' -alias arkcase_server -noprompt
-        - name: add ArkCase certs to Java truststore
-          become: yes
-          java_cert:
-            cert_alias: "{{ item.alias }}"
-            cert_path: "{{ item.path }}"
-            keystore_path: "{{ java_trust_store }}"
-            keystore_pass: "{{ java_trust_store_pass }}"
-            keystore_create: yes
-            state: present
-          loop:
-            - alias: "arkcase-server"
-              path: "{{ ssl_cert }}"
-            - alias: "arkcase-chain"
-              path: "{{ ssl_ca }}"
-        - name: add JDK certs to Java trust store
-          become: yes
-          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
-      when: "arkcase_ks_stat.stat.exists == False"
-
-- name: ensure shared permissions on the p12 key store
-  become: yes
-  file:
-    path: "{{ java_p12_store }}"
-    mode: 0644
 
 - name: write encrypted symmetric key file for use in ArkCase webapp
   block:

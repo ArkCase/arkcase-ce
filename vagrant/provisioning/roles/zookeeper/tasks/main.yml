@@ -96,6 +96,16 @@
     dest: "{{ root_folder }}/app/zookeeper/conf/zookeeper-env.sh"
     backup: yes
 
+- name: no-FIPS mode
+  become: yes
+  become_user: zookeeper
+  lineinfile:
+    backup: yes
+    path: "{{ root_folder }}/app/zookeeper/bin/zkEnv.sh"
+    insertafter: EOF
+    line: 'export SERVER_JVMFLAGS="-Dcom.redhat.fips=false -Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"'
+
+
 - name: Zookeeper logging
   become: yes
   become_user: zookeeper
