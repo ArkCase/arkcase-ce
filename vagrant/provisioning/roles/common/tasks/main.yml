@@ -23,7 +23,6 @@
   debug:
     msg: "policycoreutils: {{ pkg_policycoreutils }}"
 
-
 - name: install epel (needed first)
   become: yes
   yum:
@@ -93,6 +92,7 @@
   file:
     path: "{{ item }}"
     state: directory
+    mode: "u+rwx,g+rx,o+rx"
   loop:
     - "{{ root_folder }}"
     - "{{ root_folder }}/app"

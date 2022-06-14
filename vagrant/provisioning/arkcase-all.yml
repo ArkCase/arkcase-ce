@@ -13,7 +13,7 @@
       tags: [samba, marketplace]
     - role: ldap
       tags: [core, ldap, marketplace]
-      when: ldap_portal_url is undefined
+      when: ldap_url is defined
     - role: ldap-portal
       tags: [ldap-portal]
       when: ldap_portal_url is defined
