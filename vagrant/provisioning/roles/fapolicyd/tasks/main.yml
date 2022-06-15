@@ -1,0 +1,22 @@
+- name: check status of fapolicyd service
+  service_facts:
+
+- name: add {{ item.name }} to fapolicyd trust, if fapolicyd is installed
+  block:
+    - name: add {{ item.folder_path }} to fapolicyd trust
+      become: yes
+      command: fapolicyd-cli --file add {{ item.folder_path }} --trust-file {{ item.name }}
+      register: fapolicy_add
+      failed_when: fapolicy_add.rc != 0 and "After removing duplicates, there is nothing to add" not in fapolicy_add.stderr
+      changed_when: fapolicy_add.rc == 0
+    - name: update fapolicyd 
+      become: yes
+      command: fapolicyd-cli --update
+      when: fapolicy_add is changed
+    - name: restart fapolicyd, if it is running
+      become: yes
+      systemd:
+        name: fapolicyd
+        state: restarted
+      when: ansible_facts.services["fapolicyd.service"].state == "running" and fapolicy_add is changed
+  when: ansible_facts.services["fapolicyd.service"] is defined

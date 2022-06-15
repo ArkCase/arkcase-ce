@@ -53,6 +53,7 @@
    - "{{ java_p12_store_jdk8 }}"
    - "{{ java_pem_store }}"
    - "{{ ssl_ca }}"
+   - "{{ root_folder }}/common/rds-ca-2019-root.pem"
 
 - name: ensure secure permissions on private keys
   become: yes
