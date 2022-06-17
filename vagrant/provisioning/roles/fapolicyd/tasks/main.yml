@@ -9,10 +9,10 @@
       register: fapolicy_add
       failed_when: fapolicy_add.rc != 0 and "After removing duplicates, there is nothing to add" not in fapolicy_add.stderr
       changed_when: fapolicy_add.rc == 0
-    - name: update fapolicyd 
+    - name: update fapolicyd, if it is running
       become: yes
       command: fapolicyd-cli --update
-      when: fapolicy_add is changed
+      when: ansible_facts.services["fapolicyd.service"].state == "running" and fapolicy_add is changed
     - name: restart fapolicyd, if it is running
       become: yes
       systemd:

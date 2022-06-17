@@ -40,7 +40,7 @@
 
 - name: generate PKCS12 key store for Java 8
   become: yes
-  command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key_rsa }} -out "{{ java_p12_store_jdk8 }}" -name arkcase_server -chain -CAfile {{ ssl_ca }}  -passout 'pass:{{ java_key_store_pass }}'
+  command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key_rsa }} -out "{{ java_p12_store_jdk8 }}" -name arkcase_server -chain -CAfile {{ ssl_ca }} -passout 'pass:{{ java_key_store_pass }}'
   when: not arkcase_ks_jdk8_stat.stat.exists
 
 - name: ensure shared permissions on different TLS artifacts
@@ -63,6 +63,10 @@
   loop:
     - "{{ ssl_key }}"
     - "{{ ssl_key_rsa }}"
+
+- name: call update-ca-trust, to generate the default OpenJDK trust store
+  become: yes
+  command: update-ca-trust
 
 - name: write encrypted symmetric key file for use in ArkCase webapp
   block:

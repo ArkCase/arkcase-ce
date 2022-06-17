@@ -193,8 +193,6 @@
         src: "{{ root_folder }}/common/{{ jdbc_driver_jar_filename }}"
         dest: "{{ root_folder }}/app/activemq/lib/{{ jdbc_driver_jar_filename }}"
         state: link
-        owner: "activemq"
-        group: "activemq"
 
 - name: enable authentication for ActiveMQ in activemq.xml
   become: yes
