@@ -86,6 +86,7 @@
     masked: no
 
 - name: "restart {{ microservice.name }}"
+  become: yes
   service:
     name: "{{ microservice.name }}"
     state: restarted
