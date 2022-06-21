@@ -18,23 +18,60 @@
     - src: "repository.spring.properties"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/repository.spring.properties"
 
-- name: delete alias tomcat from keystore if exists
+- name: install prerequisites to build native library
   become: yes
-  become_user: pentaho
-  command: keytool -delete -alias tomcat -keystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore --deststorepass password
-  ignore_errors: true
-
-- name: import arkcase keystore
+  yum:
+    state: present
+    name:
+      - "@Development Tools"
+      - openssl-devel
+      - apr-devel
+- name: copy private key for Pentaho
   become: yes
-  become_user: pentaho
-  command: keytool -importkeystore -srckeystore {{ java_p12_store | default(root_folder + '/common/arkcase-client.p12') }} -srcstoretype pkcs12 -srcalias {{ keystore_alias | default('arkcase_server') }} -destkeystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore -deststoretype jks -deststorepass password -destalias tomcat -destkeypass password -srcstorepass {{ java_key_store_pass }}
-
-- name: ensure proper permissions on pentaho keystore
-  become: yes
-  become_user: pentaho
-  file:
-    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
+  copy:
+    remote_src: yes
+    src: "{{ ssl_key }}"
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/pentaho.key"
+    owner: "pentaho"
+    group: "pentaho"
     mode: 0600
+- name: create folder for native library build
+  become: yes
+  become_user: "pentaho"
+  file:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native"
+    state: directory
+- name: unarchive Tomcat native library
+  become: yes
+  become_user: "pentaho"
+  unarchive:
+    src: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/tomcat-native.tar.gz"
+    remote_src: yes
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native"
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/README.txt"
+- name: build Tomcat native library
+  become: yes
+  become_user: "pentaho"
+  shell: ./configure --with-apr=/usr/bin/apr-1-config --with-java-home=/usr/lib/jvm/java --with-ssl=yes --prefix={{ root_folder }}/app/pentaho/pentaho-server/tomcat
+  args:
+    chdir: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native/config.log"
+- name: make
+  become: yes
+  become_user: "pentaho"
+  command: make
+  args:
+    chdir: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native/.libs/libtcnative-1.so"
+- name: make install
+  become: yes
+  become_user: "pentaho"
+  command: make install
+  args:
+    chdir: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/lib/libtcnative-1.so"
 
 - name: jmx config files
   become: yes
@@ -67,22 +104,6 @@
     - src: "server.xml"
       mode: "0644"
       dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/conf"
-
-- name: read current import-export script
-  become: yes
-  become_user: pentaho
-  command: cat {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh
-  register: import_export
-  changed_when: false
-  
-- name: set TLS options in import-export script
-  become: yes
-  become_user: pentaho
-  replace:
-    path: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
-    regexp: "-Xmx2048m"
-    replace: "-Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Xmx2048m"
-  when: "'Djavax.net.ssl.trustStorePassword' not in import_export.stdout"
 
 - name: configure Tomcat log file locations
   become: yes
@@ -245,21 +266,18 @@
     - "{{ root_folder }}/app/pentaho/pentaho-server/stop-pentaho.sh"
 
 # Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
-- name: Pentaho systemd unit file (local database)
+- name: Pentaho systemd unit file
   become: yes
   template:
     src: "pentaho.service"
     dest: /etc/systemd/system/pentaho.service
-  when: not rds_password is defined
   register: pentaho_systemd
 
-- name: Pentaho systemd unit file (RDS)
-  become: yes
-  template:
-    src: "pentaho-rds.service"
-    dest: /etc/systemd/system/pentaho.service
-  when: rds_password is defined
-  register: pentaho_systemd
+- name: fapolicy settings for Pentaho, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: pentaho
+      folder_path: "{{ root_folder }}/app/pentaho"
 
 - name: reload daemon-files if needed
   become: yes
