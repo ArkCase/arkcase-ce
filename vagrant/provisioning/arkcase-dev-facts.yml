@@ -743,3 +743,5 @@ enableCaseFileSync: false
 enableComplaintSync: false
 enablePersonSync: false
 enableOrganizationSync: false
+
+user_attribute_name: sAMAccountName
