@@ -10,14 +10,14 @@
       syncPageSize: 500
       enableEditingLdapUsers: true
       directoryType: activedirectory
-      userSearchFilter: (&(objectClass=user)(sAMAccountName=%s))
+      userSearchFilter: (&(objectClass=user)({{ user_attribute_name | default(sAMAccountName) }}=%s))
       allUsersFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))
       allChangedUsersFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))(modifyTimestamp>=%s))
-      allUsersPageFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))(sAMAccountName>=%s))
-      allChangedUsersPageFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))(sAMAccountName>=%s)(modifyTimestamp>=%s))
-      allUsersSortingAttribute: sAMAccountName
+      allUsersPageFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))({{ user_attribute_name | default(sAMAccountName) }}>=%s))
+      allChangedUsersPageFilter: (&(objectCategory=person)(objectClass=user)(!(userAccountControl:1.2.840.113556.1.4.803:=2))({{ user_attribute_name | default(sAMAccountName) }}>=%s)(modifyTimestamp>=%s))
+      allUsersSortingAttribute: {{ user_attribute_name | default(sAMAccountName) }}
       groupSearchFilterForUser: (&(objectClass=group)(member=%s))
-      userIdAttributeName: sAMAccountName
+      userIdAttributeName: {{ user_attribute_name | default(sAMAccountName) }}
       groupSearchFilter: (objectclass=group)
       changedGroupSearchFilter: (&(objectclass=group)(modifyTimestamp>=%s))
       groupSearchPageFilter: (&(objectclass=group)(cn>=%s))
@@ -34,7 +34,7 @@
       ldapAddUserConfig:
         homeDirectory: homeDirectory
         mail: mail
-        sAMAccountName: sAMAccountName
+        {{ user_attribute_name | default(sAMAccountName) }}: {{ user_attribute_name | default(sAMAccountName) }}
         unicodePwd: unicodePwd
         givenName: givenName
         objectClass: top,person,user,organizationalPerson

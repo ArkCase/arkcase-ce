@@ -10,6 +10,7 @@
   changed_when: false
 
 - name: Remove old showcase UI folder
+  become: yes
   file:
     state: absent
     path: "{{ root_folder }}/data/httpd/htdocs/{{ showcase_context | default('showcase') }}/"
@@ -31,6 +32,7 @@
 
 # Showcase mock server
 - name: Remove old showcase mock server folder
+  become: yes
   file:
     state: absent
     path: "{{ root_folder }}/app/showcase-mock-server"
@@ -95,6 +97,7 @@
     masked: no
 
 - name: restart showcase mock server
+  become: yes
   service:
     name: showcase-mock-server
     state: restarted
