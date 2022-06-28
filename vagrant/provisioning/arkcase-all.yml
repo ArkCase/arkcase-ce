@@ -88,7 +88,7 @@
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
       tags: [microservices, elasticsearch]
     - role: microservices
-      tags: [microservices]
+      tags: [microservices, microservice-install]
     - role: minio
       tags: [microservices, minio]
       when: enable_minio | default(false)
