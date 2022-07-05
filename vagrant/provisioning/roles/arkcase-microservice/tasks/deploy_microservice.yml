@@ -77,6 +77,12 @@
     dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.conf"
     force: yes
 
+- name: fapolicy settings for {{ microservice.name }}, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: "{{ microservice.name }}"
+      folder_path: "{{ root_folder }}/app/{{ microservice.name }}"
+
 - name: "enable {{ microservice.name }}"
   become: yes
   systemd:
