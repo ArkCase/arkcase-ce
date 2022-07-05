@@ -19,6 +19,7 @@
     state: directory
     group: arkcase
     owner: arkcase
+    mode: 0755
   loop:
     - "{{ root_folder }}/data/arkcase"
     - "{{ root_folder }}/data/arkcase-home"

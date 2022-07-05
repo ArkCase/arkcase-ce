@@ -90,14 +90,12 @@
     name:
       - python3-pip      
 
+
+# might also need: curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py ; python3 get-pip.py --force-reinstall
 - name: install Python Excel module
   become: yes
-  pip:
-    executable: pip3      
-    name: 
-      - openpyxl
-      - lxml
-    extra_args: --upgrade
+  become_user: arkcase
+  command: python3 -m pip install --user --upgrade openpyxl lxml
 
 - name: download ArkCase war file and config server jar file (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -552,24 +550,28 @@
     state: absent
   when: acmarkcase_stat.stat.exists and not acmarkcase_stat.stat.islnk
 
+- name: read ZyLAB server cert
+  community.crypto.get_certificate:
+    host: "{{ zylab_server_host }}"
+    port: "{{ zylab_server_port | int }}"
+  register: zylab_server_cert
+  when: zylab_integration_enabled is defined and zylab_integration_enabled
 
-- name: list certs in the key store
+- name: write ZyLAB server cert to trusted cert store
   become: yes
-  command: keytool -v -list -keystore "{{ java_trust_store }}" -storepass "{{ java_trust_store_pass }}"
-  register: cert_list
-  changed_when: false
+  copy:
+    dest: /etc/pki/ca-trust/source/zylab_server_cert.pem
+    content: "{{ zylab_server_cert.cert }}"
+    backup: true
+    force: yes
+  register: zylab_server_cert_pem
+  when: zylab_integration_enabled is defined and zylab_integration_enabled
 
-- name: import the zylab cert to the ArkCase trust store
+- name: update trusted certs
   become: yes
-  java_cert:
-    cert_alias: "zylab_server_cert"
-    cert_url: "{{ zylab_server_host }}"
-    cert_port: "{{ zylab_server_port|int }}"
-    keystore_path: "{{ java_trust_store }}"
-    keystore_pass: "{{ java_trust_store_pass }}"
-    state: present
-  when: zylab_integration_enabled is defined and zylab_integration_enabled and 'zylab_server_cert' not in cert_list.stdout
-  
+  command: update-ca-trust
+  when: zylab_integration_enabled is defined and zylab_integration_enabled and zylab_server_cert_pem is changed
+
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
 - name: link certs and keys to .arkcase folder
@@ -582,7 +584,7 @@
   loop:
     - src: "{{ ssl_ca }}"
       path: "/home/arkcase/.arkcase/acm/private/arkcase-ca.crt"
-    - src: "{{ java_key_store }}"
+    - src: "{{ java_p12_store_jdk8 }}"
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ks"
     - src: "{{ java_trust_store }}"
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ts"
