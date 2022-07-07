@@ -27,8 +27,21 @@
     host: "%"
     name: "{{ s.user }}"
     password: "{{ default_database_password }}" 
-    priv: '{{ s.schema }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,REQUIRESSL'
+    priv: '{{ s.schema }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute{{ ",REQUIRESSL" if s.requiressl | default(false) else "" }}'
     state: present
+  when: ansible_version.full is version('2.10.0', '<')
+
+- name: create {{ s.user }} MySQL user (IP address) with REQUIRESSL
+  become: yes
+  mysql_user:
+    login_host: "{{ database_host_name }}"
+    login_password: "{{ database_root_password }}"
+    host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+    name: "{{ s.user }}"
+    password: "{{ default_database_password }}"
+    priv: '{{ s.schema }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute{{ ",REQUIRESSL" if s.requiressl | default(false) else "" }}'
+    state: present
+  no_log: true
   when: ansible_version.full is version('2.10.0', '<')
 
 - name: create {{ s.user }} MySQL user with tls_requires
