@@ -10,6 +10,7 @@
   changed_when: false
 
 - name: Remove old storybook UI folder
+  become: yes
   file:
     state: absent
     path: "{{ root_folder }}/data/httpd/htdocs/{{ storybook_context | default('storybook') }}/"
