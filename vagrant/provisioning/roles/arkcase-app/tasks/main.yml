@@ -257,12 +257,6 @@
     path: /home/arkcase/.arkcase/.arkcase-arkcase-{{ arkcase_version }}
     state: absent
 
-- name: deploy core reports
-  include_tasks: deploy_report.yml
-  loop: "{{ arkcase_core_reports|flatten }}"
-  loop_control:
-    loop_var: r
-   
 - name: arkcase and config server logrotate
   become: yes
   template:
@@ -1138,3 +1132,10 @@
     - .vault.authMethod = "{{ arkcase_vault_authMethod | default('approle', true) }}"
     - .vault.username = "{{ arkcase_vault_username | default('arkcase', true) }}"
     - .vault.password = "{{ arkcase_vault_password | default('arkcase', true) }}"
+
+- name: deploy core reports
+  include_tasks: deploy_report.yml
+  loop: "{{ arkcase_core_reports|flatten }}"
+  loop_control:
+    loop_var: r
+  when: pentaho_host == internal_host

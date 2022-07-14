@@ -1,3 +1,10 @@
+- name: install epel on RHEL 8
+  become: yes
+  package:
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    state: installed
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
 - name: install tesseract from the testing repo
   become: yes
   yum:

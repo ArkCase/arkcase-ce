@@ -268,21 +268,21 @@
         http-response add-header X-SSE-Node %s
         mode http
         option tcp-check
-        server sse0 {{ arkcase_host }}:9050
+        server sse0 {{ arkcase_host }}:9050 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/api/sse/,/)]
 
       backend be_minio
         http-response add-header X-Minio-Node %s
         mode http
         option tcp-check
-        server minio0 {{ arkcase_host }}:9000
+        server minio0 {{ arkcase_host }}:9000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/api/minio/,/)]
 
       backend be_api_gateway
         http-response add-header X-API-Gateway-Node %s
         mode http
         option tcp-check
-        server api_gateway0 {{ arkcase_host }}:9002
+        server api_gateway0 {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
       backend be_config
         http-response add-header X-Config %s
@@ -425,7 +425,7 @@
         http-response add-header X-SHOWCASE-BACKEND-Node %s
         mode http
         option tcp-check
-        server showcase_backend0 {{ internal_host }}:3000
+        server showcase_backend0 {{ internal_host }}:3000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/showcase/,/)] 
   when: deploy_showcase | default(false)
 
@@ -499,7 +499,7 @@
             http-response add-header X-Schema-registry %s
             mode http
             option tcp-check
-            server schema-registry {{ internal_host }}:8081
+            server schema-registry {{ internal_host }}:8081 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             reqrep ^([^\ ]*\ /)schema-registry[/]?(.*)     \1\2
 
           backend be_control-center
@@ -511,7 +511,7 @@
           backend be_control-center-ws
             mode http
             option tcp-check
-            server controlws {{ internal_host }}:9021
+            server controlws {{ internal_host }}:9021 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             reqrep (.*\/)control-center\/(.*)     \1\2
 
   when: enable_kafka is defined and enable_kafka == "yes"
@@ -547,7 +547,7 @@
             http-response add-header X-Elasticsearch %s
             mode http
             option tcp-check
-            server elasticsearch {{ internal_host }}:9200
+            server elasticsearch {{ internal_host }}:9200 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/elasticsearch/,/)]
   
   when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
@@ -587,21 +587,21 @@
             http-response add-header X-Zipkin-Health %s
             mode http
             option tcp-check
-            server zipkin-health {{ internal_host }}:9411
+            server zipkin-health {{ internal_host }}:9411 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin-api
             http-response add-header X-Zipkin-Api %s
             mode http
             option tcp-check
-            server zipkin-api {{ internal_host }}:9411
+            server zipkin-api {{ internal_host }}:9411 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin
             http-response add-header X-Zipkin %s
             mode http
             option tcp-check
-            server zipkin {{ internal_host }}:9411/zipkin
+            server zipkin {{ internal_host }}:9411/zipkin check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
   when: enable_zipkin is defined and enable_zipkin == 'yes'    
 
@@ -640,20 +640,20 @@
             http-response add-header X-Gateway %s
             mode http
             option tcp-check
-            server gateway {{ arkcase_host }}:9002
+            server gateway {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/adk/,/)]
 
           backend be_eureka
             http-response add-header X-Eureka %s
             mode http
             option tcp-check
-            server eureka {{ arkcase_host }}:9002/eureka
+            server eureka {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
           backend be_eureka-dashboard
             http-response add-header X-Eureka-Dashboard %s
             mode http
             option tcp-check
-            server eureka-dashboard {{ arkcase_host }}:9002/eureka-dashboard
+            server eureka-dashboard {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   
   when: enable_eureka is defined and enable_eureka == 'yes'
 

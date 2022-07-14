@@ -4,61 +4,40 @@
     microservice:
       name: arkcase-file-utils
       version: "{{ arkcase_file_utils_version | default(arkcase_version) }}"
-      java_opts: "-Dserver.port=9078 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djodconverter.local.officeHome=/opt/openoffice4 -Djodconverter.local.port-numbers=9079"
+      java_opts: "-Dserver.port=9078 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_p12_store_jdk8 }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djodconverter.local.officeHome={{ libreoffice_install_path }} -Djodconverter.local.port-numbers=9079 -Dspring.kafka.bootstrap-servers={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Darkcase.kafka.bootstrapAddress={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Dspring.kafka.producer.bootstrap-servers={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Dspring.kafka.security.protocol=SSL"
 
-- name: Check Open Office installed
-  become: yes
-  stat:
-    path: "/opt/openoffice4/program/soffice"
-  register: openoffice_bin 
-
-- name: Check Open Office version
-  become: yes
-  command: "/opt/openoffice4/program/soffice -h  2>&1 | head -n1"
-  register: openoffice_old_version
-  when: openoffice_bin.stat.exists
-
-- name: Set open_office_latest_version fact
-  set_fact:
-    open_office_latest_version: "{{ open_office_version | default('4.1.11') | string in openoffice_old_version.stdout }}"
-  when: openoffice_bin.stat.exists
-
-- name: Remove old Open Office and Libreoffice version, if necessary
+- name: install LibreOffice (CentOS 7)
   become: yes
   yum:
-    state: absent
-    name: 
-      - "openoffice*"
-      - "libreoffice*"
-  when: openoffice_bin.stat.exists and not open_office_latest_version
+    state: installed
+    name:
+      - libreoffice
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  loop:
-    - name: Open Office
-      dest: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
-      owner: root
-      url: "https://sourceforge.net/projects/openofficeorg.mirror/files/{{ open_office_version | default('4.1.11') }}/binaries/en-US/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz --no-check-certificate"
-  when: open_office_latest_version is not defined or not open_office_latest_version
-
-- name: unpack Open Office RPM
-  become: yes
-  unarchive:
-    src: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
-    remote_src: yes
-    dest: /tmp
-  when: open_office_latest_version is not defined or not open_office_latest_version
-
-- name: install Open Office
-  become: yes
-  command: 
-    cmd: rpm -Uvih /tmp/en-US/RPMS/*.rpm
-    warn: false
-  when: open_office_latest_version is not defined or not open_office_latest_version
-
-- name: remove tmp files
-  become: yes
-  file:
-    force: yes
-    state: absent
-    path: /tmp/en-US
-  when: open_office_latest_version is not defined or not open_office_latest_version
+- name: install LibreOffice (RHEL 8)
+  block:
+    - name: download LibreOffice 
+      include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+      loop:
+        - name: LibreOffice {{ libreoffice_version }}
+          dest: "{{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm.tar.gz"
+          owner: arkcase
+          url: https://downloadarchive.documentfoundation.org/libreoffice/old/{{ libreoffice_version }}/rpm/x86_64/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm.tar.gz
+    - name: unarchive libreoffice
+      become: yes
+      become_user: arkcase
+      unarchive:
+        src: "{{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm.tar.gz"
+        remote_src: yes
+        dest: "{{ root_folder }}/install/arkcase"
+        creates: "{{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm/readmes/README_en-US"
+    - name: install libreoffice
+      become: yes
+      # because the RPMs aren't signed properly for FIPS mode, we need to disable digest checking.
+      shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm/RPMS/*.rpm
+      args:
+        warn: false
+      register: libreoffice_rpm_install
+      failed_when: libreoffice_rpm_install.rc != 0 and "is already installed" not in libreoffice_rpm_install.stderr
+      changed_when: libreoffice_rpm_install.rc == 0
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
