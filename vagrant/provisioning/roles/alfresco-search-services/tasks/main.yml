@@ -60,9 +60,9 @@
     - regexp: "^alfresco.port.ssl=8443$"
       replace: "alfresco.port.ssl=7070"
     - regexp: "^alfresco.encryption.ssl.truststore.location=ssl.repo.client.truststore$"
-      replace: "alfresco.encryption.ssl.truststore.location={{ root_folder }}/common/arkcase.ts"
+      replace: "alfresco.encryption.ssl.truststore.location={{ java_key_store }}"
     - regexp: "^alfresco.encryption.ssl.keystore.location=ssl.repo.client.keystore$"
-      replace: "alfresco.encryption.ssl.keystore.location={{ root_folder }}/common/arkcase.ks"
+      replace: "alfresco.encryption.ssl.keystore.location={{ java_p12_store_jdk8 }}"
     - regexp: "^alfresco.encryption.ssl.keystore.type=JCEKS$"
       replace: "alfresco.encryption.ssl.keystore.type=PKCS12"
     - regexp: "^#data.dir.root=DATA_DIR$"
@@ -114,6 +114,7 @@
   loop:
     - "SOLR_SOLR_HOST={{ internal_host }}"
     - "SOLR_ALFRESCO_HOST={{ external_host }}"
+    - 'SOLR_OPTS="$SOLR_OPTS -Dcom.redhat.fips=false -Djava.net.preferIPv4Stack=true"'
  
 - name: keystore passwords file
   become: yes
@@ -144,6 +145,12 @@
   file:
     path: "{{ root_folder }}/app/alfresco-search/alfresco-search-services/solr/bin/solr"
     setype: bin_t
+
+- name: fapolicy settings for search services, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: alfrescoo-search
+      folder_path: "{{ root_folder }}/app/alfresco-search"
 
 - name: see if search services was already started
   become: yes
