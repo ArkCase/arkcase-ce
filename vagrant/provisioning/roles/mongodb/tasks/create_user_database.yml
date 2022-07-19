@@ -21,3 +21,16 @@
       - { db: "admin", role: "readWrite" }
       - { db: arkcase, role: "readWrite" }
     ssl: yes
+
+- name: Create pass_db database
+  mongodb_user:
+    login_host: "{{ internal_host }}"
+    login_user: arkcase
+    login_password: '{{ default_user_password }}'
+    login_port: "{{ mongodb_port | default(27017) }}"
+    database: "pass_db"
+    name: "pass_db"
+    password: '{{ default_user_password }}'
+    roles:
+      - { db: "pass_db", role: "readWrite" }
+    ssl: yes

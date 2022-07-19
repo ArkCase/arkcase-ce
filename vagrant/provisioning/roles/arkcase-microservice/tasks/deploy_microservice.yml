@@ -85,7 +85,7 @@
   become: yes
   become_user: arkcase
   template:
-    src: "{{ role_path }}/../{{ microservice.name }}/templates/{{ microservice.template }}"
+    src: "{{ role_path }}/../{{ microservice.template_parent_folder | default(microservice.name) }}/templates/{{ microservice.template }}"
     dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.template }}"
     force: yes
     backup: yes

@@ -631,6 +631,15 @@
     replace: "server,runtime"
   when: "'server,runtime' not in conf_yml.stdout"
 
+- name: set config server URL
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "url: http://localhost:9999"
+    replace: "url: https://{{ internal_host }}:9999"
+
 - name: see if audit patterns is in the main folder
   become: yes
   become_user: arkcase
@@ -1032,9 +1041,9 @@
     - regexp: JKS
       replace: PKCS12
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/encryption-keystore"
-      replace: "{{ java_key_store }}"
+      replace: "{{ java_p12_store_jdk8 }}"
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
-      replace: "{{ java_key_store }}"
+      replace: "{{ java_p12_store_jdk8 }}"
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'

@@ -1,5 +1,5 @@
 server:
-  port: 9090
+  port: 9099
   ssl:
     key-store: {{ java_p12_store_jdk8 }}
     keyStoreType: PKCS12 
@@ -13,23 +13,10 @@ spring:
     producer:
       bootstrap-servers: "{{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
     security:
-      protocol: SSL
+      protocol: "{{ kafka_security_protocol | default('PLAINTEXT') }}"
   profiles:
     include: {{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime
-  data:
-    mongodb:
-      uri: "mongodb://pass_db:{{ default_user_password | urlencode }}@{{ internal_host }}:{{ mongodb_port }}/pass_db?ssl=true"
 arkcase:
-  ldap:
-    url: "{{ ldap_portal_url | default(ldap_url) }}"
-    base: "{{ ldap_portal_base | default(ldap_base) }}"
-    manager-dn: "{{ ldap_portal_bind_user | default(ldap_bind_user) }}"
-    manager-password: "{{ ldap_portal_bind_password | default(ldap_bind_password) }}"
-    search-properties:
-      user-domain: {{ ldap_portal_user_domain | default(ldap_user_domain) }}
-      user-search-base: "{{ ldap_portal_user_no_base | default(ldap_user_no_base) }}"
-      group-search-base: "{{ ldap_portal_group_no_base | default(ldap_group_no_base) }}"
-      user-prefix: "{{ ldap_portal_user_prefix | default('portal.') }}"
   kafka:
     bootstrapAddress: "{{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
     jwt:
@@ -42,6 +29,6 @@ arkcase:
         schema-updated-topic: "schema-updated-topic"
 logging:
   file:
-    name: {{ root_folder }}/log/arkcase-ldap-authority/arkcase-ldap-authority.log
+    name: {{ root_folder }}/log/arkcase-schema/arkcase-schema.log
 
 
