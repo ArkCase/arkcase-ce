@@ -1,7 +1,7 @@
 - name: download arkcase portal UI  
   become: yes
   become_user: apache
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_ui_version_formatted }}.zip
   args:
     chdir: "{{ root_folder }}/tmp/httpd"
   environment:
@@ -13,8 +13,8 @@
   become_user: apache
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/tmp/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip"
-    dest: "{{ root_folder }}/install/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip"
+    src: "{{ root_folder }}/tmp/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_ui_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_ui_version_formatted }}.zip"
   register: arkcase_portal_zip
 
 - name: see if arkcase portal UI web folder exists
@@ -42,6 +42,6 @@
   become_user: apache
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/install/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_version_formatted }}.zip"
+    src: "{{ root_folder }}/install/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_ui_version_formatted }}.zip"
     dest: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}/"
   when: arkcase_portal_zip is changed
