@@ -136,6 +136,9 @@
     - role: arkcase-file-utils
       tags: [core, upgrade, arkcase-file-utils, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
+    - role: arkcase-portal-oidc
+      tags: [ core, upgrade, arkcase-portal-oidc, arkcase-microservices ]
+      when: enable_microservices | default(false)
     - role: arkcase-extra-microservices
       tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
       when: enable_microservices | default(false) and arkcase_extra_microservices is defined
