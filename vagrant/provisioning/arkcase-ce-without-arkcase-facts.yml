@@ -595,7 +595,21 @@ aws_secret_access_key: ""
 
 ldap_type: "samba"
 
-# OIDC authentication properties
+# Portal OIDC properties (when using Portal OIDC microservice)
+oidc_portal_provider: cognito
+oidc_portal_access_key: ""
+oidc_portal_secret_key: ""
+oidc_portal_user_pool: ""
+oidc_portal_client_id: ""
+oidc_portal_client_secret: ""
+oidc_portal_success_login_uri: ""
+oidc_portal_authorization_uri: ""
+oidc_portal_issuer_uri: ""
+oidc_portal_jwk_set_uri: ""
+oidc_portal_token_uri: ""
+oidc_portal_user_info_url: ""
+
+# OIDC authentication properties when using Core ArkCase OIDC implementation
 #oidc_registrationId: ""
 #oidc_clientId: ""
 #oidc_clientSecret: ""
