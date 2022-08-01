@@ -222,9 +222,9 @@
         use_backend be_arkcase if acl_arkcase
         use_backend be_sse if acl_sse
         use_backend be_minio if acl_minio
+        use_backend be_oidc if acl_oidc
         use_backend be_api_gateway if acl_api_gateway
         use_backend be_config if acl_config
-        use_backend be_oidc if acl_oidc
 
       #backend servers  
       backend be_solr
