@@ -16,12 +16,13 @@
 
 - name: Create buckets
   become: yes
-  s3_bucket:
+  amazon.aws.s3_bucket:
     s3_url: "{{ file_management_s3_url }}"
     aws_access_key: "{{ file_management_s3_access_key }}"
     aws_secret_key: "{{ file_management_s3_secret_key }}"
     name: "{{ item.bucket_name }}"
     state: present
+    validate_certs: "{{ file_management_s3_validate_certs | default(true) }}"
   with_items: "{{ file_management_s3_buckets }}"
   vars:
     ansible_python_interpreter: /usr/bin/python3
