@@ -86,6 +86,23 @@
     - "{{ ldap_portal_user_no_base }},{{ ldap_base }}"
   when: foia_portal_context is defined
 
+- name: add core portal organizational units
+  ldap_entry:
+    server_uri: "{{ ldap_url }}"
+    validate_certs: no
+    bind_dn: "{{ ldap_bind_user }}"
+    bind_pw: "{{ ldap_bind_password }}"
+    dn: "{{ item }}"
+    objectClass:
+      - organizationalUnit
+      - top
+    attributes:
+      description: "{{ item }}"
+  loop:
+    - "{{ ldap_core_portal_group_no_base }},{{ ldap_base }}"
+    - "{{ ldap_core_portal_user_no_base }},{{ ldap_base }}"
+  when: enable_microservices is true
+
 - name: add arkcase groups
   ldap_entry:
     server_uri: "{{ ldap_url }}"
@@ -136,6 +153,23 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_portal_groups|flatten }}"  
   when: foia_portal_context is defined
+
+- name: add Core portal groups
+  ldap_entry:
+    server_uri: "{{ ldap_url }}"
+    validate_certs: no
+    bind_dn: "{{ ldap_bind_user }}"
+    bind_pw: "{{ ldap_bind_password }}"
+    dn: "CN={{ item.name }},{{ ldap_core_portal_group_no_base }},{{ ldap_base }}"
+    objectClass:
+      - group
+      - top
+    attributes:
+      description: "{{ item.description }}"
+      samAccountName: "{{ item.name }}"
+      cn: "{{ item.name }}"
+  loop: "{{ ldap_core_portal_groups|flatten }}"
+  when: enable_microservices is true
 
 - name: add users
   include_tasks: add-user.yml

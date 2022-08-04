@@ -80,6 +80,10 @@ ldap_user_no_base: "OU=Users,OU=ArkCase"
 ldap_portal_user_no_base: "OU=UsersPortal,OU=ArkCase"
 ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
 ldap_prefix: ""
+ldap_core_portal_user_no_base: "OU=CorePortalGroups"
+ldap_core_portal_group_no_base: "OU=CorePortalUsers"
+ldap_core_portal_user_base: "{{ ldap_core_portal_user_no_base }},{{ ldap_base }}"
+ldap_core_portal_group_base: "{{ ldap_core_portal_group_no_base }},{{ ldap_base }}"
 
 # if yes, will reset the password unconditionally.  
 # otherwise, will set the password only if the user is created (user did not already exist)
@@ -208,6 +212,12 @@ ldap_groups:
 ldap_portal_groups:
   - description: PortalUsers
     name: '{{ foia_portal_group }}'
+    alfresco_role: SiteContributor
+    alfresco_rma_role: Administrator
+
+ldap_core_portal_groups:
+  - description: CorePortalUsers
+    name: '{{ core_portal_group }}'
     alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
 
@@ -354,6 +364,8 @@ foia_portal_context: foia
 foia_portal_group: "{{ ldap_prefix }}ARKCASE_PORTAL_USER"
 foia_portal_id: "8c41ee4e-49d4-4acb-8bce-866e52de3e4e"
 portal_authenticated: true
+
+core_portal_group: "{{ ldap_prefix }}ARKCASE_CORE_PORTAL_USER"
 
 # foia reports
 arkcase_foia_reports:
