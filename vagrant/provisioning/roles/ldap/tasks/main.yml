@@ -101,7 +101,7 @@
   loop:
     - "{{ ldap_core_portal_group_no_base }},{{ ldap_base }}"
     - "{{ ldap_core_portal_user_no_base }},{{ ldap_base }}"
-  when: enable_microservices is true
+  when: enable_microservices is defined
 
 - name: add arkcase groups
   ldap_entry:
@@ -169,7 +169,7 @@
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
   loop: "{{ ldap_core_portal_groups|flatten }}"
-  when: enable_microservices is true
+  when: enable_microservices is defined
 
 - name: add users
   include_tasks: add-user.yml
