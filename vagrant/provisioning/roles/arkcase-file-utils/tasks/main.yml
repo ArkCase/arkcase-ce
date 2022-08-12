@@ -81,7 +81,7 @@
   unarchive:
     src: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
     remote_src: yes
-    dest: /tmp/LibreOffice
+    dest: /tmp/
 
 #- name: install LibreOffice
 #  become: yes
