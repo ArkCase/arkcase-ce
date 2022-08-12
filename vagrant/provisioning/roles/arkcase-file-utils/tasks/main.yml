@@ -10,7 +10,7 @@
   become: yes
   stat:
     path: "/opt/openoffice4/program/soffice"
-  register: openoffice_bin 
+  register: openoffice_bin
 
 - name: Check Open Office version
   become: yes
@@ -27,7 +27,7 @@
   become: yes
   yum:
     state: absent
-    name: 
+    name:
       - "openoffice*"
       - "libreoffice*"
   when: openoffice_bin.stat.exists and not open_office_latest_version
@@ -50,7 +50,7 @@
 
 - name: install Open Office
   become: yes
-  command: 
+  command:
     cmd: rpm -Uvih /tmp/en-US/RPMS/*.rpm
     warn: false
   when: open_office_latest_version is not defined or not open_office_latest_version
@@ -62,3 +62,40 @@
     state: absent
     path: /tmp/en-US
   when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: Check Libreoffice Installation
+  become: yes
+  stat:
+    path: "/opt/libreoffice/program/soffice"
+  register: libreoffice_bin_exists
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: LibreOffice
+      dest: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+      owner: root
+      url: "https://ftp.osuosl.org/pub/tdf/libreoffice/stable/{{ libreoffice_version | default('7.3.4') }}/rpm/x86_64/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_rpm.tar.gz --no-check-certificate"
+  when: not libreoffice_bin_exists.stat.exists
+
+- name: unpack LibreOffice RPM
+  become: yes
+  unarchive:
+    src: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+    remote_src: yes
+    dest: /tmp/
+  when: not libreoffice_bin_exists.stat.exists
+
+- name: install LibreOffice
+  become: yes
+  command:
+    cmd: rpm -Uvih /tmp/LibreOffice*/RPMS/*.rpm
+    warn: false
+  when: not libreoffice_bin_exists.stat.exists
+
+- name: remove tmp files
+  become: yes
+  file:
+    force: yes
+    state: absent
+    path: /tmp/LibreOffice*
+  when: not libreoffice_bin_exists.stat.exists
