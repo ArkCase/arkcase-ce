@@ -16,3 +16,8 @@ arkcase:
     defaultZone: https://{{ eureka_host | default(internal_host) }}/eureka/
   zipkin:
     baseUrl: https://{{ zipkin_host | default(internal_host) }}/zipkin/api
+spring:
+  data:
+    mongodb:
+      port: "{{ mongodb_port | default(27017) }}"
+      host: "{{ file_management_mongodb_host | default(internal_host) }}"
