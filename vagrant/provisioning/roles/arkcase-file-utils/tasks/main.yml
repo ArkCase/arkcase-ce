@@ -75,6 +75,7 @@
       dest: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
       owner: root
       url: "https://ftp.osuosl.org/pub/tdf/libreoffice/stable/{{ libreoffice_version | default('7.3.4') }}/rpm/x86_64/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_rpm.tar.gz --no-check-certificate"
+  when: not libreoffice_bin_exists.stat.exists
 
 - name: unpack LibreOffice RPM
   become: yes
@@ -82,12 +83,14 @@
     src: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
     remote_src: yes
     dest: /tmp/
+  when: not libreoffice_bin_exists.stat.exists
 
 - name: install LibreOffice
   become: yes
   command:
     cmd: rpm -Uvih /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
+  when: not libreoffice_bin_exists.stat.exists
 
 - name: remove tmp files
   become: yes
@@ -95,3 +98,4 @@
     force: yes
     state: absent
     path: /tmp/LibreOffice*
+  when: not libreoffice_bin_exists.stat.exists
