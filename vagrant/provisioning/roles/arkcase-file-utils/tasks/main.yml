@@ -83,19 +83,19 @@
     remote_src: yes
     dest: /tmp/LibreOffice
 
-- name: install LibreOffice
-  become: yes
-  command:
-    cmd: yum -y localinstall /tmp/LibreOffice/RPMS/*.rpm
-    warn: false
-
-- name: Move Libreoffice install folder
-  become: yes
-  command: mv "/opt/libreoffice*" "/opt/libreoffice"
-
-- name: remove tmp files
-  become: yes
-  file:
-    force: yes
-    state: absent
-    path: /tmp/LibreOffice
+#- name: install LibreOffice
+#  become: yes
+#  command:
+#    cmd: yum -y localinstall /tmp/LibreOffice/RPMS/*.rpm
+#    warn: false
+#
+#- name: Move Libreoffice install folder
+#  become: yes
+#  command: mv "/opt/libreoffice*" "/opt/libreoffice"
+#
+#- name: remove tmp files
+#  become: yes
+#  file:
+#    force: yes
+#    state: absent
+#    path: /tmp/LibreOffice
