@@ -21,4 +21,4 @@ arkcase:
 jodconverter:
   local:
     enabled: true
-    officeHome: /opt/libreoffice/program
+    officeHome: /opt/libreoffice7.3/
