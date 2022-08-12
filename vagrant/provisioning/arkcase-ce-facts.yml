@@ -74,13 +74,13 @@ ldap_prefix: ""
 ldap_portal_group_no_base: "OU=PortalGroups,OU=ArkCase"
 ldap_portal_user_no_base: "OU=UsersPortal,OU=ArkCase"
 
-# if yes, will reset the password unconditionally.  
+# if yes, will reset the password unconditionally.
 # otherwise, will set the password only if the user is created (user did not already exist)
 ldap_force_password_reset: yes
 
 # used in version 3.3.2
-# it takes some work to get Ansible to output the rolesToGroups value in the format 
-# needed by ArkCase.  Each role name and each group name have to be surrounded by \\\", 
+# it takes some work to get Ansible to output the rolesToGroups value in the format
+# needed by ArkCase.  Each role name and each group name have to be surrounded by \\\",
 # and separated by a colon, and everything has to be one long line
 roles_to_groups: "{\\\"ROLE_ENTITY_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_CONSUMER\\\": \\\"{{ ldap_prefix }}ARKCASE_CONSUMER@ARKCASE.ORG\\\", \\\"ROLE_SUPERVISOR\\\": \\\"{{ ldap_prefix }}ARKCASE_SUPERVISOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_ADMINISTRATOR\\\": \\\"{{ ldap_prefix }}ARKCASE_ADMINISTRATOR@ARKCASE.ORG,{{ ldap_prefix }}ARKCASE_ENTITY_ADMINISTRATOR@ARKCASE.ORG\\\", \\\"ROLE_EXTERNAL\\\": \\\"{{ ldap_prefix }}ARKCASE_EXTERNAL@ARKCASE.ORG\\\", \\\"ROLE_CONTRIBUTOR\\\": \\\"{{ ldap_prefix }}ARKCASE_CONTRIBUTOR@ARKCASE.ORG\\\"}"
 
@@ -136,7 +136,7 @@ ldap_portal_groups:
     name: '{{ ldap_prefix }}ARKCASE_PORTAL_USER'
     alfresco_role: SiteContributor
     alfresco_rma_role: Administrator
-        
+
 arkcase_admin_user: "{{ ldap_prefix}}arkcase-admin"
 arkcase_admin_password: "{{ default_user_password }}"
 arkcase_admin_group: "CN={{ ldap_prefix }}ARKCASE_ADMINISTRATOR,{{ldap_group_base}}"
@@ -160,7 +160,7 @@ rules_spreadsheet_updates: []
 ########################################
 ### email settings
 #######################################
-# below settings work for Outlook 365    
+# below settings work for Outlook 365
 
 email_host_imap: "outlook.office365.com"
 email_port_imap: 993
@@ -195,15 +195,15 @@ arkcase_webapp_supported_versions:
   - "2021.02"
   - "2021.03"
 
-# arkcase_version is either a maven version (for SFTP download) 
-# or a github release version (for github downloads). 
+# arkcase_version is either a maven version (for SFTP download)
+# or a github release version (for github downloads).
 # Leave blank to get latest Maven snapshot from SFTP.
 arkcase_version: "2021.03"
 arkcase_version_formatted: "{{ '-' ~ arkcase_version if arkcase_version != '' else '' }}"
 
-# arkcase extension 
+# arkcase extension
 arkcase_extension_install: no
-# arkcase_extension_id is the base name of the jar file, 
+# arkcase_extension_id is the base name of the jar file,
 # which should also be the branch name in the configuration
 # repository.
 arkcase_extension_id: ""
@@ -224,7 +224,7 @@ arkcase_core_reports:
     definition: "AuditReport.prpt"
 
 
-# extension reports... each different extension may or may not have its own path 
+# extension reports... each different extension may or may not have its own path
 # in the jar file where report definitions are stored
 arkcase_extension_install_reports: no
 arkcase_extension_reports:
@@ -232,19 +232,19 @@ arkcase_extension_reports:
     jar_path: ""
     pentaho_path: ""
 
-# if arkcase_extension_install is "no", arkcase_configuration_classifier 
-# must be either "core" or "foia" or "privacy".  
+# if arkcase_extension_install is "no", arkcase_configuration_classifier
+# must be either "core" or "foia" or "privacy".
 arkcase_configuration_classifier: "core"
 arkcase_configuration_version: ""
 
-# portal_version is either a maven version (for SFTP download) 
-# or a github release version (for github downloads). 
+# portal_version is either a maven version (for SFTP download)
+# or a github release version (for github downloads).
 # Leave blank to get latest Maven snapshot from SFTP.
 # Used only with foia and privacy extensions
 portal_version: ""
 
-# sftp_arkcase_password, sftp_pentaho_password, 
-# and sftp_extension_password must be specified as 
+# sftp_arkcase_password, sftp_pentaho_password,
+# and sftp_extension_password must be specified as
 # extra arguments.
 sftp_service_base_url: "fileshare.armedia.com"
 sftp_arkcase_user: "arkcase"
@@ -279,7 +279,7 @@ arkcase_extra_artifacts:
         - src: |
             key=value
           dest: application.properties
-    
+
 # if `arkcase_retrieve_strategy` is "github" then `arkcase_config_server_version` must
 # correspond to a release tag on the GitHub site; in other words,
 # there must be a release artifact at the URL
@@ -416,8 +416,8 @@ solr_node_3: ""
 
 # NOTE: Alfresco CE 2018-06 does NOT work with
 # higher versions of Maria JDBC; specifically it does NOT
-# work with 2.4.2.  
-# Also, Alfresco 6.1 EE is certified with 2.2.5... 
+# work with 2.4.2.
+# Also, Alfresco 6.1 EE is certified with 2.2.5...
 # it doesn't work with 2.2.6.
 mariadb_jdbc_version: 2.2.5
 default_database_password: "@rKc@3S!"
@@ -476,7 +476,7 @@ records_management_categories:
   - "SAR"
 
 site_folders:
-  - s_name: acm 
+  - s_name: acm
     content_management_folders:
       - "Case Files"
       - "Complaints"
@@ -498,7 +498,7 @@ site_folders:
 active_directory_non_expiring_password_age: -9223372036854775808
 
 activemq_version: 5.15.9
-   
+
 # Confluent platform (with default version)
 confluent_major_version: 5.4
 confluent_minor_version: 7
@@ -661,3 +661,5 @@ enablePersonSync: false
 enableOrganizationSync: false
 
 user_attribute_name: sAMAccountName
+
+microservice_protocol: http

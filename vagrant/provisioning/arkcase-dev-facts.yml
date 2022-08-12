@@ -85,7 +85,7 @@ ldap_core_portal_group_no_base: "OU=CorePortalUsers"
 ldap_core_portal_user_base: "{{ ldap_core_portal_user_no_base }},{{ ldap_base }}"
 ldap_core_portal_group_base: "{{ ldap_core_portal_group_no_base }},{{ ldap_base }}"
 
-# if yes, will reset the password unconditionally.  
+# if yes, will reset the password unconditionally.
 # otherwise, will set the password only if the user is created (user did not already exist)
 ldap_force_password_reset: yes
 
@@ -349,10 +349,10 @@ arkcase_core_reports:
   - path: "arkcase-audit"
     definition: "AuditReport.prpt"
 
-# arkcase extension 
+# arkcase extension
 arkcase_extension_install: no
 arkcase_extension_version: ""
-# extension reports... each different extension may or may not have its own path 
+# extension reports... each different extension may or may not have its own path
 # in the jar file where report definitions are stored
 arkcase_extension_install_reports: no
 arkcase_extension_reports:
@@ -379,8 +379,8 @@ arkcase_privacy_reports:
   - path: "privacy"
     definition: "SARs-Received Processed and Pending SARs.prpt"
 
-# sftp_arkcase_password, sftp_pentaho_password, 
-# and sftp_extension_password must be specified as 
+# sftp_arkcase_password, sftp_pentaho_password,
+# and sftp_extension_password must be specified as
 # extra arguments.
 sftp_service_base_url: "fileshare.armedia.com"
 sftp_arkcase_user: "arkcase"
@@ -522,8 +522,8 @@ solr_node_3: ""
 
 # NOTE: Alfresco CE 2018-06 does NOT work with
 # higher versions of Maria JDBC; specifically it does NOT
-# work with 2.4.2.  
-# Also, Alfresco 6.1 EE is certified with 2.2.5... 
+# work with 2.4.2.
+# Also, Alfresco 6.1 EE is certified with 2.2.5...
 # it doesn't work with 2.2.6.
 mariadb_jdbc_version: 2.2.5
 default_database_password: "@rM3d1A!"
@@ -687,7 +687,7 @@ zookeeper_version: "3.6.3"
 activemq_user: ""
 activemq_password: ""
 
-# missing fact during vagrant provisioning 
+# missing fact during vagrant provisioning
 arkcase_version: ""
 
 # define arkcase_log_level core/foia with one of thge following valid values: trace, debug, info, warn, error
@@ -771,3 +771,5 @@ enablePersonSync: false
 enableOrganizationSync: false
 
 user_attribute_name: sAMAccountName
+
+microservice_protocol: http
