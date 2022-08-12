@@ -29,7 +29,6 @@
     state: absent
     name:
       - "openoffice*"
-      - "libreoffice*"
   when: openoffice_bin.stat.exists and not open_office_latest_version
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -66,7 +65,7 @@
 - name: Check Libreoffice Installation
   become: yes
   stat:
-    path: "/opt/libreoffice/program/soffice"
+    path: "/opt/libreoffice7.3/program/soffice"
   register: libreoffice_bin_exists
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
