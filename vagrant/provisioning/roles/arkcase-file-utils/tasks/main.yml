@@ -86,7 +86,7 @@
 - name: install LibreOffice
   become: yes
   command:
-    cmd: yum -y localinstall /tmp/LibreOffice*/RPMS/*.rpm
+    cmd: rpm -Uvih /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
 
 - name: Move Libreoffice install folder
