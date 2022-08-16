@@ -12,6 +12,7 @@
 # CentOS 7 ships with HTTPD version 2.4.6. We need at least version 2.4.11 for the SubstituteMaxLineLength directive
 # RHEL 8 has httpd v2.4.37 so this repository is only needed on CentOS 7
 - name: Copy the HTTPD CodeIT repo
+  become: yes
   template:
     src: codeit.el7.repo
     dest: /etc/yum.repos.d/

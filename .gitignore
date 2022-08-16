@@ -20,3 +20,6 @@ vagrant/provisioning/filter_plugins/__pycache__/urldecode.cpython-37.pyc
 
 # packer cache directory
 packer/packer_cache
+
+# IntelliJ
+.idea

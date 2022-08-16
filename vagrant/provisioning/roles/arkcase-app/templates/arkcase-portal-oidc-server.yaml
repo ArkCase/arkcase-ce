@@ -1,0 +1,14 @@
+oidc:
+  accessKey: {{ oidc_portal_access_key }}
+  secretKey: {{ oidc_portal_secret_key }}
+  userPool: {{ oidc_portal_user_pool }}
+  clientId: {{ oidc_portal_client_id }}
+  clientSecret: {{ oidc_portal_client_secret }}
+  loginUri: https://{{ external_host }}/api/oidc/oauth2/authorization/{{ oidc_portal_provider }}
+  redirectUri: https://{{ external_host }}/api/oidc/login/oauth2/code/{{ oidc_portal_provider }}
+  successLoginUri: {{ oidc_portal_success_login_uri }}
+  authorizationUri: {{ oidc_portal_authorization_uri }}
+  issuerUri: {{ oidc_portal_issuer_uri }}
+  jwkSetUri: {{ oidc_portal_jwk_set_uri }}
+  tokenUri: {{ oidc_portal_token_uri }}
+  userInfoUri: {{ oidc_portal_user_info_url }}

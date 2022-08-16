@@ -1,7 +1,8 @@
 arkcase:
   baseURL: "https://{{ external_host }}/arkcase"
   basePortalURL: "https://{{ external_host }}/portal"
-  fileManagementURL: "https://{{ external_host }}"
+  fileManagementURL: "{{ microservice_protocol | default('http') }}://{{ internal_host }}:{{ file_management_port | default(9068) }}"
+  fileUtilsURL: "{{ microservice_protocol | default('http') }}://{{ internal_host }}:{{ file_utils_port | default(9078) }}"
   enableKafkaSync:
     schema: {{ enableSchemaSync | default(false) }}
     caseFile: {{ enableCaseFileSync | default(false) }}
@@ -17,5 +18,13 @@ arkcase:
     defaultZone: https://{{ eureka_host | default(internal_host) }}/eureka/
   zipkin:
     baseUrl: https://{{ zipkin_host | default(internal_host) }}/zipkin/api
+spring:
+  data:
+    mongodb:
+      port: "{{ mongodb_port | default(27017) }}"
+      host: "{{ file_management_mongodb_host | default(internal_host) }}"
 
-
+jodconverter:
+  local:
+    enabled: true
+    officeHome: /opt/libreoffice7.3/

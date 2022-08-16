@@ -29,7 +29,7 @@ portal.truststoreFilename: arkcase.ts
 portal.truststorePassword: "{{ java_trust_store_pass }}"
 
 # authentication type, possible values (basic, external)
-portal.authenticationType: basic
+portal.authenticationType: "{{ authentication_type | default('basic') }}"
 # basic
 portal.authenticationBasicUser: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
 portal.authenticationBasicPassword: "{{ arkcase_admin_password }}"

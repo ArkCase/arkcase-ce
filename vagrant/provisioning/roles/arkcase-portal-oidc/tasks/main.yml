@@ -1,0 +1,15 @@
+- name: deploy arkcase-oidc-cognito
+  include_tasks: "{{ role_path }}/../arkcase-microservice/tasks/deploy_microservice.yml"
+  vars:
+    microservice:
+      name: arkcase-oidc-cognito
+      version: "{{ arkcase_oidc_cognito_version | default(arkcase_version) }}"
+      java_opts: "-Dserver.port=9100 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Dspring.kafka.bootstrap-servers={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Darkcase.kafka.bootstrapAddress={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
+
+- name: Portal OIDC server options
+  become: yes
+  become_user: arkcase
+  template:
+    src: "{{ role_path }}/../arkcase-app/templates/arkcase-portal-oidc-server.yaml"
+    dest: "{{ root_folder }}/app/arkcase-oidc-cognito/application.yml"
+    backup: yes

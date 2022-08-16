@@ -8,38 +8,95 @@
       boot_opts: "--spring.config.location=classpath:/bootstrap.yaml,classpath:/application.yaml,{{ root_folder }}/app/arkcase-file-utils/server.yml"
       template: server.yml
 
-- name: install LibreOffice (CentOS 7)
+- name: Check Open Office installed
+  become: yes
+  stat:
+    path: "/opt/openoffice4/program/soffice"
+  register: openoffice_bin
+
+- name: Check Open Office version
+  become: yes
+  command: "/opt/openoffice4/program/soffice -h  2>&1 | head -n1"
+  register: openoffice_old_version
+  when: openoffice_bin.stat.exists
+
+- name: Set open_office_latest_version fact
+  set_fact:
+    open_office_latest_version: "{{ open_office_version | default('4.1.11') | string in openoffice_old_version.stdout }}"
+  when: openoffice_bin.stat.exists
+
+- name: Remove old Open Office and Libreoffice version, if necessary
   become: yes
   yum:
-    state: installed
+    state: absent
     name:
-      - libreoffice
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+      - "openoffice*"
+  when: openoffice_bin.stat.exists and not open_office_latest_version
 
-- name: install LibreOffice (RHEL 8)
-  block:
-    - name: download LibreOffice 
-      include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-      loop:
-        - name: LibreOffice {{ libreoffice_version }}
-          dest: "{{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm.tar.gz"
-          owner: arkcase
-          url: https://downloadarchive.documentfoundation.org/libreoffice/old/{{ libreoffice_version }}/rpm/x86_64/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm.tar.gz
-    - name: unarchive libreoffice
-      become: yes
-      become_user: arkcase
-      unarchive:
-        src: "{{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm.tar.gz"
-        remote_src: yes
-        dest: "{{ root_folder }}/install/arkcase"
-        creates: "{{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm/readmes/README_en-US"
-    - name: install libreoffice
-      become: yes
-      # because the RPMs aren't signed properly for FIPS mode, we need to disable digest checking.
-      shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/arkcase/LibreOffice_{{ libreoffice_version }}_Linux_x86-64_rpm/RPMS/*.rpm
-      args:
-        warn: false
-      register: libreoffice_rpm_install
-      failed_when: libreoffice_rpm_install.rc != 0 and "is already installed" not in libreoffice_rpm_install.stderr
-      changed_when: libreoffice_rpm_install.rc == 0
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: Open Office
+      dest: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+      owner: root
+      url: "https://sourceforge.net/projects/openofficeorg.mirror/files/{{ open_office_version | default('4.1.11') }}/binaries/en-US/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz --no-check-certificate"
+  when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: unpack Open Office RPM
+  become: yes
+  unarchive:
+    src: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+    remote_src: yes
+    dest: /tmp
+  when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: install Open Office
+  become: yes
+  command:
+    cmd: rpm -Uvih /tmp/en-US/RPMS/*.rpm
+    warn: false
+  when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: remove tmp files
+  become: yes
+  file:
+    force: yes
+    state: absent
+    path: /tmp/en-US
+  when: open_office_latest_version is not defined or not open_office_latest_version
+
+- name: Check Libreoffice Installation
+  become: yes
+  stat:
+    path: "/opt/libreoffice7.3/program/soffice"
+  register: libreoffice_bin_exists
+
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: LibreOffice
+      dest: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+      owner: root
+      url: "https://ftp.osuosl.org/pub/tdf/libreoffice/stable/{{ libreoffice_version | default('7.3.4') }}/rpm/x86_64/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_rpm.tar.gz --no-check-certificate"
+  when: not libreoffice_bin_exists.stat.exists
+
+- name: unpack LibreOffice RPM
+  become: yes
+  unarchive:
+    src: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.4') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+    remote_src: yes
+    dest: /tmp/
+  when: not libreoffice_bin_exists.stat.exists
+
+- name: install LibreOffice
+  become: yes
+  command:
+    cmd: rpm -Uvih /tmp/LibreOffice*/RPMS/*.rpm
+    warn: false
+  when: not libreoffice_bin_exists.stat.exists
+
+- name: remove tmp files
+  become: yes
+  file:
+    force: yes
+    state: absent
+    path: /tmp/LibreOffice*
+  when: not libreoffice_bin_exists.stat.exists

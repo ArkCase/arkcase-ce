@@ -199,8 +199,9 @@
         acl acl_arkcase path_beg /arkcase
         acl acl_sse path_beg /api/sse
         acl acl_minio path_beg /api/minio
+        acl acl_oidc path_beg /api/oidc
         acl acl_api_gateway path_beg /api
-        acl acl_config path_beg /config
+        acl acl_config path_beg /config        
         acl acl_root path -i /
 
         # redirections
@@ -221,6 +222,7 @@
         use_backend be_arkcase if acl_arkcase
         use_backend be_sse if acl_sse
         use_backend be_minio if acl_minio
+        use_backend be_oidc if acl_oidc
         use_backend be_api_gateway if acl_api_gateway
         use_backend be_config if acl_config
 
@@ -283,6 +285,13 @@
         mode http
         option tcp-check
         server api_gateway0 {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+      
+      backend be_oidc
+        http-response add-header X-OIDC-Node %s
+        mode http
+        option tcp-check
+        server oidc0 {{ arkcase_host }}:9100 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/api/oidc/,/)]
 
       backend be_config
         http-response add-header X-Config %s

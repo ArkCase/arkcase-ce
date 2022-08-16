@@ -76,7 +76,7 @@ ldap_portal_user_no_base: "OU=UsersPortal,OU=ArkCase"
 ldap_user_base: "{{ ldap_user_no_base }},{{ ldap_base }}"
 ldap_prefix: ""
 
-# if yes, will reset the password unconditionally.  
+# if yes, will reset the password unconditionally.
 # otherwise, will set the password only if the user is created (user did not already exist)
 ldap_force_password_reset: yes
 
@@ -334,7 +334,7 @@ arkcase_core_reports:
   - path: "arkcase-audit"
     definition: "AuditReport.prpt"
 
-# extension reports... each different extension may or may not have its own path 
+# extension reports... each different extension may or may not have its own path
 # in the jar file where report definitions are stored
 arkcase_extension_install: no
 arkcase_extension_install_reports: no
@@ -360,8 +360,8 @@ arkcase_privacy_reports:
   - path: "privacy"
     definition: "SARs-Received Processed and Pending SARs.prpt"
 
-# sftp_arkcase_password, sftp_pentaho_password, 
-# and sftp_extension_password must be specified as 
+# sftp_arkcase_password, sftp_pentaho_password,
+# and sftp_extension_password must be specified as
 # extra arguments.
 sftp_service_base_url: "fileshare.armedia.com"
 sftp_arkcase_user: "arkcase"
@@ -383,7 +383,7 @@ snowbound_symmetric_key: ""
 
 # Mongodb port
 mongodb_port: "27017"
-enable_mongo: false 
+enable_mongo: false
 
 ### default values that shouldn't have to change
 arkcase_host_name: "{{ arkcase_host }}"
@@ -496,8 +496,8 @@ solr_cores:
 
 # NOTE: Alfresco CE 2018-06 does NOT work with
 # higher versions of Maria JDBC; specifically it does NOT
-# work with 2.4.2.  
-# Also, Alfresco 6.1 EE is certified with 2.2.5... 
+# work with 2.4.2.
+# Also, Alfresco 6.1 EE is certified with 2.2.5...
 # it doesn't work with 2.2.6.
 mariadb_jdbc_version: 2.2.5
 default_database_password: "@rM3d1A!"
@@ -595,7 +595,21 @@ aws_secret_access_key: ""
 
 ldap_type: "samba"
 
-# OIDC authentication properties
+# Portal OIDC properties (when using Portal OIDC microservice)
+oidc_portal_provider: cognito
+oidc_portal_access_key: ""
+oidc_portal_secret_key: ""
+oidc_portal_user_pool: ""
+oidc_portal_client_id: ""
+oidc_portal_client_secret: ""
+oidc_portal_success_login_uri: ""
+oidc_portal_authorization_uri: ""
+oidc_portal_issuer_uri: ""
+oidc_portal_jwk_set_uri: ""
+oidc_portal_token_uri: ""
+oidc_portal_user_info_url: ""
+
+# OIDC authentication properties when using Core ArkCase OIDC implementation
 #oidc_registrationId: ""
 #oidc_clientId: ""
 #oidc_clientSecret: ""
@@ -675,3 +689,5 @@ enablePersonSync: false
 enableOrganizationSync: false
 
 user_attribute_name: sAMAccountName
+
+microservice_protocol: http

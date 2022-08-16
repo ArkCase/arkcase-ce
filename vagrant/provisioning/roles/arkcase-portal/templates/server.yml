@@ -33,3 +33,5 @@ arkcase:
 logging:
   file:
     name: {{ root_folder }}/log/arkcase-api-gateway/arkcase-api-gateway.log
+
+portal.authenticationType: "{{ portal_authentication_type | default('basic') }}"    
