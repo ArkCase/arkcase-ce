@@ -3,7 +3,7 @@ Description={{ microservice.name }}
 After=syslog.target
 
 [Service]
-ExecStart={{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar
+ExecStart={{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar {{ microservice.boot_opts | default("") }}
 SuccessExitStatus=143
 WorkingDirectory={{ root_folder }}/app/{{ microservice.name }}
 User=arkcase

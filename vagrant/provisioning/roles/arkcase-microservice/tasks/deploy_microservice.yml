@@ -77,6 +77,16 @@
     dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.conf"
     force: yes
 
+- name: "{{ microservice.name }} custom yaml, if needed"
+  become: yes
+  become_user: arkcase
+  template:
+    src: "{{ role_path }}/../{{ microservice.template_parent_folder | default(microservice.name) }}/templates/{{ microservice.template }}"
+    dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.template }}"
+    force: yes
+    backup: yes
+  when: microservice.template is defined and microservice.template != ""
+
 - name: "enable {{ microservice.name }}"
   become: yes
   systemd:
