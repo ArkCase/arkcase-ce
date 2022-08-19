@@ -1,0 +1,22 @@
+server:
+  port: 9090
+spring:
+  cloud:
+    config:
+      uri: "https://{{ config_server_host | default(internal_host) }}/config"
+  profiles:
+    include: {{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime
+arkcase:
+  ldap:
+    url: "{{ ldap_portal_url | default(ldap_url) }}"
+    base: "{{ ldap_portal_base | default(ldap_base) }}"
+    manager-dn: "{{ ldap_portal_bind_user | default(ldap_bind_user) }}"
+    manager-password: "{{ ldap_portal_bind_password | default(ldap_bind_password) }}"
+    search-properties:
+      user-domain: {{ ldap_portal_user_domain | default(ldap_user_domain) }}
+      user-search-base: "{{ ldap_portal_user_no_base | default(ldap_user_no_base) }}"
+      group-search-base: "{{ ldap_portal_group_no_base | default(ldap_group_no_base) }}"
+      user-prefix: "{{ ldap_portal_user_prefix | default('portal.') }}"
+logging:
+  file:
+    name: {{ root_folder }}/log/arkcase-ldap-authority/arkcase-ldap-authority.log
