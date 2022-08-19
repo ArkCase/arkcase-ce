@@ -1,0 +1,232 @@
+- name: get the ArkCase cert info
+  ansible.builtin.shell: echo Q | openssl s_client -showcerts -connect {{ arkcase_ip }}:443 
+  register: arkcase_cert_info
+
+- name: write ArkCase cert info to file
+  ansible.builtin.copy:
+    dest: /tmp/arkcase_ca_cert.pem
+    content: "{{ arkcase_cert_info.stdout }}"
+
+- name: get the ArkCase root CA cert
+  ansible.builtin.shell: tac < /tmp/arkcase_ca_cert.pem | sed '/END CERTIFICATE/,$!d;/BEGIN CERTIFICATE/q' | tac
+  register: arkcase_ca_cert
+
+- name: write the CA cert to file
+  become: yes
+  ansible.builtin.copy:
+    dest: /etc/pki/ca-trust/source/anchors/arkcase_root_cert.pem
+    content: "{{ arkcase_ca_cert.stdout }}"
+
+- name: set haproxy facts for RHEL 8
+  set_fact:
+    pkg_haproxy: haproxy
+    path_haproxy_cfg: "/etc/haproxy/haproxy.cfg"
+    path_stats_socket: "/var/lib/haproxy/stats"
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: set haproxy facts CentOS 7
+  set_fact:
+    pkg_haproxy: "rh-haproxy18-haproxy"
+    path_haproxy_cfg: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
+    path_stats_socket: "/var/opt/rh/rh-haproxy18/lib/haproxy/stats"
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: ensure web and proxy ports
+  become: yes
+  firewalld:
+    immediate: yes
+    permanent: yes
+    port: "{{ item }}"
+    state: enabled
+  loop:
+    - "80/tcp"
+    - "443/tcp"
+    - "8404/tcp"
+
+- name: install epel-release 
+  become: yes
+  yum:
+    name: epel-release
+    state: present
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: install software collections
+  become: yes
+  yum:
+    name: centos-release-scl
+    state: present
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: install haproxy 1.8
+  become: yes
+  yum: 
+    name: "{{ pkg_haproxy }}"
+    state: present
+
+- name: haproxy folders
+  become: yes
+  file:
+    path: "{{ root_folder }}/log/haproxy"
+    state: directory
+    owner: haproxy
+    group: haproxy
+    mode: '0755'
+
+- name: Change rsyslog.conf for allow haproxy logging
+  become: yes
+  lineinfile:
+    path: /etc/rsyslog.conf
+    backup: yes
+    regex: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: '^\#\$ModLoad\ imudp'
+      line: '$ModLoad imudp'
+    - regexp: '^\#\$UDPServerRun\ 514'
+      line: '$UDPServerRun 514'
+  register: rsyslog_configuration
+
+- name: Allow SELinux write access on the haproxy log directory
+  become: yes
+  sefcontext:
+    target: '{{ root_folder }}/log/haproxy'
+    setype: haproxy_var_log_t
+    state: present
+  register: allow_haproxy_logging
+
+- name: Apply new SELinux file context to filesystem
+  become: yes
+  command: restorecon -v {{ root_folder }}/log/haproxy
+  when: allow_haproxy_logging is changed
+
+- name: Copy haproxy log configuration into rsyslog.d
+  become: yes
+  template:
+    src: haproxy-rsyslog.d
+    dest: /etc/rsyslog.d/haproxy.conf
+    backup: yes
+  register: haproxy_rsyslog
+
+- name: remove default TLS policies
+  become: yes
+  lineinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: '^    ssl-default-bind-ciphers PROFILE=SYSTEM'
+      line: '   # ssl-default-bind-ciphers PROFILE=SYSTEM'
+    - regexp: '^    ssl-default-server-ciphers PROFILE=SYSTEM'
+      line: '   # ssl-default-server-ciphers PROFILE=SYSTEM'
+  register: default_tls_options
+ 
+
+- name: increase 'timeout server' and 'timeout client'
+  become: yes
+  lineinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: 'timeout client          1m'
+      line: 'timeout client          3m'
+    - regexp: 'timeout server          1m'
+      line: 'timeout server          3m'
+  register: timeout_settings
+
+- name: establish our preferred default policies
+  become: yes
+  lineinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: yes
+    line: "{{ item }}"
+    insertafter: stats socket {{ path_stats_socket }}
+  loop:
+    - "    ssl-default-server-options   force-tlsv12"
+    - "    ssl-default-bind-ciphers  ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS"
+    - "    tune.ssl.default-dh-param 2048"
+    - "    # ArkCase Default TLS Options"
+    - "    log         127.0.0.1:514 local2"
+  register: good_tls_options
+
+- name: read current config
+  become: yes
+  command: cat {{ path_haproxy_cfg }}
+  register: current_config
+  changed_when: false
+  
+- name: remove default frontend/backend configuration
+  become: yes
+  command: sed -i '/^# main frontend which proxys to the backends$/,$d' {{ path_haproxy_cfg }}
+  when: '"main frontend which proxys to the backends" in current_config.stdout'
+  register: remove_default_config
+
+- name: see if we already have a cert file named for this host
+  become: yes
+  stat:
+    path: /etc/pki/tls/certs/{{ external_host }}.pem
+  register: host_pem_stat
+  changed_when: false
+
+- name: ArkCase configuration
+  become: yes
+  blockinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: yes
+    block: |
+      frontend stats
+        bind *:8404
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats admin if LOCALHOST
+        stats auth admin:{{ default_user_password }}
+       
+      frontend main
+        mode http
+        bind *:80
+        {{ "bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/" + external_host + ".pem" if host_pem_stat.stat.exists else "" }}
+
+        acl acl_arkcase path_beg /arkcase
+
+        # Let's Encrypt ... renewing an LE cert requires
+        # allowing the LE site to call us on port 80.  Since
+        # haproxy is not an httpd server, we run a transient
+        # web server at port 8888 only when we are renewing the
+        # certificate.
+        acl acl_letsencrypt path_beg /.well-known/acme-challenge
+
+        
+        redirect scheme https code 301 if !acl_letsencrypt !{ ssl_fc }
+
+      # backend uses
+      use_backend be_arkcase if acl_arkcase
+      use_backend be_letsencrypt if acl_letsencrypt
+
+      backend be_arkcase
+        http-response add-header X-ArkCase-Node %s<F6>
+        mode http
+        option tcp-check
+        server arkcase0 {{ arkcase_ip }}:443 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/arkcase_root_cert.pem
+
+      backend be_letsencrypt
+        mode http
+        server letsencrypt 127.0.0.1:8888
+
+- name: enable haproxy to connect to any port
+  become: yes
+  seboolean:
+    name: haproxy_connect_any
+    state: yes
+    persistent: yes
+
+- name: enable and start haproxy
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: haproxy
+    enabled: yes
+    state: started
+
