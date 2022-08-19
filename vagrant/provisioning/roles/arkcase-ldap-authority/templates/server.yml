@@ -16,9 +16,6 @@ spring:
       protocol: SSL
   profiles:
     include: {{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime
-  data:
-    mongodb:
-      uri: "mongodb://pass_db:{{ default_user_password | urlencode }}@{{ internal_host }}:{{ mongodb_port }}/pass_db?ssl=true"
 arkcase:
   ldap:
     url: "{{ ldap_portal_url | default(ldap_url) }}"
