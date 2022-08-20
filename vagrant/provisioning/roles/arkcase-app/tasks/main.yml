@@ -271,12 +271,18 @@
     path: "{{ root_folder }}/app/alfresco7"
   register: alfresco7_path
 
+- name: check for Solr service file
+  stat:
+    path: /etc/systemd/system/solr.service
+  register: service_file_solr
+  changed_when: false
+
 - name: service facts
   set_fact:
     db_service_name: "{{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if arkcase_host == database_host else '' }}"
     activemq_service_name: "{{ 'activemq.service' if activemq_host == arkcase_host else '' }}"
     samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
-    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host else '' }}"
+    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host and service_file_solr.stat.exists == True else '' }}"
     alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
     alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
 

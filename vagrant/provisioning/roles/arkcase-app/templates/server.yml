@@ -108,7 +108,7 @@ ark.activemq:
   transportConnectorURI: "ssl://{{ activemq_host }}:61616"
 acm.websockets:
   stomp_broker_relay.relay_host: "{{ activemq_host }}"
-  stomp_broker_relay.keystore: "{{ java_key_store }}"
+  stomp_broker_relay.keystore: "{{ java_p12_store_jdk8 }}"
   stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
   stomp_broker_relay.truststore: "{{ java_trust_store }}"
   stomp_broker_relay.truststore_pass: "ENC({{ encrypted_java_trust_store_pass }})"
