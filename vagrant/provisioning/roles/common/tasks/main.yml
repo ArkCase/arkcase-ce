@@ -156,7 +156,13 @@
     creates: "{{ root_folder }}/common/rds-ca-2019-root.pem"
     dest: "{{ root_folder }}/common/rds-ca-2019-root.pem"
     url: https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
-    
+   
+- name: fapolicy settings for common, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: arkcase_common
+      folder_path: "{{ root_folder }}/common"
+
 - name: Import server certificates to JDK truststore 
   block:
     - name: see if the Java truststore exists
