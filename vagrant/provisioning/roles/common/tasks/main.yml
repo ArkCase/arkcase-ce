@@ -133,7 +133,7 @@
 - name: set timezone to UTC
   become: yes
   timezone:
-    name: UTC
+    name: "{{ time_zone | default('UTC') }}"
 
 - name: Set default locale to en_US.utf8
   become: yes
