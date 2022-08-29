@@ -931,13 +931,13 @@
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-prc-server.yaml
   when: (arkcase_version == "" or arkcase_version is version('2021.04', '>=') ) and ( arkcase_extra_microservices is defined and arkcase_extra_microservices | selectattr('name', 'eq', 'prc-dockets') != [] )
 
-- name: server-specific configuration for arkcase-portal-oidc.yml for version 2021.04
+- name: server-specific configuration for arkcase-portal-cognito.yaml for version 2021.04
   become: yes
   become_user: arkcase
   template:
     backup: yes
-    src: arkcase-portal-oidc-server.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-oidc-server.yaml
+    src: arkcase-portal-cognito-server.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-cognito-server.yaml
   when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
 
 # the rolesToGroups format changed during the 3.3.3 release cycle, so we need 

@@ -40,5 +40,3 @@ arkcase:
 logging:
   file:
     name: {{ root_folder }}/log/arkcase-ldap-authority/arkcase-ldap-authority.log
-
-
