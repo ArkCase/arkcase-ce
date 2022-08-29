@@ -152,3 +152,4 @@ payment:
     securelinkendpoint: "{{ touchnet_securelinkendpoint | default('') }}"
     securepaylinkendpoint: "{{ touchnet_securepaylinkendpoint | default('') }}"
     upaysiteid: "{{ touchnet_upaysiteid | default('') }}"
+microsoftOfficeOnline.isWopiEnabled: {{ arkcase_ee | default('false') }}
