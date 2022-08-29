@@ -355,7 +355,7 @@
       opencmis.servletpath.override=true
       opencmis.servletpath.value=
       opencmis.server.override=true
-      opencmis.server.value=https://{{ external_host }}/alfresco/api
+      opencmis.server.value=https://{{ alfresco_host | default(internal_host) }}/alfresco/api
 
 - name: create and populate ldap1-ad.properties
   become: yes

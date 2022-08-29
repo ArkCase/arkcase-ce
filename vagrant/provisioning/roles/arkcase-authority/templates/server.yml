@@ -15,7 +15,7 @@ spring:
     security:
       protocol: SSL
   profiles:
-    include: {{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime
+    include: {{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}ldap-authority,server,runtime
 arkcase:
   kafka:
     bootstrapAddress: "{{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
@@ -27,6 +27,8 @@ arkcase:
     schema:
       topic:
         schema-updated-topic: "schema-updated-topic"
+    consumer:
+        ark-ldap-command-user: "arkcase-ldap-command-user"
 logging:
   file:
     name: {{ root_folder }}/log/arkcase-authority/arkcase-authority.log

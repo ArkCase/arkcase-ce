@@ -60,7 +60,7 @@
     - regexp: "^alfresco.port.ssl=8443$"
       replace: "alfresco.port.ssl=7070"
     - regexp: "^alfresco.encryption.ssl.truststore.location=ssl.repo.client.truststore$"
-      replace: "alfresco.encryption.ssl.truststore.location={{ java_key_store }}"
+      replace: "alfresco.encryption.ssl.truststore.location={{ java_trust_store }}"
     - regexp: "^alfresco.encryption.ssl.keystore.location=ssl.repo.client.keystore$"
       replace: "alfresco.encryption.ssl.keystore.location={{ java_p12_store_jdk8 }}"
     - regexp: "^alfresco.encryption.ssl.keystore.type=JCEKS$"
@@ -129,7 +129,7 @@
   become_user: alfresco-search
   template:
     backup: yes
-    src: "password-file.properties"
+    src: "truststore-password-file.properties"
     dest: "{{ root_folder }}/app/alfresco-search/ssl-truststore-passwords.properties" 
 
 - name: link log4j.properties
