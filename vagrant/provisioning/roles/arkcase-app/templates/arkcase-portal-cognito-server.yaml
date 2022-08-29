@@ -1,4 +1,4 @@
-oidc:
+cognito:
   accessKey: {{ oidc_portal_access_key }}
   secretKey: {{ oidc_portal_secret_key }}
   userPool: {{ oidc_portal_user_pool }}
