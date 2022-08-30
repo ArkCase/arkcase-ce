@@ -65,7 +65,7 @@
 - name: Check Libreoffice Installation
   become: yes
   stat:
-    path: "/opt/libreoffice7.3/program/soffice"
+    path: "/opt/app/arkcase/app/program/soffice"
   register: libreoffice_bin_exists
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -84,10 +84,16 @@
     dest: /tmp/
   when: not libreoffice_bin_exists.stat.exists
 
+- name: Ensure that libreoffice7.3-freedesktop-menus-7.3.5-2.noarch.rpm is removed
+  become: yes
+  command:
+    cmd: rm /tmp/LibreOffice_7.3.5.2_Linux_x86-64_rpm/RPMS/libreoffice7.3-freedesktop-menus-7.3.5-2.noarch.rpm
+  when: not libreoffice_bin_exists.stat.exists
+
 - name: install LibreOffice
   become: yes
   command:
-    cmd: rpm -Uvih /tmp/LibreOffice*/RPMS/*.rpm
+    cmd: rpm -Uvih --prefix=/opt/app/arkcase/app /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
   when: not libreoffice_bin_exists.stat.exists
 
