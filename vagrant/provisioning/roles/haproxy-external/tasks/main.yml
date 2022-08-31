@@ -190,6 +190,9 @@
         {{ "bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/" + external_host + ".pem" if host_pem_stat.stat.exists else "" }}
 
         acl acl_arkcase path_beg /arkcase
+        acl acl_api path_beg /api
+        acl acl_portal path_beg /portal
+        acl acl_assets path_beg /assets
 
         # Let's Encrypt ... renewing an LE cert requires
         # allowing the LE site to call us on port 80.  Since
@@ -203,13 +206,35 @@
 
       # backend uses
       use_backend be_arkcase if acl_arkcase
+      use_backend be_api if acl_api
+      use_backend be_portal if acl_portal
       use_backend be_letsencrypt if acl_letsencrypt
+      use_backend be_assets if acl_assets
 
       backend be_arkcase
-        http-response add-header X-ArkCase-Node %s<F6>
+        http-response add-header X-ArkCase-Node %s
         mode http
         option tcp-check
         server arkcase0 {{ arkcase_ip }}:443 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/arkcase_root_cert.pem
+
+      backend be_api
+        http-response add-header X-ArkCase-Api-Node %s
+        mode http
+        option tcp-check
+        server arkcase_api0 {{ arkcase_ip }}:443 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/arkcase_root_cert.pem
+
+      backend be_portal
+        http-response add-header X-ArkCase-Portal-Node %s
+        mode http
+        option tcp-check
+        server arkcase_portal0 {{ arkcase_ip }}:443 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/arkcase_root_cert.pem
+
+      backend be_assets
+        http-response add-header X-ArkCase-Assets-Node %s
+        mode http
+        option tcp-check
+        server arkcase_assets0 {{ arkcase_ip }}:443 check fall 3 rise 2 check ssl verify required ca-file /etc/pki/ca-trust/source/anchors/arkcase_root_cert.pem
+        http-request set-path %[path,regsub(^/assets/,/portal/assets/)]
 
       backend be_letsencrypt
         mode http
