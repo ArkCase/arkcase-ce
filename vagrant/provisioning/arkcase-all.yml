@@ -186,3 +186,5 @@
       tags: [foia-dev-reports, arkcase-developer]
     - role: arkcase-developer
       tags: [arkcase-developer]
+    - role: fapolicyd-config
+      tags: [fapolicyd-config]

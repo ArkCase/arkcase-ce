@@ -52,7 +52,7 @@
 - name: install Open Office
   become: yes
   command:
-    cmd: rpm -Uvih /tmp/en-US/RPMS/*.rpm
+    cmd: rpm -Uvih --nodigest --nofiledigest /tmp/en-US/RPMS/*.rpm
     warn: false
   when: open_office_latest_version is not defined or not open_office_latest_version
 
@@ -67,7 +67,7 @@
 - name: Check Libreoffice Installation
   become: yes
   stat:
-    path: "/opt/libreoffice7.3/program/soffice"
+    path: "{{ libreoffice_install_path }}/program/soffice"
   register: libreoffice_bin_exists
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -89,7 +89,7 @@
 - name: install LibreOffice
   become: yes
   command:
-    cmd: rpm -Uvih /tmp/LibreOffice*/RPMS/*.rpm
+    cmd: rpm -Uvih --nodigest --nofiledigest /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
   when: not libreoffice_bin_exists.stat.exists
 
@@ -100,3 +100,11 @@
     state: absent
     path: /tmp/LibreOffice*
   when: not libreoffice_bin_exists.stat.exists
+
+- name: fapolicy settings for OpenOffice and LibreOffice, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: openoffice
+      folder_path: "/opt/openoffice4"
+    - name: libreoffice
+      folder_path: "{{ libreoffice_install_path }}" 

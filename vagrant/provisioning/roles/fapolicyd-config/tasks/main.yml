@@ -1,0 +1,15 @@
+- name: set max size of fapolicyd database
+  become: yes
+  replace:
+    path: /etc/fapolicyd/fapolicyd.conf
+    backup: yes
+    regexp: "^db_max_size = 40$"
+    replace: "db_max_size = 400"
+  register: fapolicyd_update
+
+- name: restart fapolicyd if needed
+  systemd:
+    service: fapolicyd
+    state: restarted
+  when: fapolicyd_update is changed
+

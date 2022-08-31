@@ -24,6 +24,23 @@
     name: "arkcase"
     state: started
 
-- name: wait for arkcase to create the tables in the database
-  pause:
-    minutes: 3
+- name: wait for ArkCase URL to work
+  uri:
+    url: https://{{ internal_host }}:8843/arkcase/
+    validate_certs: false
+    follow_redirects: all
+  register: _result
+  until: _result.status == 200
+  retries: 100
+  delay: 5
+
+- name: fapolicy settings for ArkCase, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: arkcase_app
+      folder_path: "{{ root_folder }}/app/arkcase"
+    - name: arkcase_ui
+      folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase/custom"
+    - name: arkcase_tmp
+      folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase/tmp"
+
