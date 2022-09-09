@@ -188,3 +188,5 @@
       tags: [arkcase-developer]
     - role: fapolicyd-config
       tags: [fapolicyd-config]
+    - role: timeservice
+      tags: [timeservice]
