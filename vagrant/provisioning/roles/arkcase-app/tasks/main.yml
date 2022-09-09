@@ -1154,3 +1154,7 @@
     - .vault.authMethod = "{{ arkcase_vault_authMethod | default('approle', true) }}"
     - .vault.username = "{{ arkcase_vault_username | default('arkcase', true) }}"
     - .vault.password = "{{ arkcase_vault_password | default('arkcase', true) }}"
+
+- name: configure Cognito, if needed
+  include_tasks: configure_cognito.yml
+  when: core_cognito_enabled | bool | default(false)

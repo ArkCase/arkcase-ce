@@ -1,0 +1,14 @@
+cognito-core:
+  accessKey: {{ cognito_core_access_key }}
+  secretKey: {{ cognito_core_secret_key }}
+  userPool: {{ cognito_core_user_pool }}
+  clientId: {{ cognito_core_client_id }}
+  clientSecret: {{ cognito_core_client_secret }}
+  loginUri: {{ cognito_core_login_url }}
+  redirectUri: {{ cognito_core_redirect_uri }}
+  successLoginUri: {{ cognito_core_success_login_uri }}
+  authorizationUri: {{ cognito_core_authorization_uri }}
+  issuerUri: {{ cognito_core_issuer_uri }}
+  jwkSetUri: {{ cognito_core_jwk_set_uri }}
+  tokenUri: {{ cognito_core_token_uri }}
+  userInfoUri: {{ cognito_core_user_info_uri }}
