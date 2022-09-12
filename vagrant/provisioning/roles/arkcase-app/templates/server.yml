@@ -104,9 +104,9 @@ email:
   enableModernAuthentication: "{{ enable_modern_authentication | default(false) }}"
 ################### Azure AD OAuth Configuration ####################
 aad:
-  clientId: "{{ azure_ad_client_id | default('')"
-  clientSecret: "{{ azure_ad_client_secret | default('')"
-  tenantId: "{{ azure_ad_tenant_id | default('')"
+  clientId: "{{ azure_ad_client_id | default('') }}"
+  clientSecret: "{{ azure_ad_client_secret | default('') }}"
+  tenantId: "{{ azure_ad_tenant_id | default('') }}"
 ocr:
   tempPath: "{{ root_folder }}/tmp/arkcase/"
 ark.activemq:

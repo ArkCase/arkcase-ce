@@ -87,7 +87,7 @@
 - name: Ensure that libreoffice7.3-freedesktop-menus-7.3.5-2.noarch.rpm is removed
   become: yes
   command:
-    cmd: rm /tmp/LibreOffice_{{ libre_office_version | (default('7.3.5.2') }}_Linux_x86-64_rpm/RPMS/libreoffice7.3-freedesktop-menus-{{ libre_office_version | (default('7.3.5-2') }}.noarch.rpm
+    cmd: rm /tmp/LibreOffice_{{ libre_office_version | default('7.3.5.2') }}_Linux_x86-64_rpm/RPMS/libreoffice7.3-freedesktop-menus-{{ libre_office_version | default('7.3.5-2') }}.noarch.rpm
   when: not libreoffice_bin_exists.stat.exists
 
 - name: install LibreOffice
