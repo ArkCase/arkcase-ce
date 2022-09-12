@@ -455,7 +455,8 @@
   register: output
 
 - name: restart config-server to bring the changes in the service file
-  service:
+  become: yes
+  systemd:
     name: config-server
     state: restarted
   when: output.stdout == 'active'
