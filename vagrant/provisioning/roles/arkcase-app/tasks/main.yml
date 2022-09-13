@@ -1158,4 +1158,4 @@
 
 - name: configure Cognito, if needed
   include_tasks: configure_cognito.yml
-  when: core_cognito_enabled | bool | default(false)
+  when: {{ core_cognito_enabled | default('false') }} | bool | default(false)
