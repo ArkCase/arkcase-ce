@@ -2,6 +2,7 @@ cognito-core:
   accessKey: {{ cognito_core_access_key }}
   secretKey: {{ cognito_core_secret_key }}
   userPool: {{ cognito_core_user_pool }}
+  ldapDirectoryName: "{{ ldap_user_domain | replace('.', '_') }}"
   clientId: {{ cognito_core_client_id }}
   clientSecret: {{ cognito_core_client_secret }}
   loginUri: {{ cognito_core_login_url }}
