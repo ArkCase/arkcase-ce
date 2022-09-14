@@ -18,9 +18,10 @@
   register: openoffice_old_version
   when: openoffice_bin.stat.exists
 
-- name: Set open_office_latest_version fact
+- name: Set some facts
   set_fact:
     open_office_latest_version: "{{ open_office_version | default('4.1.11') | string in openoffice_old_version.stdout }}"
+    libreoffice_install_path: "{{ root_folder }}/app/libreoffice"
   when: openoffice_bin.stat.exists
 
 - name: Remove old Open Office and Libreoffice version, if necessary
@@ -65,7 +66,7 @@
 - name: Check Libreoffice Installation
   become: yes
   stat:
-    path: "/opt/app/arkcase/app/program/soffice"
+    path: "{{ libreoffice_install_path }}/program/soffice"
   register: libreoffice_bin_exists
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -94,9 +95,12 @@
 - name: install LibreOffice
   become: yes
   command:
-    cmd: rpm -Uvih --prefix=/opt/app/arkcase/app/libreoffice /tmp/LibreOffice*/RPMS/*.rpm
+    cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
   when: not libreoffice_bin_exists.stat.exists
+  register: libreoffice_install
+  # 41 means the packages were already installed
+  failed_when: libreoffice_install.rc != 0 and libreoffice_install.rc != 41
 
 - name: remove tmp files
   become: yes
