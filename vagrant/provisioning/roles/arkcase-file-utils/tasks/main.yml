@@ -97,6 +97,7 @@
     cmd: rpm -Uvih --prefix=/opt/app/arkcase/app/libreoffice /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
   when: not libreoffice_bin_exists.stat.exists
+  ignore_errors: true
 
 - name: remove tmp files
   become: yes
