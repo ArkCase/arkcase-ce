@@ -1166,6 +1166,6 @@
   template:
     backup: yes
     src: arkcase-ldap-authority-server.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server/arkcase-ldap-authority-server.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-ldap-authority-server.yaml
 
 
