@@ -1,3 +1,17 @@
+- name: ensure group arkcase exists
+  become: yes
+  group:
+    name: arkcase
+    state: present
+
+- name: arkcase user
+  become: yes
+  user:
+    name: arkcase
+    shell: /bin/bash
+    group: arkcase
+    append: yes
+
 - name: deploy license-manager
   include_tasks: "{{ role_path }}/../arkcase-microservice/tasks/deploy_microservice.yml"
   vars:
