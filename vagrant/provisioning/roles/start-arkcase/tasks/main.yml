@@ -43,4 +43,6 @@
       folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase/custom"
     - name: arkcase_tmp
       folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase/tmp"
+    - name: arkcase_cache
+      folder_path: "{{ root_folder }}/data/arkcase-home/.cache"
 

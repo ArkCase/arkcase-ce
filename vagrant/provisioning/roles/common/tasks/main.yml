@@ -128,7 +128,7 @@
   # Don't try to modify the `/etc/hosts` file when running inside
   # Docker, this is not possible. Instead, use `--add-host` on the
   # `docker run` command line.
-  when: not stat_dockerenv_result.stat.exists
+  when: not stat_dockerenv_result.stat.exists and not (aws_client | default(false))
 
 - name: set timezone to UTC
   become: yes
@@ -162,6 +162,19 @@
   loop:
     - name: arkcase_common
       folder_path: "{{ root_folder }}/common"
+
+- name: change default logrotate.conf settings - rotate daily, keep 4
+  become: yes
+  replace:
+    backup: yes
+    path: /etc/logrotate.conf
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "weekly"
+      replace: "daily"
+    - regexp: "4"
+      replace: "7"
 
 - name: Import server certificates to JDK truststore 
   block:

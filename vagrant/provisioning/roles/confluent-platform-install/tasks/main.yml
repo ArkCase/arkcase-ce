@@ -180,8 +180,11 @@
       replace: "confluent.metrics.reporter.bootstrap.servers={{ internal_host }}:9092"
     - regexp: "#confluent.metrics.reporter.topic.replicas=1"
       replace: "confluent.metrics.reporter.topic.replicas=1"
-      regexp: "zookeeper.connect=localhost:2181"
+    - regexp: "zookeeper.connect=localhost:2181"
       replace: "zookeeper.connect={{ solr_node_1 + ':2281' if solr_node_2 | default('') == '' else solr_node_1 + ':2281,' + solr_node_2 + ':2281,' + solr_node_3 + ':2281' }}"
+    - regexp: "#confluent.telemetry.enabled=true"
+      replace: "confluent.telemetry.enabled=false"
+
 
 - name: Kafka TLS configuration
   become: yes
@@ -419,6 +422,8 @@
       folder_path: "{{ root_folder }}/app/kafka-rest"
     - name: ksql
       folder_path: "{{ root_folder }}/app/ksql"
+    - name: ksql-snappy
+      folder_path: "/usr/share/java/ksqldb"
     - name: schema-registry
       folder_path: "{{ root_folder }}/app/schema-registry"
 
