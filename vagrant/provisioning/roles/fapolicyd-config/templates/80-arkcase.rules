@@ -1,0 +1,1 @@
+allow perm=open uid=arkcase : dir={{ root_folder }}/data/arkcase-home/.cache/JNA/temp/

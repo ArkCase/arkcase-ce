@@ -273,12 +273,6 @@
     dest: /etc/systemd/system/pentaho.service
   register: pentaho_systemd
 
-- name: fapolicy settings for Pentaho, if fapolicyd is installed
-  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
-  loop:
-    - name: pentaho
-      folder_path: "{{ root_folder }}/app/pentaho"
-
 - name: reload daemon-files if needed
   become: yes
   command: systemctl daemon-reload
@@ -390,6 +384,12 @@
   retries: 100
   delay: 5
   when: security_provider_updated is changed
+
+- name: fapolicy settings for Pentaho, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: pentaho
+      folder_path: "{{ root_folder }}/app/pentaho"
 
 - name: Expose pentaho app port
   become: yes
