@@ -26,4 +26,4 @@ spring:
 jodconverter:
   local:
     enabled: true
-    officeHome: /opt/libreoffice7.3/
+    officeHome: /opt/app/arkcase/libreoffice
