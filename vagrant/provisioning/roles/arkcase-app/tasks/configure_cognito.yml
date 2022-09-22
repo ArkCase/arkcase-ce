@@ -4,7 +4,7 @@
   template:
     backup: yes
     src: arkcase-cognito.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server/arkcase-cognito.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-cognito.yaml
 
 - name: read current setenv.sh
   become: yes
