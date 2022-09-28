@@ -15,3 +15,7 @@ arkcase:
       password: "{{ file_management_mongodb_password }}"
       host: "{{ file_management_mongodb_host }}"
       port: "{{ file_management_mongodb_port }}"
+
+spring:
+  data:
+      uri: "mongodb://{{ file_management_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/{{ file_management_mongodb_database }}"

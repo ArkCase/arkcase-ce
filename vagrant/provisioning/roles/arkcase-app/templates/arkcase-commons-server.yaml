@@ -22,7 +22,6 @@ spring:
     mongodb:
       port: "{{ mongodb_port | default(27017) }}"
       host: "{{ file_management_mongodb_host | default(internal_host) }}"
-      uri: "mongodb://{{ file_management_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/file_management_mongodb_database"
 
 jodconverter:
   local:
