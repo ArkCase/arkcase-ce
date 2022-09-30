@@ -15,4 +15,4 @@ arkcase.security:
   userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
   password: "{{ arkcase_admin_password }}"
 
-spring.data.mongodb.uri: "mongodb://{{ microservice_mongodb_username }}:{{ microservice_mongodb_password }}@{{ microservice_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/{{ microservice_mongodb_database }}?ssl={{ mongodb_ssl | default (false) }}?ssl={{ mongodb_ssl | default (false) }}"
+spring.data.mongodb.uri: "mongodb://{{ microservice_mongodb_username }}:{{ microservice_mongodb_password }}@{{ microservice_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/{{ microservice_mongodb_database }}?ssl={{ mongodb_ssl | default (false) }}"
