@@ -14,4 +14,4 @@ cognito-core:
   tokenUri: {{ cognito_core_token_uri }}
   userInfoUri: {{ cognito_core_user_info_uri }}
 
-spring.data.mongodb.uri: "mongodb://{{ microservice_mongodb_username }}:{{ microservice_mongodb_password }}@{{ microservice_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/{{ microservice_mongodb_database }}"
+spring.data.mongodb.uri: "mongodb://{{ microservice_mongodb_username }}:{{ microservice_mongodb_password }}@{{ microservice_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/{{ microservice_mongodb_database }}?ssl={{ mongodb_ssl | default (false) }}"

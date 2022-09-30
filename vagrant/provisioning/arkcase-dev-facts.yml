@@ -402,6 +402,7 @@ snowbound_symmetric_key: ""
 
 # Mongodb port
 mongodb_port: "27017"
+mongodb_ssl: false
 enable_mongo: true
 
 ### default values that shouldn't have to change
@@ -774,5 +775,3 @@ user_attribute_name: sAMAccountName
 
 microservice_protocol: http
 
-arkcase_microservice_user: arkcase-admin@arkcase.org
-arkcase_microservice_password: AcMd3v$
