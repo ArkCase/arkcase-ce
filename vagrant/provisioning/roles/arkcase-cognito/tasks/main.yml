@@ -22,3 +22,11 @@
     src: "{{ role_path }}/../arkcase-app/templates/arkcase-portal-cognito-server.yaml"
     dest: "{{ root_folder }}/app/arkcase-cognito/application.yml"
     backup: yes
+
+- name: setup configuration file
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: server.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-cognito-server.yaml

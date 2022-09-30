@@ -758,11 +758,10 @@ file_management_s3_buckets:
   - config_name: arkcaseBucket
     bucket_name: arkcase-portal
 
-file_management_mongodb_host: acm-arkcase
-file_management_mongodb_port: "{{ mongodb_port }}"
-file_management_mongodb_database: arkcase
-file_management_mongodb_username: arkcase
-file_management_mongodb_password: AcMd3v$
+microservice_mongodb_host: acm-arkcase
+microservice_mongodb_database: arkcase
+microservice_mongodb_username: arkcase
+microservice_mongodb_password: AcMd3v$
 
 enableSchemaSync: false
 enableCaseFileSync: false
@@ -773,3 +772,6 @@ enableOrganizationSync: false
 user_attribute_name: sAMAccountName
 
 microservice_protocol: http
+
+arkcase_microservice_user: arkcase-admin@arkcase.org
+arkcase_microservice_password: AcMd3v$
