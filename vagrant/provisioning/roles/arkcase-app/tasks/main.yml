@@ -453,7 +453,8 @@
   register: output
 
 - name: restart config-server to bring the changes in the service file
-  service:
+  become: yes
+  systemd:
     name: config-server
     state: restarted
   when: output.stdout == 'active'
@@ -1166,9 +1167,16 @@
     - .vault.username = "{{ arkcase_vault_username | default('arkcase', true) }}"
     - .vault.password = "{{ arkcase_vault_password | default('arkcase', true) }}"
 
-- name: deploy core reports
-  include_tasks: deploy_report.yml
-  loop: "{{ arkcase_core_reports|flatten }}"
-  loop_control:
-    loop_var: r
-  when: pentaho_host == internal_host
+- name: configure Cognito, if needed
+  include_tasks: configure_cognito.yml
+  when: core_cognito_enabled | default(false) | bool
+
+- name: arkcase-ldap-authority server settings
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: arkcase-ldap-authority-server.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-ldap-authority-server.yaml
+
+

@@ -101,6 +101,12 @@ email:
   create:
     case.enabled: {{ create_case_from_email_enabled | lower }}
     complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
+  enableModernAuthentication: "{{ enable_modern_authentication | default(false) }}"
+################### Azure AD OAuth Configuration ####################
+aad:
+  clientId: "{{ azure_ad_client_id | default('') }}"
+  clientSecret: "{{ azure_ad_client_secret | default('') }}"
+  tenantId: "{{ azure_ad_tenant_id | default('') }}"
 ocr:
   tempPath: "{{ root_folder }}/tmp/arkcase/"
 ark.activemq:
@@ -152,3 +158,13 @@ payment:
     securelinkendpoint: "{{ touchnet_securelinkendpoint | default('') }}"
     securepaylinkendpoint: "{{ touchnet_securepaylinkendpoint | default('') }}"
     upaysiteid: "{{ touchnet_upaysiteid | default('') }}"
+microsoftOfficeOnline.isWopiEnabled: {{ arkcase_ee | default('false') }}
+sessionControl:
+  #number of concurrent session allowed
+  #set to -1 to allow unlimited sessions
+  maximumSessions: {{ session_control_max_sessions | default(-1) }}
+  #determines whether the user should be prevented from opening more sessions than allowed
+  #If set to true, the user authenticating will be prevented from authenticating.
+  #if set to false, the user that has already authenticated will be forcibly logged out.
+  exceptionIfMaximumExceeded: {{ session_control_throw_exception | default(false) }}
+

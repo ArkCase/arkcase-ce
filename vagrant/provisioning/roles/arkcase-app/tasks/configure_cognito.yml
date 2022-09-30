@@ -1,0 +1,44 @@
+- name: cognito configuration
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: arkcase-cognito.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-cognito.yaml
+
+- name: read current setenv.sh
+  become: yes
+  become_user: arkcase
+  command: cat {{ root_folder }}/app/arkcase/bin/setenv.sh
+  register: setenv_contents
+  changed_when: false
+
+- name: replace ldap profile with cognito
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    regexp: "ldap"
+    replace: "cognito"
+  when: '"ldap" in setenv_contents.stdout'
+
+- name: ensure cognito is in the profile (other profiles already exist)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    regexp: "spring.profiles.active="
+    replace: "spring.profiles.active=cognito"
+  when: '"cognito" not in setenv_contents.stdout and "ldap" not in setenv_contents.stdout and "spring.profiles.active" in setenv_contents.stdout'
+
+- name: ensure cognito is in the profile (no other profiles already exist)
+  become: yes
+  become_user: arkcase
+  lineinfile:
+    backup: yes
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    line: 'JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=cognito"'
+  when: '"spring.profiles.active" not in setenv_contents.stdout'
+
