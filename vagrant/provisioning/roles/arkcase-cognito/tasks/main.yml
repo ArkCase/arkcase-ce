@@ -19,7 +19,7 @@
   become: yes
   become_user: arkcase
   template:
-    src: "{{ role_path }}/../arkcase-app/templates/arkcase-portal-cognito-server.yaml"
+    src: application.yaml
     dest: "{{ root_folder }}/app/arkcase-cognito/application.yml"
     backup: yes
 
