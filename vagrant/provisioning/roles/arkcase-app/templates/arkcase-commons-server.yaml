@@ -24,4 +24,4 @@ jodconverter:
     enabled: true
     officeHome: /opt/app/arkcase/app/libreoffice
 
-arkcase.integrationUser.userId: "{{ arkcase_microservice_user }}"
+arkcase.integrationUser.userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
