@@ -402,6 +402,7 @@ snowbound_symmetric_key: ""
 
 # Mongodb port
 mongodb_port: "27017"
+mongodb_ssl: false
 enable_mongo: true
 
 ### default values that shouldn't have to change
@@ -758,18 +759,19 @@ file_management_s3_buckets:
   - config_name: arkcaseBucket
     bucket_name: arkcase-portal
 
-file_management_mongodb_host: acm-arkcase
-file_management_mongodb_port: "{{ mongodb_port }}"
-file_management_mongodb_database: arkcase
-file_management_mongodb_username: arkcase
-file_management_mongodb_password: AcMd3v$
+microservice_mongodb_host: acm-arkcase
+microservice_mongodb_database: arkcase
+microservice_mongodb_username: arkcase
+microservice_mongodb_password: AcMd3v$
 
 enableSchemaSync: false
 enableCaseFileSync: false
 enableComplaintSync: false
 enablePersonSync: false
 enableOrganizationSync: false
+enableFileSync: false
 
 user_attribute_name: sAMAccountName
 
 microservice_protocol: http
+

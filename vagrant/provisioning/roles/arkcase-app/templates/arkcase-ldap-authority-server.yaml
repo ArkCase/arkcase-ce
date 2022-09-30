@@ -1,4 +1,0 @@
-spring:
-  data:
-    mongodb:
-      uri: "mongodb://{{ file_management_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/pass_db"

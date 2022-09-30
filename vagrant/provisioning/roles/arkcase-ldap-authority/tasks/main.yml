@@ -6,4 +6,12 @@
       version: "{{ arkcase_ldap_authority_version | default(arkcase_version) }}"
       java_opts: "-Xmx512M -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_p12_store_jdk8 }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
       boot_opts: "--spring.config.location=classpath:/bootstrap.yaml,classpath:/application.yaml,{{ root_folder }}/app/arkcase-ldap-authority/server.yml"
-      template: server.yml
+      template: application.yml
+
+- name: setup configuration file
+  become: yes
+  become_user: arkcase
+  template:
+    backup: yes
+    src: server.yml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-ldap-authority-server.yaml

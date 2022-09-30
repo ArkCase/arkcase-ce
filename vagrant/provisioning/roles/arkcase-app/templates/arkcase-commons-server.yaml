@@ -9,6 +9,7 @@ arkcase:
     complaint: {{ enableComplaintSync | default(false) }}
     person: {{ enablePersonSync | default(false) }}
     organization: {{ enableOrganizationSync | default(false) }}
+    file: {{ enableFileSync | default(false) }}
   kafka:
     configuration:
       bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
@@ -23,3 +24,5 @@ jodconverter:
   local:
     enabled: true
     officeHome: "{{ libreoffice_install_path }}"
+
+arkcase.integrationUser.userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
