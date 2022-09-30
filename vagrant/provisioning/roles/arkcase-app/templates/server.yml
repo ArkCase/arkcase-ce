@@ -159,3 +159,12 @@ payment:
     securepaylinkendpoint: "{{ touchnet_securepaylinkendpoint | default('') }}"
     upaysiteid: "{{ touchnet_upaysiteid | default('') }}"
 microsoftOfficeOnline.isWopiEnabled: {{ arkcase_ee | default('false') }}
+sessionControl:
+  #number of concurrent session allowed
+  #set to -1 to allow unlimited sessions
+  maximumSessions: {{ session_control_max_sessions | default(-1) }}
+  #determines whether the user should be prevented from opening more sessions than allowed
+  #If set to true, the user authenticating will be prevented from authenticating.
+  #if set to false, the user that has already authenticated will be forcibly logged out.
+  exceptionIfMaximumExceeded: {{ session_control_throw_exception | default(false) }}
+
