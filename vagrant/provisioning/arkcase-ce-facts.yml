@@ -658,6 +658,7 @@ enableCaseFileSync: false
 enableComplaintSync: false
 enablePersonSync: false
 enableOrganizationSync: false
+enableFileSync: false
 
 user_attribute_name: sAMAccountName
 
