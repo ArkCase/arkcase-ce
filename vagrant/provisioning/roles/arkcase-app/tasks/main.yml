@@ -919,7 +919,6 @@
     backup: yes
     src: server.yml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-server.yaml
-  ignore_errors: true
 
 - name: server-specific configuration for arkcase-commons.yml for version 2021.04
   become: yes
@@ -929,7 +928,6 @@
     src: arkcase-commons-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-commons-server.yaml
   when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
-  ignore_errors: true
 
 - name: server-specific configuration for arkcase-portal-cognito.yaml for version 2021.04
   become: yes
@@ -939,7 +937,6 @@
     src: arkcase-portal-cognito-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-cognito-server.yaml
   when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
-  ignore_errors: true
 
 # the rolesToGroups format changed during the 3.3.3 release cycle, so we need
 # one format for pre-3.3.3 versions, and another format for 3.3.3+
@@ -1170,6 +1167,5 @@
 - name: configure Cognito, if needed
   include_tasks: configure_cognito.yml
   when: core_cognito_enabled | default(false) | bool
-
 
 
