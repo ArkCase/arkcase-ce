@@ -15,3 +15,21 @@
       replace: key="{{ private_key_alias | default('arkcase_server') }}" value="{{ java_key_store_pass }}"
     - regexp: 'type="java.lang.String" value="armedia"'
       replace: type="java.lang.String" value="{{ private_key_alias | default('arkcase_server') }}"
+
+- name: check if forceAuthN already present
+  become: yes
+  become_user: arkcase
+  command: "grep forceAuthN {{ root_folder }}/data/arkcase-home/.arkcase/acm/spring-security/{{ saml_prop_file }}"
+  register: force_authn_output
+  failed_when: force_authn_output.rc != 0 and force_authn_output.rc != 1
+
+- name: add forceAuthN if needed
+  become: yes
+  become_user: arkcase
+  lineinfile:
+    backup: yes
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/spring-security/{{ saml_prop_file }}"
+    insertafter: '^(.*)<beans:property name="includeScoping" value="false"/>'
+    line: '<beans:property name="forceAuthN" value="true"/>'
+    state: present
+  when: force_authn_output.stdout == ""
