@@ -32,7 +32,7 @@
 
 - name: encrypt passwords
   include_tasks: encrypt_password.yml
-  loop: 
+  loop:
       - name: default_database
         value: "{{ default_database_password }}"
       - name: default_user
@@ -76,25 +76,25 @@
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
 
-- name: remove pip2 that might come up along OS        
+- name: remove pip2 that might come up along OS
   become: yes
   yum:
     state: absent
     name:
       - python3-pip
 
-- name: install pip3        
+- name: install pip3
   become: yes
   yum:
     state: present
     name:
-      - python3-pip      
+      - python3-pip
 
 - name: install Python Excel module
   become: yes
   pip:
-    executable: pip3      
-    name: 
+    executable: pip3
+    name:
       - openpyxl
       - lxml
     extra_args: --upgrade
@@ -227,7 +227,7 @@
   become: yes
   become_user: arkcase
   command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
-  when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool 
+  when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool
 
 - name: unzip the configuration files
   become: yes
@@ -264,7 +264,7 @@
   loop: "{{ arkcase_core_reports|flatten }}"
   loop_control:
     loop_var: r
-   
+
 - name: arkcase and config server logrotate
   become: yes
   template:
@@ -336,7 +336,7 @@
   stat:
     path: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
   register: tls_default_file
-  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')  
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
 
 - name: copy fixed tls-default.conf file
   become: yes
@@ -345,7 +345,7 @@
     src: tls-default.conf
     dest: /home/arkcase/.arkcase/custom/WEB-INF/classes/tls-default.conf
   register: default_file_copied
-  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')  
+  when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
 
 - name: remove old WEB-INF folder
   become: yes
@@ -386,7 +386,7 @@
     chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
     warn: false
   register: search_service_contents
-  changed_when: false 
+  changed_when: false
 
 - name: remove tls_defalt_conf from search service jar
   become: yes
@@ -434,7 +434,7 @@
     replace: "Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp -Dspring.config.location={{ root_folder }}/app/config-server/application.yaml"
   when: arkcase_version == "" or arkcase_version is version('2021.02', '>=')
 
-- name: enable ArkCase 
+- name: enable ArkCase
   become: yes
   systemd:
     daemon_reload: yes
@@ -537,7 +537,7 @@
     path: /home/arkcase/.arkcase/acm/private/arkcase-ca.crt
     state: absent
   when: arkcase_ca_stat.stat.exists and not arkcase_ca_stat.stat.islnk
-  
+
 - name: check whether acm-arkcase.crt a symlink
   become: yes
   become_user: arkcase
@@ -570,7 +570,7 @@
     keystore_pass: "{{ java_trust_store_pass }}"
     state: present
   when: zylab_integration_enabled is defined and zylab_integration_enabled and 'zylab_server_cert' not in cert_list.stdout
-  
+
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
 - name: link certs and keys to .arkcase folder
@@ -607,7 +607,7 @@
     autogenerate_user_id: "{{ autogenerate_user_id | default('false') }}"
 
 - name: configure LDAP
-  include_role: 
+  include_role:
     name: arkcase-ldap-config
   vars:
     old_config_id: armedia
@@ -653,7 +653,7 @@
 - name: copy audit patterns if necessary
   become: yes
   become_user: arkcase
-  copy: 
+  copy:
     remote_src: yes
     backup: yes
     src: /home/arkcase/.arkcase/acm/auditPatterns.properties
@@ -711,7 +711,7 @@
   stat:
     path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
   register: arkcase_activemq_xml
-  
+
 - name: plaintext passwords (arkcase-activemq.yaml)
   become: yes
   become_user: arkcase
@@ -725,7 +725,7 @@
     - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
       replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_activemq_xml.stat.exists
-      
+
 - name: plaintext passwords (forms properties)
   become: yes
   become_user: arkcase
@@ -756,7 +756,7 @@
   stat:
     path: /home/arkcase/.arkcase/acm/cmis/camel-config-alfresco-cmis.properties
   register: camel_alfresco_cmis_properties
-      
+
 - name: plaintext passwords (camel alfresco cmis properties)
   become: yes
   become_user: arkcase
@@ -789,7 +789,7 @@
   stat:
     path: /home/arkcase/.arkcase/acm/cmis/camel-config-opencmis-cmis.properties
   register: camel_open_cmis_properties
-  
+
 - name: plaintext passwords (camel opencmis cmis properties)
   become: yes
   become_user: arkcase
@@ -833,7 +833,7 @@
   stat:
     path: /home/arkcase/.arkcase/acm/cmis/mule-config-alfresco-cmis.properties
   register: alfresco_cmis_properties
-      
+
 - name: plaintext passwords (alfresco cmis properties)
   become: yes
   become_user: arkcase
@@ -866,7 +866,7 @@
   stat:
     path: /home/arkcase/.arkcase/acm/cmis/mule-config-opencmis-cmis.properties
   register: open_cmis_properties
-  
+
 - name: plaintext passwords (opencmis cmis properties)
   become: yes
   become_user: arkcase
@@ -912,13 +912,13 @@
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-commons-server.yaml
   when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
 
-- name: server-specific configuration for arkcase-portal-prc.yml for version 2021.04 if prc-dockets is deployed
+- name: server-specific configuration for arkcase-portal.yml for version 2021.04 if prc-dockets is deployed
   become: yes
   become_user: arkcase
   template:
     backup: yes
-    src: arkcase-portal-prc-server.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-prc-server.yaml
+    src: arkcase-portal-server.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml
   when: (arkcase_version == "" or arkcase_version is version('2021.04', '>=') ) and ( arkcase_extra_microservices is defined and arkcase_extra_microservices | selectattr('name', 'eq', 'prc-dockets') != [] )
 
 - name: server-specific configuration for arkcase-portal-cognito.yaml for version 2021.04
@@ -930,7 +930,7 @@
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-cognito-server.yaml
   when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
 
-# the rolesToGroups format changed during the 3.3.3 release cycle, so we need 
+# the rolesToGroups format changed during the 3.3.3 release cycle, so we need
 # one format for pre-3.3.3 versions, and another format for 3.3.3+
 - name: roles to groups mapping (3.3.2 and below)
   become: yes
@@ -942,7 +942,7 @@
       application.roles_to_groups: "{{ roles_to_groups }}"
   when: arkcase_version != "" and arkcase_version is version('3.3.3', '<')
 
-# the rolesToGroups format changed during the 3.3.3 release cycle, so we need 
+# the rolesToGroups format changed during the 3.3.3 release cycle, so we need
 # one format for pre-3.3.3 versions, and another format for 3.3.3+
 - name: roles to groups mapping (3.3.3 and above)
   become: yes
@@ -986,7 +986,7 @@
 - name: remove activemq properties, if present
   become: yes
   become_user: arkcase
-  file: 
+  file:
     path: /home/arkcase/.arkcase/acm/arkcase-activemq.properties
     state: absent
   when: arkcase_version == "" or arkcase_version is version('3.3.3', '>=')
@@ -1009,7 +1009,7 @@
 - name: copy arkcase-activemq.yaml if necessary
   become: yes
   become_user: arkcase
-  copy: 
+  copy:
     src: arkcase-activemq.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-activemq.yaml
     force: no
@@ -1028,7 +1028,7 @@
 - name: copy quartz.properties if necessary
   become: yes
   become_user: arkcase
-  copy: 
+  copy:
     src: quartz.properties
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/spring/quartz.properties
     force: no
@@ -1073,12 +1073,12 @@
     src: spring-config-proxy.xml
     dest: /home/arkcase/.arkcase/acm/spring/proxy-config/spring-config-proxy.xml
 
-# TODO: keep an eye on whether this fix is still needed, as session 
+# TODO: keep an eye on whether this fix is still needed, as session
 # management keeps being improved
 - name: hazelcast session management fix
   become: yes
   become_user: arkcase
-  replace: 
+  replace:
     backup: yes
     path: /home/arkcase/.arkcase/acm/spring-security/spring-security-config-ldap.xml
     regexp: 'session-authentication-strategy-ref="concurrentSessionControlAuthenticationStrategy"'
@@ -1124,7 +1124,7 @@
   loop_control:
     loop_var: e
   when: arkcase_deploy_extra_artifacts | bool
-    
+
 ### prepare for starting arkcase and config server
 - name: copy extension jar
   become: yes
