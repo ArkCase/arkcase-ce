@@ -3,4 +3,9 @@ arkcase:
     url: "https://{{ external_host }}/api/arkcase-portal"
     groupName: "{{ arkcase_portal_group }}"
 
-portal.authenticationType: "{{ portal_authentication_type | default('basic') }}"    
+portal.authenticationType: "{{ portal_authentication_type | default('basic') }}"
+
+portal-prc:
+  arkcaseUrl: "https://{{ external_host }}/arkcase"
+  userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+  password: "{{ arkcase_admin_password }}"
