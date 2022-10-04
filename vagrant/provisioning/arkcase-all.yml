@@ -2,7 +2,7 @@
 - hosts: all
   roles:
     - role: common
-      tags: [core, common, upgrade, marketplace]
+      tags: [core, common, marketplace]
     - role: arkcase-pre-upgrade
       tags: [arkcase-pre-upgrade, upgrade]   
     - role: pki
@@ -80,7 +80,7 @@
     - role: snowbound
       tags: [core, snowbound, marketplace]
     - role: snowbound-app
-      tags: [core, snowbound, snowbound-app, upgrade, marketplace]
+      tags: [core, snowbound, snowbound-app, marketplace]
     - role: confluent-platform-install
       when: enable_kafka is defined and enable_kafka == "yes"
       tags: [microservices, confluent]
@@ -106,10 +106,10 @@
       tags: [core, upgrade, arkcase-api-gateway, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-sidecar
-      tags: [core, upgrade, arkcase-sidecar, arkcase-microservices, marketplace]
+      tags: [core, arkcase-sidecar, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-audit
-      tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
+      tags: [core, arkcase-audit, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-authority
       tags: [core, upgrade, arkcase-authority, arkcase-microservices, marketplace]
@@ -175,7 +175,7 @@
       when: enable_firewall is undefined or enable_firewall
       tags: [firewall, core, marketplace]
     - role: arkcase-interactive-reports
-      tags: [core, interactive-reports, upgrade]
+      tags: [core, interactive-reports]
     - role: disable-admin
       tags: [disable-admin, marketplace]
     - role: disable-solr-user

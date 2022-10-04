@@ -200,6 +200,8 @@
         acl acl_sse path_beg /api/sse
         acl acl_minio path_beg /api/minio
         acl acl_oidc path_beg /api/oidc
+        acl acl_cognito path_beg /api/cognito
+        acl acl_ldap_authority path_beg /api/auth/ldap
         acl acl_portal_prc path_beg /api/arkcase-portal-prc
         acl acl_portal path_beg /api/arkcase-portal/
         acl acl_schema path_beg /api/schema
@@ -226,6 +228,8 @@
         use_backend be_sse if acl_sse
         use_backend be_minio if acl_minio
         use_backend be_oidc if acl_oidc
+        use_backend be_cognito if acl_cognito
+        use_backend be_ldap_authority if acl_ldap_authority
         use_backend be_portal_prc if acl_portal_prc
         use_backend be_portal if acl_portal
         use_backend be_schema if acl_schema
@@ -298,6 +302,20 @@
         option tcp-check
         server oidc0 {{ arkcase_host }}:9100 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/api/oidc/,/)]
+
+      backend be_cognito
+        http-response add-header X-Cognito-Node %s
+        mode http
+        option tcp-check
+        server cognito0 {{ arkcase_host }}:9100 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/api/cognito/,/)]
+
+      backend be_ldap_authority
+        http-response add-header X-LDAP-Authority-Node %s
+        mode http
+        option tcp-check
+        server ldap-authority0 {{ arkcase_host }}:9090 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/api/auth/ldap/,/)]
 
       backend be_config
         http-response add-header X-Config %s
