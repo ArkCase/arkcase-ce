@@ -10,16 +10,16 @@
 - name: ArkCase fapolicyd rules
   become: yes
   template:
-    src: 80-arkcase.rules
-    dest: /etc/fapolicyd/rules.d/80-arkcase.rules
+    src: 15-arkcase.rules
+    dest: /etc/fapolicyd/rules.d/15-arkcase.rules
     backup: yes
     owner: root
     group: fapolicyd
   register: arkcase_rules
 
-- name: check and reload ArkCase fapolicyd rules
+- name: reload ArkCase fapolicyd rules
   become: yes
-  shell: fagenrules --check ; fagenrules --load
+  shell: fagenrules --load
   when: arkcase_rules is changed
 
 - name: restart fapolicyd if needed

@@ -46,3 +46,13 @@
     - name: arkcase_cache
       folder_path: "{{ root_folder }}/data/arkcase-home/.cache"
 
+- name: Run CRON job every 15 minutes to make sure ArkCase is running
+  become: yes
+  become_method: sudo
+  cron:
+    name: "ensure arkcase started"
+    user: "root"
+    minute: "*/15"
+    job: 'systemctl status arkcase || systemctl start arkcase'
+    state: present
+
