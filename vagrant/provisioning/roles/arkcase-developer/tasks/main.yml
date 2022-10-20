@@ -4,6 +4,7 @@
     apply:
       vars:
         item: arkcase
+  when: db_engine == 'mariadb'      
 
 - name: transfer start services script
   become: yes

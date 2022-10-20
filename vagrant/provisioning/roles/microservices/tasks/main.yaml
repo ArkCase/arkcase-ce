@@ -131,4 +131,5 @@
 - name: create arkcase_process database schema
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
   loop:
-    - arkcase_process    
+    - arkcase_process
+  when: db_engine == mariadb

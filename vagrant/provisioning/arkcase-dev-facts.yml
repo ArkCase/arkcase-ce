@@ -717,6 +717,7 @@ postgres_log_folder: "{{ root_folder }}/log/postgresql"
 postgresql_auth_method: "{{ ansible_fips  | ternary('scram-sha-256', 'md5') }}"
 postgresql_user: postgres
 postgresql_group: postgres
+postgresql_unix_socket_folder: /var/run/postgresql
 
 solr_log4j_version: ""
 
