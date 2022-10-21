@@ -68,3 +68,4 @@
     keystore_path: "{{ java_key_store }}"
     keystore_pass: "{{ java_key_store_pass }}"
     state: present
+  when: oidc_federation_host is defined

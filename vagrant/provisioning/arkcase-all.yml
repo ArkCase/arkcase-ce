@@ -158,7 +158,7 @@
     - role: saml-config
       tags: [upgrade-saml]
     - role: oidc-config
-      tags: [oidc-config]
+      tags: [oidc-config, upgrade]
     - role: arkcase-post-upgrade
       tags: [arkcase-post-upgrade, upgrade]
     - role: pentaho-pdi-client
