@@ -15,6 +15,9 @@ arkcase:
       bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
       schemaRegistryAddress: https://{{ schema_registry_host | default(kafka_host) }}/schema-registry
       securityProtocol: SSL
+    # this is for arkcase_version until/and 2022.01-RC1
+    bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
+    schemaRegistryAddress: https://{{ schema_registry_host | default(kafka_host) }}/schema-registry  
   eureka:
     defaultZone: https://{{ eureka_host | default(internal_host) }}/eureka/
   zipkin:
