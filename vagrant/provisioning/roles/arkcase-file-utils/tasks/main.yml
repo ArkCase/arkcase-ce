@@ -50,12 +50,15 @@
     dest: /tmp
   when: open_office_latest_version is not defined or not open_office_latest_version
 
-- name: install Open Office
+- name: install Open Office, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
   become: yes
   command:
-    cmd: rpm -Uvih --nodigest --nofiledigest /tmp/en-US/RPMS/*.rpm
+    cmd: rpm -Uvih --nodigest --nofiledigest  --undefine=__transaction_fapolicyd /tmp/en-US/RPMS/*.rpm
     warn: false
   when: open_office_latest_version is not defined or not open_office_latest_version
+  register: openoffice_install
+  # 41 means the packages were already installed
+  failed_when: openoffice_install.rc != 0 and openoffice_install.rc != 41
 
 - name: remove tmp files
   become: yes
@@ -94,15 +97,15 @@
     state: absent
   when: not libreoffice_bin_exists.stat.exists
 
-- name: install LibreOffice
+- name: install LibreOffice, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
   become: yes
   command:
-    cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} --nodigest --nofiledigest /tmp/LibreOffice*/RPMS/*.rpm
+    cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} --nodigest --nofiledigest --undefine=__transaction_fapolicyd /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
   when: not libreoffice_bin_exists.stat.exists
   register: libreoffice_install
   # 41 means the packages were already installed
-  failed_when: libreoffice_install.rc != 0 and libreoffice_install.rc != 41
+  failed_when: libreoffice_install.rc != 0 and libreoffice_install.rc != 41 
 
 - name: remove tmp files
   become: yes

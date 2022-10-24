@@ -89,6 +89,25 @@
         backup: yes
         regexp: '(^.*)AprLifecycleListener" SSLEngine(.*$)'
         replace: '\1AprLifecycleListener" useAprConnector="true" SSLEngine\2'
+    - name: configure RemoteIP logging valve, to log the browser IP address in the access log
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        backup: yes
+        insertbefore: '<!-- Access log processes all example.'
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - REMOTE IP VALVE -->"
+        block: |
+          <!-- Remote IP Valve -->
+          <Valve className="org.apache.catalina.valves.RemoteIpValve" />
+    - name: enable request attribute logging
+      become: yes
+      become_user: "{{ tc.user }}"
+      replace:
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        backup: yes
+        regexp: '<Valve className="org.apache.catalina.valves.AccessLogValve" directory'
+        replace: '<Valve className="org.apache.catalina.valves.AccessLogValve" requestAttributesEnabled="true" directory'
     - name: configure access log file location
       become: yes
       become_user: "{{ tc.user }}"
