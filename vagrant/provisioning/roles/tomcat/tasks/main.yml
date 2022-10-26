@@ -8,6 +8,29 @@
           - "@Development Tools"
           - openssl-devel
           - apr-devel
+    - name: see if Tomcat already installed
+      become: yes
+      stat:
+        path: "{{ tc.tomcat_home }}"
+      register: current_install
+    - name: detect current version, if already installed
+      become: yes
+      shell: "{{ tc.tomcat_home }}/bin/version.sh | grep 'Server version' | awk -F/ '{ print $2 }'"
+      register: current_version
+      when: current_install.stat.exists
+    - name: move current version to backup location, if different from desired version
+      become: yes
+      shell: mv {{ tc.tomcat_home }} {{ tc.tomcat_home }}-{{ current_version.stdout }}
+      when: current_install.stat.exists and ( tomcat_version != current_version.stdout )
+    - name: make new tomcat home folder, if new version is an upgrade
+      become: yes
+      file:
+        path: "{{ tc.tomcat_home }}"
+        state: directory
+        group: "{{ tc.user }}"
+        owner: "{{ tc.user }}"
+        mode: 0755
+      when: current_install.stat.exists and ( tomcat_version != current_version.stdout )
     - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
       loop:
         - name: Tomcat
