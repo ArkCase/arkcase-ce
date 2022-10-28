@@ -22,6 +22,10 @@
       become: yes
       shell: mv {{ tc.tomcat_home }} {{ tc.tomcat_home }}-{{ current_version.stdout }}
       when: current_install.stat.exists and ( tomcat_version != current_version.stdout )
+    - name: zip/archive the backup location, if needed
+      become: yes
+      shell: zip -rm {{ tc.tomcat_home }}-{{ current_version.stdout }}.zip {{ tc.tomcat_home }}-{{ current_version.stdout }}
+      when: current_install.stat.exists and ( tomcat_version != current_version.stdout )
     - name: make new tomcat home folder, if new version is an upgrade
       become: yes
       file:
