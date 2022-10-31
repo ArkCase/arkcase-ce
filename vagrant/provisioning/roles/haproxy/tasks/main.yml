@@ -206,7 +206,8 @@
         acl acl_portal path_beg /api/arkcase-portal/
         acl acl_schema path_beg /api/schema
         acl acl_api_gateway path_beg /api
-        acl acl_config path_beg /config        
+        acl acl_config path_beg /config
+        acl acl_assets path_beg /assets 
         acl acl_root path -i /
 
         # redirections
@@ -234,6 +235,7 @@
         use_backend be_portal if acl_portal
         use_backend be_schema if acl_schema
         use_backend be_api_gateway if acl_api_gateway
+        use_backend be_assets if acl_assets
         use_backend be_config if acl_config
 
       #backend servers  
@@ -391,6 +393,13 @@
         mode http
         option tcp-check
         server arkcase_portal0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+       backend be_assets
+        http-response add-header x-arkcase-assets-node %s
+        mode http
+        option tcp-check
+        server arkcase_assets0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/assets/,/portal/assets/)]
   when: deploy_arkcase_portal | default(false)
 
 ### Showcase frontend
