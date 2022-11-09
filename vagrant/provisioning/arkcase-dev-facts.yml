@@ -760,6 +760,8 @@ file_management_s3_buckets:
   - config_name: arkcaseBucket
     bucket_name: arkcase-portal
 
+prc_dockets_s3_bucket_name: prc-rca
+
 microservice_mongodb_host: acm-arkcase
 microservice_mongodb_database: arkcase
 microservice_mongodb_username: arkcase
