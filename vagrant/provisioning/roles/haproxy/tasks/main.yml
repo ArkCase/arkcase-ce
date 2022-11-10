@@ -77,7 +77,7 @@
 
 - name: Apply new SELinux file context to filesystem
   become: yes
-  command: restorecon -v {{ root_folder }}/log/haproxy
+  command: restorecon -R -v {{ root_folder }}/log/haproxy
   when: allow_haproxy_logging is changed
 
 - name: Copy haproxy log configuration into rsyslog.d
