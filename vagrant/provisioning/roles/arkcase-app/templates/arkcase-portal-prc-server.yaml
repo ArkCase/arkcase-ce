@@ -10,7 +10,7 @@ portal-prc:
     secretKey: "{{ file_management_s3_secret_key }}"
     bucketName: "{{ prc_dockets_s3_bucket_name }}"
   
-arkcase.rca.solr.configuration:
+prc.rca.solr.configuration:
   host: "{{ solr_host }}"
   port: {{ solr_port | default(443) }}
   
