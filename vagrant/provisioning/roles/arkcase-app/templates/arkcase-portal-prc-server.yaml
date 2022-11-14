@@ -4,10 +4,10 @@ portal-prc:
   password: "{{ arkcase_admin_password }}"
   
   s3:
-    url: "{{ file_management_s3_url }}"
-    region: "{{ file_management_s3_region }}"
-    accessKey: "{{ file_management_s3_access_key }}"
-    secretKey: "{{ file_management_s3_secret_key }}"
+    url: "{{ prc_dockets_s3_url }}"
+    region: "{{ prc_dockets_s3_region }}"
+    accessKey: "{{ prc_dockets_s3_access_key }}"
+    secretKey: "{{ prc_dockets_s3_secret_key }}"
     bucketName: "{{ prc_dockets_s3_bucket_name }}"
   
 prc.rca.solr.configuration:
