@@ -1,11 +1,12 @@
 [Unit]
 Description=Zipkin Server
-After=syslog.target elasticsearch.service
+After=syslog.target 
 
 [Service]
-ExecStart={{ root_folder }}/app/zipkin/zipkin-server-{{ zipkin_version }}.jar
+ExecStart=java -Dio.netty.native.workdir={{ root_folder }}/app/zipkin -Djava.io.tmpdir={{ root_folder }}/tmp/zipkin -jar -Dcom.redhat.fips=false {{ root_folder }}/app/zipkin/zipkin-server-{{ zipkin_version }}.jar --armeria.ssl.key-store={{ java_p12_store_jdk8 }} --armeria.ssl.key-store-type=PKCS12 --armeria.ssl.key-store-password={{ java_key_store_pass }} --armeria.ssl.enabled=true --armeria.ports[0].port=9411 --armeria.ports[0].protocols[0]=https 
 SuccessExitStatus=143
-Environment=KAFKA_ZOOKEEPER=localhost:2181 KAFKA_GROUP_ID=zipkin STORAGE_TYPE=elasticsearch ES_HOSTS=localhost:{{ elasticsearch_port | default(9200) }}
+Environment=KAFKA_ZOOKEEPER={{ solr_node_1 + ':2281' if solr_node_2 | default('') == '' else solr_node_1 + ':2281,' + solr_node_2 + ':2281,' + solr_node_3 + ':2281' }}
+Environment=KAFKA_GROUP_ID=zipkin 
 WorkingDirectory={{ root_folder }}/app/zipkin
 User=zipkin
 Group=zipkin

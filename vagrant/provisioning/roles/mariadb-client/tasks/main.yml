@@ -36,7 +36,7 @@
 
 - name: MySQL python package name (RHEL 8)
   set_fact:
-    pkg_mysql_python: python3-mysql
+    pkg_mysql_python: python3-PyMySQL
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
 - name: install MariaDB packages
@@ -61,8 +61,4 @@
   loop:
     - "{{ database_arkcase_user | default('arkcase') }}"
     - "{{ database_alfresco_user | default('alfresco') }}"
-    - "{{ database_pentaho_user | default('pentaho') }}"
     - "{{ database_activemq_user | default('activemq') }}"
-    - "{{ database_pentaho_hibernate_user | default('hibuser') }}"
-    - "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
-    - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"

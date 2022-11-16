@@ -19,6 +19,7 @@
     state: directory
     group: arkcase
     owner: arkcase
+    mode: 0755
   loop:
     - "{{ root_folder }}/data/arkcase"
     - "{{ root_folder }}/data/arkcase-home"
@@ -83,14 +84,6 @@
   register: npm_version
   ignore_errors: yes
 
-- name: required packages (yarn) to run ArkCase webapp
-  become: yes
-  yum:
-    state: present
-    name:
-      - yarn
-  when: yarn_version.stdout == ""
-
 - name: required packages (npm) to run ArkCase webapp
   become: yes
   yum:
@@ -106,6 +99,22 @@
     name:
       - nodejs
   when: node_version.stdout == ""
+
+# need to download the yarn package, then install with RPM,
+# due to it not being packaged right for FIPS mode
+- name: download required packages (yarn) to run ArkCase webapp
+  become: yes
+  command: dnf -y install --downloadonly --downloaddir {{ root_folder }}/install/arkcase yarn
+  args:
+    warn: false
+  when: yarn_version.stdout == ""
+
+- name: install required package (yarn)
+  become: yes
+  shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/arkcase/yarn*.rpm
+  args:
+    warn: false
+  when: yarn_version.stdout == ""
 
 - name: install python2 (needed on RHEL8)
   become: yes
@@ -141,6 +150,9 @@
           catalina_temp: "{{ root_folder }}/tmp/arkcase"
           log_folder: "{{ root_folder }}/log/arkcase"
           java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
+          fips_mode: "{{ fips_mode_arkcase | default('') }}"
+          mem_min: "4g"
+          mem_max: "12g"
   register: tomcat_unarchived
 
 - name: add options to JAVA_OPTS

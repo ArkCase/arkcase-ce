@@ -1,0 +1,38 @@
+- name: make sure chronyd is installed
+  become: yes
+  package:
+   name: chrony
+   state: present
+
+- name: update chronyd config - use time.nist.gov
+  become: yes
+  replace:
+    backup: yes
+    path: /etc/chrony.conf
+    regexp: "169.254.169.123"
+    replace: "time.nist.gov"
+  register: chronyd_config_nist_time
+
+- name: update chronyd config - allow connections from other servers
+  become: yes
+  lineinfile:
+    backup: yes
+    path: /etc/chrony.conf
+    line: "allow 10.0.0.0/8"
+  register: chronyd_config_service
+
+- name: Restart chronyd
+  become: yes
+  service:
+    name: chronyd
+    state: restarted
+  when: chronyd_config_nist_time is changed or chronyd_config_service is changed
+
+- name: open ntp port
+  become: yes
+  firewalld:
+    service: ntp
+    permanent: yes
+    immediate: yes
+    state: enabled
+

@@ -12,3 +12,10 @@ cognito:
   jwkSetUri: {{ oidc_portal_jwk_set_uri }}
   tokenUri: {{ oidc_portal_token_uri }}
   userInfoUri: {{ oidc_portal_user_info_url }}
+spring:
+  kafka:
+    security:
+      protocol: SSL
+    admin:
+      security:
+        protocol: SSL

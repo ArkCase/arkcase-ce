@@ -4,7 +4,9 @@
     microservice:
       name: arkcase-file-utils
       version: "{{ arkcase_file_utils_version | default(arkcase_version) }}"
-      java_opts: "-Dserver.port=9078 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djodconverter.local.officeHome=/opt/openoffice4 -Djodconverter.local.port-numbers=9079"
+      java_opts: "-Dserver.port=9078 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_p12_store_jdk8 }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djodconverter.local.officeHome={{ libreoffice_install_path }} -Djodconverter.local.port-numbers=9079 -Dspring.kafka.bootstrap-servers={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Darkcase.kafka.bootstrapAddress={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Dspring.kafka.producer.bootstrap-servers={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Dspring.kafka.security.protocol=SSL"
+      boot_opts: "--spring.config.location=classpath:/bootstrap.yaml,classpath:/application.yaml,{{ root_folder }}/app/arkcase-file-utils/server.yml"
+      template: server.yml
 
 - name: Check Open Office installed
   become: yes
@@ -48,12 +50,15 @@
     dest: /tmp
   when: open_office_latest_version is not defined or not open_office_latest_version
 
-- name: install Open Office
+- name: install Open Office, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
   become: yes
   command:
-    cmd: rpm -Uvih /tmp/en-US/RPMS/*.rpm
+    cmd: rpm -Uvih --nodigest --nofiledigest  --undefine=__transaction_fapolicyd /tmp/en-US/RPMS/*.rpm
     warn: false
   when: open_office_latest_version is not defined or not open_office_latest_version
+  register: openoffice_install
+  # 41 means the packages were already installed
+  failed_when: openoffice_install.rc != 0 and openoffice_install.rc != 41
 
 - name: remove tmp files
   become: yes
@@ -92,15 +97,15 @@
     state: absent
   when: not libreoffice_bin_exists.stat.exists
 
-- name: install LibreOffice
+- name: install LibreOffice, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
   become: yes
   command:
-    cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} /tmp/LibreOffice*/RPMS/*.rpm
+    cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} --nodigest --nofiledigest --undefine=__transaction_fapolicyd /tmp/LibreOffice*/RPMS/*.rpm
     warn: false
   when: not libreoffice_bin_exists.stat.exists
   register: libreoffice_install
   # 41 means the packages were already installed
-  failed_when: libreoffice_install.rc != 0 and libreoffice_install.rc != 41
+  failed_when: libreoffice_install.rc != 0 and libreoffice_install.rc != 41 
 
 - name: remove tmp files
   become: yes
@@ -109,3 +114,11 @@
     state: absent
     path: /tmp/LibreOffice*
   when: not libreoffice_bin_exists.stat.exists
+
+- name: fapolicy settings for OpenOffice and LibreOffice, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: openoffice
+      folder_path: "/opt/openoffice4"
+    - name: libreoffice
+      folder_path: "{{ libreoffice_install_path }}" 

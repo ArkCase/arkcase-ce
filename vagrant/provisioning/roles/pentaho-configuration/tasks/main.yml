@@ -1,3 +1,52 @@
+- name: detect current Tocmat version
+  become: yes
+  shell: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/bin/version.sh | grep 'Server version' | awk -F/ '{ print $2 }'"
+  register: current_version
+- name: copy current version to backup location, if different from desired version
+  become: yes
+  shell: cp -a {{ root_folder}}/app/pentaho/pentaho-server/tomcat {{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ current_version.stdout }}
+  when: pentaho_tomcat_version != current_version.stdout
+- name: zip/archive the backup location, if needed
+  become: yes
+  shell: zip -rm {{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ current_version.stdout }}.zip {{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ current_version.stdout }}
+  when: pentaho_tomcat_version != current_version.stdout
+- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: Tomcat
+      dest: "{{ root_folder }}/common/apache-tomcat-{{ pentaho_tomcat_version }}.tar.gz"
+      owner: root
+      url: https://archive.apache.org/dist/tomcat/tomcat-{{ pentaho_tomcat_version[0] }}/v{{ pentaho_tomcat_version }}/bin/apache-tomcat-{{ pentaho_tomcat_version }}.tar.gz
+  when: pentaho_tomcat_version != current_version.stdout
+- name: make new tomcat home folder, if new version is an upgrade
+  become: yes
+  file:
+    path: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ pentaho_tomcat_version }}"
+    state: directory
+    group: "pentaho"
+    owner: "pentaho"
+    mode: 0755
+  when: pentaho_tomcat_version != current_version.stdout
+- name: unarchive upgrade Tomcat
+  become: yes
+  become_user: "pentaho"
+  unarchive:
+    src: "{{ root_folder }}/common/apache-tomcat-{{ pentaho_tomcat_version }}.tar.gz"
+    remote_src: yes
+    dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ pentaho_tomcat_version }}"
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ pentaho_tomcat_version }}/README.md"
+  when: pentaho_tomcat_version != current_version.stdout
+- name: apply upgraded files
+  become: yes
+  become_user: "pentaho"
+  shell: cp -vprf {{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ pentaho_tomcat_version }}/{lib,bin,BUILDING.txt,CONTRIBUTING.md,LICENSE,NOTICE,README.md,RELEASE-NOTES,RUNNING.txt} {{ root_folder}}/app/pentaho/pentaho-server/tomcat
+  when: pentaho_tomcat_version != current_version.stdout
+- name: remove the extra Tomcat folder
+  become: yes
+  become_user: pentaho
+  shell: rm -rf {{ root_folder}}/app/pentaho/pentaho-server/tomcat-{{ pentaho_tomcat_version }}
+  when: pentaho_tomcat_version != current_version.stdout
 - name: link JDBC jar file
   become: yes
   become_user: pentaho
@@ -18,23 +67,60 @@
     - src: "repository.spring.properties"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/repository.spring.properties"
 
-- name: delete alias tomcat from keystore if exists
+- name: install prerequisites to build native library
   become: yes
-  become_user: pentaho
-  command: keytool -delete -alias tomcat -keystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore --deststorepass password
-  ignore_errors: true
-
-- name: import arkcase keystore
+  yum:
+    state: present
+    name:
+      - "@Development Tools"
+      - openssl-devel
+      - apr-devel
+- name: copy private key for Pentaho
   become: yes
-  become_user: pentaho
-  command: keytool -importkeystore -srckeystore {{ java_p12_store | default(root_folder + '/common/arkcase-client.p12') }} -srcstoretype pkcs12 -srcalias {{ keystore_alias | default('arkcase_server') }} -destkeystore {{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore -deststoretype jks -deststorepass password -destalias tomcat -destkeypass password -srcstorepass {{ java_key_store_pass }}
-
-- name: ensure proper permissions on pentaho keystore
-  become: yes
-  become_user: pentaho
-  file:
-    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/keystore"
+  copy:
+    remote_src: yes
+    src: "{{ ssl_key }}"
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/pentaho.key"
+    owner: "pentaho"
+    group: "pentaho"
     mode: 0600
+- name: create folder for native library build
+  become: yes
+  become_user: "pentaho"
+  file:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native"
+    state: directory
+- name: unarchive Tomcat native library
+  become: yes
+  become_user: "pentaho"
+  unarchive:
+    src: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/tomcat-native.tar.gz"
+    remote_src: yes
+    dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native"
+    extra_opts:
+      - --strip-components=1
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/README.txt"
+- name: build Tomcat native library
+  become: yes
+  become_user: "pentaho"
+  shell: ./configure --with-apr=/usr/bin/apr-1-config --with-java-home=/usr/lib/jvm/java --with-ssl=yes --prefix={{ root_folder }}/app/pentaho/pentaho-server/tomcat
+  args:
+    chdir: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native/config.log"
+- name: make
+  become: yes
+  become_user: "pentaho"
+  command: make
+  args:
+    chdir: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native/.libs/libtcnative-1.so"
+- name: make install
+  become: yes
+  become_user: "pentaho"
+  command: make install
+  args:
+    chdir: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/bin/native/native"
+    creates: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/lib/libtcnative-1.so"
 
 - name: jmx config files
   become: yes
@@ -67,22 +153,6 @@
     - src: "server.xml"
       mode: "0644"
       dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/conf"
-
-- name: read current import-export script
-  become: yes
-  become_user: pentaho
-  command: cat {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh
-  register: import_export
-  changed_when: false
-  
-- name: set TLS options in import-export script
-  become: yes
-  become_user: pentaho
-  replace:
-    path: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
-    regexp: "-Xmx2048m"
-    replace: "-Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Xmx2048m"
-  when: "'Djavax.net.ssl.trustStorePassword' not in import_export.stdout"
 
 - name: configure Tomcat log file locations
   become: yes
@@ -245,20 +315,11 @@
     - "{{ root_folder }}/app/pentaho/pentaho-server/stop-pentaho.sh"
 
 # Pentaho needs to start once with the default jackrabbit-based security (not with LDAP); this initial startup will create tenant0. After that, change the security provider to ldap restart
-- name: Pentaho systemd unit file (local database)
+- name: Pentaho systemd unit file
   become: yes
   template:
     src: "pentaho.service"
     dest: /etc/systemd/system/pentaho.service
-  when: not rds_password is defined
-  register: pentaho_systemd
-
-- name: Pentaho systemd unit file (RDS)
-  become: yes
-  template:
-    src: "pentaho-rds.service"
-    dest: /etc/systemd/system/pentaho.service
-  when: rds_password is defined
   register: pentaho_systemd
 
 - name: reload daemon-files if needed
@@ -372,6 +433,12 @@
   retries: 100
   delay: 5
   when: security_provider_updated is changed
+
+- name: fapolicy settings for Pentaho, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: pentaho
+      folder_path: "{{ root_folder }}/app/pentaho"
 
 - name: Expose pentaho app port
   become: yes

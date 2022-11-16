@@ -1,0 +1,88 @@
+- name: required packages
+  become: yes
+  package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - "bind-utils"
+    - "python3"
+
+- name: getssl folders
+  become: yes
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ root_folder }}"
+    - "{{ root_folder }}/getssl"
+
+- name: download getssl
+  include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+  loop:
+    - name: GetSSL 
+      dest: "{{ root_folder }}/getssl/getssl"
+      owner: root
+      url: https://raw.githubusercontent.com/srvrco/getssl/latest/getssl
+
+- name: make getssl executable
+  become: yes
+  ansible.builtin.file:
+    path: "{{ root_folder }}/getssl/getssl"
+    mode: 0700
+
+- name: create getssl config files
+  become: yes
+  ansible.builtin.command:
+    cmd: "{{ root_folder }}/getssl/getssl -c {{ external_host }}"
+    creates: /root/.getssl/getssl.cfg
+
+- name: update default config file
+  become: yes
+  ansible.builtin.replace:
+    path: /root/.getssl/getssl.cfg
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: '^CA="https://acme-staging-v02.api.letsencrypt.org"$'
+      replace: '# CA="https://acme-staging-v02.api.letsencrypt.org"'
+    - regexp: '^#CA="https://acme-v02.api.letsencrypt.org"$'
+      replace: 'CA="https://acme-v02.api.letsencrypt.org"'
+
+- name: set reload command
+  become: yes
+  ansible.builtin.lineinfile:
+    path: /root/.getssl/getssl.cfg
+    backup: yes
+    line: 'RELOAD_CMD="systemctl reload haproxy"'
+
+- name: update domain config file
+  become: yes
+  ansible.builtin.replace:
+    path: /root/.getssl/{{ external_host }}/getssl.cfg
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: '^SANS="www.{{ external_host }}"$'
+      replace: '# SANS="www.{{ external_host }}"'
+
+- name: more updates in domain config file
+  become: yes
+  ansible.builtin.blockinfile:
+    path: /root/.getssl/{{ external_host }}/getssl.cfg
+    backup: yes
+    block: |
+      ACL=('{{ root_folder }}/getssl/.well-known/acme-challenge')
+      USE_SINGLE_ACL="true"
+      DOMAIN_CERT_LOCATION="/etc/pki/tls/certs/{{ external_host }}.crt"
+      DOMAIN_KEY_LOCATION="/etc/pki/tls/private/{{ external_host }}.key"
+      CA_CERT_LOCATION="/etc/pki/tls/certs/chain.crt"
+
+- name: renewcert script
+  become: yes
+  ansible.builtin.template:
+    src: renewcert.sh
+    dest: "{{ root_folder }}/getssl/renewcert.sh"
+    backup: yes
+

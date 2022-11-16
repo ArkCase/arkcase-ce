@@ -38,6 +38,7 @@
           catalina_temp: "{{ root_folder }}/tmp/alfresco7"
           log_folder: "{{ root_folder }}/log/alfresco7"
           java_home: "{{ alfresco_java_home }}"
+          fips_mode: "{{ fips_mode_alfresco7 | default('') }}"
   register: tomcat_unarchived
 
 - name: remove all files under /webapp, if needed
@@ -354,7 +355,7 @@
       opencmis.servletpath.override=true
       opencmis.servletpath.value=
       opencmis.server.override=true
-      opencmis.server.value=https://{{ external_host }}/alfresco/api
+      opencmis.server.value=https://{{ alfresco_host | default(internal_host) }}/alfresco/api
 
 - name: create and populate ldap1-ad.properties
   become: yes
@@ -472,6 +473,12 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - METADATA KEY STORE SETTINGS"
     block: |
       export JAVA_TOOL_OPTIONS="-Dencryption.keystore.type=JCEKS -Dencryption.cipherAlgorithm=DESede/CBC/PKCS5Padding -Dencryption.keyAlgorithm=DESede -Dencryption.keystore.location={{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/keystore/metadata-keystore/keystore -Dmetadata-keystore.password=mp6yc0UD9e -Dmetadata-keystore.aliases=metadata -Dmetadata-keystore.metadata.password=oKIWzVdEdA -Dmetadata-keystore.metadata.algorithm=DESede"
+
+- name: fapolicy settings for Alfresco 7, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: alfresco7
+      folder_path: "{{ root_folder }}/app/alfresco7"
 
 - name: Alfresco systemd unit file
   become: yes

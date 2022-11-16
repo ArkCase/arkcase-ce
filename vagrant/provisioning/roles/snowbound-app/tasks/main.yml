@@ -115,6 +115,12 @@
     force: yes
   register: snowbound_war_copied
 
+- name: fapolicy settings for Snowbound, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: snowbound
+      folder_path: "{{ root_folder }}/app/snowbound"
+
 - name: start Snowbound
   become: yes
   systemd:

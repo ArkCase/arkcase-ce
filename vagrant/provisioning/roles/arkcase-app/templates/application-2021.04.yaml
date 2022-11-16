@@ -13,8 +13,6 @@ spring:
       retries: 1
       bootstrap-servers:
       - "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 properties.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo
 branding.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/branding
 avro.schema.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/schemas/avro    
@@ -23,7 +21,7 @@ process.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/proc
 logging:
   file.max-history: 10
   file.max-size: 10MB
-  file: "{{ root_folder }}/log/config-server/acmConfigServer.log"
+  file.name: "{{ root_folder }}/log/config-server/acmConfigServer.log"
   level:
     com.armedia.acm.configserver: info
     org.springframework.cloud.config: info
@@ -34,6 +32,7 @@ arkcase:
   kafka:  
     messageBufferWindow: 1  
     bootstrapAddress: "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
+    security-protocol: "{{ kafka_security_protocol | default('PLAINTEXT') }}"
     configuration-changed-topic: ark-config-event-configuration 
     configuration-changed-topic-replicas: 1 
     configuration-changed-topic-partitions: 1 

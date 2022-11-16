@@ -15,9 +15,13 @@
     - schema: "jackrabbit"
       user: "jcr_user"
       script: ""
+      requiressl: true
     - schema: "quartz"
       user: "pentaho_user"
       script: "quartz-create-db.sql"
+    - schema: "pentaho"
+      user: "pentaho"
+      script: ""
   loop_control:
     loop_var: s
   when: db_engine == 'mariadb'

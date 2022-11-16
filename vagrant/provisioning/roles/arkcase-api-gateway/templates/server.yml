@@ -1,0 +1,34 @@
+server:
+  port: 9002
+  ssl:
+    key-store: {{ java_p12_store_jdk8 }}
+    keyStoreType: PKCS12 
+    key-store-password: {{ java_key_store_pass }}
+spring:
+  cloud:
+    config:
+      uri: "https://{{ config_server_host | default(internal_host) }}/config"
+  kafka:
+    bootstrap-servers: "{{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
+    producer:
+      bootstrap-servers: "{{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
+    security:
+      protocol: "{{ kafka_security_protocol | default('PLAINTEXT') }}"
+  profiles:
+    include: {{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime
+arkcase:
+  kafka:
+    bootstrapAddress: "{{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
+    jwt:
+      jwt-blacklisted-topic-group-id: "deny-list-topic-group-id"
+      jwt-blacklisted-topic: "deny-list-topic"
+      jwt-allowed-urls-topic-group-id: "allowed-urls-topic-group-id"
+      jwt-allowed-urls-topic: "allowed-urls-topic"
+    schema:
+      topic:
+        schema-updated-topic: "schema-updated-topic"
+logging:
+  file:
+    name: {{ root_folder }}/log/arkcase-api-gateway/arkcase-api-gateway.log
+
+

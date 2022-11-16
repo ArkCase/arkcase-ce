@@ -200,8 +200,14 @@
         acl acl_sse path_beg /api/sse
         acl acl_minio path_beg /api/minio
         acl acl_oidc path_beg /api/oidc
+        acl acl_cognito path_beg /api/cognito
+        acl acl_ldap_authority path_beg /api/auth/ldap
+        acl acl_portal_prc path_beg /api/arkcase-portal-prc
+        acl acl_portal path_beg /api/arkcase-portal/
+        acl acl_schema path_beg /api/schema
         acl acl_api_gateway path_beg /api
-        acl acl_config path_beg /config        
+        acl acl_config path_beg /config
+        acl acl_assets path_beg /assets 
         acl acl_root path -i /
 
         # redirections
@@ -223,7 +229,13 @@
         use_backend be_sse if acl_sse
         use_backend be_minio if acl_minio
         use_backend be_oidc if acl_oidc
+        use_backend be_cognito if acl_cognito
+        use_backend be_ldap_authority if acl_ldap_authority
+        use_backend be_portal_prc if acl_portal_prc
+        use_backend be_portal if acl_portal
+        use_backend be_schema if acl_schema
         use_backend be_api_gateway if acl_api_gateway
+        use_backend be_assets if acl_assets
         use_backend be_config if acl_config
 
       #backend servers  
@@ -232,7 +244,9 @@
         mode http
         balance roundrobin
         option tcp-check
-        server solr0 {{ solr_host }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        server solr0 {{ solr_node_1 }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        {{ 'server solr1 ' + solr_node_2 + ':8983 check fall 3 rise 2 check ssl verify required ca-file ' + ssl_ca if solr_node_2 != '' else '' }}
+        {{ 'server solr2 ' + solr_node_3 + ':8983 check fall 3 rise 2 check ssl verify required ca-file ' + ssl_ca if solr_node_3 != '' else '' }}
 
       backend be_pentaho
         http-response add-header X-Pentaho-Node %s
@@ -268,34 +282,48 @@
         http-response add-header X-SSE-Node %s
         mode http
         option tcp-check
-        server sse0 {{ arkcase_host }}:9050
+        server sse0 {{ arkcase_host }}:9050 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/api/sse/,/)]
 
       backend be_minio
         http-response add-header X-Minio-Node %s
         mode http
         option tcp-check
-        server minio0 {{ arkcase_host }}:9000
+        server minio0 {{ arkcase_host }}:9000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/api/minio/,/)]
 
       backend be_api_gateway
         http-response add-header X-API-Gateway-Node %s
         mode http
         option tcp-check
-        server api_gateway0 {{ arkcase_host }}:9002
+        server api_gateway0 {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
       
       backend be_oidc
         http-response add-header X-OIDC-Node %s
         mode http
         option tcp-check
-        server oidc0 {{ arkcase_host }}:9100
+        server oidc0 {{ arkcase_host }}:9100 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/api/oidc/,/)]
+
+      backend be_cognito
+        http-response add-header X-Cognito-Node %s
+        mode http
+        option tcp-check
+        server cognito0 {{ arkcase_host }}:9100 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/api/cognito/,/)]
+
+      backend be_ldap_authority
+        http-response add-header X-LDAP-Authority-Node %s
+        mode http
+        option tcp-check
+        server ldap-authority0 {{ arkcase_host }}:9090 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/api/auth/ldap/,/)]
 
       backend be_config
         http-response add-header X-Config %s
         mode http
         option tcp-check
-        server config {{ arkcase_host }}:9999
+        server config {{ arkcase_host }}:9999 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/config/,/)]  
 
   register: arkcase_config
@@ -365,6 +393,13 @@
         mode http
         option tcp-check
         server arkcase_portal0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+       backend be_assets
+        http-response add-header x-arkcase-assets-node %s
+        mode http
+        option tcp-check
+        server arkcase_assets0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/assets/,/portal/assets/)]
   when: deploy_arkcase_portal | default(false)
 
 ### Showcase frontend
@@ -432,7 +467,7 @@
         http-response add-header X-SHOWCASE-BACKEND-Node %s
         mode http
         option tcp-check
-        server showcase_backend0 {{ internal_host }}:3000
+        server showcase_backend0 {{ internal_host }}:3000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/showcase/,/)] 
   when: deploy_showcase | default(false)
 
@@ -506,7 +541,7 @@
             http-response add-header X-Schema-registry %s
             mode http
             option tcp-check
-            server schema-registry {{ internal_host }}:8081
+            server schema-registry {{ internal_host }}:8081 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             reqrep ^([^\ ]*\ /)schema-registry[/]?(.*)     \1\2
 
           backend be_control-center
@@ -518,7 +553,7 @@
           backend be_control-center-ws
             mode http
             option tcp-check
-            server controlws {{ internal_host }}:9021
+            server controlws {{ internal_host }}:9021 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             reqrep (.*\/)control-center\/(.*)     \1\2
 
   when: enable_kafka is defined and enable_kafka == "yes"
@@ -554,7 +589,7 @@
             http-response add-header X-Elasticsearch %s
             mode http
             option tcp-check
-            server elasticsearch {{ internal_host }}:9200
+            server elasticsearch {{ internal_host }}:9200 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/elasticsearch/,/)]
   
   when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
@@ -594,21 +629,21 @@
             http-response add-header X-Zipkin-Health %s
             mode http
             option tcp-check
-            server zipkin-health {{ internal_host }}:9411
+            server zipkin-health {{ internal_host }}:9411 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin-api
             http-response add-header X-Zipkin-Api %s
             mode http
             option tcp-check
-            server zipkin-api {{ internal_host }}:9411
+            server zipkin-api {{ internal_host }}:9411 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin
             http-response add-header X-Zipkin %s
             mode http
             option tcp-check
-            server zipkin {{ internal_host }}:9411/zipkin
+            server zipkin {{ internal_host }}:9411/zipkin check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
   when: enable_zipkin is defined and enable_zipkin == 'yes'    
 
@@ -647,20 +682,41 @@
             http-response add-header X-Gateway %s
             mode http
             option tcp-check
-            server gateway {{ arkcase_host }}:9002
+            server gateway {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/adk/,/)]
+
+          backend be_portal
+            http-response add-header X-Portal-Api %s
+            mode http
+            option tcp-check
+            server gateway {{ arkcase_host }}:9040 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/arkcase-portal/,/)]
+
+          backend be_portal_prc
+            http-response add-header X-Prc-Portal-Api %s
+            mode http
+            option tcp-check
+            server gateway {{ arkcase_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/arkcase-portal-prc/,/)]
+
+          backend be_schema
+            http-response add-header X-Schema %s
+            mode http
+            option tcp-check
+            server gateway {{ arkcase_host }}:9099 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/schema/,/)]
 
           backend be_eureka
             http-response add-header X-Eureka %s
             mode http
             option tcp-check
-            server eureka {{ arkcase_host }}:9002/eureka
+            server eureka {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
           backend be_eureka-dashboard
             http-response add-header X-Eureka-Dashboard %s
             mode http
             option tcp-check
-            server eureka-dashboard {{ arkcase_host }}:9002/eureka-dashboard
+            server eureka-dashboard {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   
   when: enable_eureka is defined and enable_eureka == 'yes'
 

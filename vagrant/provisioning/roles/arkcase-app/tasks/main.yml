@@ -90,14 +90,12 @@
     name:
       - python3-pip
 
+
+# might also need: curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py ; python3 get-pip.py --force-reinstall
 - name: install Python Excel module
   become: yes
-  pip:
-    executable: pip3
-    name:
-      - openpyxl
-      - lxml
-    extra_args: --upgrade
+  become_user: arkcase
+  command: python3 -m pip install --user --upgrade openpyxl lxml
 
 - name: download ArkCase war file and config server jar file (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -259,11 +257,11 @@
     path: /home/arkcase/.arkcase/.arkcase-arkcase-{{ arkcase_version }}
     state: absent
 
-- name: deploy core reports
-  include_tasks: deploy_report.yml
-  loop: "{{ arkcase_core_reports|flatten }}"
-  loop_control:
-    loop_var: r
+    #- name: deploy core reports
+    #include_tasks: deploy_report.yml
+    #loop: "{{ arkcase_core_reports|flatten }}"
+    #loop_control:
+    # loop_var: r
 
 - name: arkcase and config server logrotate
   become: yes
@@ -279,12 +277,18 @@
     path: "{{ root_folder }}/app/alfresco7"
   register: alfresco7_path
 
+- name: check for Solr service file
+  stat:
+    path: /etc/systemd/system/solr.service
+  register: service_file_solr
+  changed_when: false
+
 - name: service facts
   set_fact:
     db_service_name: "{{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if arkcase_host == database_host else '' }}"
     activemq_service_name: "{{ 'activemq.service' if activemq_host == arkcase_host else '' }}"
     samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
-    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host else '' }}"
+    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host and service_file_solr.stat.exists == True else '' }}"
     alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
     alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
 
@@ -553,23 +557,27 @@
     state: absent
   when: acmarkcase_stat.stat.exists and not acmarkcase_stat.stat.islnk
 
+- name: read ZyLAB server cert
+  community.crypto.get_certificate:
+    host: "{{ zylab_server_host }}"
+    port: "{{ zylab_server_port | int }}"
+  register: zylab_server_cert
+  when: zylab_integration_enabled is defined and zylab_integration_enabled
 
-- name: list certs in the key store
+- name: write ZyLAB server cert to trusted cert store
   become: yes
-  command: keytool -v -list -keystore "{{ java_trust_store }}" -storepass "{{ java_trust_store_pass }}"
-  register: cert_list
-  changed_when: false
+  copy:
+    dest: /etc/pki/ca-trust/source/zylab_server_cert.pem
+    content: "{{ zylab_server_cert.cert }}"
+    backup: true
+    force: yes
+  register: zylab_server_cert_pem
+  when: zylab_integration_enabled is defined and zylab_integration_enabled
 
-- name: import the zylab cert to the ArkCase trust store
+- name: update trusted certs
   become: yes
-  java_cert:
-    cert_alias: "zylab_server_cert"
-    cert_url: "{{ zylab_server_host }}"
-    cert_port: "{{ zylab_server_port|int }}"
-    keystore_path: "{{ java_trust_store }}"
-    keystore_pass: "{{ java_trust_store_pass }}"
-    state: present
-  when: zylab_integration_enabled is defined and zylab_integration_enabled and 'zylab_server_cert' not in cert_list.stdout
+  command: update-ca-trust
+  when: zylab_integration_enabled is defined and zylab_integration_enabled and zylab_server_cert_pem is changed
 
 # NOTE keep the /home/arkcase/.arkcase file names the
 # same until next release
@@ -583,7 +591,7 @@
   loop:
     - src: "{{ ssl_ca }}"
       path: "/home/arkcase/.arkcase/acm/private/arkcase-ca.crt"
-    - src: "{{ java_key_store }}"
+    - src: "{{ java_p12_store_jdk8 }}"
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ks"
     - src: "{{ java_trust_store }}"
       path: "/home/arkcase/.arkcase/acm/private/arkcase.ts"
@@ -635,6 +643,15 @@
     regexp: "runtime"
     replace: "server,runtime"
   when: "'server,runtime' not in conf_yml.stdout"
+
+- name: set config server URL
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "url: http://localhost:9999"
+    replace: "url: https://{{ internal_host }}:9999"
 
 - name: see if audit patterns is in the main folder
   become: yes
@@ -1046,9 +1063,9 @@
     - regexp: JKS
       replace: PKCS12
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/encryption-keystore"
-      replace: "{{ java_key_store }}"
+      replace: "{{ java_p12_store_jdk8 }}"
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
-      replace: "{{ java_key_store }}"
+      replace: "{{ java_p12_store_jdk8 }}"
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'

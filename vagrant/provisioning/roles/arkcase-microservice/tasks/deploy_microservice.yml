@@ -2,6 +2,10 @@
   set_fact:
     microservice_version_formatted: "{{ '-' ~ microservice.version if microservice.version != '' else '' }}"
 
+- name: service version
+  debug:
+    msg: "{{ microservice.name }} version {{ microservice_version_formatted }}"
+
 - name: microservice folders
   become: yes
   file:
@@ -86,6 +90,12 @@
     force: yes
     backup: yes
   when: microservice.template is defined and microservice.template != ""
+
+- name: fapolicy settings for {{ microservice.name }}, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: "{{ microservice.name }}"
+      folder_path: "{{ root_folder }}/app/{{ microservice.name }}"
 
 - name: "enable {{ microservice.name }}"
   become: yes

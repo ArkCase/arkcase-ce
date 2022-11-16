@@ -114,7 +114,7 @@ ark.activemq:
   transportConnectorURI: "ssl://{{ activemq_host }}:61616"
 acm.websockets:
   stomp_broker_relay.relay_host: "{{ activemq_host }}"
-  stomp_broker_relay.keystore: "{{ java_key_store }}"
+  stomp_broker_relay.keystore: "{{ java_p12_store_jdk8 }}"
   stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
   stomp_broker_relay.truststore: "{{ java_trust_store }}"
   stomp_broker_relay.truststore_pass: "ENC({{ encrypted_java_trust_store_pass }})"
@@ -159,3 +159,12 @@ payment:
     securepaylinkendpoint: "{{ touchnet_securepaylinkendpoint | default('') }}"
     upaysiteid: "{{ touchnet_upaysiteid | default('') }}"
 microsoftOfficeOnline.isWopiEnabled: {{ arkcase_ee | default('false') }}
+sessionControl:
+  #number of concurrent session allowed
+  #set to -1 to allow unlimited sessions
+  maximumSessions: {{ session_control_max_sessions | default(-1) }}
+  #determines whether the user should be prevented from opening more sessions than allowed
+  #If set to true, the user authenticating will be prevented from authenticating.
+  #if set to false, the user that has already authenticated will be forcibly logged out.
+  exceptionIfMaximumExceeded: {{ session_control_throw_exception | default(false) }}
+

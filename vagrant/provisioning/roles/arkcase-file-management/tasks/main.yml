@@ -3,8 +3,6 @@
   yum:
     state: installed
     name: python3-pip
-  vars:
-    ansible_python_interpreter: /usr/bin/python2
 
 - name: install Python boto3 library
   become: yes
@@ -25,7 +23,7 @@
   with_items: "{{ file_management_s3_buckets }}"
   vars:
     ansible_python_interpreter: /usr/bin/python3
-  when: file_management_s3_url is defined and file_management_s3_buckets is defined
+  when: file_management_s3_url is defined and file_management_s3_buckets is defined and file_management_create_bucket_flag | default(false)
 
 - name: setup configuration file
   become: yes
@@ -34,8 +32,6 @@
     backup: yes
     src: server.yml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-file-management-server.yaml
-  vars:
-    ansible_python_interpreter: /usr/bin/python2
 
 - name: deploy arkcase-file-management
   include_tasks: "{{ role_path }}/../arkcase-microservice/tasks/deploy_microservice.yml"
@@ -43,5 +39,6 @@
     microservice:
       name: arkcase-file-management
       version: "{{ arkcase_file_management_version | default(arkcase_version) }}"
-      java_opts: "-Dserver.port=9068 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
-    ansible_python_interpreter: /usr/bin/python2
+      java_opts: "-Dserver.port=9068 -Xmx512M -Dspring.cloud.config.uri=https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_p12_store_jdk8 }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Dspring.kafka.bootstrap-servers={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Darkcase.kafka.bootstrapAddress={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Dspring.kafka.producer.bootstrap-servers={{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }} -Dspring.kafka.security.protocol=SSL"
+      boot_opts: "--spring.config.location=classpath:/bootstrap.yaml,classpath:/application.yaml,{{ root_folder }}/app/arkcase-file-management/arkcase-file-management.yml"
+      template: arkcase-file-management.yml

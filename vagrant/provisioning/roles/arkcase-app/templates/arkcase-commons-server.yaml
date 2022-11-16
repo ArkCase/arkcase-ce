@@ -14,6 +14,7 @@ arkcase:
     configuration:
       bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
       schemaRegistryAddress: https://{{ schema_registry_host | default(kafka_host) }}/schema-registry
+      securityProtocol: SSL
     # this is for arkcase_version until/and 2022.01-RC1
     bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
     schemaRegistryAddress: https://{{ schema_registry_host | default(kafka_host) }}/schema-registry  
@@ -25,7 +26,7 @@ arkcase:
 jodconverter:
   local:
     enabled: true
-    officeHome: /opt/app/arkcase/app/libreoffice
+    officeHome: "{{ libreoffice_install_path }}"
 
 arkcase.integrationUser.userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
 
