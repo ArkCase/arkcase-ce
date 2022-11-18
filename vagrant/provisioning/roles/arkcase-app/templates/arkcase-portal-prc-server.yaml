@@ -2,3 +2,16 @@ portal-prc:
   arkcaseUrl: "https://{{ external_host }}/arkcase"
   userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
   password: "{{ arkcase_admin_password }}"
+  
+  s3:
+    url: "{{ prc_dockets_s3_url }}"
+    region: "{{ prc_dockets_s3_region }}"
+    accessKey: "{{ prc_dockets_s3_access_key }}"
+    secretKey: "{{ prc_dockets_s3_secret_key }}"
+    bucketName: "{{ prc_dockets_s3_bucket_name }}"
+  
+prc.rca.solr.configuration:
+  host: "{{ solr_host }}"
+  port: {{ solr_port | default(443) }}
+  
+spring.data.mongodb.uri: "mongodb://{{ microservice_mongodb_username }}:{{ microservice_mongodb_password }}@{{ microservice_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/{{ microservice_mongodb_database }}?ssl={{ mongodb_ssl | default (false) }}"

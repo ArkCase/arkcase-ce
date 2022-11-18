@@ -29,3 +29,8 @@ jodconverter:
     officeHome: "{{ libreoffice_install_path }}"
 
 arkcase.integrationUser.userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+
+recaptcha:
+  configuration:
+    secretKey: {{ secretKeyid_recaptcha | default('') }}
+    verifyUrl: "https://www.google.com/recaptcha/api/siteverify"
