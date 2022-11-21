@@ -132,4 +132,4 @@
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
   loop:
     - arkcase_process
-  when: db_engine == mariadb
+  when: db_engine == 'mariadb'
