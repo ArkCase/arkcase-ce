@@ -8,117 +8,117 @@
       boot_opts: "--spring.config.location=classpath:/bootstrap.yaml,classpath:/application.yaml,{{ root_folder }}/app/arkcase-file-utils/server.yml"
       template: server.yml
 
-- name: Check Open Office installed
-  become: yes
-  stat:
-    path: "/opt/openoffice4/program/soffice"
-  register: openoffice_bin
+#- name: Check Open Office installed
+#  become: yes
+#  stat:
+#    path: "/opt/openoffice4/program/soffice"
+#  register: openoffice_bin
 
-- name: Check Open Office version
-  become: yes
-  command: "/opt/openoffice4/program/soffice -h  2>&1 | head -n1"
-  register: openoffice_old_version
-  when: openoffice_bin.stat.exists
+#- name: Check Open Office version
+#  become: yes
+#  command: "/opt/openoffice4/program/soffice -h  2>&1 | head -n1"
+#  register: openoffice_old_version
+#  when: openoffice_bin.stat.exists
 
-- name: Set some facts
-  set_fact:
-    open_office_latest_version: "{{ open_office_version | default('4.1.11') | string in openoffice_old_version.stdout }}"
-    libreoffice_install_path: "{{ root_folder }}/app/libreoffice"
-  when: openoffice_bin.stat.exists
+#- name: Set some facts
+#  set_fact:
+#    open_office_latest_version: "{{ open_office_version | default('4.1.11') | string in openoffice_old_version.stdout }}"
+#    libreoffice_install_path: "{{ root_folder }}/app/libreoffice"
+#  when: openoffice_bin.stat.exists
 
-- name: Remove old Open Office and Libreoffice version, if necessary
-  become: yes
-  yum:
-    state: absent
-    name:
-      - "openoffice*"
-  when: openoffice_bin.stat.exists and not open_office_latest_version
+#- name: Remove old Open Office and Libreoffice version, if necessary
+#  become: yes
+#  yum:
+#    state: absent
+#    name:
+#      - "openoffice*"
+#  when: openoffice_bin.stat.exists and not open_office_latest_version
 
-- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  loop:
-    - name: Open Office
-      dest: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
-      owner: root
-      url: "https://sourceforge.net/projects/openofficeorg.mirror/files/{{ open_office_version | default('4.1.11') }}/binaries/en-US/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz --no-check-certificate"
-  when: open_office_latest_version is not defined or not open_office_latest_version
+#- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+#  loop:
+#    - name: Open Office
+#      dest: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+#      owner: root
+#      url: "https://sourceforge.net/projects/openofficeorg.mirror/files/{{ open_office_version | default('4.1.11') }}/binaries/en-US/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz --no-check-certificate"
+#  when: open_office_latest_version is not defined or not open_office_latest_version
 
-- name: unpack Open Office RPM
-  become: yes
-  unarchive:
-    src: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
-    remote_src: yes
-    dest: /tmp
-  when: open_office_latest_version is not defined or not open_office_latest_version
+#- name: unpack Open Office RPM
+#  become: yes
+#  unarchive:
+#    src: "/tmp/Apache_OpenOffice_{{ open_office_version | default('4.1.11') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+#    remote_src: yes
+#    dest: /tmp
+#  when: open_office_latest_version is not defined or not open_office_latest_version
 
-- name: install Open Office, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
-  become: yes
-  command:
-    cmd: rpm -Uvih --nodigest --nofiledigest  --undefine=__transaction_fapolicyd /tmp/en-US/RPMS/*.rpm
-    warn: false
-  when: open_office_latest_version is not defined or not open_office_latest_version
-  register: openoffice_install
-  # 41 means the packages were already installed
-  failed_when: openoffice_install.rc != 0 and openoffice_install.rc != 41
+#- name: install Open Office, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
+#  become: yes
+#  command:
+#    cmd: rpm -Uvih --nodigest --nofiledigest  --undefine=__transaction_fapolicyd /tmp/en-US/RPMS/*.rpm
+#    warn: false
+# when: open_office_latest_version is not defined or not open_office_latest_version
+#  register: openoffice_install
+#  # 41 means the packages were already installed
+#  failed_when: openoffice_install.rc != 0 and openoffice_install.rc != 41
 
-- name: remove tmp files
-  become: yes
-  file:
-    force: yes
-    state: absent
-    path: /tmp/en-US
-  when: open_office_latest_version is not defined or not open_office_latest_version
+#- name: remove tmp files
+#  become: yes
+#  file:
+#    force: yes
+#    state: absent
+#    path: /tmp/en-US
+#  when: open_office_latest_version is not defined or not open_office_latest_version
 
-- name: Check Libreoffice Installation
-  become: yes
-  stat:
-    path: "{{ libreoffice_install_path }}/program/soffice"
-  register: libreoffice_bin_exists
+#- name: Check Libreoffice Installation
+#  become: yes
+#  stat:
+#    path: "{{ libreoffice_install_path }}/program/soffice"
+#  register: libreoffice_bin_exists
 
-- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  loop:
-    - name: LibreOffice
-      dest: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.5') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
-      owner: root
-      url: "https://ftp.osuosl.org/pub/tdf/libreoffice/stable/{{ libreoffice_version | default('7.3.5') }}/rpm/x86_64/LibreOffice_{{ libreoffice_version | default('7.3.5') }}_Linux_x86-64_rpm.tar.gz --no-check-certificate"
-  when: not libreoffice_bin_exists.stat.exists
+#- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
+#  loop:
+#    - name: LibreOffice
+#      dest: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.5') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+#      owner: root
+#      url: "https://ftp.osuosl.org/pub/tdf/libreoffice/stable/{{ libreoffice_version | default('7.3.5') }}/rpm/x86_64/LibreOffice_{{ libreoffice_version | default('7.3.5') }}_Linux_x86-64_rpm.tar.gz --no-check-certificate"
+#  when: not libreoffice_bin_exists.stat.exists
 
-- name: unpack LibreOffice RPM
-  become: yes
-  unarchive:
-    src: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.5') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
-    remote_src: yes
-    dest: /tmp/
-  when: not libreoffice_bin_exists.stat.exists
+#- name: unpack LibreOffice RPM
+#  become: yes
+#  unarchive:
+#    src: "/tmp/LibreOffice_{{ libreoffice_version | default('7.3.5') }}_Linux_x86-64_install-rpm_en-US.tar.gz"
+#    remote_src: yes
+#    dest: /tmp/
+#  when: not libreoffice_bin_exists.stat.exists
 
-- name: Ensure that libreoffice7.3-freedesktop-menus-7.3.5-2.noarch.rpm is removed
-  become: yes
-  file:
-    path: /tmp/LibreOffice_{{ libreoffice_version | default('7.3.5.2') }}_Linux_x86-64_rpm/RPMS/libreoffice7.3-freedesktop-menus-{{ libreoffice_version | default('7.3.5-2') }}.noarch.rpm
-    state: absent
-  when: not libreoffice_bin_exists.stat.exists
+#- name: Ensure that libreoffice7.3-freedesktop-menus-7.3.5-2.noarch.rpm is removed
+#  become: yes
+#  file:
+#    path: /tmp/LibreOffice_{{ libreoffice_version | default('7.3.5.2') }}_Linux_x86-64_rpm/RPMS/libreoffice7.3-freedesktop-menus-{{ libreoffice_version | default('7.3.5-2') }}.noarch.rpm
+#    state: absent
+#  when: not libreoffice_bin_exists.stat.exists
 
-- name: install LibreOffice, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
-  become: yes
-  command:
-    cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} --nodigest --nofiledigest --undefine=__transaction_fapolicyd /tmp/LibreOffice*/RPMS/*.rpm
-    warn: false
-  when: not libreoffice_bin_exists.stat.exists
-  register: libreoffice_install
-  # 41 means the packages were already installed
-  failed_when: libreoffice_install.rc != 0 and libreoffice_install.rc != 41 
+#- name: install LibreOffice, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
+#  become: yes
+#  command:
+#    cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} --nodigest --nofiledigest --undefine=__transaction_fapolicyd /tmp/LibreOffice*/RPMS/*.rpm
+#    warn: false
+#  when: not libreoffice_bin_exists.stat.exists
+#  register: libreoffice_install
+#  # 41 means the packages were already installed
+#  failed_when: libreoffice_install.rc != 0 and libreoffice_install.rc != 41 
 
-- name: remove tmp files
-  become: yes
-  file:
-    force: yes
-    state: absent
-    path: /tmp/LibreOffice*
-  when: not libreoffice_bin_exists.stat.exists
+#- name: remove tmp files
+#  become: yes
+#  file:
+#    force: yes
+#    state: absent
+#    path: /tmp/LibreOffice*
+#  when: not libreoffice_bin_exists.stat.exists
 
-- name: fapolicy settings for OpenOffice and LibreOffice, if fapolicyd is installed
-  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
-  loop:
-    - name: openoffice
-      folder_path: "/opt/openoffice4"
-    - name: libreoffice
-      folder_path: "{{ libreoffice_install_path }}" 
+#- name: fapolicy settings for OpenOffice and LibreOffice, if fapolicyd is installed
+#  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+#  loop:
+#    - name: openoffice
+#      folder_path: "/opt/openoffice4"
+#    - name: libreoffice
+#      folder_path: "{{ libreoffice_install_path }}" 

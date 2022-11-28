@@ -2,6 +2,7 @@ portal-prc:
   arkcaseUrl: "https://{{ external_host }}/arkcase"
   userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
   password: "{{ arkcase_admin_password }}"
+  authenticationType: "{{ arkcase_portal_authentication }}"
   
   s3:
     url: "{{ prc_dockets_s3_url }}"
