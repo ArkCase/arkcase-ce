@@ -1,8 +1,8 @@
-- name: server-specific configuration for arkcase-portal-prc.yml for version 2021.04 if prc-dockets is deployed
+- name: server-specific configuration for prc-dockets-server.yaml for version 2021.04 if prc-dockets is deployed
   become: yes
   become_user: arkcase
   template:
     backup: yes
-    src: arkcase-portal-prc-server.yaml
-    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-prc-server.yaml
+    src: prc-dockets-server.yaml
+    dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/prc-dockets-server.yaml
   when: (arkcase_version == "" or arkcase_version is version('2021.04', '>=') ) and ( arkcase_extra_microservices is defined and arkcase_extra_microservices | selectattr('name', 'eq', 'prc-dockets') != [] )
