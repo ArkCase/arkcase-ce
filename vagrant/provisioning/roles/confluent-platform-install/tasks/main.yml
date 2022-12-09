@@ -25,27 +25,11 @@
     state: present
     key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
 
-- name: Create Confluent repo (1/2)
+- name: download confluent repo
   become: yes
-  yum_repository:
-    name: Confluent.dist
-    description: Confluent repository (dist)
-    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/{{ confluent_minor_version | default(8) }}
-    gpgcheck: yes
-    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
-    enabled: yes
-    file: confluent
-
-- name: Create Confluent repo (2/2)
-  become: yes
-  yum_repository:
-    name: Confluent
-    description: Confluent repository
-    baseurl: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}
-    gpgcheck: yes
-    gpgkey: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
-    enabled: yes
-    file: confluent
+  get_url:
+    url: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/confluent.repo
+    dest: /etc/yum.repos.d
 
 # The yum module does not support clearing yum cache in an idempotent way!
 - name: Clean the yum caches
