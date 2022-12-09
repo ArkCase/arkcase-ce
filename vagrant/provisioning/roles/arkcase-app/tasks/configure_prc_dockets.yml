@@ -5,4 +5,4 @@
     backup: yes
     src: prc-dockets-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/prc-dockets-server.yaml
-  when: (arkcase_version == "" or arkcase_version is version('2021.04', '>=') ) and ( arkcase_extra_microservices is defined and arkcase_extra_microservices | selectattr('name', 'eq', 'prc-dockets') != [] )
+  when: (arkcase_version == "" or arkcase_version is version('2021.04', '>=') ) and ( arkcase_extra_microservices is defined and arkcase_extra_microservices | selectattr('name', 'eq', 'dockets') != [] )
