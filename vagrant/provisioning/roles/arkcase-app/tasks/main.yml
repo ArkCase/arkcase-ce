@@ -1154,4 +1154,24 @@
 - name: configure Prc-Dockets, if needed
   include_tasks: configure_prc_dockets.yml
 
+- name: register if pdftron license key is added
+  become: yes
+  become_user: arkcase
+  lineinfile:
+    state: absent
+    path: /home/arkcase/.arkcase/acm/licenses/pdfnet_sdk_license.txt
+    regexp: "{{ pdftron_viewer_license }}"
+  check_mode: true
+  changed_when: false
+  register: license_key
+  when: pdftron_viewer_license is defined
 
+- name: add pdfTron license if defined
+  become: yes
+  become_user: arkcase
+  lineinfile:
+    path: /home/arkcase/.arkcase/acm/licenses/pdfnet_sdk_license.txt
+    state: present
+    regexp: '^License Key:'
+    line: "License Key: {{ pdftron_viewer_license | default('') }}"
+  when: pdftron_viewer_license is defined and license_key.found == 0
