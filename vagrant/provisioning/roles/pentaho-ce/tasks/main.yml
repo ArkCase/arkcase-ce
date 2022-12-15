@@ -3,7 +3,7 @@
     - name: "Pentaho CE Server"
       dest: "{{ root_folder }}/install/pentaho/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
       owner: "pentaho"
-      url: "https://jztkft.dl.sourceforge.net/project/pentaho/Pentaho%20{{ pentaho_major_version }}/server/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip"
+      url: "https://sourceforge.net/projects/pentaho/files/Pentaho%20{{ pentaho_major_version }}/server/pentaho-server-ce-{{ pentaho_major_version }}.{{ pentaho_minor_version }}.zip/download"
       validate_certs: no
       checksum: "{{ pentaho_ce_checksum }}"
 
