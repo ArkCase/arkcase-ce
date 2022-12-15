@@ -103,8 +103,8 @@
     - role: arkcase-api-gateway
       tags: [core, upgrade, arkcase-api-gateway, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
-    - role: arkcase-sidecar
-      tags: [core, upgrade, arkcase-sidecar, arkcase-microservices, marketplace]
+    - role: arkcase-eureka
+      tags: [core, upgrade, arkcase-eureka, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-audit
       tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
