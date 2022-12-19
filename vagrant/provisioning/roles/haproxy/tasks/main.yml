@@ -654,13 +654,13 @@
             http-response add-header X-Eureka %s
             mode http
             option tcp-check
-            server eureka {{ arkcase_host }}:9002/eureka
+            server eureka {{ arkcase_host }}:8761/eureka
 
           backend be_eureka-dashboard
             http-response add-header X-Eureka-Dashboard %s
             mode http
             option tcp-check
-            server eureka-dashboard {{ arkcase_host }}:9002/eureka-dashboard
+            server eureka-dashboard {{ arkcase_host }}:8761/eureka-dashboard
   
   when: enable_eureka is defined and enable_eureka == 'yes'
 
