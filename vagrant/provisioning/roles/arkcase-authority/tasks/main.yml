@@ -1,7 +1,0 @@
-- name: deploy arkcase-authority
-  include_tasks: "{{ role_path }}/../arkcase-microservice/tasks/deploy_microservice.yml"
-  vars:
-    microservice:
-      name: arkcase-authority
-      version: "{{ arkcase_authority_version | default(arkcase_version) }}"
-      java_opts: "-Dserver.port=9095 -Xmx512M -Dspring.config.import=configserver:https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
