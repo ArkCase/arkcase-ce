@@ -11,11 +11,15 @@
     name: "config-server"
     state: started
 
-- name: wait for config server
-  wait_for:
-    connect_timeout: 15
-    delay: 5
-    port: 9999
+- name: wait for config server URL to work
+  uri:
+    url: https://{{ internal_host }}:9999/arkcase/runtime.yml
+    validate_certs: false
+    follow_redirects: all
+  register: config_result
+  until: config_result.status == 200
+  retries: 100
+  delay: 5
 
 - name: start arkcase
   become: yes

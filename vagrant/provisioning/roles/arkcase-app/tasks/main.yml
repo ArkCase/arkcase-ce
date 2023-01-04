@@ -379,7 +379,6 @@
   shell: unzip -o arkcase{{ arkcase_version_formatted }}.war WEB-INF/lib/acm-service-search-*.jar
   args:
     chdir: "{{ root_folder }}/install/arkcase"
-    warn: false
   register: search_service_jar
 
 - name: list files in search service jar
@@ -388,7 +387,6 @@
   shell: unzip -l acm-service-search-*.jar
   args:
     chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
-    warn: false
   register: search_service_contents
   changed_when: false
 
@@ -398,7 +396,6 @@
   shell: zip -d acm-service-search-*.jar tls-default.conf
   args:
     chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
-    warn: false
   when: search_service_jar is changed and 'tls-default.conf' in search_service_contents.stdout
   register: tls_default_removed_from_service
 
@@ -408,7 +405,6 @@
   command: zip -r -m arkcase{{ arkcase_version_formatted}}.war WEB-INF
   args:
     chdir: "{{ root_folder }}/install/arkcase"
-    warn: false
   when: tls_default_removed_from_service is changed
 
 - name: application.yaml file
