@@ -1,5 +1,15 @@
 ---
 # tasks file for confluent-install
+- name: Check for current confluent platform version
+  become: yes
+  shell: rpm -qa | grep confluent-platform
+  ignore_errors: yes
+  register: confluent_version
+
+- name: Upgrade confluent platform
+  import_tasks: upgrade-confluent.yml
+  when: confluent_version.stdout != "" and not confluent_major_version | string in confluent_version.stdout
+
 - name: Install curl and which
   become: yes
   yum:
@@ -13,13 +23,13 @@
   become: yes
   rpm_key:
     state: present
-    key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/archive.key
+    key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
 
 - name: Install Confluent Platform repository
   become: yes
   get_url:
     timeout: 1200 # default value is too short for Pentaho Server download
-    url: https://packages.confluent.io/rpm/{{ confluent_major_version | default(5.4) }}/confluent.repo 
+    url: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/confluent.repo 
     dest: /etc/yum.repos.d/confluent.repo
 
 # The yum module does not support clearing yum cache in an idempotent way!

@@ -710,13 +710,13 @@
             http-response add-header X-Eureka %s
             mode http
             option tcp-check
-            server eureka {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            server eureka {{ arkcase_host }}:8761/eureka check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
           backend be_eureka-dashboard
             http-response add-header X-Eureka-Dashboard %s
             mode http
             option tcp-check
-            server eureka-dashboard {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            server eureka-dashboard {{ arkcase_host }}:8761/eureka-dashboard check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   
   when: enable_eureka is defined and enable_eureka == 'yes'
 

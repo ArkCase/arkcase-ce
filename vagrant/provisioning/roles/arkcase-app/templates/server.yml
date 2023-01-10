@@ -33,6 +33,9 @@ ecm:
   viewer.snowbound.encryptionKey: "{{ snowbound_symmetric_key }}"
   viewer.snowbound.readonly:
     url: "https://{{ external_host }}/arkcase/VirtualViewerJavaHTML5/index-read-only.html?documentId=ecmFileId=$[fileId]%26acm_ticket=$[ticket]%26userid=$[userid]"
+{% if ecm_viewer is defined %}
+  viewer: "{{ ecm_viewer | default('snowbound')}}"
+{% endif %}
 outlook.exchange.integration:
   enabled: yes
   system_user_email: "{{ email_service_account }}"
@@ -168,3 +171,7 @@ sessionControl:
   #if set to false, the user that has already authenticated will be forcibly logged out.
   exceptionIfMaximumExceeded: {{ session_control_throw_exception | default(false) }}
 
+#### Configuration variables for PDFTron integration ###########
+pdftron:
+  viewer:
+    license: "{{ pdftron_viewer_license | default('') }}"

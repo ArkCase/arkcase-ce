@@ -19,9 +19,11 @@ arkcase:
     bootstrapAddress: {{ kafka_host }}:{{ kafka_port | default(9092) }}
     schemaRegistryAddress: https://{{ schema_registry_host | default(kafka_host) }}/schema-registry  
   eureka:
-    defaultZone: https://{{ eureka_host | default(internal_host) }}/eureka/
+    defaultZone: https://{{ eureka_host | default(internal_host) }}/eureka
   zipkin:
     baseUrl: https://{{ zipkin_host | default(internal_host) }}/zipkin/api
+  configuration-server:
+    baseURL: https://{{ internal_host }}/config
 
 jodconverter:
   local:
