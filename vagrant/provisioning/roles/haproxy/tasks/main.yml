@@ -12,17 +12,22 @@
     path_stats_socket: "/var/opt/rh/rh-haproxy18/lib/haproxy/stats"
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
+# using Python 3.9, or Python 2, no firewall module can be found or installed, 
+# so we have to use commands instead
+
 - name: ensure web and proxy ports
   become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
-    port: "{{ item }}"
-    state: enabled
+  command: firewall-cmd --add-port "{{ item }}" --permanent
   loop:
     - "80/tcp"
     - "443/tcp"
     - "8404/tcp"
+  register: firewall_ports_updated
+
+- name: reload the firewall if needed
+  become: yes
+  command: firewall-cmd --reload
+  when: firewall_ports_updated is changed
 
 - name: install epel-release 
   become: yes
@@ -67,12 +72,17 @@
       line: '$UDPServerRun 514'
   register: rsyslog_configuration
 
+# Python 3.9 has no selinux module
+- name: see if SELinux context needs to be added
+  become: yes
+  command: ls -lZ {{ root_folder}}/log/haproxy
+  register: haproxy_logging_context
+  changed_when: false
+
 - name: Allow SELinux write access on the haproxy log directory
   become: yes
-  sefcontext:
-    target: '{{ root_folder }}/log/haproxy'
-    setype: haproxy_var_log_t
-    state: present
+  command: semanage fcontext -a -t haproxy_var_log_t "{{ root_folder }}/log/haproxy(/.*)?"
+  when: '"haproxy_var_log_t" not in haproxy_logging_context.stdout'
   register: allow_haproxy_logging
 
 - name: Apply new SELinux file context to filesystem
@@ -658,7 +668,6 @@
         block: |
             acl acl_gateway path_beg /adk
             acl acl_eureka path_beg /eureka
-            acl acl_eureka-dashboard path_beg /eureka-dashboard
 
     - name: Tell frontend part which backend servers will use
       become: yes
@@ -669,7 +678,6 @@
         block: |
             use_backend be_gateway if acl_gateway
             use_backend be_eureka if acl_eureka
-            use_backend be_eureka-dashboard if acl_eureka-dashboard
           
     - name: Populate haproxy.conf with backend servers for Eureka
       become: yes
@@ -712,11 +720,6 @@
             option tcp-check
             server eureka {{ arkcase_host }}:8761/eureka check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
-          backend be_eureka-dashboard
-            http-response add-header X-Eureka-Dashboard %s
-            mode http
-            option tcp-check
-            server eureka-dashboard {{ arkcase_host }}:8761/eureka-dashboard check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   
   when: enable_eureka is defined and enable_eureka == 'yes'
 
@@ -745,12 +748,16 @@
     daemon_reload: yes
   when: haproxy_service_name is changed
 
+# python3.9 has no sepolicy module
+- name: see if haproxy_connect_any is already enabled
+  become: yes
+  command: getsebool haproxy_connect_any
+  register: haproxy_connect_status
+
 - name: enable haproxy to connect to any port
   become: yes
-  seboolean:
-    name: haproxy_connect_any
-    state: yes
-    persistent: yes
+  command: setsebool -P haproxy_connect_any 1
+  when: '"--> on" not in haproxy_connect_status.stdout'
 
 - name: enable and start haproxy
   become: yes
