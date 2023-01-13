@@ -13,3 +13,5 @@ oidc:
   systemUserEmail: "{{ oidc_systemUserEmail }}"
   systemUserPassword: "ENC({{ encrypted_oidc_systemUserPassword }})"
   usersDirectory: "{{ ldap_user_domain | replace('.', '_') }}"
+  responseType: "{{ oidc_responseType }}"
+  responseMode: "{{ oidc_responseMode }}"
