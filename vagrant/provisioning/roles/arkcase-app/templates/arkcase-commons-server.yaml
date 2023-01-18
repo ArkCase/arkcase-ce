@@ -2,8 +2,8 @@ arkcase:
   baseURL: "https://{{ external_host }}/arkcase"
   basePortalURL: "https://{{ external_host }}/portal"
   baseApplicationUrl:  "https://{{ external_host }}"
-  fileManagementURL: "{{ microservice_protocol | default('http') }}://{{ internal_host }}:{{ file_management_port | default(9068) }}/api/file-management"
-  fileUtilsURL: "{{ microservice_protocol | default('http') }}://{{ internal_host }}:{{ file_utils_port | default(9078) }}/api/file-utils"
+  fileManagementURL: "{{ microservice_protocol | default('http') }}://{{ internal_host }}:{{ file_management_port | default(9068) }}"
+  fileUtilsURL: "{{ microservice_protocol | default('http') }}://{{ internal_host }}:{{ file_utils_port | default(9078) }}"
   enableKafkaSync:
     schema: {{ enableSchemaSync | default(false) }}
     caseFile: {{ enableCaseFileSync | default(false) }}
