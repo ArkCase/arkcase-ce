@@ -1175,3 +1175,20 @@
     regexp: '^License Key:'
     line: "License Key: {{ pdftron_viewer_license | default('') }}"
   when: pdftron_viewer_license is defined and license_key.found == 0
+
+- name: download PDFTron libraries
+  become: yes
+  become_user: arkcase
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ pdftron_libraries | default('pdftron') }}/pdftron_libraries.zip
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+
+- name: unzip the PDFTron libraries files
+  become: yes
+  become_user: arkcase
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/pdftron_libraries.zip"
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/libraries"
