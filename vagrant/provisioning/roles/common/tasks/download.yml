@@ -6,12 +6,6 @@
   become: yes
   become_user: "{{ item.owner }}"
   command: wget --read-timeout=1200 {{ item.url }} -O {{ item.dest }}
-  args:
-    warn: no
-#  get_url:
-#    timeout: 1200 # default value is too short for Pentaho Server download
-#    url: "{{ item.url }}"
-#    dest: "{{ item.dest }}"
   when: already_downloaded.stat.exists == False
   register: item_downloaded
 
@@ -37,7 +31,6 @@
 #  become_user: "{{ item.owner }}"
 #  #command: wget --read-timeout=1200 {{ item.url }} -O {{ item.dest }}
 #  #args:
-#  #  warn: no
 #  get_url:
 #    timeout: 1200 # default value is too short for Pentaho Server download
 #    url: "{{ item.url }}"

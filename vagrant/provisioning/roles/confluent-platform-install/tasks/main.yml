@@ -36,8 +36,6 @@
 - name: Clean the yum caches
   become: yes
   command: yum clean all
-  args:
-    warn: False
 
 - name: set Confluent Platform version
   set_fact:
@@ -65,8 +63,6 @@
 - name: Install Confluent Platform
   become: yes
   shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/confluent-platform/*.rpm
-  args:
-    warn: false
   when: confluent_downloaded is changed
 
 - name: Kafka folders

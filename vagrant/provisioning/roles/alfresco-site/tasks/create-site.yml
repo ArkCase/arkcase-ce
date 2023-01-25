@@ -1,7 +1,5 @@
 - name: create {{ item.s_name }} share site
   command: curl -k -sS --user admin:"{{ alfresco_admin_password }}" -H 'Content-Type{{ ":" }} application/json' -H 'Accept{{ ":" }} */*' -H 'Alfresco-CSRFToken{{ ":" }} {{ csrftoken }}' --cookie cookie.txt --cookie-jar cookie.txt -X POST '{{ alfresco_url }}/share/service/modules/create-site' --data '{ "title"{{ ":" }} "{{ item.s_title }}","shortName"{{ ":" }} "{{ item.s_name }}","description"{{ ":" }} "{{ item.s_description }}","sitePreset"{{ ":" }} "{{ item.s_preset }}", "type"{{ ":" }} "{{ item.s_type }}","visibility"{{ ":" }} "PUBLIC","compliance"{{ ":" }} "{{ item.s_compliance }}" }' --compressed
-  args:
-    warn: false
   register: acm_site_out
   failed_when: '"true" not in acm_site_out.stdout and "error.duplicateShortName" not in acm_site_out.stdout'
   changed_when: '"Success" in acm_site_out.stdout'
