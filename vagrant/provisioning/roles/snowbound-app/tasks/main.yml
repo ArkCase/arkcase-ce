@@ -73,7 +73,6 @@
   become_user: snowbound
   command: unzip -o snowbound-integration-{{ snowbound_vendor_version }}{{ snowbound_arkcase_version_formatted }}.war WEB-INF/web.xml
   args:
-    warn: no
     chdir: "{{ root_folder }}/install/snowbound"
   when: snowbound_war is changed
 
@@ -101,7 +100,6 @@
   become_user: snowbound
   command: zip -r snowbound-integration-{{ snowbound_vendor_version }}{{ snowbound_arkcase_version_formatted }}.war WEB-INF
   args:
-    warn: no
     chdir: "{{ root_folder }}/install/snowbound"
   when: web_xml is changed
 

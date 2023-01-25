@@ -14,8 +14,6 @@
 - name: install epel on RHEL 8 - install
   become: yes
   shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/arkcase/epel-release-latest*.rpm
-  args:
-    warn: false
   register: epel_install_command
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
   failed_when: epel_install_command.rc != 0 and "is already installed" not in epel_install_command.stderr

@@ -105,15 +105,11 @@
 - name: download required packages (yarn) to run ArkCase webapp
   become: yes
   command: dnf -y install --downloadonly --downloaddir {{ root_folder }}/install/arkcase yarn
-  args:
-    warn: false
   when: yarn_version.stdout == ""
 
 - name: install required package (yarn)
   become: yes
   shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/arkcase/yarn*.rpm
-  args:
-    warn: false
   when: yarn_version.stdout == ""
 
 - name: install python2 (needed on RHEL8)

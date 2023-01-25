@@ -103,7 +103,7 @@
     - role: arkcase-app
       tags: [arkcase-app, core, arkcase, upgrade, marketplace]
     - role: arkcase-api-gateway
-      tags: [core, upgrade, arkcase-api-gateway, arkcase-microservices, marketplace]
+      tags: [core, arkcase-api-gateway, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-eureka
       tags: [core, upgrade, arkcase-eureka, arkcase-microservices, marketplace]

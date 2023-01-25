@@ -81,7 +81,6 @@
   command: unzip -j -d "{{ root_folder }}/tmp/pentaho-pdi/{{ item }}" "{{ root_folder }}/install/pentaho-pdi/{{ item }}-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip"
   args:
     creates: "{{ root_folder }}/tmp/pentaho-pdi/{{ item }}/license.txt"
-    warn: no
   loop:
     - pdi-ee-client
 

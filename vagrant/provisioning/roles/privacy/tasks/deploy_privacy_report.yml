@@ -12,15 +12,11 @@
   become: yes
   become_user: arkcase
   shell: unzip -u -o -j -d "{{ root_folder }}/install/arkcase" "{{ root_folder }}/install/arkcase/arkcase{{ arkcase_version_formatted }}.war" WEB-INF/lib/acm-privacy-*.jar
-  args:
-    warn: no
 
 - name: unzip report definition file "{{ r }}"
   become: yes
   become_user: arkcase
   shell: unzip -u -o -j -d "{{ root_folder }}/tmp/arkcase/" "{{ root_folder }}/install/arkcase/acm-privacy-*.jar"  "reports/{{ r }}"
-  args:
-    warn: no
 
 - name: copy the report definition file "{{ r }}", this will tell us if it changed
   become: yes

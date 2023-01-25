@@ -3,7 +3,6 @@
   become_user: pentaho
   command: 
     cmd: 'wget --no-check-certificate -O {{ root_folder }}/install/pentaho/datasources-list.json --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
-    warn: no
   changed_when: false
 
 - name: read the list of data sources
@@ -25,14 +24,12 @@
 - name: create the ArkCase JDBC data source for interactive reports
   command: 
     cmd: 'wget --no-check-certificate --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
-    warn: no
   register: create_datasource_rest_call
   when: not '"MariaDB Local"' in data_source_list.stdout
 
 - name: Check if keep alive report exists
   command: 
     cmd: 'curl -k -v -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/getJobs'
-    warn: no
   register: scheduledJobs_out
 
 - name: Copy keep alive files to /tmp
@@ -54,7 +51,6 @@
 - name: Schedule execution of keep alive report on every 30 min to keep connection alive
   command:
     cmd: 'curl -k -v -H "Content-Type: application/xml" --data @/tmp/DBKeepAliveJob.xml -X POST -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/job'
-    warn: no
   when: '"KeepAliveJob" not in scheduledJobs_out.stdout'
 
 - name: download configuration (if using sftp, and no extension is configured)
@@ -165,5 +161,4 @@
 - name: Install static reports from configuration
   command:
     cmd: 'curl -k -v -X PUT --data-binary "@{{ item.path }}" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/repo/files/:public:{{ item.path | dirname | regex_replace(".*\/", "") }}:{{ item.path | basename | replace(" ","%20")}}'
-    warn: no
   with_items: "{{ static_reports.files }}"
