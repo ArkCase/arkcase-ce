@@ -109,7 +109,7 @@
       tags: [core, upgrade, arkcase-eureka, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-audit
-      tags: [core, arkcase-audit, arkcase-microservices, marketplace]
+      tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-ldap-authority
       tags: [core, upgrade, arkcase-ldap-authority, arkcase-microservices, marketplace]
