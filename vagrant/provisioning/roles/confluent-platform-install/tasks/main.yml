@@ -35,8 +35,7 @@
 - name: Clean the yum caches
   become: yes
   command: yum clean all
-  args:
-    warn: False
+  ignore_errors: true
 
 - name: Install Confluent Platform
   become: yes

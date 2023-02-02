@@ -22,8 +22,7 @@
     - name: mount guest additions
       become: yes
       shell: mount -t iso9660 -o loop /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso /mnt
-      args:
-        warn: False
+      ignore_errors: true
       when: mounted.stdout.find('VBoxGuestAdditions') == -1
     - name: build guest additions
       become: yes

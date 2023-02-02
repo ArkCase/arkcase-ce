@@ -214,7 +214,7 @@
   become_user: pentaho
   command: 
     cmd: 'wget --no-check-certificate -O {{ root_folder }}/install/pentaho/datasources-list.json --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
-    warn: no
+  ignore_errors: true
   changed_when: false
 
 - name: read the list of data sources
@@ -236,7 +236,7 @@
 - name: create the ArkCase JDBC data source for analytical reports
   command: 
     cmd: 'wget --no-check-certificate --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
-    warn: no
+  ignore_errors: true
   register: create_datasource_rest_call
   when: not '"MariaDB Local"' in data_source_list.stdout
 
@@ -245,7 +245,7 @@
   become_user: pentaho
   command:
     cmd: 'curl -k -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
-    warn: no
+  ignore_errors: true
 
 #########################################################
 # Deploy the reports 
