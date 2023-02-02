@@ -47,7 +47,6 @@
     - name: install libreoffice
       become: yes
       shell: yum -y install {{ root_folder }}/install/alfresco/LibreOffice_5.4.6.2_Linux_x86-64_rpm/RPMS/*.rpm
-      ignore_errors: true
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
       
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later

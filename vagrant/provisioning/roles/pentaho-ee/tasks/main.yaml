@@ -38,7 +38,6 @@
   command: unzip -j -d "{{ root_folder }}/tmp/pentaho/{{ item }}" "{{ root_folder }}/install/pentaho/{{ item }}-{{ pentaho_major_version }}.{{ pentaho_minor_version }}-dist.zip"
   args:
     creates: "{{ root_folder }}/tmp/pentaho/{{ item }}/license.txt"
-  ignore_errors: true
   loop:
     - paz-plugin-ee
     - pdd-plugin-ee

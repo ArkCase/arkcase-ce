@@ -376,7 +376,6 @@
   args:
     chdir: "{{ root_folder }}/install/arkcase"
   register: search_service_jar
-  ignore_errors: true
 
 - name: list files in search service jar
   become: yes
@@ -386,7 +385,6 @@
     chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
   register: search_service_contents
   changed_when: false
-  ignore_errors: true
 
 - name: remove tls_defalt_conf from search service jar
   become: yes
@@ -396,7 +394,6 @@
     chdir: "{{ root_folder }}/install/arkcase/WEB-INF/lib"
   when: search_service_jar is changed and 'tls-default.conf' in search_service_contents.stdout
   register: tls_default_removed_from_service
-  ignore_errors: true
 
 - name: update arkcase.war with updated search service jar
   become: yes
@@ -405,7 +402,6 @@
   args:
     chdir: "{{ root_folder }}/install/arkcase"
   when: tls_default_removed_from_service is changed
-  ignore_errors: true
 
 - name: application.yaml file
   become: yes
