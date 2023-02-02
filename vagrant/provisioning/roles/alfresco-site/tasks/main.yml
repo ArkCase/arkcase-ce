@@ -25,8 +25,7 @@
 # note, can't use get_uri here since we need to keep the cookie jar
 - name: login to Share
   command: curl -k -sS --user admin:"{{ alfresco_admin_password }}" --cookie cookie.txt --cookie-jar cookie.txt -H "Content-Type:application/x-www-form-urlencoded" --data "success=/share/page/" --data "failure=/share/page/?error=true" --data "username=admin" --data password="{{ alfresco_admin_password }}" -X POST "{{ alfresco_url }}/share/page/dologin"
-  args:
-    warn: false
+  ignore_errors: true
   changed_when: false
 
 - name: check if login succeeded
@@ -37,8 +36,7 @@
 
 - name: get the CSRFToken
   command: curl -k -sS --user admin:"{{ alfresco_admin_password }}" --cookie cookie.txt --cookie-jar cookie.txt "{{ alfresco_url }}/share/service/modules/authenticated?a=user"
-  args:
-    warn: false
+  ignore_errors: true
   changed_when: false
 
 - name: check if we got the CSRFToken

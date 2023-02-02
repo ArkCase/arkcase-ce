@@ -16,8 +16,7 @@
   become: yes
   become_user: pentaho
   command: unzip -u -o -j -d {{ root_folder }}/install/pentaho/report-definitions/extension/{{ r.pentaho_path }} {{ root_folder }}/install/pentaho/{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.jar "{{ r.jar_path }}"
-  args:
-    warn: no
+  ignore_errors: true
   register: report_definition
   changed_when: "'inflated' in report_definition.stdout or 'inflating' in report_definition.stdout"
   
