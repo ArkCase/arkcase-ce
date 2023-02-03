@@ -1156,11 +1156,11 @@
   lineinfile:
     state: absent
     path: /home/arkcase/.arkcase/acm/licenses/pdfnet_sdk_license.txt
-    regexp: "{{ pdftron_viewer_license }}"
+    regexp: "{{ pdftron_license_key }}"
   check_mode: true
   changed_when: false
   register: license_key
-  when: pdftron_viewer_license is defined
+  when: pdftron_license_key is defined
 
 - name: add pdfTron license if defined
   become: yes
@@ -1169,8 +1169,8 @@
     path: /home/arkcase/.arkcase/acm/licenses/pdfnet_sdk_license.txt
     state: present
     regexp: '^License Key:'
-    line: "License Key: {{ pdftron_viewer_license | default('') }}"
-  when: pdftron_viewer_license is defined and license_key.found == 0
+    line: "License Key: {{ pdftron_license_key | default('') }}"
+  when: pdftron_license_key is defined and license_key.found == 0
 
 - name: download PDFTron libraries
   become: yes
