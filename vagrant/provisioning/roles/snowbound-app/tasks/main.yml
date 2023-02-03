@@ -74,7 +74,6 @@
   command: unzip -o snowbound-integration-{{ snowbound_vendor_version }}{{ snowbound_arkcase_version_formatted }}.war WEB-INF/web.xml
   args:
     chdir: "{{ root_folder }}/install/snowbound"
-  ignore_errors: true
   when: snowbound_war is changed
 
 - name: fix the WEB-INF/web.xml file
@@ -102,7 +101,6 @@
   command: zip -r snowbound-integration-{{ snowbound_vendor_version }}{{ snowbound_arkcase_version_formatted }}.war WEB-INF
   args:
     chdir: "{{ root_folder }}/install/snowbound"
-  ignore_errors: true
   when: web_xml is changed
 
 - name: Update Snowbound war file

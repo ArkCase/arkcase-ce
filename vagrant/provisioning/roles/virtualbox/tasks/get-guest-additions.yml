@@ -4,7 +4,6 @@
     path: /usr/share/virtualbox
     state: directory
 
-
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: VirtualBox_Guest_Additions
@@ -22,7 +21,6 @@
     - name: mount guest additions
       become: yes
       shell: mount -t iso9660 -o loop /usr/share/virtualbox/VBoxGuestAdditions_{{ virtualbox_version }}.iso /mnt
-      ignore_errors: true
       when: mounted.stdout.find('VBoxGuestAdditions') == -1
     - name: build guest additions
       become: yes

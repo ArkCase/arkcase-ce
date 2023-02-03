@@ -52,7 +52,6 @@
   become: yes
   command:
     cmd: rpm -Uvih /tmp/en-US/RPMS/*.rpm
-  ignore_errors: true
   when: open_office_latest_version is not defined or not open_office_latest_version
 
 - name: remove tmp files
@@ -96,7 +95,6 @@
   become: yes
   command:
     cmd: rpm -Uvih --prefix={{ libreoffice_install_path }} /tmp/LibreOffice*/RPMS/*.rpm
-  ignore_errors: true
   when: not libreoffice_bin_exists.stat.exists
   register: libreoffice_install
   # 41 means the packages were already installed
