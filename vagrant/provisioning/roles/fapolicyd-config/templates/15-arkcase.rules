@@ -1,2 +1,3 @@
 allow perm=any uid=arkcase : dir={{ root_folder }}/data/arkcase-home/.cache/JNA/temp/
 allow perm=any uid=arkcase : dir={{ root_folder }}/app/arkcase/work/Catalina/localhost/arkcase/org/apache/jsp/views/
+allow perm=any uid=arkcase : ftype=application/x-sharedlib
