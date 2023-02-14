@@ -167,6 +167,9 @@ microsoftOfficeOnline.isWopiEnabled: {{ arkcase_ee | default('false') }}
 pdftron:
   viewer:
     license: "{{ pdftron_viewer_license | default('') }}"
+  audioVideo:
+    viewer:
+      license: "{{ pdftron_audio_video_viewer_license | default('') }}"
 
 ############# File service configuration for s3/alfresco
 fileManagement:
