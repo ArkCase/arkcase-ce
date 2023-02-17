@@ -115,5 +115,6 @@
   copy:
     src: "{{ item }}"
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/pdftron/annotations/"
+    remote_src: yes
   with_fileglob:
     - "{{ latest_config_backup_folder.path }}/pdftron/annotations/*"
