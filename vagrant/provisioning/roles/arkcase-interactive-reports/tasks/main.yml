@@ -66,12 +66,12 @@
 - name: set extension config file name (extension id)
   set_fact:
     extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.zip"
-  when: arkcase_extension_id is defined and pentaho_host != internal_host
+  when: arkcase_extension_id is defined 
 
 - name: set extension config file name (no extension id)
   set_fact:
     extension_config_file_name: "arkcase-config{{ arkcase_extension_version }}.zip"
-  when: not arkcase_extension_id is defined and pentaho_host != internal_host
+  when: not arkcase_extension_id is defined
 
 - name: download extension configuration (if configured)
   become: yes
