@@ -4,7 +4,6 @@
     path: /usr/share/virtualbox
     state: directory
 
-
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: VirtualBox_Guest_Additions

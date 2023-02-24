@@ -202,3 +202,14 @@
     dest: /usr/bin/yq
     mode: '0755'
 
+- name: add PdfTron java librabries to java arguments
+  become: yes
+  become_user: arkcase
+  blockinfile:
+    path: "{{ root_folder }}/app/arkcase/bin/setenv.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - PdfTron"
+    block: |
+      export JAVA_OPTS="$JAVA_OPTS -Djava.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries:{{ root_folder }}/app/arkcase/lib"
+  when: pdftron_viewer_license is defined
+

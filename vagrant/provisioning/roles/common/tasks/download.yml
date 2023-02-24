@@ -2,6 +2,7 @@
   stat:
     path: "{{ item.dest }}" 
   register: already_downloaded
+
 - name: download {{ item.name }} if needed (no checksum)
   become: yes
   become_user: "{{ item.owner }}"
@@ -25,19 +26,3 @@
   fail:
     msg: "Actual checksum {{ item_checksum.stat.checksum }} doesn't match expected checkum {{ item.checksum }}"
   when: item.checksum is defined and item.checksum != 'sha1:' ~ item_checksum.stat.checksum
-
-#- name: download {{ item.name }} if needed (checksum)
-#  become: yes
-#  become_user: "{{ item.owner }}"
-#  #command: wget --read-timeout=1200 {{ item.url }} -O {{ item.dest }}
-#  #args:
-#  get_url:
-#    timeout: 1200 # default value is too short for Pentaho Server download
-#    url: "{{ item.url }}"
-#    dest: "{{ item.dest }}"
-#    checksum: "{{ item.checksum }}"
-#  when: already_downloaded.stat.exists == False and item.checksum is defined
-#  register: item_downloaded
-#  until: not item_downloaded.failed
-#  retries: 10
-#  delay: 30
