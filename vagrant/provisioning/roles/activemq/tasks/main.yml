@@ -126,6 +126,7 @@
     - { after: "^wrapper\\.java\\.additional\\.14.*", line: "wrapper.java.additional.15=-Dcom.sun.management.jmxremote.ssl=false" }
     - { after: "^wrapper\\.java\\.additional\\.15.*", line: "wrapper.java.additional.16=-Xdebug -Xnoagent -Djava.compiler=NONE" }
     - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
+    - { after: "^wrapper\\.java\\.additional\\.17.*", line: "wrapper.java.additional.18=-Dlog4j.configuration=%ACTIVEMQ_CONF%/log4j.properties" }
   when: activemq_unarchived is changed
 
 - name: jdbc support and dead letter queue policy
@@ -242,6 +243,25 @@
           <sslContext keyStore="file://{{ java_p12_store_jdk8 }}" keyStorePassword="{{ java_key_store_pass }}" keyStoreType="pkcs12" />
       </sslContext>
   when: activemq_xml.stdout.find('sslContext keyStore="file://' ~ java_key_store) == -1 
+
+- name: ActiveMQ Log4J fixes - remove vulnerable log4j
+  become: yes
+  become_user: activemq
+  ansible.builtin.file:
+    path: "{{ root_folder }}/app/activemq/lib/optional/log4j-1.2.17.jar"
+    state: absent
+
+- name: ActiveMQ Log4J fixes - add acceptable log4j 
+  become: yes
+  become_user: activemq
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ root_folder }}/common/log4j-{{ item }}-{{ log4j_version | default('2.19.0') }}.jar"
+    dest: "{{ root_folder }}/app/activemq/lib/optional/log4j-{{ item }}-{{ log4j_version | default('2.19.0') }}.jar"
+  loop:
+    - api
+    - core
+    - 1.2-api
 
 - include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
   loop:
