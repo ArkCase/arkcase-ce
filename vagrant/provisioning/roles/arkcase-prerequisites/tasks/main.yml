@@ -149,6 +149,7 @@
           fips_mode: "{{ fips_mode_arkcase | default('') }}"
           mem_min: "4g"
           mem_max: "12g"
+          extra_lib_path: "/home/arkcase/.arkcase/libraries"
   register: tomcat_unarchived
 
 - name: add options to JAVA_OPTS

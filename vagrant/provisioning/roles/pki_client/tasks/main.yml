@@ -43,6 +43,40 @@
   command: openssl pkcs12 -export -in {{ ssl_cert }} -inkey {{ ssl_key_rsa }} -out "{{ java_p12_store_jdk8 }}" -name arkcase_server -chain -CAfile {{ ssl_ca }} -passout 'pass:{{ java_key_store_pass }}'
   when: not arkcase_ks_jdk8_stat.stat.exists
 
+- name: download FIPS crypto library
+  become: yes
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/bc-fips-{{ bc_fips_version | default("1.0.2.3") }}.jar
+  args:
+    chdir: "{{ root_folder }}/common"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  register: bc_fips_jar
+
+- name: copy FIPS crypto library to Java extension folder
+  become: yes
+  command: cp {{ root_folder }}/common/bc-fips-{{ bc_fips_version | default("1.0.2.3") }}.jar /usr/lib/jvm/java-1.8.0/jre/lib/ext
+  when: bc_fips_jar is changed and (deploy_bc_fips_jar | default(false))
+
+- name: configure Java security to use FIPS crypto library when in FIPS mode
+  become: yes
+  lineinfile:
+    backup: yes
+    path: /usr/lib/jvm/java-1.8.0/jre/lib/security/java.security
+    line: fips.provider.5=org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider
+  when: deploy_bc_fips_jar | default(false)
+
+- name: see if the FIPS keystore exists
+  become: yes
+  stat:
+    path: "{{ java_fips_store }}"
+  register: arkcase_fips_stat
+  changed_when: false
+
+- name: generate FIPS key store
+  become: yes
+  command: keytool -importkeystore -srckeystore {{ java_p12_store_jdk8 }} -srcstoretype PKCS12 -srcstorepass {{ java_key_store_pass }} -destkeystore {{ java_fips_store }} -deststorepass {{ java_key_store_pass }} -deststoretype BCFKS -providername BCFIPS -provider org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider -providerpath {{ root_folder }}/common/bc-fips-{{ bc_fips_version | default("1.0.2.3") }}.jar -J-Dcom.redhat.fips=false
+  when: not arkcase_fips_stat.stat.exists
+
 - name: ensure shared permissions on different TLS artifacts
   become: yes
   file:
@@ -51,6 +85,7 @@
   loop:
    - "{{ java_p12_store }}"
    - "{{ java_p12_store_jdk8 }}"
+   - "{{ java_fips_store }}"
    - "{{ java_pem_store }}"
    - "{{ ssl_ca }}"
    - "{{ root_folder }}/common/rds-ca-2019-root.pem"
