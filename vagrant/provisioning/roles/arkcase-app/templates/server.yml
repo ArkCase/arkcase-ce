@@ -179,6 +179,10 @@ pdftron:
     viewer:
       license: "{{ pdftron_audio_video_viewer_license | default('') }}"
 
+casefile:
+  plugin:
+    auto_create_calendar_folder: false
+
 ############# File service configuration for s3/alfresco
 fileManagement:
   fileRepositoryType: {{ file_repository_type | default("alfresco") }}

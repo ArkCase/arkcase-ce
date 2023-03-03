@@ -10,20 +10,25 @@
 - name: httpd folders
   become: yes
   file:
-    path: "{{ item }}"
+    path: "{{ item.path }}"
     state: directory
     owner: apache
     group: apache
     seuser: "system_u"
     serole: "object_r"
-    setype: "httpd_log_t"
+    setype: "{{ item.setype }}"
     selevel: "s0"
   loop:
-    - "{{ root_folder }}/log/httpd"
-    - "{{ root_folder }}/data/httpd"
-    - "{{ root_folder }}/data/httpd/htdocs"
-    - "{{ root_folder }}/tmp/httpd"
-    - "{{ root_folder }}/install/httpd"
+    - path: "{{ root_folder }}/log/httpd"
+      setype: "httpd_log_t"
+    - path: "{{ root_folder }}/data/httpd"
+      setype: "usr_t"
+    - path: "{{ root_folder }}/data/httpd/htdocs"
+      setype: "httpd_sys_content_t"
+    - path: "{{ root_folder }}/tmp/httpd"
+      setype: "usr_t"
+    - path: "{{ root_folder }}/install/httpd"
+      setype: "usr_t"
 
 - name: copy private key for httpd
   become: yes

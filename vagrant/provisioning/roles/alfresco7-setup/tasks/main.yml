@@ -12,6 +12,10 @@
     state: present
     group: alfresco7
 
+- name: set path to alfresco data folder
+  set_fact:
+    data_folder: "{{ alfresco_data_folder | default(root_folder + '/data/alfresco7') }}"
+
 - name: alfresco7 folders
   become: yes
   file:
@@ -20,14 +24,24 @@
     group: alfresco7
     owner: alfresco7
   loop:
-    - "{{ root_folder }}/data/alfresco7"
-    - "{{ root_folder }}/data/alfresco7/alf_data"
     - "{{ root_folder }}/log/alfresco7"
     - "{{ root_folder }}/app/alfresco7"    
     - "{{ root_folder }}/app/alfresco7/alfresco7-pdf-renderer"
     - "{{ root_folder }}/install/alfresco7"
     - "{{ root_folder }}/tmp/alfresco7"
+    - "{{ data_folder }}"
+    - "{{ data_folder }}/alf_data"
   register: alfresco7_folder_structure
+
+- name: link data folder to root folder if necessary
+  become: yes
+  file:
+    group: alfresco7
+    owner: alfresco7
+    src: "{{ data_folder }}"
+    dest: "{{ root_folder }}/data/alfresco7"
+    state: link
+  when: data_folder != root_folder + "/data/alfresco"
 
 - name: enable logrotate for alfresco7 log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
