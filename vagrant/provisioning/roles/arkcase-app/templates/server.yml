@@ -175,7 +175,29 @@ sessionControl:
 pdftron:
   viewer:
     license: "{{ pdftron_viewer_license | default('') }}"
+  audioVideo:
+    viewer:
+      license: "{{ pdftron_audio_video_viewer_license | default('') }}"
+
 casefile:
   plugin:
     auto_create_calendar_folder: false
 
+############# File service configuration for s3/alfresco
+fileManagement:
+  fileRepositoryType: {{ file_repository_type | default("alfresco") }}
+  s3:
+    url: "http://{{ internal_host }}:9000"
+    region: {{ aws_s3_region | default("us-east-1") }}
+    accessKey: {{ s3_access_key | default("minioadmin") }}
+    secretKey: {{ s3_secret_key | default("minioadmin") }}
+    bucketName: {{ s3_bucket_name | default("arkcase") }}
+
+############# License Management
+licenseManagement:
+  licenseAboutToExpireMessage: "Your ArkCase License is set to expire in %d %s. Please reach out to your Account Manager to acquire a new license."
+  licenseStillNotActiveMessage: "Your ArkCase License will be valid soon. Please reach out to your Account Manager for more details."
+  licenseValidMessage:  "Your ArkCase License is valid."
+  licenseExpiredMessage:  "Your ArkCase License has expired. Please reach out to your Account Manager to acquire a new license."
+  userNotAdministrator: "User don't have permission to view message."
+>>>>>>> 46db923f7bbeec2604dfaed6f5e20656145a26a2

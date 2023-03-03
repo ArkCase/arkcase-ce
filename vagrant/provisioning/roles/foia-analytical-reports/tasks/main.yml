@@ -5,7 +5,6 @@
 - name: Set reports version formatted
   set_fact:
     foia_analytical_reports_version_formatted: "{{ '-' ~ foia_analytical_reports_version if foia_analytical_reports_version != '' else '' }}"
-    
 
 - name: create install folder
   become: yes
