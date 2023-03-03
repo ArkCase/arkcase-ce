@@ -96,16 +96,6 @@
     dest: "{{ root_folder }}/app/zookeeper/conf/zookeeper-env.sh"
     backup: yes
 
-- name: no-FIPS mode
-  become: yes
-  become_user: zookeeper
-  lineinfile:
-    backup: yes
-    path: "{{ root_folder }}/app/zookeeper/bin/zkEnv.sh"
-    insertafter: EOF
-    line: 'export SERVER_JVMFLAGS="-Dcom.redhat.fips=false -Xmx${ZK_SERVER_HEAP}m $SERVER_JVMFLAGS"'
-
-
 - name: Zookeeper logging
   become: yes
   become_user: zookeeper
@@ -184,3 +174,12 @@
   become: yes
   command: firewall-cmd --reload
   when: zookeeper_ports is changed
+
+- name: fapolicy settings for ZooKeeper, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: zookeeper
+      folder_path: "{{ root_folder }}/app/zookeeper"
+    - name: jre_security
+      folder_path: /usr/lib/jvm/java-1.8.0/jre/lib/ext
+
