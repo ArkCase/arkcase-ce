@@ -175,3 +175,7 @@ sessionControl:
 pdftron:
   viewer:
     license: "{{ pdftron_viewer_license | default('') }}"
+casefile:
+  plugin:
+    auto_create_calendar_folder: false
+
