@@ -200,4 +200,3 @@ licenseManagement:
   licenseValidMessage:  "Your ArkCase License is valid."
   licenseExpiredMessage:  "Your ArkCase License has expired. Please reach out to your Account Manager to acquire a new license."
   userNotAdministrator: "User don't have permission to view message."
->>>>>>> 46db923f7bbeec2604dfaed6f5e20656145a26a2
