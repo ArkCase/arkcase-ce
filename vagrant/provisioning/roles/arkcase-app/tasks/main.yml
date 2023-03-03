@@ -1190,6 +1190,13 @@
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
 
+- name: create libraries directory if it does not exist
+  become: yes
+  become_user: arkcase
+  file:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries"
+    state: directory
+
 - name: unzip the PDFTron libraries files
   become: yes
   become_user: arkcase
