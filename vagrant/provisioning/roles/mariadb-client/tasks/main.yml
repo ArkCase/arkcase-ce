@@ -4,13 +4,17 @@
     dest: /etc/yum.repos.d/mariadb.repo
     force: no
     content: |
-      # MariaDB 10.4 CentOS repository list - created 2019-01-09 21:49 UTC
-      # http://downloads.mariadb.org/mariadb/repositories/
+      # MariaDB 10.4 RedHatEnterpriseLinux repository list - created 2023-03-01 19:04 UTC
+      # https://mariadb.org/download/
       [mariadb]
       name = MariaDB
-      baseurl = http://yum.mariadb.org/10.4/centos7-amd64
-      gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
-      gpgcheck=1
+      # rpm.mariadb.org is a dynamic mirror if your preferred mirror goes offline. See https://mariadb.org/mirrorbits/ for details.
+      baseurl = https://rpm.mariadb.org/10.4/rhel/$releasever/$basearch
+      #baseurl = https://mirror.rackspace.com/mariadb/yum/10.4/rhel/$releasever/$basearch
+      module_hotfixes = 1
+      # gpgkey = https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgkey = https://mirror.rackspace.com/mariadb/yum/RPM-GPG-KEY-MariaDB
+      gpgcheck = 1
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: configure MariaDB v10 repository (RHEL 8)
@@ -19,14 +23,17 @@
     dest: /etc/yum.repos.d/mariadb.repo
     force: no
     content: |
-      # MariaDB 10.4 RedHat repository list - created  2022-01-07
+      # MariaDB 10.4 RedHatEnterpriseLinux repository list - created 2023-03-01 19:04 UTC
       # https://mariadb.org/download/
       [mariadb]
       name = MariaDB
-      baseurl = https://mirror.jaleco.com/mariadb/yum/10.4/rhel8-amd64
-      module_hotfixes=1
-      gpgkey=https://mirror.jaleco.com/mariadb/yum/RPM-GPG-KEY-MariaDB
-      gpgcheck=1
+      # rpm.mariadb.org is a dynamic mirror if your preferred mirror goes offline. See https://mariadb.org/mirrorbits/ for details.
+      baseurl = https://rpm.mariadb.org/10.4/rhel/$releasever/$basearch
+      #baseurl = https://mirror.rackspace.com/mariadb/yum/10.4/rhel/$releasever/$basearch
+      module_hotfixes = 1
+      # gpgkey = https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgkey = https://mirror.rackspace.com/mariadb/yum/RPM-GPG-KEY-MariaDB
+      gpgcheck = 1
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
 - name: MySQL python package name (CentOS 7)

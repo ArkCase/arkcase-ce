@@ -185,3 +185,10 @@
   systemd:
     name: solr
     state: restarted
+
+- name: fapolicy settings for Solr, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: solr
+      folder_path: "{{ root_folder }}/app/solr"
+
