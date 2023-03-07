@@ -108,3 +108,13 @@
     block: |
       export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=ldap"
   when: '"-Dspring.profiles.active" not in setenv_contents.stdout'
+
+- name: copy pdftron annotation files
+  become: yes
+  become_user: arkcase
+  copy:
+    src: "{{ item }}"
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/pdftron/annotations/"
+    remote_src: yes
+  with_fileglob:
+    - "{{ latest_config_backup_folder.path }}/pdftron/annotations/*"
