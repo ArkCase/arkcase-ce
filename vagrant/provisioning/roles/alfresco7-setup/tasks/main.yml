@@ -41,7 +41,7 @@
     src: "{{ data_folder }}"
     dest: "{{ root_folder }}/data/alfresco7"
     state: link
-  when: data_folder != root_folder + "/data/alfresco"
+  when: data_folder != root_folder + "/data/alfresco7"
 
 - name: enable logrotate for alfresco7 log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
