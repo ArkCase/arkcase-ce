@@ -1194,7 +1194,7 @@
   become: yes
   become_user: arkcase
   file:
-    path: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries"
+    path: "/home/arkcase/.arkcase/libraries"
     state: directory
 
 - name: unzip the PDFTron libraries files
