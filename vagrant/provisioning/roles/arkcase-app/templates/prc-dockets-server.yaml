@@ -1,5 +1,5 @@
 portal-prc:
-  arkcaseUrl: "https://{{ external_host }}/arkcase"
+  arkcaseUrl: "https://{{ arkcase_host }}/arkcase"
   userId: "{{ arkcase_admin_user }}@{{ ldap_user_domain }}"
   password: "{{ arkcase_admin_password }}"
   authenticationType: "{{ arkcase_portal_authentication }}"
