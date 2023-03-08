@@ -530,21 +530,21 @@
     state: started
   when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_ksql_updated is changed)
 
-- name: Enable Control Center to start on boot
+- name: Ensure Control Center does not start on boot
   become: yes
   systemd:
     daemon_reload: true
     name: confluent-control-center
-    enabled: yes
+    enabled: no
     masked: no
-    state: restarted
+    state: stopped
   when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_control_center_updated is changed)
 
 - name: ensure Control Center is disabled
   become: yes
   systemd:
     name: confluent-control-center
-    state: disabled
+    state: stopped
   when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_control_center_updated is changed)
 
 - name: Enable Kafka Rest to start on boot
