@@ -14,4 +14,23 @@
       become_user: alfresco7
       command: java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" install {{ amp.amp_path }} "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
       when: 'amp.title not in installed_amps.stdout'
+  when: alfresco_ee_version is version('7.3.0.1', '<')
+
+- name: apply {{ amp.title }} amp (java 11)
+  block:
+    - name: capture amp title (java 11)
+      set_fact:
+        amp_title: "{{ amp.title }}"
+    - name: list existing amps in {{ amp.target_war }} (java 11)
+      become: yes
+      become_user: alfresco7
+      command: /usr/lib/jvm/java-11-openjdk/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" list "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
+      register: installed_amps
+      changed_when: false
+    - name: apply {{ amp.title }}  amp if needed (java 11)
+      become: yes
+      become_user: alfresco7
+      command: /usr/lib/jvm/java-11-openjdk/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" install {{ amp.amp_path }} "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
+      when: 'amp.title not in installed_amps.stdout'
+  when: alfresco_ee_version is version('7.3.0.1', '>=')    
 

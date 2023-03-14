@@ -510,7 +510,7 @@ tomcat_version: 9.0.22
 # Alfresco Community Edition
 alfresco_release_name: 201806-GA
 alfresco_build_number: "-build-00113"
-alfresco_content_services_version: 7.1.0.1
+alfresco_content_services_version: 7.3.0
 alfresco_records_management_version: "{{ alfresco_content_services_version }}"
 
 # Alfresco Enterprise Edition
@@ -519,7 +519,7 @@ alfresco_records_management_version: "{{ alfresco_content_services_version }}"
 # the installer artifacts from Alfresco's support portal and uploaded
 # them to an SFTP repository.  Also, run the `alfresco_ee` role instead of
 # `alfresco_ce`
-alfresco_ee_version: 6.1.1.1
+alfresco_ee_version: 7.3.0.1
 alfresco_install_governance_services: no
 alfresco_governance_services_version: 3.2.0
 
