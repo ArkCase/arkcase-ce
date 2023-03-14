@@ -274,7 +274,7 @@
       messaging.broker.username={{ activemq_user | default('guest', true) }}
       messaging.broker.password={{ activemq_password | default('guest', true) }}
       index.subsystem.name=solr6
-      solr.secureComms=none
+      solr.secureComms=https
       solr.host={{ internal_host }}
       solr.port=8984
       synchronization.syncOnStartup=true
