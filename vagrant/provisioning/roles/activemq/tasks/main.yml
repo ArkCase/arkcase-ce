@@ -188,7 +188,7 @@
   block:
     - name: check whether the ActiveMQ tables were already created
       become: yes
-      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "show tables;"
+      command: mysql -uarkcase_root -p{{ rds_password }} -h {{ database_host_name }} activemq -Ns -e "show tables;"
       register: show_tables
       changed_when: false
     - name: start ActiveMQ, to create the tables
@@ -213,12 +213,12 @@
   block:
     - name: find current datatype for activemq_msgs.msg
       become: yes
-      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = 'activemq' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
+      command: mysql -uarkcase_root -p{{ rds_password }} -h {{ database_host_name }} activemq -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = 'activemq' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
       register: find_data_type
       changed_when: false
     - name: update data type, if necessary
       become: yes
-      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
+      command: mysql -uarkcase_root -p{{ rds_password }} -h {{ database_host_name }} activemq -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
       when: "'blob' == find_data_type.stdout"
 
 - name: activemq.xml updates

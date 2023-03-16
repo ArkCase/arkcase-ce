@@ -6,8 +6,11 @@
     - arkcase-prerequisites
     - arkcase-app
     - foia
-    - { role: foia-analytical-reports, when: foia_analytical_reports_version is defined }
+    - foia-aws
+# - { role: foia-analytical-reports, when: foia_analytical_reports_version is defined }
     - arkcase-post-upgrade
-    - snowbound-app
-    - saml-config
-    - start-arkcase
+    #    - snowbound-app
+    - role: saml-config
+      tags: [ saml-config ]
+    - role: start-arkcase
+      tags: [ start-arkcase ]

@@ -100,6 +100,21 @@
   loop_control:
     loop_var: f
 
+- name: set URL and user to retrieve lookups from arkcase
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION.ktr"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "<nullif>arkcase-admin@arkcase.org</nullif>"
+      line: "<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>"
+    - regexp: "<nullif>https{{ ':' }}//dev.uw.arkcase.com/arkcase/api/latest/service/config/lookups</nullif>"
+      line: "<nullif>https://{{ arkcase_host }}/arkcase/api/latest/service/config/lookups</nullif>"
+
 - name: update pentaho URLs to clear report cache
   become: yes
   become_user: pentaho

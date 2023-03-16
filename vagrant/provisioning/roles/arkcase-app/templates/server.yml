@@ -102,7 +102,8 @@ ark.activemq:
   #URL of the ActiveMQ broker.
   transportConnectorURI: "ssl://{{ activemq_host }}:61616"
 acm.websockets:
-  stomp_broker_relay.relay_host: "{{ activemq_host }}"
+  stomp_broker_relay.relay_host: "eeocftsprodamq.ecmontap.com"
+  #stomp_broker_relay.relay_host: "{{ activemq_host }}"
   stomp_broker_relay.keystore: "{{ java_key_store }}"
   stomp_broker_relay.keystore_pass: "{{ java_key_store_pass }}"
   stomp_broker_relay.truststore: "{{ java_trust_store }}"
@@ -116,3 +117,9 @@ calendar:
   :\"{{ calendar_purge_option }}\",\"daysClosed\":null}}"
 acm.hazelcast:
   log.folder: "{{ root_folder }}/log/arkcase"
+#################### Google Analytics Configuration (googleAnalytics.properties) ####################
+ga:
+  enabled: true
+  trackingId: "UA-192977046-4"
+  debug: false
+

@@ -9,6 +9,8 @@
       tags: [core, mariadb-client]
     - role: arkcase-prerequisites
       tags: [core, arkcase, arkcase-prerequisites]
+    - role: ldap
+      tags: [ldap]
     - role: arkcase-app
       tags: [core, arkcase, arkcase-app]
     - role: tesseract

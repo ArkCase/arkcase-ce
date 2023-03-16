@@ -179,12 +179,12 @@
     schema_task_name: create_schema_rds
   when: rds_password is defined
 
-- name: create alfresco database schema
-  include_tasks: "{{ role_path }}/../mariadb/tasks/{{ schema_task_name }}.yml"
-  args:
-    apply:
-      vars:
-        item: alfresco
+#- name: create alfresco database schema
+#  include_tasks: "{{ role_path }}/../mariadb/tasks/{{ schema_task_name }}.yml"
+#  args:
+#    apply:
+#      vars:
+#        item: alfresco
 
 - name: copy alfresco-mmt.jar
   become: yes

@@ -17,6 +17,10 @@
     create_home: yes
     home: /home/snowbound
 
+- name: set path to data folder
+  set_fact:
+    data_folder: "{{ snowbound_data_path | default(root_folder + '/data/snowbound') }}"
+
 - name: Snowbound folders
   become: yes
   file:
@@ -25,12 +29,21 @@
     group: snowbound
     owner: snowbound
   loop:
-    - "{{ root_folder }}/data/snowbound"
     - "{{ root_folder }}/log/snowbound"
     - "{{ root_folder }}/app/snowbound"
     - "{{ root_folder }}/install/snowbound"
     - "{{ root_folder }}/tmp/snowbound"
+    - "{{ data_folder }}"
+    - "{{ data_folder }}/snowbound-docs"
   register: snowbound_folder_structure
+
+- name: link ~/.snowbound-docs to snowbound data folder
+  become: yes
+  become_user: snowbound
+  file:
+    src: "{{ data_folder }}/snowbound-docs"
+    dest: /home/snowbound/.snowbound-docs
+    state: link
 
 - name: enable logrotate for snowbound log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
@@ -56,7 +69,7 @@
           ajp_port: 2009
           catalina_out: "{{ root_folder }}/log/snowbound/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/snowbound"
-          log_folder: "{{ root_folder }}/log/snowbound"          
+          log_folder: "{{ root_folder }}/log/snowbound"
           java_home: "{{ '/usr/lib/jvm/java-1.8.0-openjdk' if snowbound_vendor_version == '4.10' else '/usr/lib/jvm/java-11-openjdk' }}"
   register: snowbound_tomcat_unarchived
 
@@ -73,43 +86,32 @@
   template:
     src: VirtualViewerJavaHTML5.xml
     dest: "{{ root_folder }}/app/snowbound/conf/Catalina/localhost/"
-  
-- name: snowbound-docs folder
-  become: yes
-  become_user: snowbound
-  file:
-    path: "{{ root_folder }}/data/snowbound/snowbound-docs"
-    state: directory
 
-- name: link ~/.snowbound-docs to {{ root_folder }}/data/snowbound folder
-  become: yes
-  become_user: snowbound
-  file:
-    src: "{{ root_folder }}/data/snowbound/snowbound-docs"
-    dest: /home/snowbound/.snowbound-docs
-    state: link
-
+- name: set path to data folder
+  set_fact: 
+    data_folder: "{{ snowbound_data_path | default(root_folder + '/data/snowbound') }}"
+ 
 - name: copy fonts file
   become: yes
   become_user: snowbound
   copy:
     src: "fonts.tar.gz"
-    dest: "{{ root_folder }}/data/snowbound"
+    dest: "{{ data_folder }}"
   register: fonts_copied
 - name: expand fonts file
   become: yes
   become_user: snowbound
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/data/snowbound/fonts.tar.gz"
-    dest: "{{ root_folder }}/data/snowbound"
+    src: "{{ data_folder }}/fonts.tar.gz"
+    dest: "{{ data_folder }}"
   when: fonts_copied is changed
 - name: update fonts cache
   become: yes
   become_user: snowbound
   shell: fc-cache -f -v
   args: 
-    chdir: "{{ root_folder }}/data/snowbound"
+    chdir: "{{ data_folder }}"
   when: fonts_copied is changed
 - name: set JAVA_FONTS option
   become: yes
@@ -117,7 +119,7 @@
   lineinfile:
     backup: yes
     path: "{{ root_folder }}/app/snowbound/bin/setenv.sh"
-    line: 'export JAVA_FONTS="{{ root_folder }}/data/snowbound/.fonts/"'  
+    line: 'export JAVA_FONTS="{{ data_folder }}/.fonts/"'  
 
 - name: Snowbound systemd unit file
   become: yes

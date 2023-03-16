@@ -5,7 +5,7 @@ Description=Snowbound service
 Type=forking
 ExecStart={{ root_folder }}/app/snowbound/bin/startup.sh
 ExecStop={{ root_folder }}/app/snowbound/bin/shutdown.sh -force
-Environment="JAVA_OPTS='-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }}'"
+Environment="JAVA_OPTS=-Xmx{{ snowbound_heap_space }} -Xms{{ snowbound_heap_space }} '-Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }}'"
 User=snowbound
 Group=snowbound
 Restart=always

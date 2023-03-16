@@ -32,7 +32,7 @@
 - name: install Python crypto library
   become: yes
   pip:
-    executable: pip3
+    executable: /usr/local/bin/pip3.6 
     name: cryptography
     extra_args: --upgrade
 

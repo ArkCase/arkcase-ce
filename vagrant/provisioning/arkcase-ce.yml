@@ -7,6 +7,10 @@
       tags: [core, pki]
     - role: pki_client
       tags: [core, pki_client]
+    - role: pki-aws-csr
+      tags: [pki-aws-csr]
+    - role: pki-aws-client
+      tags: [pki-aws-client]
     - role: samba
       tags: [core, samba]
     - role: ldap

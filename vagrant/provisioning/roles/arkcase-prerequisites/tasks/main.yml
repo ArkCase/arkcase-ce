@@ -51,6 +51,15 @@
     - ".cache"
     - ".arkcase"
 
+- name: Run CRON job every day at 1.05 to remove fileserver older than 7 days
+  become: yes
+  cron:
+    name: "remove_files"
+    user: "root"
+    hour: "1"
+    minute: "5"
+    job: 'find {{ data_folder }}/fileserver -mtime +6 -type f -exec rm {} \;'
+
 - name: enable logrotate for arkcase log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
   loop:
