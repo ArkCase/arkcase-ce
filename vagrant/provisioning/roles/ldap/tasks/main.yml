@@ -6,10 +6,11 @@
       - openldap-clients
       - python-ldap
 
-- name: install pyOpenSSL
-  become: yes
-  pip:
-    name: pyOpenSSL
+#- name: install pyOpenSSL
+#  become: yes
+#  pip:
+#    executable: pip3
+#    name: pyOpenSSL
 
 - name: list certs in the key store
   become: yes

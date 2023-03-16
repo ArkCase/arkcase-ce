@@ -115,7 +115,7 @@
         block: |
           <!-- {{ tc.service}} Connector -->
           <Connector port="{{ tc.tls_port }}"
-            maxThreads="150" SSLEnabled="true" secure="true" scheme="https"
+            maxThreads="250" SSLEnabled="true" secure="true" scheme="https"
             maxHttpHeaderSize="10485760"
             maxPostSize="-1"
             connectionTimeout="40000"

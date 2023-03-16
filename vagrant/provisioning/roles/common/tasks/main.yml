@@ -19,6 +19,7 @@
       - unzip
       - git
       - net-tools
+      - python3-pip
       - python-pip
       - "@Development Tools"
       - deltarpm

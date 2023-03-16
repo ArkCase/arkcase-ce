@@ -61,7 +61,7 @@
       <attribute><code>USE_POOLING</code><attribute>Y</attribute></attribute>
     </attributes>
   </connection>
-    <connection>
+  <connection>
     <name>MariaDB Local out</name>
     <server>{{ database_host }}</server>
     <type>MARIADB</type>

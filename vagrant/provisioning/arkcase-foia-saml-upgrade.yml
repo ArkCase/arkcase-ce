@@ -7,6 +7,7 @@
     - arkcase-app
     - role: foia
       tags: [ foia ]
+    - foia-aws
 #    - { role: foia-analytical-reports, when: foia_analytical_reports_version is defined }
     - role: arkcase-post-upgrade
       tags: [ arkcase-post-upgrade ]

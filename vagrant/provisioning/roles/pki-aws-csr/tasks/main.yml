@@ -28,10 +28,17 @@
     name: setuptools_rust
     extra_args: --upgrade
 
+- name: update PIP
+  become: yes
+  pip:
+    executable: /usr/local/bin/pip3.6
+    name: pip
+    extra_args: --upgrade
+
 - name: install Python crypto library
   become: yes
   pip:
-    executable: /bin/pip3 
+    executable: /usr/local/bin/pip3.6 
     name: cryptography
     extra_args: --upgrade
 
