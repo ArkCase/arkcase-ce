@@ -38,3 +38,7 @@ portal.authenticationExternalUser: "{{ arkcase_admin_user }}@{{ ldap_user_domain
 
 # ArkCase url
 portal.arkcaseUrl: "https://{{ internal_host }}/arkcase"
+
+# Google Analytics
+portal.gaTrackingID: G-22F8D1QVL5
+

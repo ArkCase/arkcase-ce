@@ -116,7 +116,8 @@
           <!-- {{ tc.service}} Connector -->
           <Connector port="{{ tc.tls_port }}"
             maxThreads="150" SSLEnabled="true" secure="true" scheme="https"
-            maxHttpHeaderSize="32768"
+            maxHttpHeaderSize="10485760"
+            maxPostSize="-1"
             connectionTimeout="40000"
             useBodyEncodingForURI="true"
             address="0.0.0.0">

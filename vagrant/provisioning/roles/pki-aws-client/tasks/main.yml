@@ -29,10 +29,17 @@
       - java-11-openjdk	
       - java-11-openjdk-devel
 
+- name: upgrade pip
+  become: yes
+  pip:
+    executable: /usr/local/bin/pip3.6
+    name: pip
+    extra_args: --upgrade
+
 - name: install Python crypto library
   become: yes
   pip:
-    executable: pip3
+    executable: /usr/local/bin/pip3.6
     name: cryptography
     extra_args: --upgrade
 

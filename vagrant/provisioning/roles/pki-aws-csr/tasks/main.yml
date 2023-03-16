@@ -11,11 +11,27 @@
     state: installed
     name:
       - python3-pip
+      - python3-devel
+      - openssl-devel
+      - libffi-devel
+      - rust
+      - cargo
+
+- name: update pip
+  become: yes
+  command: python3 -m pip install --upgrade pip
+
+- name: install Python Rust module
+  become: yes
+  pip:
+    executable: /bin/pip3
+    name: setuptools_rust
+    extra_args: --upgrade
 
 - name: install Python crypto library
   become: yes
   pip:
-    executable: pip3
+    executable: /bin/pip3 
     name: cryptography
     extra_args: --upgrade
 

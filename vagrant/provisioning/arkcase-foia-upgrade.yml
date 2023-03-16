@@ -1,12 +1,13 @@
 ---
-- hosts: all
+- hosts: localhost
   roles:
     - common
     - arkcase-pre-upgrade
     - arkcase-prerequisites
     - arkcase-app
     - foia
-    - { role: foia-analytical-reports, when: foia_analytical_reports_version is defined }
+    - role: foia-analytical-reports
+      tags: foia-analytical-reports
     - arkcase-post-upgrade
     - snowbound-app
     - start-arkcase

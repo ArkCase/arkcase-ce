@@ -25,12 +25,64 @@
     group: snowbound
     owner: snowbound
   loop:
-    - "{{ root_folder }}/data/snowbound"
     - "{{ root_folder }}/log/snowbound"
     - "{{ root_folder }}/app/snowbound"
     - "{{ root_folder }}/install/snowbound"
     - "{{ root_folder }}/tmp/snowbound"
   register: snowbound_folder_structure
+
+- name: Snowbound data folder (specified path)
+  become: yes
+  file: 
+    path: "{{ snowbound_data_path }}"
+    state: directory
+    group: snowbound
+    owner: snowbound
+  when: snowbound_data_path is defined
+
+- name: Snowbound data folder (default path)
+  become: yes
+  file:
+    path: "{{ root_folder }}/data/snowbound"
+    state: directory
+    group: snowbound
+    owner: snowbound
+  when: snowbound_data_path is not defined
+
+- name: snowbound-docs folder (specified path)
+  become: yes
+  become_user: snowbound
+  file:
+    path: "{{ snowbound_data_path }}/snowbound-docs"
+    state: directory
+  when: snowbound_data_path is defined
+
+
+- name: snowbound-docs folder (default path)
+  become: yes
+  become_user: snowbound
+  file:
+    path: "{{ root_folder }}/data/snowbound/snowbound-docs"
+    state: directory
+  when: snowbound_data_path is not defined
+
+- name: link ~/.snowbound-docs to snowbound data folder (specified path)
+  become: yes
+  become_user: snowbound
+  file:
+    src: "{{ snowbound_data_path }}/snowbound-docs"
+    dest: /home/snowbound/.snowbound-docs
+    state: link
+  when: snowbound_data_path is defined
+
+- name: link ~/.snowbound-docs to snowbound data folder (default path)
+  become: yes
+  become_user: snowbound
+  file:
+    src: "{{ root_folder }}/data/snowbound/snowbound-docs"
+    dest: /home/snowbound/.snowbound-docs
+    state: link
+  when: snowbound_data_path is not defined
 
 - name: enable logrotate for snowbound log folder if necessary
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
@@ -74,21 +126,6 @@
     src: VirtualViewerJavaHTML5.xml
     dest: "{{ root_folder }}/app/snowbound/conf/Catalina/localhost/"
   
-- name: snowbound-docs folder
-  become: yes
-  become_user: snowbound
-  file:
-    path: "{{ root_folder }}/data/snowbound/snowbound-docs"
-    state: directory
-
-- name: link ~/.snowbound-docs to {{ root_folder }}/data/snowbound folder
-  become: yes
-  become_user: snowbound
-  file:
-    src: "{{ root_folder }}/data/snowbound/snowbound-docs"
-    dest: /home/snowbound/.snowbound-docs
-    state: link
-
 - name: copy fonts file
   become: yes
   become_user: snowbound

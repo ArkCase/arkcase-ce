@@ -116,3 +116,9 @@ calendar:
   :\"{{ calendar_purge_option }}\",\"daysClosed\":null}}"
 acm.hazelcast:
   log.folder: "{{ root_folder }}/log/arkcase"
+#################### Google Analytics Configuration (googleAnalytics.properties) ####################
+ga:
+  enabled: true
+  trackingId: "UA-192977046-3"
+  debug: false
+
