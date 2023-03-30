@@ -16,4 +16,6 @@ gov.foia.broker:
     external_requests: "external-foia-requests"
     external_request_status_updates: "foia-request-status-updates"
     external_request_files: "foia-request-files"
-
+application:
+  properties:
+    basePortalUrl: "https://{{ external_host }}/foia"
