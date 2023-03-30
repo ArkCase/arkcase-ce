@@ -26,3 +26,50 @@
   command: rsync -avm --include='*runtime*' -f 'hide,! */' {{ latest_config_backup_folder.path }}/acm/acm-config-server-repo/ {{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/
   when: latest_config_backup_folder is defined
   ignore_errors: true
+
+- name: find "templates-configuration.json" file (2021.03 and bellow)
+  become: yes
+  become_user: arkcase
+  stat:
+    path="{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
+  register: template_file
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and latest_config_backup_folder is defined
+
+- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version  (2021.03 and below)
+  become: yes
+  become_user: arkcase
+  copy:
+    src: "{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
+    dest: /home/arkcase/.arkcase/acm
+    owner: arkcase
+    group: arkcase
+    mode: '0666'
+    backup: true
+    remote_src: yes
+  when:  arkcase_version != "" and arkcase_version is version('2021.04', '<') and template_file.stat.exists
+
+- name: match the file naming (2021.03 and below)
+  become: yes
+  become_user: arkcase
+  find:
+    paths: "{{ latest_config_backup_folder.path }}/acm/correspondenceTemplates"
+    file_type: file
+    use_regex: yes
+    patterns: ['([0-9]{4})(0[1-9]|1[0-2])(0[1-9]|[1-2][0-9]|3[0-1])(2[0-3]|[01][0-9])([0-5][0-9])([0-5][0-9]_.*..docx)']
+  register: files_to_copy
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and latest_config_backup_folder is defined
+
+- name: copy matched files (2021.03 and bellow)
+  become: yes
+  become_user: arkcase
+  copy:
+    src: "{{ item.path }}"
+    dest: /home/arkcase/.arkcase/acm/correspondenceTemplates
+    owner: arkcase
+    group: arkcase
+    remote_src: yes
+  with_items: "{{ files_to_copy.files }}"
+  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and files_to_copy is defined and arkcase_version is version('2020.18', '>=')
+
+
+
