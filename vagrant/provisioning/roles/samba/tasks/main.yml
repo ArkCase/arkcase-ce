@@ -41,10 +41,16 @@
     name: https://repo.ius.io/ius-release-el7.rpm
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
+- name: install subscription-manager on Rocky8
+  become: yes
+  yum:
+    name: subscription-manager
+    state: present
+
 - name: install upstream repository (RHEL 8)
   become: yes
   command: subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
 
 - name: Samba and LDAP required packages (CentOS 7)
   become: yes
@@ -68,6 +74,11 @@
       - python36u-devel
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
+# add this command: yum --enablerepo=powertools install gpgme-devel libarchive-devel lmdb-devel rpcgen
+- name: install specified packages 
+  become: yes
+  command: yum --enablerepo=powertools install gpgme-devel libarchive-devel lmdb-devel rpcgen -y 
+
 - name: Samba and LDAP required packages (RHEL 8)
   become: yes
   yum:
@@ -77,20 +88,20 @@
       - gcc 
       - gdb 
       - gnutls-devel 
-      - gpgme-devel 
+      - gpgme-devel #failed
       - jansson-devel
       - keyutils-libs-devel 
       - krb5-workstation 
       - libacl-devel 
       - libaio-devel 
-      - libarchive-devel 
+      - libarchive-devel #failed
       - libattr-devel 
       - libblkid-devel 
       - libtasn1 
       - libtasn1-tools 
       - libxml2-devel 
       - libxslt 
-      - lmdb-devel 
+      - lmdb-devel #failed
       - openldap-devel 
       - pam-devel 
       - perl 
@@ -102,11 +113,11 @@
       - python3-gpg 
       - python36-devel 
       - readline-devel 
-      - rpcgen 
+      - rpcgen #failed
       - systemd-devel 
       - tar 
       - zlib-devel
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
 
 - name: link python3 executable
   become: yes

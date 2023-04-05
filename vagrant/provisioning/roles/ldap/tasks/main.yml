@@ -1,7 +1,7 @@
 - name: python LDAP package (RHEL 8)
   set_fact:
     pkg_python_ldap: python3-ldap
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
 
 - name: python LDAP package (CentOS 7)
   set_fact:
@@ -52,6 +52,8 @@
     attributes:
       description: "{{ item }}"
   loop: "{{ ldap_ancestor_ous }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
 - name: add arkcase organizational units
   ldap_entry:
@@ -68,6 +70,8 @@
   loop:
     - "{{ ldap_group_base }}"
     - "{{ ldap_user_base }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3  
 
 - name: add portal organizational units
   ldap_entry:
@@ -118,6 +122,8 @@
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
   loop: "{{ ldap_groups|flatten }}"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
 - name: remove portal group from ArkCase OU if exists
   ldap_entry:
@@ -175,7 +181,9 @@
   include_tasks: add-user.yml
   loop: "{{ ldap_users }}"    
   loop_control:
-    loop_var: u 
+    loop_var: u
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
 - name: Make sure Samba passwords never expire
   become: yes

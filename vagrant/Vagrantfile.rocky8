@@ -1,0 +1,153 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.require_version ">= 2.1.0" # 2.1.0 minimum required for triggers
+
+user = ENV['RH_SUBSCRIPTION_MANAGER_USER']
+password = ENV['RH_SUBSCRIPTION_MANAGER_PW']
+
+register_script = %{
+if ! sudo subscription-manager status; then
+  if [ "#{user}" = "" ] || [ "#{password}" = "" ]; then
+    echo 'Required environment variables not found. Please set RH_SUBSCRIPTION_MANAGER_USER and RH_SUBSCRIPTION_MANAGER_PW'
+    exit 1
+  fi
+  echo "registering..."
+  sudo subscription-manager register --username=#{user} --password='#{password}' --auto-attach 
+fi
+}
+
+unregister_script = %{
+  if [ "#{user}" = "" ] || [ "#{password}" = "" ]; then
+    echo 'Required environment variables not found. Please set RH_SUBSCRIPTION_MANAGER_USER and RH_SUBSCRIPTION_MANAGER_PW'
+    exit 1
+  fi
+if sudo subscription-manager status; then
+  sudo subscription-manager unregister
+fi
+}
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+ 
+  # we set insert_key to false since we are developing a box to be
+  # published for others to use; and this published box should have the
+  # default insecure key.  Hence we do NOT want Vagrant to create a new
+  # secure key since no one else will ever have that key.
+  config.ssh.insert_key=false
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://vagrantcloud.com/search.
+  config.vm.box = "generic/rocky8"
+
+  # disable the default synced folder
+  config.vm.synced_folder '.', '/vagrant', disabled: true
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # NOTE: This will enable public access to the opened port
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine and only allow access
+  # via 127.0.0.1 to disable public access
+  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+  config.vm.network "private_network", type: "dhcp"
+
+  config.vm.hostname = "arkcase-ce-rocky8.local"
+  config.vm.allow_hosts_modification = false
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  config.vm.provider "virtualbox" do |vb|
+    # Display the VirtualBox GUI when booting the machine
+     vb.gui = false
+     vb.memory = 8192
+  end
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+
+  #
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  #
+  # NOTE, the generic/rhel8 box provides extra, unused space in LVM, so 
+  # to use this space, we only have to create a logical volume, format it 
+  # and mount it.
+  $provision_script = <<-SCRIPT
+    export OPT_EXISTS=`sudo lvscan | grep /opt | grep 50`
+    if [ "$OPT_EXISTS" = "" ]
+    then 
+      sudo lvcreate -L 50G -n opt rhel_rhel8
+      sudo mkfs.xfs /dev/mapper/rhel_rhel8-opt
+      sudo mkdir /opt/arkcase
+      sudo echo "/dev/mapper/rhel_rhel8-opt /opt/arkcase   xfs     defaults        0 0" | sudo tee -a /etc/fstab
+      sudo mount /opt/arkcase
+    fi
+
+    sudo dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+
+    yum -y upgrade
+    yum -y group install "Development Tools"
+    yum -y install ansible drpm bzip2 tar vim
+  SCRIPT
+  
+  config.vm.provision "shell", inline: register_script
+  
+  config.vm.provision "shell", inline: $provision_script
+
+  # copy the provisioning folder so we can run ansible locally
+  config.vm.provision "file", source: "provisioning", destination: "provisioning"
+
+  $install_script = <<-SCRIPT
+    cd /home/vagrant/provisioning
+    ansible-galaxy collection install community.postgresql
+    ansible-playbook -e @arkcase-ce-facts.yml -e arkcase_version="#{ENV['ARKCASE_WEBAPP_VERSION']}" --tags core arkcase-ce.yml
+  SCRIPT
+
+  config.vm.provision "shell", inline: $install_script
+
+  config.trigger.before :destroy do |trigger|
+    trigger.name = "Before Destroy trigger"
+    trigger.info = "Unregistering this VM from RedHat Subscription Manager..."
+    trigger.warn = "If this fails, unregister VMs manually at https://access.redhat.com/management/subscriptions"
+    trigger.run_remote = {inline: unregister_script}
+    trigger.on_error = :continue
+  end # trigger.before :destroy
+end
+

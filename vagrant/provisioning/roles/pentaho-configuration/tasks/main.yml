@@ -380,6 +380,8 @@
     permanent: yes
     immediate: yes
     state: enabled
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
 - name: format extension version
   set_fact:

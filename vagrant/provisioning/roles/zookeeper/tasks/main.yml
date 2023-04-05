@@ -169,6 +169,8 @@
     - "2281/tcp"
     - "2888/tcp"
     - "3888/tcp"
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
 
 - name: Reload firewalld
   become: yes

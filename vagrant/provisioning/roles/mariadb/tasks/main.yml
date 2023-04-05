@@ -29,6 +29,22 @@
       gpgcheck=1
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
+- name: configure MariaDB v10 repository (RHEL 8)
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mariadb.repo
+    force: no
+    content: |
+      # MariaDB 10.4 RedHat repository list - created  2022-01-07
+      # https://mariadb.org/download/
+      [mariadb]
+      name = MariaDB
+      baseurl = http://yum.mariadb.org/10.6/rhel8-amd64
+      module_hotfixes=1
+      gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgcheck=1
+  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+
 - name: MySQL python package name (CentOS 7)
   set_fact:
     pkg_mysql_python: MySQL-python
@@ -37,8 +53,14 @@
 - name: MySQL python package name (RHEL 8)
   set_fact:
     pkg_mysql_python: python3-mysql
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
 
+#needed to remove mariadb.repo in order to install python3-mysql
+#needed to remove mariadb.repo and install old fashioned yum install mariadb-server
+#there is NO MariaDB-client package for rocky. TRY: yum search mariadb-client
+#consider this in mariadb.repo(without deleting mariadb.repo or doing anything else): 
+  #baseurl = http://yum.mariadb.org/10.6/rhel8-amd64
+  #gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
 - name: install MariaDB packages
   become: yes
   yum:
