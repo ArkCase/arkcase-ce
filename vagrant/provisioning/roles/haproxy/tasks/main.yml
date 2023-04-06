@@ -24,7 +24,7 @@
     - "443/tcp"
     - "8404/tcp"
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: install epel-release 
   become: yes
@@ -77,7 +77,7 @@
     state: present
   register: allow_haproxy_logging
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Apply new SELinux file context to filesystem
   become: yes
@@ -700,7 +700,7 @@
     state: yes
     persistent: yes
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: enable and start haproxy
   become: yes

@@ -46,11 +46,12 @@
   yum:
     name: subscription-manager
     state: present
+  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
 
 - name: install upstream repository (RHEL 8)
   become: yes
   command: subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
 - name: Samba and LDAP required packages (CentOS 7)
   become: yes
@@ -77,7 +78,8 @@
 # add this command: yum --enablerepo=powertools install gpgme-devel libarchive-devel lmdb-devel rpcgen
 - name: install specified packages 
   become: yes
-  command: yum --enablerepo=powertools install gpgme-devel libarchive-devel lmdb-devel rpcgen -y 
+  command: yum --enablerepo=powertools install gpgme-devel libarchive-devel lmdb-devel rpcgen -y
+  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
 
 - name: Samba and LDAP required packages (RHEL 8)
   become: yes

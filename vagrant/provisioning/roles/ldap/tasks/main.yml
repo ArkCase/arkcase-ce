@@ -53,7 +53,7 @@
       description: "{{ item }}"
   loop: "{{ ldap_ancestor_ous }}"
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: add arkcase organizational units
   ldap_entry:
@@ -71,7 +71,7 @@
     - "{{ ldap_group_base }}"
     - "{{ ldap_user_base }}"
   vars:
-    ansible_python_interpreter: /usr/bin/python3  
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: add portal organizational units
   ldap_entry:
@@ -123,7 +123,7 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_groups|flatten }}"
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: remove portal group from ArkCase OU if exists
   ldap_entry:
@@ -183,7 +183,7 @@
   loop_control:
     loop_var: u
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Make sure Samba passwords never expire
   become: yes

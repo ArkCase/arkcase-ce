@@ -33,7 +33,7 @@
     port: "{{ minio_port | default(9000) }}/tcp"
     state: enabled
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: ensure minio console port
   become: yes
@@ -43,7 +43,7 @@
     port: "{{ minio_console_port | default(8001) }}/tcp"
     state: enabled
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: download minio file from internet
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"

@@ -67,4 +67,4 @@
     - "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
     - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"

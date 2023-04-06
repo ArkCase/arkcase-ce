@@ -664,4 +664,6 @@ enableFileSync: false
 user_attribute_name: sAMAccountName
 
 microservice_protocol: http
+#For OS where ansible has python3+
+ansible_python3: /usr/bin/python3
 
