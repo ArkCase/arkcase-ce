@@ -38,8 +38,6 @@
       tags: [core, haproxy, marketplace]
     - role: activemq
       tags: [core, activemq, marketplace]
-    - role: alfresco-search-services
-      tags: [alfresco-search-services]
     - role: alfresco-setup
       tags: [alfresco6]
     - role: alfresco-ce
