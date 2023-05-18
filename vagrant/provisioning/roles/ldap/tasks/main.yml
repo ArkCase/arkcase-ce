@@ -89,6 +89,8 @@
     - "{{ ldap_portal_group_no_base }},{{ ldap_base }}"
     - "{{ ldap_portal_user_no_base }},{{ ldap_base }}"
   when: foia_portal_context is defined
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: add core portal organizational units
   ldap_entry:
@@ -142,6 +144,8 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_portal_groups|flatten }}"
   when: foia_portal_context is defined
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: add portal groups
   ldap_entry:
@@ -159,6 +163,8 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_portal_groups|flatten }}"  
   when: foia_portal_context is defined
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: add Core portal groups
   ldap_entry:
