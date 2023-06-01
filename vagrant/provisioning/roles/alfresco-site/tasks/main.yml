@@ -70,9 +70,9 @@
     password: "{{ alfresco_admin_password }}"
   register: rm_container_out
 
-- name: install jmespath for python3.9
+- name: install jmespath for python3.11
   become: yes
-  command: python3.9 -m pip install jmespath
+  command: python3.11 -m pip install jmespath
   when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
 
 # the join filter is just to lift the only array member into a string...

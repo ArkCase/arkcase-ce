@@ -73,6 +73,8 @@
     executable: pip3
     name: pip
     extra_args: --upgrade
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
         
 - name: install firewalld
   become: yes

@@ -21,6 +21,8 @@
   pip:
     executable: pip3
     name: cryptography
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: list certs in the key store
   become: yes
