@@ -722,6 +722,13 @@
       replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_activemq_xml.stat.exists
 
+- name: check if acm-forms are present
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/acm-forms.properties
+  register: forms_file_check
+
 - name: plaintext passwords (forms properties)
   become: yes
   become_user: arkcase
