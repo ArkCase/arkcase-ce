@@ -153,6 +153,9 @@
     - src: "server.xml"
       mode: "0644"
       dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/conf"
+    - src: "web.xml"
+      mode: "0644"
+      dest: "{{ root_folder}}/app/pentaho/pentaho-server/tomcat/conf"
 
 - name: configure Tomcat log file locations
   become: yes

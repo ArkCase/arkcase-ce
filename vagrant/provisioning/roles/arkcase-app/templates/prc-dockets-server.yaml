@@ -16,3 +16,14 @@ prc.rca.solr.configuration:
   port: {{ solr_port | default(443) }}
   
 spring.data.mongodb.uri: "mongodb://{{ microservice_mongodb_username }}:{{ microservice_mongodb_password }}@{{ microservice_mongodb_host | default(internal_host) }}:{{ mongodb_port | default(27017) }}/{{ microservice_mongodb_database }}?ssl={{ mongodb_ssl | default (false) }}"
+
+eureka:
+  client:
+    securePortEnabled: true
+    serviceUrl:
+      defaultZone: https://{{ internal_host }}:8761/eureka
+  instance:
+    prefer-ip-address: true
+    securePortEnabled: true
+    nonSecurePortEnabled: false
+

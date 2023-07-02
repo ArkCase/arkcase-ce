@@ -108,6 +108,76 @@
           #!/bin/sh
           LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CATALINA_HOME/lib{{ ":" + tc.extra_lib_path if tc.extra_lib_path is defined else "" }}
           export LD_LIBRARY_PATH
+    - name: web.xml security changes - filter mappings
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/web.xml"
+        backup: yes
+        insertbefore: "<!-- The mapping for the Set Character Encoding Filter -->"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - SECURITY UPDATES - FILTER MAPPINGS -->"
+        block: |
+          <filter-mapping>
+            <filter-name>httpHeaderSecurity</filter-name>
+            <url-pattern>/*</url-pattern>
+            <dispatcher>REQUEST</dispatcher>
+          </filter-mapping>
+          <filter-mapping>
+            <filter-name>ExpiresFilter</filter-name>
+            <url-pattern>/*</url-pattern>
+            <dispatcher>REQUEST</dispatcher>
+          </filter-mapping>
+    - name: web.xml security changes - filters
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/web.xml"
+        backup: yes
+        insertbefore: "  <!-- A filter that sets character encoding that is used to decode -->"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - SECURITY UPDATES - FILTERS -->"
+        block: |
+          <filter>
+            <filter-name>httpHeaderSecurity</filter-name>
+            <filter-class>org.apache.catalina.filters.HttpHeaderSecurityFilter</filter-class>
+            <async-supported>true</async-supported>
+            <init-param>
+              <param-name>hstsEnabled</param-name>
+              <param-value>true</param-value>
+            </init-param>
+            <init-param>
+              <param-name>hstsMaxAgeSeconds</param-name>
+              <param-value>31536000</param-value>
+            </init-param>
+            <init-param>
+              <param-name>hstsIncludeSubDomains</param-name>
+              <param-value>true</param-value>
+            </init-param>
+          </filter>
+          <filter>
+            <filter-name>ExpiresFilter</filter-name>
+            <filter-class>org.apache.catalina.filters.ExpiresFilter</filter-class>
+            <init-param>
+              <param-name>ExpiresDefault</param-name>
+              <param-value>access plus 0 seconds</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType image</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType text/css</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType text/html</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType application/javascript</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+          </filter>
+
     - name: configure Tomcat to use native connector
       become: yes
       become_user: "{{ tc.user }}"
@@ -116,6 +186,17 @@
         backup: yes
         regexp: '(^.*)AprLifecycleListener" SSLEngine(.*$)'
         replace: '\1AprLifecycleListener" useAprConnector="true" SSLEngine\2'
+    - name: configure error report valve - 2023-07-02 security updates
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        backup: yes
+        insertbefore: '<!-- Access log processes all example.'
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - ERROR REPORT VALVE -->"
+        block: |
+          <!-- Error Report Valve -->
+          <Valve className="org.apache.catalina.valves.ErrorReportValve" showReport="false" showServerInfo="false"/>
     - name: configure RemoteIP logging valve, to log the browser IP address in the access log
       become: yes
       become_user: "{{ tc.user }}"
@@ -173,6 +254,8 @@
             useBodyEncodingForURI="true">
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
             <SSLHostConfig 
+              honorCipherOrder="true"
+              ciphers="HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!kRSA"
               caCertificateFile="{{ ssl_ca }}"
               protocols="{{ ssl_version }}">
               <Certificate 

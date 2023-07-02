@@ -217,7 +217,6 @@
         acl acl_schema path_beg /api/schema
         acl acl_file_management path_beg /api/file-management
         acl acl_file_utils path_beg /api/file-utils
-        acl acl_prc_dockets path_beg /api/prc-dockets
         acl acl_api_gateway path_beg /api
         acl acl_config path_beg /config
         acl acl_assets path_beg /assets 
@@ -249,7 +248,6 @@
         use_backend be_schema if acl_schema
         use_backend be_file_management if acl_file_management
         use_backend be_file_utils if acl_file_utils
-        use_backend be_prc_dockets if acl_prc_dockets
         use_backend be_api_gateway if acl_api_gateway
         use_backend be_assets if acl_assets
         use_backend be_config if acl_config
@@ -733,13 +731,6 @@
             option tcp-check
             server file-utils0 {{ arkcase_host }}:9078 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/api/file-utils/,/)]
-
-          backend be_prc_dockets
-            http-response add-header X-PRC-Dockets %s
-            mode http
-            option tcp-check
-            server prc-dockets0 {{ arkcase_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-            http-request set-path %[path,regsub(^/api/prc-dockets/,/)]
 
           backend be_eureka
             http-response add-header X-Eureka %s
