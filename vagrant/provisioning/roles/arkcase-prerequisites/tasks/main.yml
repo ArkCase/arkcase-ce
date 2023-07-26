@@ -147,8 +147,8 @@
           log_folder: "{{ root_folder }}/log/arkcase"
           java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
           fips_mode: "{{ fips_mode_arkcase | default('') }}"
-          mem_min: "4g"
-          mem_max: "12g"
+          mem_min: "{{ arkcase_mem_min | default(4) }}g"
+          mem_max: "{{ arkcase_mem_max | default(12) }}g"
           extra_lib_path: "/home/arkcase/.arkcase/libraries"
   register: tomcat_unarchived
 
