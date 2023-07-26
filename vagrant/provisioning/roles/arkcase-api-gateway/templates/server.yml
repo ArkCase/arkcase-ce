@@ -8,6 +8,10 @@ spring:
   cloud:
     config:
       uri: "https://{{ config_server_host | default(internal_host) }}/config"
+    gateway:
+      httpclient:
+        ssl:
+          useInsecureTrustManager: true
   kafka:
     bootstrap-servers: "{{ kafka_host | default(internal_host) }}:{{ kafka_port | default(9092) }}"
     producer:
