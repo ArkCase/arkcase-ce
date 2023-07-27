@@ -739,6 +739,13 @@
       replace: "ENC({{ encrypted_activemq_password }})"
   when: arkcase_activemq_xml.stat.exists
 
+- name: check if acm-forms are present
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/acm-forms.properties
+  register: forms_file_check
+
 - name: plaintext passwords (forms properties)
   become: yes
   become_user: arkcase
@@ -761,7 +768,7 @@
       replace: "ENC({{ encrypted_default_database }})"
     - regexp: "ENC.U2FsdGVkX1./i7RReaawm2OyEcse1DBxZ0.oGE3ZsT5V1ahjvWhorhAZoUB97sHH."
       replace: "ENC({{ encrypted_snowbound_key }})"
-  when: arkcase_version != "" and arkcase_version is version('2021.04', '<')
+  when: forms_file_check.stat.exists == true and arkcase_version != "" and arkcase_version is version('2021.04', '<')
 
 - name: see if we have a camel alfresco cmis properties file
   become: yes

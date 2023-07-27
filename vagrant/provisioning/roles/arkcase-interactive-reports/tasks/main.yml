@@ -141,6 +141,8 @@
     reports_folder: "{{ 'foia' if arkcase_foia_yaml.stat.exists == true else 'arkcase' }}"
 
 - name: Find interactive reports in configuration
+  become: yes
+  become_user: arkcase
   find:
     paths: /home/arkcase/.arkcase/acm/reports/interactive/reports
     patterns: '*.zip'
@@ -152,6 +154,8 @@
   with_items: "{{ interactive_reports.files }}"
 
 - name: Find static reports folder in configuration
+  become: yes
+  become_user: arkcase
   find:
     paths: /home/arkcase/.arkcase/acm/reports/static/reports
     patterns: '*.prpt'
