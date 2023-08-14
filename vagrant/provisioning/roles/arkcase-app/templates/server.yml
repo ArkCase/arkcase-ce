@@ -104,12 +104,12 @@ email:
   create:
     case.enabled: {{ create_case_from_email_enabled | lower }}
     complaint.enabled: {{ create_complaint_from_email_enabled | lower }}
-  enableModernAuthentication: "{{ enable_modern_authentication | default(false) }}"
 ################### Azure AD OAuth Configuration ####################
 aad:
   clientId: "{{ azure_ad_client_id | default('') }}"
   clientSecret: "{{ azure_ad_client_secret | default('') }}"
   tenantId: "{{ azure_ad_tenant_id | default('') }}"
+  enableModernAuthentication: "{{ enable_modern_authentication | default(false) }}"
 ocr:
   tempPath: "{{ root_folder }}/tmp/arkcase/"
 ark.activemq:
