@@ -1,3 +1,13 @@
+- name: set Java 8 as Java Home (old versions versions)
+  set_fact:
+    java_home_version: "/usr/lib/jvm/java-1.8.0-openjdk"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: set Java 11 as Java Home (new versions versions)
+  set_fact:
+    java_home_version: "/usr/lib/jvm/java-11-openjdk"
+  when: arkcase_version == "" and arkcase_version is version('2023.02', '>=')
+
 - name: Ensure group arkcase exists
   become: yes
   group:
@@ -140,7 +150,7 @@
           catalina_out: "{{ root_folder }}/log/arkcase/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/arkcase"
           log_folder: "{{ root_folder }}/log/arkcase"
-          java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
+          java_home: "{{java_home_version}}"
   register: tomcat_unarchived
 
 - name: add options to JAVA_OPTS
