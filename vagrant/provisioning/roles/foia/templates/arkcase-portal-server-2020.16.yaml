@@ -34,4 +34,4 @@ portal:
     token:  "{{ portal_foiagov_token | default ('') }}"
 
 
-configServerUri: "{{ internal_host }}"
+configServerUri: "{{ internal_host }}/config"
