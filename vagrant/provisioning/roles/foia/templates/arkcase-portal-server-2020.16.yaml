@@ -32,3 +32,6 @@ portal:
   security.authentication:
     header.parameter.name: foia-api-secret
     token:  "{{ portal_foiagov_token | default ('') }}"
+
+
+configServerUri: "{{ internal_host }}"
