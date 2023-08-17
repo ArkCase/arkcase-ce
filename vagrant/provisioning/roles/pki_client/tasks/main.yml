@@ -69,7 +69,7 @@
               path: "{{ ssl_ca }}"
         - name: add JDK certs to Java trust store
           become: yes
-          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+          command: keytool -importkeystore -srckeystore /etc/pki/ca-trust/extracted/java/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
       when: "arkcase_ks_stat.stat.exists == False"
 
 - name: ensure shared permissions on the p12 key store
