@@ -1,0 +1,81 @@
+- name: install cryptography
+  become: yes
+  pip:
+    executable: pip3
+    name: cryptography
+
+- name: create pki folder structure
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "/etc/tls"
+    - "/etc/tls/private"
+    - "/etc/tls/csr"
+    - "/etc/tls/crt"
+    - "/etc/tls/ca"
+
+# Although 4096 bits is slightly more secure than 2048 bits,
+# it slows down TLS handshakes and significantly increases
+# processor load during handshakes. For this reason, most
+# websites use 2048-bit pairs.
+- name: generate server private key
+  become: yes
+  openssl_privatekey:
+    path: "/etc/tls/private/ssl-key-pp.pem"
+    type: RSA
+    size: 2048
+    mode: 0644
+    cipher: "auto"
+    passphrase: "m0rn1ngD$w"
+  register: server_private_key
+
+- name: remove passphrase from server key
+  become: yes
+  command: openssl rsa -in "/etc/tls/private/ssl-key-pp.pem" -out "{{ ssl_key }}" -passin pass:'m0rn1ngD$w'
+
+- name: set public_host if needed
+  set_fact:
+    public_host: "{{ external_host }}"
+  when: public_host is not defined
+
+- name: generate server csr
+  become: yes
+  openssl_csr:
+    basic_constraints_critical: no
+    basic_constraints:
+      - CA:FALSE
+    key_usage_critical: yes
+    key_usage:
+      - Digital Signature
+      - keyEncipherment
+    extended_key_usage_critical: no
+    extended_key_usage:
+      - serverAuth
+    digest: sha256
+    path: "/etc/tls/csr/arkcase-server.csr"
+    privatekey_path: "{{ ssl_key }}"
+    country_name: US
+    state_or_province_name: VA
+    locality_name: Vienna
+    organization_name: ArkCase
+    organizational_unit_name: Product Development
+    email_address: info@arkcase.com
+    common_name: "{{ internal_host }}"
+    subject_alt_name:
+      - DNS:{{ internal_host }}
+      - DNS:{{ public_host }}
+  register: server_csr
+
+# the server cert is signed with the intermediate key
+- name: Sign server CSR
+  become: yes
+  openssl_certificate:
+    path: "{{ ssl_cert }}"
+    ownca_path: "/etc/tls/crt/arkcase-intermediate.crt"
+    ownca_privatekey_path: "/etc/tls/private/arkcase-intermediate.pem"
+    csr_path: "/etc/tls/csr/arkcase-server.csr"
+    provider: ownca
+    mode: 0644
+  when: server_csr is changed
