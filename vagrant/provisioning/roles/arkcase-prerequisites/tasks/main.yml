@@ -59,14 +59,6 @@
     - arkcase
     - config-server
 
-- name: create arkcase database schema
-  include_tasks: "{{ role_path }}/../{{ db_engine }}/tasks/create_schema.yml"
-  args:
-    apply:
-      vars:
-        item: arkcase
-  when: db_engine | default('mariadb') == "mariadb"
-
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:

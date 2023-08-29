@@ -1,4 +1,4 @@
-- name: create {{ item }} MariaDB database and user with (ansible>2.9)
+- name: create {{ item }} MariaDB database when the database is running locally
   block:
     - name: create {{ item }} database
       become: yes
@@ -29,33 +29,89 @@
           SSL:
         priv: '{{ item }}.*:ALL'
         state: present
-  when: ansible_version.full is version('2.10.0', '>=')
+  when: internal_host == database_host
 
-- name: create {{ item }} MariaDB database and user with ansible<=2.9
+- name: create {{ item }} MariaDB database when the database is on another host and Ansible < 2.10.0
   block:
+    - name: where am i
+      debug:
+        msg: "creating db on remote host, lower ansible version"
     - name: create {{ item }} database
       become: yes
       mysql_db:
-        login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+        login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user | default('root') }}"
+        login_password: "{{ database_root_password }}"
         name: "{{ item }}"
         encoding: utf8
         state: present
     - name: create {{ item }} MySQL user
       become: yes
       mysql_user:
-        login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+        login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user | default('root') }}"
+        login_password: "{{ database_root_password }}"
         host: "%"
         name: "{{ item }}"
         password: "{{ default_database_password }}" 
-        priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
-        state: present 
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,REQUIRESSL'
+        state: present
+        #no_log: true 
     - name: create {{ item }} MySQL user (IP address)
       become: yes
       mysql_user:
-        login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
-        host: "127.0.0.1"
+        login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user | default('root') }}"
+        login_password: "{{ database_root_password }}"
+        host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
         name: "{{ item }}"
         password: "{{ default_database_password }}" 
-        priv: '*.*:REQUIRESSL/{{ item }}.*:ALL'
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,REQUIRESSL'
         state: present
-  when: ansible_version.full is version('2.10.1', '<')
+        #no_log: true
+  when: internal_host != database_host and ansible_version.full is version('2.10.0', '<')
+
+- name: create {{ item }} MariaDB database when the database is on another host and Ansible >= 2.10.0
+  block:
+    - name: where am i
+      debug:
+        msg: "creating db on remote host"
+    - name: create {{ item }} database
+      become: yes
+      mysql_db:
+        login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user | default('root') }}"
+        login_password: "{{ database_root_password }}"
+        name: "{{ item }}"
+        encoding: utf8
+        state: present
+    - name: create {{ item }} MySQL user
+      become: yes
+      mysql_user:
+        login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user | default('root') }}"
+        login_password: "{{ database_root_password }}"
+        host: "%"
+        name: "{{ item }}"
+        password: "{{ default_database_password }}"
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute'
+        state: present
+        tls_requires:
+          SSL:
+        #no_log: true
+    - name: create {{ item }} MySQL user (IP address)
+      become: yes
+      mysql_user:
+        login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user | default('root') }}"
+        login_password: "{{ database_root_password }}"
+        host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+        name: "{{ item }}"
+        password: "{{ default_database_password }}"
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute'
+        state: present
+        tls_requires:
+          SSL:
+        #no_log: true
+  when: internal_host != database_host and ansible_version.full is version('2.10.0', '>=')
+

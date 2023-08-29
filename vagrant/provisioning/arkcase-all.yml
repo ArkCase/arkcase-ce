@@ -7,6 +7,8 @@
       tags: [arkcase-pre-upgrade, upgrade]   
     - role: pki
       tags: [pki]
+    - role: arkcase-addiitional-node
+      tags: [arkcase-additional-node]
     - role: pki_client
       tags: [core, pki_client, marketplace]
     - role: samba
@@ -24,7 +26,7 @@
       tags: [core, mariadb, marketplace]
       when: db_engine | default('mariadb') == 'mariadb'
     - role: mariadb-client
-      tags: [core, mariadb, marketplace]
+      tags: [core, mariadb, mariadb-client, marketplace]
       when: db_engine | default('mariadb') == 'mariadb'
     - role: postgresql
       tags: [core, postgresql, marketplace]

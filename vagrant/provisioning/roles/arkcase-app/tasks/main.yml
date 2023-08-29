@@ -171,6 +171,7 @@
 - name: format extension version
   set_fact:
     arkcase_extension_version_formatted: "{{ '-' ~ arkcase_extension_version if arkcase_extension_version != '' else '' }}"
+    arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
 
 - name: download extension (if configured)
   become: yes
@@ -184,12 +185,12 @@
 
 - name: set extension config file name (extension id)
   set_fact:
-    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.zip"
+    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_configuration_version_formatted }}.zip"
   when: arkcase_extension_id is defined
 
 - name: set extension config file name (no extension id)
   set_fact:
-    extension_config_file_name: "arkcase-config{{ arkcase_extension_version }}.zip"
+    extension_config_file_name: "arkcase-config{{ arkcase_configuration_version }}.zip"
   when: not arkcase_extension_id is defined
 
 - name: download extension configuration (if configured)
@@ -207,11 +208,6 @@
   become_user: arkcase
   command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
   when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
-
-
-- name: format config version
-  set_fact:
-    arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
 
 - name: download configuration (if using sftp, and no extension is configured)
   become: yes
