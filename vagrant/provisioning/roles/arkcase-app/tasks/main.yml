@@ -303,23 +303,23 @@
     - src: config-server.service
       dest: /etc/systemd/system/config-server.service
 
-- name: copy config-server configuration file before version 2021.04
+- name: copy config-server configuration file before version 2021.04 or after 2023.01
   become: yes
   become_user: arkcase
   template:
     src: config-server.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version != "" and arkcase_version is version('2021.04', '<')
+  when: arkcase_version != "" and ( arkcase_version is version('2021.04', '<') or arkcase_version is version('2023.01', '>=') )
 
-- name: copy config-server configuration file after version 2021.04
+- name: copy config-server configuration file after version 2021.04 and before 2023.01
   become: yes
   become_user: arkcase
   template:
     src: config-server-2021.04.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
+  when: arkcase_version == "" or ( arkcase_version is version('2021.04', '>=') and arkcase_version is version('2023.01', '<') )
 
 ##### Mule TLS fixes #####
 - name: ensure custom/WEB-INF/classes exists
