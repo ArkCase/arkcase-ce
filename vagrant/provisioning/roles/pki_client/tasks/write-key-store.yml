@@ -1,0 +1,24 @@
+- name: see if the Java keystore exists
+  become: yes
+  stat:
+    path: "{{ item.key_store }}"
+  register: arkcase_ks_stat
+  changed_when: false
+- name: write Java key store and trust store
+  block:
+    - name: write PKCS12 openssl store (used by Pentaho)
+      become: yes
+      command: openssl pkcs12 -export -in {{ item.ssl_cert }} -inkey {{ item.ssl_key_rsa }} -out "{{ item.p12_store }}" -name arkcase_server -chain -CAfile {{ ssl_ca }} -passout 'pass:{{ java_key_store_pass }}'
+    - name: write PKCS12 Java keystore
+      become: yes
+      command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ item.key_store }}" -deststoretype pkcs12 -srckeystore "{{ item.p12_store }}" -srcstoretype pkcs12 -srcstorepass {{ java_key_store_pass }} -alias arkcase_server -noprompt
+    - name: write JKS Java keystore)
+      become: yes
+      command: keytool -importkeystore -deststorepass '{{ java_key_store_pass }}' -destkeypass '{{ java_key_store_pass }}' -destkeystore "{{ item.key_store_jks }}" -deststoretype JKS -srckeystore "{{ item.p12_store }}" -srcstoretype pkcs12 -srcstorepass '{{ java_key_store_pass }}' -alias arkcase_server -noprompt
+    - name: ensure shared permissions on the p12 key store
+      become: yes
+      file:
+        path: "{{ item.p12_store }}"
+        mode: 0644
+  when: not arkcase_ks_stat.stat.exists
+

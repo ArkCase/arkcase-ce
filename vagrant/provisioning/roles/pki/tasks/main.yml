@@ -134,9 +134,9 @@
 - name: copy chain cert file, if necessary
   become: yes
   copy:
-    path: "{{ ssl_ca }}"
+    dest: "{{ ssl_ca }}"
     content: "{{ arkcase_chain_cert }}"
-  when: (arkcase_clustering | default(false))  and not (arkcase_primary_node | default(true))
+  when: (arkcase_clustering | default(false)) and not (arkcase_primary_node | default(true))
 
 
 # Although 4096 bits is slightly more secure than 2048 bits,
@@ -212,10 +212,16 @@
 - name: copy primary node's intermediate key, if necessary
   become: yes
   copy:
-    path: /etc/tls/private/arkcase-intermediate.pem
+    dest: /etc/tls/private/arkcase-intermediate.pem
     content: "{{ arkcase_intermediate_key }}"
   when: (arkcase_clustering | default(false))  and not (arkcase_primary_node | default(true))
 
+- name: copy primary node's intermediate cert, if necessary
+  become: yes
+  copy:
+    dest: /etc/tls/crt/arkcase-intermediate.crt
+    content: "{{ arkcase_intermediate_cert }}"
+  when: (arkcase_clustering | default(false))  and not (arkcase_primary_node | default(true))
 
 # the server cert is signed with the intermediate key
 - name: Sign server CSR
@@ -228,11 +234,4 @@
     provider: ownca
     mode: 0644
   when: server_csr is changed
-
-- name: copy primary node's private key, if necessary
-  become: yes
-  copy:
-    path: /etc/tls/private/arkcase-node-1.pem
-    content: "{{ primary_node_private_key }}"
-  when: (arkcase_clustering | default(false))  and not (arkcase_primary_node | default(true))
 

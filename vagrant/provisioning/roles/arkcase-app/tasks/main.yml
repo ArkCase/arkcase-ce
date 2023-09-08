@@ -19,12 +19,17 @@
 - name: decrypt the symmetric key (using private key)
   become: yes
   command: openssl rsautl -decrypt -inkey {{ ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
-  when: not client_ssl_key is defined
+  when: not client_ssl_key is defined and ( not (arkcase_clustering | default(false)) or (arkcase_primary_node | default(true)) )
 
 - name: decrypt the symmetric key (using private key)
   become: yes
   command: openssl rsautl -decrypt -inkey {{ client_ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
-  when: client_ssl_key is defined
+  when: client_ssl_key is defined and ( not (arkcase_clustering | default(false)) or (arkcase_primary_node | default(true)) )
+
+- name: decrypt the symmetric key (using private key)
+  become: yes
+  command: openssl rsautl -decrypt -inkey /etc/tls/private/arkcase-node-1.pem -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
+  when: arkcase_clustering | default(false) and not (arkcase_primary_node | default(true))
 
 - name: remove the trailing new line from the symmetric key file
   become: yes
@@ -283,10 +288,11 @@
     solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host else '' }}"
     alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
     alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
+    config_server_service_name: "{{ 'config-server.service' if config_server_host == arkcase_host else '' }}"
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:
-    arkcase_required_services: "{{ db_service_name + ' ' + activemq_service_name + ' ' + solr_service_name + ' ' + samba_service_name + ' ' + alfresco7_service_name + ' ' + alfresco_service_name + ' config-server.service' }}"
+    arkcase_required_services: "{{ db_service_name + ' ' + activemq_service_name + ' ' + solr_service_name + ' ' + samba_service_name + ' ' + alfresco7_service_name + ' ' + alfresco_service_name + ' ' + config_server_service_name }}"
 
 - name: copy ArkCase and config server systemd unit files
   become: yes
@@ -618,7 +624,7 @@
   register: conf_yml
   changed_when: false
 
-- name: update config server configuration
+- name: update config server configuration - make sure the server profile is included
   become: yes
   become_user: arkcase
   replace:
@@ -627,6 +633,15 @@
     regexp: "runtime"
     replace: "server,runtime"
   when: "'server,runtime' not in conf_yml.stdout"
+
+- name: update config server configuration - set config server URL if needed
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "localhost"
+    replace: "{{ config_server_host }}"
 
 - name: see if audit patterns is in the main folder
   become: yes
@@ -1033,7 +1048,17 @@
     private_key_alias: "arkcase_server"
   when: not client_ssl_key is defined
 
-- name: fix encryptionproperties
+- name: set encryption key store (no clustering, or primary node)
+  set_fact:
+    encryption_key_store: "{{ java_key_store }}"
+  when: not (arkcase_clustering | default(false)) or (arkcase_primary_node | default(true))
+
+- name: set encryption key store (clustering, subsequent nodes)
+  set_fact:
+    encryption_key_store: "{{ java_key_store_node1 }}"
+  when: (arkcase_clustering | default(false)) and not (arkcase_primary_node | default(true))
+
+- name: fix encryption properties
   become: yes
   become_user: arkcase
   replace:
@@ -1045,9 +1070,9 @@
     - regexp: JKS
       replace: PKCS12
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/encryption-keystore"
-      replace: "{{ java_key_store }}"
+      replace: "{{ encryption_key_store }}"
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
-      replace: "{{ java_key_store }}"
+      replace: "{{ encryption_key_store }}"
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'
@@ -1207,3 +1232,4 @@
     remote_src: yes
     src: "{{ root_folder }}/install/arkcase/pdftron_libraries.zip"
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries"
+ 

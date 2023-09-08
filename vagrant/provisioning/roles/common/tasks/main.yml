@@ -120,6 +120,7 @@
   become: yes
   lineinfile:
     path: /etc/hosts
+    backup: yes
     line: "{{ item }}"
   loop:
     - "{{ arkcase_host_address | default('127.0.0.1') }} arkcase-host"
@@ -129,6 +130,15 @@
   # Docker, this is not possible. Instead, use `--add-host` on the
   # `docker run` command line.
   when: not stat_dockerenv_result.stat.exists
+
+- name: add cluster nodes to hosts file, if necessary
+  become: yes
+  lineinfile:
+    path: /etc/hosts
+    backup: yes
+    line: "{{ item.ip }} {{ item.hostname }}"
+  loop: "{{ arkcase_nodes }}"
+  when: arkcase_clustering | default(false) and not stat_dockerenv_result.stat.exists
 
 - name: set timezone to UTC
   become: yes

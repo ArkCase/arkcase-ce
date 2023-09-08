@@ -66,3 +66,4 @@
     - "{{ database_pentaho_hibernate_user | default('hibuser') }}"
     - "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
     - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
+  when: not (arkcase_clustering | default(false)) or (arkcase_primary_node | default(true))

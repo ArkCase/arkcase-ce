@@ -7,8 +7,6 @@
       tags: [arkcase-pre-upgrade, upgrade]   
     - role: pki
       tags: [pki]
-    - role: arkcase-addiitional-node
-      tags: [arkcase-additional-node]
     - role: pki_client
       tags: [core, pki_client, marketplace]
     - role: samba

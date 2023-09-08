@@ -135,6 +135,13 @@ calendar:
   :\"{{ calendar_purge_option }}\",\"daysClosed\":null}}"
 acm.hazelcast:
   log.folder: "{{ root_folder }}/log/arkcase"
+  management_center:
+    enabled: false
+    multicast:
+      enabled: false
+    tcp_ip:
+      enabled: "{{ arkcase_clustering | default(false) | bool }}"
+      members: "{{ arkcase_nodes | default([]) | map(attribute='ip') | join(',') }}"
 
 ################### AWS Credentials (aws/credentials.properties) ####################
 ## AccessKeyId and SecretAccessKey must be encrypted. ##
