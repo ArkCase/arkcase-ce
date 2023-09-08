@@ -913,7 +913,7 @@
     backup: yes
     src: arkcase-commons-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-commons-server.yaml
-  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
+  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
 
 - name: server-specific configuration for arkcase-portal-cognito.yaml for version 2021.04
   become: yes
@@ -922,7 +922,7 @@
     backup: yes
     src: arkcase-portal-cognito-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-cognito-server.yaml
-  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
+  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
 
 # the rolesToGroups format changed during the 3.3.3 release cycle, so we need
 # one format for pre-3.3.3 versions, and another format for 3.3.3+
