@@ -162,6 +162,7 @@ zylabIntegration:
     systemUserEmail: "{{ zylab_systemUserEmail | default('') }}"
     systemUserPassword: "{{ zylab_systemUserPassword | default('') }}"
 payment:
+  enabled: {{ payment_enabled | default(false) }}
   touchnet:
     username: "{{ touchnet_username | default('') }}"
     password: "{{ touchnet_password | default('') }}"
