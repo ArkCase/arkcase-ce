@@ -14,12 +14,12 @@
     login_user: arkcase
     login_password: '{{ default_user_password }}'
     login_port: "{{ mongodb_port | default(27017) }}"
-    database: "arkcase"
-    name: arkcase
-    password: '{{ default_user_password }}'
+    database: "{{ microservice_mongodb_database }}"
+    name: "{{ microservice_mongodb_username }}"
+    password: '{{ microservice_mongodb_password }}'
     roles:
       - { db: "admin", role: "readWrite" }
-      - { db: arkcase, role: "readWrite" }
+      - { db: "{{ microservice_mongodb_database }}", role: "readWrite" }
     ssl: yes
 
 - name: Create pass_db database
