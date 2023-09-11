@@ -15,10 +15,10 @@ cp /data/arkcase-ce/vagrant/provisioning/stg-prc-facts.yml /data/arkcase-ce/vagr
 cp /opt/app/arkcase/data/arkcase-home/.arkcase/acm/acm-config-server-repo/ldap/ldap-server.yaml /opt/app/arkcase/data/arkcase-home/.arkcase/acm/acm-config-server-repo/ldap/ldap-server.yaml.`date +%Y-%m-%dT%H-%M`
 cp /opt/app/arkcase/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1/ldap-ad.properties /opt/app/arkcase/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1/ldap-ad.properties.`date +%Y-%m-%dT%H-%M`
 cp /opt/app/arkcase/app/pentaho/pentaho-server/pentaho-solutions/system/applicationContext-security-ldap.properties /opt/app/arkcase/app/pentaho/pentaho-server/pentaho-solutions/system/applicationContext-security-ldap.properties.`date +%Y-%m-%dT%H-%M`
-cp /opt/app/arkcase/app/arkcase-ldap-authority/server.yml /opt/app/arkcase/app/arkcase-ldap-authority/server.yml.`date +%Y-%m-%dT%H-%M`
+#cp /opt/app/arkcase/app/arkcase-ldap-authority/server.yml /opt/app/arkcase/app/arkcase-ldap-authority/server.yml.`date +%Y-%m-%dT%H-%M`
 
 sed -i "s|ldap_bind_password: .*|ldap_bind_password: '$NEW_BIND_PWD'|g" stg-prc-facts.yml
 sed -i "s|      authUserPassword: .*|      authUserPassword: ENC($ENC_BIND_PWD)|g" /opt/app/arkcase/data/arkcase-home/.arkcase/acm/acm-config-server-repo/ldap/ldap-server.yaml
 sed -i "s|ldap.synchronization.java.naming.security.credentials=.*|ldap.synchronization.java.naming.security.credentials=$NEW_BIND_PWD|g" /opt/app/arkcase/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1/ldap-ad.properties
 sed -i "s|contextSource.password=.*|contextSource.password=$NEW_BIND_PWD|g" /opt/app/arkcase/app/pentaho/pentaho-server/pentaho-solutions/system/applicationContext-security-ldap.properties
-sed -i "s|    manager-password: .*|    manager-password: '$NEW_BIND_PWD'|g" /opt/app/arkcase/app/arkcase-ldap-authority/server.yml
+#sed -i "s|    manager-password: .*|    manager-password: '$NEW_BIND_PWD'|g" /opt/app/arkcase/app/arkcase-ldap-authority/server.yml
