@@ -175,7 +175,7 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   loop:
-    - src: "{{ java_key_store }}"
+    - src: "{{ java_p12_store_jdk8 }}"
       dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ks"
     - src: "{{ java_trust_store }}"
       dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ts"

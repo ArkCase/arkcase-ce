@@ -187,7 +187,7 @@ casefile:
 fileManagement:
   fileRepositoryType: {{ file_repository_type | default("alfresco") }}
   s3:
-    url: "http://{{ internal_host }}:9000"
+    url: {{ s3_url | default("http{{ : }}//{{ internal_host }}:9000") }}
     region: {{ aws_s3_region | default("us-east-1") }}
     accessKey: {{ s3_access_key | default("minioadmin") }}
     secretKey: {{ s3_secret_key | default("minioadmin") }}

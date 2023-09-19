@@ -49,7 +49,7 @@
         host: "%"
         name: "{{ item }}"
         password: "{{ default_database_password }}" 
-        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,REQUIRESSL'
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,create temporary tables,REQUIRESSL'
         state: present
         #no_log: true 
     - name: create {{ item }} MySQL user (IP address)
@@ -60,7 +60,7 @@
         host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
         name: "{{ item }}"
         password: "{{ default_database_password }}" 
-        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,REQUIRESSL'
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,create temporary tables,REQUIRESSL'
         state: present
         #no_log: true
   when: internal_host != database_host and ansible_version.full is version('2.10.0', '<')
@@ -83,7 +83,7 @@
         host: "%"
         name: "{{ item }}"
         password: "{{ default_database_password }}"
-        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute'
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,create temporary tables'
         state: present
         tls_requires:
           SSL:
@@ -96,7 +96,7 @@
         host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
         name: "{{ item }}"
         password: "{{ default_database_password }}"
-        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute'
+        priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,create temporary tables'
         state: present
         tls_requires:
           SSL:
