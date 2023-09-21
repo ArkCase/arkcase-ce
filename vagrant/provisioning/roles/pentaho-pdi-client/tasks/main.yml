@@ -120,6 +120,15 @@
     path: /home/pentaho-pdi/.pentaho
     state: directory
 
+- name: add no-fips to the license installer script
+  become: yes
+  become_user: pentaho-pdi
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/pentaho-pdi/license-installer/install_license.sh"
+    regexp: "DIR_REL -Dlog"
+    replace: "DIR_REL -Dcom.redhat.fips=false -Dlog"
+
 - name: install licenses, if necessary
   become: yes
   become_user: pentaho-pdi
