@@ -28,4 +28,3 @@ sed -i "s|      authUserPassword: .*|      authUserPassword: ENC($ENC_BIND_PWD)|
 sed -i "s|ldap.synchronization.java.naming.security.credentials=.*|ldap.synchronization.java.naming.security.credentials=$NEW_BIND_PWD|g" /opt/app/arkcase/app/alfresco7/shared/classes/alfresco/extension/subsystems/Authentication/ldap-ad/ldap1/ldap-ad.properties
 sed -i "s|contextSource.password=.*|contextSource.password=$NEW_BIND_PWD|g" /opt/app/arkcase/app/pentaho/pentaho-server/pentaho-solutions/system/applicationContext-security-ldap.properties
 #sed -i "s|    manager-password: .*|    manager-password: '$NEW_BIND_PWD'|g" /opt/app/arkcase/app/arkcase-ldap-authority/server.yml
-

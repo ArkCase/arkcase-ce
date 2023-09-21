@@ -75,6 +75,7 @@
         name: "{{ item }}"
         encoding: utf8
         state: present
+        check_hostname: true
     - name: create {{ item }} MySQL user
       become: yes
       mysql_user:
@@ -85,6 +86,7 @@
         password: "{{ default_database_password }}"
         priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,create temporary tables'
         state: present
+        check_hostname: true
         tls_requires:
           SSL:
         #no_log: true
@@ -98,6 +100,7 @@
         password: "{{ default_database_password }}"
         priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,create temporary tables'
         state: present
+        check_hostname: true
         tls_requires:
           SSL:
         #no_log: true
