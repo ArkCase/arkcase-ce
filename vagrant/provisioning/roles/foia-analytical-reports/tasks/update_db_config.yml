@@ -7,19 +7,24 @@
   become: yes
   become_user: pentaho
   shell: "sed -i s~/home/marst/projects/ETL-projects/EEOC/foia---reports-dw-1/~{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/~g {{ f }}"
+  
+  # Windows support from here
+- name: replace developer local path with good local path - {{ f }} (Older, windows support)
+  become: yes
+  become_user: pentaho
+  shell: "sed -i s~C:\\\\\\\\Users\\\\\\\\marjan.stefanoski\\\\\\\\foia-dw1\\\\\\\\~{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/~g {{ f }}"
 
-## This will be un-commented if workind on Windows
-# - name: replace stages backslash - {{ f }}
-#   become: yes
-#   become_user: pentaho
-#   shell: "sed -i s~stages\\\\\\\\~stages/~g {{ f }}"
+- name: replace stages backslash - {{ f }}
+  become: yes
+  become_user: pentaho
+  shell: "sed -i s~stages\\\\\\\\~stages/~g {{ f }}"
 
-# - name: replace misc backslash - {{ f }}
-#   become: yes
-#   become_user: pentaho
-#   shell: "sed -i s~misc\\\\\\\\~misc/~g {{ f }}"
+- name: replace misc backslash - {{ f }}
+  become: yes
+  become_user: pentaho
+  shell: "sed -i s~misc\\\\\\\\~misc/~g {{ f }}"
 
-# - name: replace dimensions backslash - {{ f }}
-#   become: yes
-#   become_user: pentaho
-#   shell: "sed -i s~dimensions\\\\\\\\~dimensions/~g {{ f }}"
+- name: replace dimensions backslash - {{ f }}
+  become: yes
+  become_user: pentaho
+  shell: "sed -i s~dimensions\\\\\\\\~dimensions/~g {{ f }}"

@@ -8,6 +8,33 @@
           - "@Development Tools"
           - openssl-devel
           - apr-devel
+    - name: see if Tomcat already installed
+      become: yes
+      stat:
+        path: "{{ tc.tomcat_home }}"
+      register: current_install
+    - name: detect current version, if already installed
+      become: yes
+      shell: "{{ tc.tomcat_home }}/bin/version.sh | grep 'Server version' | awk -F/ '{ print $2 }'"
+      register: current_version
+      when: current_install.stat.exists
+    - name: move current version to backup location, if different from desired version
+      become: yes
+      shell: mv {{ tc.tomcat_home }} {{ tc.tomcat_home }}-{{ current_version.stdout }}
+      when: current_install.stat.exists and ( tomcat_version != current_version.stdout )
+    - name: zip/archive the backup location, if needed
+      become: yes
+      shell: zip -rm {{ tc.tomcat_home }}-{{ current_version.stdout }}.zip {{ tc.tomcat_home }}-{{ current_version.stdout }}
+      when: current_install.stat.exists and ( tomcat_version != current_version.stdout )
+    - name: make new tomcat home folder, if new version is an upgrade
+      become: yes
+      file:
+        path: "{{ tc.tomcat_home }}"
+        state: directory
+        group: "{{ tc.user }}"
+        owner: "{{ tc.user }}"
+        mode: 0755
+      when: current_install.stat.exists and ( tomcat_version != current_version.stdout )
     - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
       loop:
         - name: Tomcat
@@ -79,8 +106,78 @@
         force: no
         content: |
           #!/bin/sh
-          LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CATALINA_HOME/lib
+          LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CATALINA_HOME/lib{{ ":" + tc.extra_lib_path if tc.extra_lib_path is defined else "" }}
           export LD_LIBRARY_PATH
+    - name: web.xml security changes - filter mappings
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/web.xml"
+        backup: yes
+        insertbefore: "<!-- The mapping for the Set Character Encoding Filter -->"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - SECURITY UPDATES - FILTER MAPPINGS -->"
+        block: |
+          <filter-mapping>
+            <filter-name>httpHeaderSecurity</filter-name>
+            <url-pattern>/*</url-pattern>
+            <dispatcher>REQUEST</dispatcher>
+          </filter-mapping>
+          <filter-mapping>
+            <filter-name>ExpiresFilter</filter-name>
+            <url-pattern>/*</url-pattern>
+            <dispatcher>REQUEST</dispatcher>
+          </filter-mapping>
+    - name: web.xml security changes - filters
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/web.xml"
+        backup: yes
+        insertbefore: "  <!-- A filter that sets character encoding that is used to decode -->"
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - SECURITY UPDATES - FILTERS -->"
+        block: |
+          <filter>
+            <filter-name>httpHeaderSecurity</filter-name>
+            <filter-class>org.apache.catalina.filters.HttpHeaderSecurityFilter</filter-class>
+            <async-supported>true</async-supported>
+            <init-param>
+              <param-name>hstsEnabled</param-name>
+              <param-value>true</param-value>
+            </init-param>
+            <init-param>
+              <param-name>hstsMaxAgeSeconds</param-name>
+              <param-value>31536000</param-value>
+            </init-param>
+            <init-param>
+              <param-name>hstsIncludeSubDomains</param-name>
+              <param-value>true</param-value>
+            </init-param>
+          </filter>
+          <filter>
+            <filter-name>ExpiresFilter</filter-name>
+            <filter-class>org.apache.catalina.filters.ExpiresFilter</filter-class>
+            <init-param>
+              <param-name>ExpiresDefault</param-name>
+              <param-value>access plus 0 seconds</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType image</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType text/css</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType text/html</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+            <init-param>
+              <param-name>ExpiresByType application/javascript</param-name>
+              <param-value>access plus 60 minutes</param-value>
+            </init-param>
+          </filter>
+
     - name: configure Tomcat to use native connector
       become: yes
       become_user: "{{ tc.user }}"
@@ -89,6 +186,36 @@
         backup: yes
         regexp: '(^.*)AprLifecycleListener" SSLEngine(.*$)'
         replace: '\1AprLifecycleListener" useAprConnector="true" SSLEngine\2'
+    - name: configure error report valve - 2023-07-02 security updates
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        backup: yes
+        insertbefore: '<!-- Access log processes all example.'
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - ERROR REPORT VALVE -->"
+        block: |
+          <!-- Error Report Valve -->
+          <Valve className="org.apache.catalina.valves.ErrorReportValve" showReport="false" showServerInfo="false"/>
+    - name: configure RemoteIP logging valve, to log the browser IP address in the access log
+      become: yes
+      become_user: "{{ tc.user }}"
+      blockinfile:
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        backup: yes
+        insertbefore: '<!-- Access log processes all example.'
+        marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - REMOTE IP VALVE -->"
+        block: |
+          <!-- Remote IP Valve -->
+          <Valve className="org.apache.catalina.valves.RemoteIpValve" />
+    - name: enable request attribute logging
+      become: yes
+      become_user: "{{ tc.user }}"
+      replace:
+        path: "{{ tc.tomcat_home }}/conf/server.xml"
+        backup: yes
+        regexp: '<Valve className="org.apache.catalina.valves.AccessLogValve" directory'
+        replace: '<Valve className="org.apache.catalina.valves.AccessLogValve" requestAttributesEnabled="true" directory'
     - name: configure access log file location
       become: yes
       become_user: "{{ tc.user }}"
@@ -114,18 +241,26 @@
         marker: "<!-- {mark} ANSIBLE MANAGED BLOCK - TLS CONFIG -->"
         block: |
           <!-- {{ tc.service}} Connector -->
-          <Connector port="{{ tc.tls_port }}"
-            maxThreads="150" SSLEnabled="true" secure="true" scheme="https"
+          <Connector 
+            port="{{ tc.tls_port }}"
+            maxThreads="150" 
+            SSLEnabled="true" 
+            secure="true" 
+            scheme="https"
+            address="0.0.0.0"
+            protocol="org.apache.coyote.http11.Http11AprProtocol"
             maxHttpHeaderSize="32768"
             connectionTimeout="40000"
-            useBodyEncodingForURI="true"
-            address="0.0.0.0">
+            useBodyEncodingForURI="true">
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
-            <SSLHostConfig protocols="{{ ssl_version }}" certificateVerification="none">
-              <Certificate certificateFile="{{ ssl_cert }}"
-                certificateKeyFile="{{ tc.tomcat_home }}/conf/{{ tc.user }}.key"
-                certificateChainFile="{{ ssl_ca }}"
-                type="RSA" />
+            <SSLHostConfig 
+              honorCipherOrder="true"
+              ciphers="HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!kRSA"
+              caCertificateFile="{{ ssl_ca }}"
+              protocols="{{ ssl_version }}">
+              <Certificate 
+                certificateFile="{{ ssl_cert }}"
+                certificateKeyFile="{{ tc.tomcat_home }}/conf/{{ tc.user }}.key" />
             </SSLHostConfig>
           </Connector>
     - name: JMX password file
@@ -167,7 +302,7 @@
         insertbefore: EOF
         marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_OPTS"
         block: |
-          export JAVA_OPTS="-Xms{{ arkcase_mem_min | default('1g',true)}} -Xmx{{ arkcase_mem_max | default('6g',true)}} -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.trustStore={{ java_trust_store }} -Dlog4j.formatMsgNoLookups=true"
+          export JAVA_OPTS="-Xms{{ tc.mem_min | default('1g',true)}} -Xmx{{ tc.mem_max | default('6g',true)}} -Djava.net.preferIPv4Stack=true -XX:+UseG1GC -Dlog4j.formatMsgNoLookups=true {{ tc.fips_mode | default('') }}"
     - name: set CATALINA_OPTS
       become: yes
       become_user: "{{ tc.user }}"
