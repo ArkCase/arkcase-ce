@@ -3,7 +3,7 @@
 # and then we also have to escape them for bash.
 # what we really want is to replace backslash 
 # with slash.
-- name: replace developer local path with good local path - {{ f }}
+- name: replace developer local path with good local path - {{ f }} (Windows)
   become: yes
   become_user: pentaho
   shell: "sed -i s~C:\\\\\\\\Users\\\\\\\\marjan.stefanoski\\\\\\\\foia-dw1\\\\\\\\~{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/~g {{ f }}"
@@ -22,3 +22,8 @@
   become: yes
   become_user: pentaho
   shell: "sed -i s~dimensions\\\\\\\\~dimensions/~g {{ f }}"
+
+- name: replace developer local path with good local path - {{ f }} (Linux)
+  become: yes
+  become_user: pentaho
+  shell: "sed -i s~/home/marst/projects/ETL-projects/EEOC/foia---reports-dw-1/~{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/~g {{ f }}"

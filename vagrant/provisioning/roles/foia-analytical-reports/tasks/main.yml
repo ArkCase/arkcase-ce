@@ -133,10 +133,15 @@
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
 
-- name: setup path to arkcase config file
+- name: setup path to arkcase config file(Windows)
   become: yes
   become_user: pentaho
   shell: sed -i 's~C:\\Users\\marjan\.stefanoski\\foia---reports-dw-1\\config\\arkcase_config\.properties~{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config\.properties~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr
+
+- name: setup path to arkcase config file(Linux)
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~/home/marst/projects/ETL-projects/EEOC/foia---reports-dw-1/config/arkcase_config\.properties~{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config\.properties~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr
 
 - name: setup Arkcase REST endpoints
   become: yes
