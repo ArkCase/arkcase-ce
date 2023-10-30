@@ -26,4 +26,7 @@
 - name: replace developer local path with good local path - {{ f }} (Linux)
   become: yes
   become_user: pentaho
-  shell: "sed -i s~/home/marst/projects/ETL-projects/foia---reports-dw-1/~{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}/~g {{ f }}"
+  replace:
+    path: "{{ f }}"
+    regexp: '(\s*)(\/home\/marst\/projects\/ETL-projects\/foia---reports-dw-1\/)'
+    replace: '\1{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}'
