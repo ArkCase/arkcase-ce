@@ -28,5 +28,5 @@
   become_user: pentaho
   replace:
     path: "{{ f }}"
-    regexp: '(\s*)(\/home\/marst\/projects\/ETL-projects\/foia---reports-dw-1\/)'
+    regexp: '(\s*)(\/home\/marst\/projects\/ETL-projects\/*)'
     replace: '\1{{ root_folder }}/install/pentaho/foia-reports-dw-{{ foia_analytical_reports_version }}'

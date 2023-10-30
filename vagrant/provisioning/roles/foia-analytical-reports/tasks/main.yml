@@ -150,7 +150,7 @@
     path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr"
     state: present
     backrefs: yes
-    regexp: '^(\s*)<name>/home/marst/projects/ETL-projects/foia---reports-dw-1/config/arkcase_config.properties</name>'
+    regexp: '^(\s*)<name>/home/marst/projects/ETL-projects/*'
     line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>'
 
 - name: setup Arkcase REST endpoints
