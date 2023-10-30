@@ -76,6 +76,26 @@
     regexp: "<repeat>Y</repeat>"
     line: "      <repeat>N</repeat>"
 
+- name: setup path to arkcase config file(Windows)
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr"
+    state: present
+    backrefs: yes
+    regexp: '^(\s*)<name>C:\\Users\\marjan\.stefanoski\\foia---reports-dw-1\\config\\arkcase_config.properties</name>'
+    line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>'
+
+- name: setup path to arkcase config file(Linux)
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr"
+    state: present
+    backrefs: yes
+    regexp: '^(\s*)(.*)<name>/home/marst/projects/ETL-projects/(.*)$'
+    line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>'
+
 - name: find project files
   become: yes
   become_user: pentaho
@@ -132,26 +152,6 @@
       line: "  <httpLogin>{{ arkcase_admin_user }}</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
-
-- name: setup path to arkcase config file(Windows)
-  become: yes
-  become_user: pentaho
-  lineinfile:
-    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr"
-    state: present
-    backrefs: yes
-    regexp: '^(\s*)<name>C:\\Users\\marjan\.stefanoski\\foia---reports-dw-1\\config\\arkcase_config.properties</name>'
-    line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>'
-
-- name: setup path to arkcase config file(Linux)
-  become: yes
-  become_user: pentaho
-  lineinfile:
-    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/misc/VARIABLE_CONFIG.ktr"
-    state: present
-    backrefs: yes
-    regexp: '^(\s*)<name>/home/marst/projects/ETL-projects/*'
-    line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>'
 
 - name: setup Arkcase REST endpoints
   become: yes
