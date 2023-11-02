@@ -1,0 +1,65 @@
+- name: stop arkcase
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: arkcase
+    state: stopped
+
+- name: copy existing solr data to backup folder
+  become: yes
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/data/solr/"
+    dest: "{{ root_folder }}/data/solr_backup/"
+    owner: solr
+    group: solr
+
+- name: delete solr cores from previous install
+  command: /opt/arkcase/app/solr/bin/solr delete -c {{ item }}
+  loop: "{{ solr_cores }}"
+
+- name: stop solr
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: solr
+    state: stopped
+
+- name: Remove solr config files and folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+    group: solr
+    owner: solr
+  loop:
+    - "{{ root_folder }}/data/solr"
+    - "{{ root_folder }}/app/solr"
+    - "{{ root_folder }}/install/solr"
+    - "/etc/systemd/system/solr.service"
+
+- name: install solr
+  include_role: 
+    name: solr
+
+- name: remove solr default data folder after upgrade
+  become: yes 
+  shell: rm -rf {{ root_folder }}/data/solr/*
+
+- name: copy backup dir to new solr data dir
+  become: yes
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/data/solr_backup/"
+    dest: "{{ root_folder }}/data/solr/"
+    owner: solr
+    group: solr
+
+- name: restart services arkcase and solr
+  become: yes
+  service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - solr
+    - arkcase

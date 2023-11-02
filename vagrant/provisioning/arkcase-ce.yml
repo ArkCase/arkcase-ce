@@ -52,6 +52,8 @@
       tags: [core, zookeeper]
     - role: solr
       tags: [core, solr]
+    - role: upgrade-solr
+      tags: [upgrade-solr]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup]
     - role: pentaho-ce
