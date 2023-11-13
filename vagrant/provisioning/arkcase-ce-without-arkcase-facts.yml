@@ -505,7 +505,7 @@ default_database_password: "@rM3d1A!"
 
 # tomcat_major_version needed to build download URL
 tomcat_major_version: 9
-tomcat_version: 9.0.22
+tomcat_version: 9.0.82
 
 # Alfresco Community Edition
 alfresco_release_name: 201806-GA
