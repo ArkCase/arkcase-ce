@@ -1,65 +1,91 @@
-- name: stop arkcase
+- name: check for available disk space
   become: yes
-  systemd:
-    daemon_reload: true
-    name: arkcase
-    state: stopped
+  command: df -h /opt/
+  register: space_available
 
-- name: copy existing solr data to backup folder
+- name: check for solr data space
   become: yes
-  copy:
-    remote_src: yes
-    src: "{{ root_folder }}/data/solr/"
-    dest: "{{ root_folder }}/data/solr_backup/"
-    owner: solr
-    group: solr
+  stat:
+    path:  /opt/arkcase/data/solr
+  register: solr_data
 
-- name: delete solr cores from previous install
-  command: /opt/arkcase/app/solr/bin/solr delete -c {{ item }}
-  loop: "{{ solr_cores }}"
+- name: upgrade and backup solr if space is available under root_folder
+  block: 
+    - name: stop arkcase
+      become: yes
+      systemd:
+        name: arkcase
+        state: stopped
 
-- name: stop solr
+    - name: copy existing solr data to backup folder
+      become: yes
+      copy:
+        remote_src: yes
+        src: "{{ root_folder }}/data/solr/"
+        dest: "{{ root_folder }}/data/solr_backup/"
+        owner: solr
+        group: solr
+
+    - name: delete solr cores from previous install
+      command: /opt/arkcase/app/solr/bin/solr delete -c {{ item }}
+      loop: "{{ solr_cores }}"
+
+    - name: stop solr
+      become: yes
+      systemd:
+        name: solr
+        state: stopped
+
+    - name: Remove solr config files and folders
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: absent
+        group: solr
+        owner: solr
+      loop:
+        - "{{ root_folder }}/data/solr"
+        - "{{ root_folder }}/app/solr"
+        - "{{ root_folder }}/install/solr"
+        - "/etc/systemd/system/solr.service"
+
+    - name: install solr
+      include_role: 
+        name: solr
+
+    - name: remove solr default data folder after upgrade
+      become: yes 
+      shell: rm -rf {{ root_folder }}/data/solr/*
+
+    - name: copy backup dir to new solr data dir
+      become: yes
+      copy:
+        remote_src: yes
+        src: "{{ root_folder }}/data/solr_backup/"
+        dest: "{{ root_folder }}/data/solr/"
+        owner: solr
+        group: solr
+
+    - name: restart service solr
+      become: yes
+      systemd:
+        daemon_reload: true
+        name: solr
+        state: restarted
+      
+    - name: wait for solr to start before start arkcase service
+      pause:
+        minutes: 1
+
+    - name: start service arkcase
+      become: yes
+      systemd:
+        name: arkcase
+        state: started
+  when: solr_data < space_available
+
+- name: output if there is not space available
   become: yes
-  systemd:
-    daemon_reload: true
-    name: solr
-    state: stopped
-
-- name: Remove solr config files and folders
-  become: yes
-  file:
-    path: "{{ item }}"
-    state: absent
-    group: solr
-    owner: solr
-  loop:
-    - "{{ root_folder }}/data/solr"
-    - "{{ root_folder }}/app/solr"
-    - "{{ root_folder }}/install/solr"
-    - "/etc/systemd/system/solr.service"
-
-- name: install solr
-  include_role: 
-    name: solr
-
-- name: remove solr default data folder after upgrade
-  become: yes 
-  shell: rm -rf {{ root_folder }}/data/solr/*
-
-- name: copy backup dir to new solr data dir
-  become: yes
-  copy:
-    remote_src: yes
-    src: "{{ root_folder }}/data/solr_backup/"
-    dest: "{{ root_folder }}/data/solr/"
-    owner: solr
-    group: solr
-
-- name: restart services arkcase and solr
-  become: yes
-  service:
-    name: "{{ item }}"
-    state: restarted
-  loop:
-    - solr
-    - arkcase
+  debug:
+    msg: "There is no space available under {{ root_folder }}"
+  when: solr_data > space_available
