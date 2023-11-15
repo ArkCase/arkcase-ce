@@ -132,35 +132,6 @@
     global: yes
     state: present
 
-- name: check current tomcat version
-  become: yes
-  script: 
-    cmd: /bin/sh "{{ root_folder }}/app/arkcase/bin/version.sh"
-  register: tomcat_current_version
-
-- name: backup tomcat directory
-  become: yes
-  copy:
-    src: "{{ root_folder }}/app/arkcase/"
-    dest: "{{ root_folder }}/app/backup/arkcase/"
-    remote_src: yes
-  when: "tomcat_version not in tomcat_current_version.stdout_lines"
-
-- name: remove created files with previos tomcat installation
-  become: yes
-  become_user: arkcase
-  file:
-    path: "{{ item }}"
-    state: absent
-  loop:
-    - "{{ root_folder }}/app/arkcase/README.md"
-    - "{{ root_folder }}/app/arkcase/bin/native/README.txt"
-    - "{{ root_folder }}/app/arkcase/bin/native/native/config.log"
-    - "{{ root_folder }}/app/arkcase/bin/native/native/.libs/libtcnative-1.so"
-    - "{{ root_folder }}/app/arkcase/bin/native/native/config.log"
-    - "{{ root_folder }}/app/arkcase/lib/libtcnative-1.so"
-  when: "tomcat_version not in tomcat_current_version.stdout_lines"
-
 - include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
   args:
     apply:
