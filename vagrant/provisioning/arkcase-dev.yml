@@ -79,3 +79,5 @@
       tags: [core, privacy, reports, privacy-dev-reports]
     - role: arkcase-developer
       tags: [core, arkcase, arkcase-developer]
+    - role: upgrade-log4j
+      tags: [upgrade-log4j]

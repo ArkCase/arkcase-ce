@@ -183,3 +183,5 @@
       tags: [foia-dev-reports, arkcase-developer]
     - role: arkcase-developer
       tags: [arkcase-developer]
+    - role: upgrade-log4j
+      tags: [upgrade-log4j]
