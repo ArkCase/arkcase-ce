@@ -452,6 +452,9 @@ enable_alfresco_sync: true
 # whether to add ldap groups to Alfresco sites
 alfresco_add_groups_to_sites: false
 
+# Used when we want to upgrade Alfresco to the latest installer version
+alfresco_upgrade: false
+
 alfresco_sites:
   - s_title: "ACM"
     s_name: "acm"
