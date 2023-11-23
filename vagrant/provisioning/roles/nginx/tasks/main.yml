@@ -1,0 +1,43 @@
+- name: install nginx
+  become: yes
+  yum:
+    state: present
+    name: nginx
+
+- name: enable nginx to run at startup
+  become: yes
+  systemd:
+    daemon_reload: true
+    name: nginx
+    enabled: yes
+    masked: no
+
+- name: open firewall port for nginx ui
+  become: yes
+  firewalld:
+    port: "{{ item }}"
+    permanent: yes
+    state: enabled
+    immediate: yes
+  loop:
+    - "81/tcp"
+    - "9443/tcp"
+
+- name: ArkCase Nginx configuration
+  become: yes
+  template:
+    backup: yes
+    src: nginx.conf
+    dest: /etc/nginx/nginx.conf
+  register: nginx_conf
+
+# - name: add nginx port for selinux enforcing mode (if needed)
+#   shell: semanage port -a -t http_port_t  -p tcp 9443
+#   when: nginx_ssl
+
+- name: restart nginx if needed
+  become: yes
+  systemd:
+    name: nginx
+    state: restarted
+  when: nginx_conf is changed
