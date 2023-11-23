@@ -52,7 +52,8 @@ default_user_password: "AcMd3v$"
 ldap_host: "{{ internal_host }}"
 ldap_protocol: ldaps
 ldap_port: 636
-ldap_url: "{{ ldap_protocol }}://{{ ldap_host }}:{{ ldap_port }}"
+ldap_url: 
+  - "{{ ldap_protocol }}://{{ ldap_host }}:{{ ldap_port }}"
 ldap_base: "DC=arkcase-ce"
 ldap_bind_user: "CN=Administrator,CN=Users,{{ ldap_base }}"
 ldap_bind_password: "{{ default_user_password }}"
