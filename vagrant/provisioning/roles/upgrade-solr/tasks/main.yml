@@ -94,10 +94,10 @@
         name: arkcase
         state: started
       when: _result.status == 200
-  when: solr_data_formated < space_available_formated
+  when: solr_data_formated > space_available_formated
 
 - name: output if there is not space available
   become: yes
   debug:
     msg: "There is no space available under {{ root_folder }}"
-  when:  solr_data_formated > space_available_formated
+  when:  solr_data_formated < space_available_formated
