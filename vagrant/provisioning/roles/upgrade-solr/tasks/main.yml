@@ -23,12 +23,8 @@
 
     - name: copy existing solr data to backup folder
       become: yes
-      copy:
-        remote_src: yes
-        src: "{{ root_folder }}/data/solr/"
-        dest: "{{ root_folder }}/data/solr_backup/"
-        owner: solr
-        group: solr
+      become: solr
+      shell: mv {{ root_folder }}/data/solr/ {{ root_folder }}/data/solr_backup/
 
     - name: delete solr cores from previous install
       command: "{{ root_folder }}/app/solr/bin/solr delete -c {{ item }}"
@@ -94,10 +90,10 @@
         name: arkcase
         state: started
       when: _result.status == 200
-  when: solr_data_formated > space_available_formated
+  when: solr_data_formated * 2 > space_available_formated
 
 - name: output if there is not space available
   become: yes
   debug:
     msg: "There is no space available under {{ root_folder }}"
-  when:  solr_data_formated < space_available_formated
+  when:  solr_data_formated * 2 < space_available_formated
