@@ -35,7 +35,7 @@
        that you fully re-index after changing this setting as it can
        affect both how text is indexed and queried.
   -->
-  <luceneMatchVersion>7.7.2</luceneMatchVersion>
+  <luceneMatchVersion>8.11.2</luceneMatchVersion>
 
   <!-- Use classic schema.xml  -->	
   <schemaFactory class="ClassicIndexSchemaFactory"/>
@@ -101,7 +101,7 @@
        replication is in use, this should match the replication
        configuration.
     -->
-  <dataDir>${solr.data.dir:}</dataDir>
+  <dataDir>${solr.data.home:}</dataDir>
 
 
   <!-- The DirectoryFactory to use for indexes.
@@ -411,8 +411,7 @@
                       to occupy. Note that when this option is specified, the size
                       and initialSize parameters are ignored.
       -->
-    <filterCache class="solr.FastLRUCache"
-                 size="512"
+    <filterCache size="512"
                  initialSize="512"
                  autowarmCount="0"/>
 
@@ -424,8 +423,7 @@
             maxRamMB - the maximum amount of RAM (in MB) that this cache is allowed
                        to occupy
       -->
-    <queryResultCache class="solr.LRUCache"
-                      size="512"
+    <queryResultCache size="512"
                       initialSize="512"
                       autowarmCount="0"/>
 
@@ -435,14 +433,12 @@
          document).  Since Lucene internal document ids are transient,
          this cache will not be autowarmed.
       -->
-    <documentCache class="solr.LRUCache"
-                   size="512"
+    <documentCache size="512"
                    initialSize="512"
                    autowarmCount="0"/>
 
     <!-- custom cache currently used by block join -->
     <cache name="perSegFilter"
-           class="solr.search.LRUCache"
            size="10"
            initialSize="0"
            autowarmCount="10"
@@ -455,8 +451,7 @@
          even if not configured here.
       -->
     <!--
-       <fieldValueCache class="solr.FastLRUCache"
-                        size="512"
+       <fieldValueCache size="512"
                         autowarmCount="128"
                         showItems="32" />
       -->
@@ -472,7 +467,6 @@
       -->
     <!--
        <cache name="myUserCache"
-              class="solr.LRUCache"
               size="4096"
               initialSize="1024"
               autowarmCount="1024"
