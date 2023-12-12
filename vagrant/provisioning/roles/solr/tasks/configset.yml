@@ -22,7 +22,7 @@
 - name: copy solrconfig.xml if needed
   become: yes
   become_user: solr
-  copy:
+  template:
     src: solrconfig.xml
     dest: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/"
     mode: 0644
