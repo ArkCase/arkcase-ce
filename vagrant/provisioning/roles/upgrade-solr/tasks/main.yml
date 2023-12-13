@@ -23,7 +23,7 @@
 
     - name: copy existing solr data to backup folder
       become: yes
-      become: solr
+      become_user: solr
       shell: mv {{ root_folder }}/data/solr/ {{ root_folder }}/data/solr_backup/
 
     - name: delete solr cores from previous install
