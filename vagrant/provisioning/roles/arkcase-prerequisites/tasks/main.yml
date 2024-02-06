@@ -59,14 +59,6 @@
     - arkcase
     - config-server
 
-- name: create arkcase database schema
-  include_tasks: "{{ role_path }}/../{{ db_engine }}/tasks/create_schema.yml"
-  args:
-    apply:
-      vars:
-        item: arkcase
-  when: db_engine | default('mariadb') == "mariadb"
-
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
@@ -161,7 +153,7 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - CONFIG-SERVER JAVA_OPTS"
     block: |
-      export JAVA_OPTS="$JAVA_OPTS -Dacm.configurationserver.propertyfile=/home/arkcase/.arkcase/acm/conf.yml -Duser.home={{ root_folder }}/data/arkcase-home"
+      export JAVA_OPTS="$JAVA_OPTS -Dacm.configurationserver.propertyfile=/home/arkcase/.arkcase/acm/conf.yml -Duser.home={{ root_folder }}/data/arkcase-home -Dspring.cloud.config.uri=http://{{ config_server_host }}:9999"
 
 
 - name: configure NodeJS minification

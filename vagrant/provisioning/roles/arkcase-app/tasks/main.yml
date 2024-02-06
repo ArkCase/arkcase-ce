@@ -19,12 +19,17 @@
 - name: decrypt the symmetric key (using private key)
   become: yes
   command: openssl rsautl -decrypt -inkey {{ ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
-  when: not client_ssl_key is defined
+  when: not client_ssl_key is defined and ( not (arkcase_clustering | default(false)) or (arkcase_primary_node | default(true)) )
 
 - name: decrypt the symmetric key (using private key)
   become: yes
   command: openssl rsautl -decrypt -inkey {{ client_ssl_key }} -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
-  when: client_ssl_key is defined
+  when: client_ssl_key is defined and ( not (arkcase_clustering | default(false)) or (arkcase_primary_node | default(true)) )
+
+- name: decrypt the symmetric key (using private key)
+  become: yes
+  command: openssl rsautl -decrypt -inkey /etc/tls/private/arkcase-node-1.pem -in {{ root_folder }}/common/symmetricKey.encrypted -out {{ root_folder }}/common/symmetricKeyWithNewLine.decrypted
+  when: arkcase_clustering | default(false) and not (arkcase_primary_node | default(true))
 
 - name: remove the trailing new line from the symmetric key file
   become: yes
@@ -171,6 +176,7 @@
 - name: format extension version
   set_fact:
     arkcase_extension_version_formatted: "{{ '-' ~ arkcase_extension_version if arkcase_extension_version != '' else '' }}"
+    arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
 
 - name: download extension (if configured)
   become: yes
@@ -184,12 +190,12 @@
 
 - name: set extension config file name (extension id)
   set_fact:
-    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.zip"
+    extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_configuration_version_formatted }}.zip"
   when: arkcase_extension_id is defined
 
 - name: set extension config file name (no extension id)
   set_fact:
-    extension_config_file_name: "arkcase-config{{ arkcase_extension_version }}.zip"
+    extension_config_file_name: "arkcase-config{{ arkcase_configuration_version }}.zip"
   when: not arkcase_extension_id is defined
 
 - name: download extension configuration (if configured)
@@ -207,11 +213,6 @@
   become_user: arkcase
   command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
   when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
-
-
-- name: format config version
-  set_fact:
-    arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
 
 - name: download configuration (if using sftp, and no extension is configured)
   become: yes
@@ -287,10 +288,11 @@
     solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host else '' }}"
     alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
     alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
+    config_server_service_name: "{{ 'config-server.service' if config_server_host == arkcase_host else '' }}"
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:
-    arkcase_required_services: "{{ db_service_name + ' ' + activemq_service_name + ' ' + solr_service_name + ' ' + samba_service_name + ' ' + alfresco7_service_name + ' ' + alfresco_service_name + ' config-server.service' }}"
+    arkcase_required_services: "{{ db_service_name + ' ' + activemq_service_name + ' ' + solr_service_name + ' ' + samba_service_name + ' ' + alfresco7_service_name + ' ' + alfresco_service_name + ' ' + config_server_service_name }}"
 
 - name: copy ArkCase and config server systemd unit files
   become: yes
@@ -622,7 +624,7 @@
   register: conf_yml
   changed_when: false
 
-- name: update config server configuration
+- name: update config server configuration - make sure the server profile is included
   become: yes
   become_user: arkcase
   replace:
@@ -631,6 +633,15 @@
     regexp: "runtime"
     replace: "server,runtime"
   when: "'server,runtime' not in conf_yml.stdout"
+
+- name: update config server configuration - set config server URL if needed
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/conf.yml
+    regexp: "localhost"
+    replace: "{{ config_server_host }}"
 
 - name: see if audit patterns is in the main folder
   become: yes
@@ -1037,7 +1048,17 @@
     private_key_alias: "arkcase_server"
   when: not client_ssl_key is defined
 
-- name: fix encryptionproperties
+- name: set encryption key store (no clustering, or primary node)
+  set_fact:
+    encryption_key_store: "{{ java_key_store }}"
+  when: not (arkcase_clustering | default(false)) or (arkcase_primary_node | default(true))
+
+- name: set encryption key store (clustering, subsequent nodes)
+  set_fact:
+    encryption_key_store: "{{ java_key_store_node1 }}"
+  when: (arkcase_clustering | default(false)) and not (arkcase_primary_node | default(true))
+
+- name: fix encryption properties
   become: yes
   become_user: arkcase
   replace:
@@ -1049,9 +1070,9 @@
     - regexp: JKS
       replace: PKCS12
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/encryption-keystore"
-      replace: "{{ java_key_store }}"
+      replace: "{{ encryption_key_store }}"
     - regexp: "#\\{systemProperties\\['user.home'\\]\\}/.arkcase/acm/private/keystore.old"
-      replace: "{{ java_key_store }}"
+      replace: "{{ encryption_key_store }}"
     - regexp: "password"
       replace: "{{ java_key_store_pass }}"
     - regexp: 'value="armedia"'
@@ -1211,3 +1232,4 @@
     remote_src: yes
     src: "{{ root_folder }}/install/arkcase/pdftron_libraries.zip"
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries"
+ 

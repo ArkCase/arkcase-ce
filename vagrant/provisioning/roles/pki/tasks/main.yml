@@ -26,10 +26,13 @@
     cipher: "auto"
     passphrase: "m0rn1ngD$w"
     select_crypto_backend: "cryptography"
+  when: not (arkcase_clustering | default(false)) or arkcase_primary_node | default(true)
+  register: root_ca_pk 
 
 - name: remove passphrase from private key
   become: yes
   command: openssl rsa -in "/etc/tls/private/arkcase-root-passphrase.pem" -out "/etc/tls/private/arkcase-root.pem" -passin pass:'m0rn1ngD$w'
+  when: root_ca_pk is changed
 
 - name: generate root ca certificate signing request
   become: yes
@@ -53,6 +56,7 @@
     # the common_name has to be a DNS-compatible name now.
     common_name: root.authority.{{ base_domain }}
     email_address: info@arkcase.com
+  when: not (arkcase_clustering | default(false)) or arkcase_primary_node | default(true)
   register: root_csr
 
 - name: Sign root ca certificate
@@ -74,10 +78,12 @@
     cipher: "auto"
     passphrase: "m0rn1ngD$w"
   register: intermediate_private_key
+  when: not (arkcase_clustering | default(false)) or arkcase_primary_node | default(true)
 
 - name: remove passphrase from intermediate key
   become: yes
   command: openssl rsa -in "/etc/tls/private/arkcase-intermediate-pp.pem" -out "/etc/tls/private/arkcase-intermediate.pem" -passin pass:'m0rn1ngD$w'
+  when: intermediate_private_key is changed
 
 # NOTE the intermediate CSR is signed with the intermediate key
 - name: generate intermediate csr
@@ -102,6 +108,7 @@
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
     common_name: intermediate.authority.{{ base_domain }}
+  when: not (arkcase_clustering | default(false)) or arkcase_primary_node | default(true)
   register: intermediate_csr
 
 # the intermediate cert is signed with the root key
@@ -124,6 +131,14 @@
   shell: cat /etc/tls/crt/arkcase-intermediate.crt /etc/tls/ca/arkcase-root.crt > {{ ssl_ca }}
   when: intermediate_cert is changed or root_cert is changed
 
+- name: copy chain cert file, if necessary
+  become: yes
+  copy:
+    dest: "{{ ssl_ca }}"
+    content: "{{ arkcase_chain_cert }}"
+  when: (arkcase_clustering | default(false)) and not (arkcase_primary_node | default(true))
+
+
 # Although 4096 bits is slightly more secure than 2048 bits,
 # it slows down TLS handshakes and significantly increases
 # processor load during handshakes. For this reason, most
@@ -142,11 +157,31 @@
 - name: remove passphrase from server key
   become: yes
   command: openssl rsa -in "/etc/tls/private/ssl-key-pp.pem" -out "{{ ssl_key }}" -passin pass:'m0rn1ngD$w'
+  when: server_private_key is changed
 
 - name: set public_host if needed
   set_fact:
     public_host: "{{ external_host }}"
   when: public_host is not defined
+
+- name: set list of all host names
+  set_fact:
+    all_hosts:
+      - DNS:{{ external_host }}
+      - DNS:{{ internal_host }}
+      - DNS:{{ activemq_host }}
+      - DNS:{{ alfresco_host }}
+      - DNS:{{ arkcase_host }}
+      - DNS:{{ database_host }}
+      - DNS:{{ mariadb_host }}
+      - DNS:{{ pentaho_host }}
+      - DNS:{{ snowbound_host }}
+      - DNS:{{ solr_host }}
+      - DNS:{{ public_host }}
+
+- name: unique host names
+  set_fact:
+    unique_hosts: "{{ all_hosts | unique }}"
 
 - name: generate server csr
   become: yes
@@ -171,19 +206,22 @@
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
     common_name: "{{ internal_host }}"
-    subject_alt_name:
-      - DNS:{{ external_host }}
-      - DNS:{{ internal_host }}
-      - DNS:{{ activemq_host }}
-      - DNS:{{ alfresco_host }}
-      - DNS:{{ arkcase_host }}
-      - DNS:{{ database_host }}
-      - DNS:{{ mariadb_host }}
-      - DNS:{{ pentaho_host }}
-      - DNS:{{ snowbound_host }}
-      - DNS:{{ solr_host }}
-      - DNS:{{ public_host }}
+    subject_alt_name: "{{ unique_hosts }}"
   register: server_csr
+
+- name: copy primary node's intermediate key, if necessary
+  become: yes
+  copy:
+    dest: /etc/tls/private/arkcase-intermediate.pem
+    content: "{{ arkcase_intermediate_key }}"
+  when: (arkcase_clustering | default(false))  and not (arkcase_primary_node | default(true))
+
+- name: copy primary node's intermediate cert, if necessary
+  become: yes
+  copy:
+    dest: /etc/tls/crt/arkcase-intermediate.crt
+    content: "{{ arkcase_intermediate_cert }}"
+  when: (arkcase_clustering | default(false))  and not (arkcase_primary_node | default(true))
 
 # the server cert is signed with the intermediate key
 - name: Sign server CSR
@@ -196,3 +234,4 @@
     provider: ownca
     mode: 0644
   when: server_csr is changed
+
