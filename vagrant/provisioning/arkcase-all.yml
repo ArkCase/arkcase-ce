@@ -78,9 +78,9 @@
     - role: pentaho-configuration
       tags: [core, pentaho, pentaho-configuration, marketplace]
     - role: snowbound
-      tags: [core, snowbound, marketplace]
+      tags: [core, snowbound]
     - role: snowbound-app
-      tags: [core, snowbound, snowbound-app, upgrade, marketplace]
+      tags: [core, snowbound, snowbound-app, upgrade]
     - role: confluent-platform-install
       when: enable_kafka is defined and enable_kafka == "yes"
       tags: [microservices, confluent]

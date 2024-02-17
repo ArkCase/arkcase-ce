@@ -12,6 +12,28 @@
     state: present
     group: activemq
 
+- name: Create ActiveMQ directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "u+rwx,g+rx,o+rx"
+  loop:
+    - "{{ root_folder }}/data/activemq"
+    - "{{ root_folder }}/log/activemq"
+    - "{{ root_folder }}/app/activemq"
+    - "{{ root_folder }}/install/activemq"
+    - "{{ root_folder }}/app/activemq/conf"
+
+- name: Create log4j.properties file
+  become: yes
+  file:
+    path: "{{ root_folder }}/app/activemq/conf/log4j.properties"
+    state: touch
+    mode: "u+rwx,g+rx,o+rx"
+    group: activemq
+    owner: activemq
+
 - name: ActiveMQ folders
   become: yes
   file:
@@ -19,11 +41,13 @@
     state: directory
     group: activemq
     owner: activemq
+    mode: "u+rwx,g+rx,o+rx"
   loop:
     - "{{ root_folder }}/data/activemq"
     - "{{ root_folder }}/log/activemq"
     - "{{ root_folder }}/app/activemq"
     - "{{ root_folder }}/install/activemq"
+    - "{{ root_folder }}/app/activemq/conf"
   register: activemq_folder_structure
 
 - name: enable logrotate for activemq log folder if necessary
@@ -231,8 +255,8 @@
     - name: wait for startup to finish
       wait_for:
         port: 61616
-        delay: 10
-        timeout: 60
+        delay: 20
+        timeout: 180
       when: activemq_first_start is changed
     - name: stop ActiveMQ
       become: yes
@@ -265,7 +289,6 @@
     - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
     - { regexp: 'uri="tcp', replace: 'uri="ssl' }
     - { regexp: 'uri="stomp://', replace: 'uri="stomp+ssl://' }
-    - { regexp: 'uri="amqp://', replace: 'uri="amqp+ssl://' }
 
 - name: JMX config
   block:

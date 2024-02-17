@@ -405,31 +405,31 @@
       become: yes
       become_user: alfresco7
       stat:
-        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-log4j.properties"
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-{{ log4j_properties }}"
       register: log4j_exists
     - name: unzip default log4j.properties
       become: yes
       become_user: alfresco7
-      command: unzip -d "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension" -j "{{ root_folder }}/app/alfresco7/webapps/alfresco.war" WEB-INF/classes/log4j.properties
+      command: unzip -d "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension" -j "{{ root_folder }}/app/alfresco7/webapps/alfresco.war" WEB-INF/classes/{{ log4j_properties }}
       when: log4j_exists.stat.exists == False
       register: log4j_unzipped
     - name: configure alfresco.log location
       become: yes
       become_user: alfresco7
       replace:
-        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/log4j.properties"
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/{{ log4j_properties }}"
         regexp: log4j.appender.File.File=alfresco.log
         replace: log4j.appender.File.File={{ root_folder }}/log/alfresco7/alfresco.log
       when: log4j_unzipped is changed
     - name: rename log4j.properties
       become: yes
       become_user: alfresco7
-      command: mv "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/log4j.properties" "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-log4j.properties"
+      command: mv "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/{{ log4j_properties }}" "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-{{ log4j_properties }}"
       when: log4j_unzipped is changed
     - name: remove default log4j.properties
       become: yes
       become_user: alfresco7
-      command: zip -d "{{ root_folder }}/app/alfresco7/webapps/alfresco.war" WEB-INF/classes/log4j.properties
+      command: zip -d "{{ root_folder }}/app/alfresco7/webapps/alfresco.war" WEB-INF/classes/{{ log4j_properties }}
       when: log4j_unzipped is changed
 
 - name: configure share.log location
@@ -438,19 +438,19 @@
       become: yes
       become_user: alfresco7
       stat:
-        path: "{{ root_folder }}/tmp/alfresco7/WEB-INF/classes/log4j.properties"
+        path: "{{ root_folder }}/tmp/alfresco7/WEB-INF/classes/{{ log4j_properties }}"
       register: share_log4j_exists
     - name: unzip share default log4j.properties
       become: yes
       become_user: alfresco7
-      command: unzip -d {{ root_folder }}/tmp/alfresco7 {{ root_folder }}/app/alfresco7/webapps/share.war WEB-INF/classes/log4j.properties
+      command: unzip -d {{ root_folder }}/tmp/alfresco7 {{ root_folder }}/app/alfresco7/webapps/share.war WEB-INF/classes/{{ log4j_properties }}
       when: share_log4j_exists.stat.exists == False
       register: share_log4j_unzipped
     - name: configure share.log location
       become: yes
       become_user: alfresco7
       replace:
-        path: "{{ root_folder }}/tmp/alfresco7/WEB-INF/classes/log4j.properties"
+        path: "{{ root_folder }}/tmp/alfresco7/WEB-INF/classes/{{ log4j_properties }}"
         regexp: log4j.appender.File.File=share.log
         replace: log4j.appender.File.File={{ root_folder }}/log/alfresco7/share.log
       when: share_log4j_unzipped is changed
@@ -516,3 +516,8 @@
   retries: 100
   delay: 5
 
+- name: Set Java alternatives to OpenJDK 8
+  command: alternatives --config java
+  become: yes
+  args:
+    stdin: "2"  

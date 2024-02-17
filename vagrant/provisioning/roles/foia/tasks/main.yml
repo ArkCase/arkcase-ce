@@ -27,6 +27,19 @@
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
   changed_when: false
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: Download FOIA UI portal
+  become: yes
+  become_user: apache
+  command: sshpass -e sftp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/external-web-portal-ui-foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip
+  args:
+    chdir: "{{ root_folder }}/tmp/httpd"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  changed_when: false
+  when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')   
+
 
 - name: copy foia UI portal to install folder (this will tell us if it actually changed)
   become: yes
@@ -36,6 +49,17 @@
     src: "{{ root_folder }}/tmp/httpd/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
     dest: "{{ root_folder }}/install/httpd/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
   register: foia_zip
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: copy foia UI portal to install folder (this will tell us if it actually changed)
+  become: yes
+  become_user: apache
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/tmp/httpd/external-web-portal-ui-foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/httpd/external-web-portal-ui-foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
+  register: foia_zip
+  when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 
 - name: see if foia web folder exists
   become: yes
@@ -64,7 +88,16 @@
     remote_src: yes
     src: "{{ root_folder }}/install/httpd/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
     dest: "{{ root_folder }}/data/httpd/htdocs/{{ foia_portal_context }}/"
-  when: foia_zip is changed
+  when: (foia_zip is changed) and (arkcase_version != "" and arkcase_version is version('2023.02', '<'))
+
+- name: unzip foia ui portal
+  become: yes
+  become_user: apache
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/httpd/external-web-portal-ui-foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/data/httpd/htdocs/{{ foia_portal_context }}/"
+  when: (foia_zip is changed) and (arkcase_version == "" or arkcase_version is version('2023.02', '>='))
 
 #### External REST Portal
 - name: create config folder
