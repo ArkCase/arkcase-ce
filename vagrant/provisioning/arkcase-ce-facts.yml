@@ -404,6 +404,7 @@ pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
 
 solr_version: 8.11.2
 solr_jmx_enabled: true
+upgrade_solr: false
 # Cores are only needed for Solr before 8.8.2
 solr_cores:
   - "acmAdvancedSearch"
