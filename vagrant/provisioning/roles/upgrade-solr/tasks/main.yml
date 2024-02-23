@@ -1,12 +1,17 @@
-- name: Check systemd zookeeper file exists
-  stat:
-    path: /etc/systemd/system/zookeeper.service
-  register: service_file
+- name: Populate service facts
+  service_facts:
 
 - name: install zookeeper
   include_role: 
     name: zookeeper
-  when: not service_file.stat.exists
+  when: ansible_facts.services["zookeeper.service"] is not defined
+
+- name: restart zookeeper if not running
+  become: yes
+  systemd:
+    name: zookeeper
+    state: restarted
+  when: ansible_facts.services["zookeeper.service"].state != "running"
 
 - name: check for available disk space
   become: yes
