@@ -12,7 +12,15 @@
   file:
     path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
     state: directory  
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
 
+- name: create install folder
+  become: yes
+  become_user: pentaho
+  file:
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01"
+    state: directory  
+  when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 - name: download FOIA analytical reports repository
   become: yes
   become_user: pentaho
@@ -23,6 +31,19 @@
     SSHPASS: "{{ sftp_arkcase_password }}"
   loop:
     - foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: download FOIA analytical reports repository
+  become: yes
+  become_user: pentaho
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ item }}
+  args:
+    chdir: "{{ root_folder }}/install/pentaho"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  loop:
+    - foia-reports-dw-2023.02.01-RC.01.zip
+  when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 
 - name: unzip repository
   become: yes
@@ -31,6 +52,16 @@
     remote_src: yes
     src: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip"
     dest: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: unzip repository
+  become: yes
+  become_user: pentaho
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01.zip"
+    dest: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01"
+  when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 
 ##########################################################
 # Configure the Kettle job files and run the Kettle job.
@@ -75,6 +106,18 @@
     backrefs: yes
     regexp: "<repeat>Y</repeat>"
     line: "      <repeat>N</repeat>"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')  
+
+- name: ensure the job has no internal schedule (should be unscheduled)
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/foia-dw1.kjb"
+    backrefs: yes
+    regexp: "<repeat>Y</repeat>"
+    line: "      <repeat>N</repeat>"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')  
 
 - name: setup path to arkcase config file(Windows)
   become: yes
@@ -85,6 +128,18 @@
     backrefs: yes
     regexp: '^(\s*)<name>C:\\Users\\marjan\.stefanoski\\foia---reports-dw-1\\config\\arkcase_config.properties</name>'
     line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>'
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: setup path to arkcase config file(Windows)
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/misc/VARIABLE_CONFIG.ktr"
+    state: present
+    backrefs: yes
+    regexp: '^(\s*)<name>C:\\Users\\marjan\.stefanoski\\foia---reports-dw-1\\config\\arkcase_config.properties</name>'
+    line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/config/arkcase_config.properties</name>'
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: setup path to arkcase config file(Linux)
   become: yes
@@ -95,6 +150,18 @@
     backrefs: yes
     regexp: '^(\s*)(.*)<name>/home/marst/projects/ETL-projects/(.*)$'
     line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties</name>'
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: setup path to arkcase config file(Linux)
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/misc/VARIABLE_CONFIG.ktr"
+    state: present
+    backrefs: yes
+    regexp: '^(\s*)(.*)<name>/home/marst/projects/ETL-projects/(.*)$'
+    line: '\1<name>{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/config/arkcase_config.properties</name>'
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: find project files
   become: yes
@@ -112,6 +179,25 @@
       - "*~"
       - "*.zip"
   register: foia_dw_files
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: find project files
+  become: yes
+  become_user: pentaho
+  find: 
+    paths: 
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/dimensions"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/stages"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/reports"
+      - "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/misc"
+    file_type: file
+    recurse: no
+    excludes: 
+      - "*~"
+      - "*.zip"
+  register: foia_dw_files
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: update database configurations
   include_tasks: update_db_config.yml
@@ -135,6 +221,25 @@
       line: "  <httpLogin>{{ arkcase_admin_user }}</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: update pentaho URLs to clear report cache
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/misc/FOIA_CDA_CLEAR_CACHE.ktr"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/plugin/cda/api/clearCache</nullif>"
+      line: "<nullif>https://{{ internal_host }}:2002/pentaho/plugin/cda/api/clearCache</nullif>"
+    - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
+      line: "  <httpLogin>{{ arkcase_admin_user }}</httpLogin>"
+    - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
+      line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')    
 
 - name: update pentaho URLs to clear Mondrian cache
   become: yes
@@ -152,6 +257,25 @@
       line: "  <httpLogin>{{ arkcase_admin_user }}</httpLogin>"
     - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
       line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: update pentaho URLs to clear Mondrian cache
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/misc/FOIA_MONDRIAN_CLEAR_CACHE.ktr"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "<nullif>http{{ ':' }}//localhost{{ ':' }}8080/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
+      line: "<nullif>https://{{ internal_host }}:2002/pentaho/api/system/refresh/mondrianSchemaCache</nullif>"
+    - regexp: "<httpLogin>242.matthew.maines</httpLogin>"
+      line: "  <httpLogin>{{ arkcase_admin_user }}</httpLogin>"
+    - regexp: "<httpPassword>Encrypted 2be98afc81ac2978aac22ab798bb3aac0</httpPassword>"
+      line: "  <httpPassword>{{ arkcase_admin_encr_password.stdout }}</httpPassword>"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: setup Arkcase REST endpoints
   become: yes
@@ -173,16 +297,53 @@
       line: "TRUSTSTORE_PATH={{ java_trust_store }}"
     - regexp: "TRUSTSTORE_PASSWORD=password"
       line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: setup Arkcase REST endpoints
+  become: yes
+  become_user: pentaho
+  lineinfile:
+    backup: yes
+    backrefs: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/config/arkcase_config.properties"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "AGENCY_REST_ENDPOINT=https{{ ':' }}//acm-arkcase/arkcase/api/latest/service/config/lookups"
+      line: "AGENCY_REST_ENDPOINT=https://{{ external_host }}/arkcase/api/latest/service/config/lookups"
+    - regexp: "ARKCASE_USER=arkcase-admin@arkcase.org"
+      line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+    - regexp: "ARKCASE_PASS=AcMd3v\\$"
+      line: "ARKCASE_PASS={{ arkcase_admin_password }}"
+    - regexp: "TRUSTSTORE_PATH=/some/path/to/truststore"
+      line: "TRUSTSTORE_PATH={{ java_trust_store }}"
+    - regexp: "TRUSTSTORE_PASSWORD=password"
+      line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: setup arkcase admin user in stg_foia_organization.ktr
   become: yes
   become_user: pentaho
   shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION.ktr
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: setup arkcase admin user in stg_foia_organization.ktr
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/stages/STG_FOIA_ORGANIZATION.ktr
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: setup arkcase admin user in stg_foia_organization_consultation.ktr
   become: yes
   become_user: pentaho
   shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION_CONSULTATION.ktr
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: setup arkcase admin user in stg_foia_organization_consultation.ktr
+  become: yes
+  become_user: pentaho
+  shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/stages/STG_FOIA_ORGANIZATION_CONSULTATION.ktr
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: run the job to create and populate the mondrian cubes
   become: yes
@@ -190,6 +351,15 @@
   command: 
     cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb
     chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: run the job to create and populate the mondrian cubes
+  become: yes
+  become_user: pentaho-pdi
+  command: 
+    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/foia-dw1.kjb
+    chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 - name: set the cron environment so as to be able to run the job
   become: yes
@@ -218,6 +388,23 @@
     minute: "0"
     disabled: no
     state: present
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: schedule the job to run every day at 2 AM
+  become: yes
+  become_user: pentaho-pdi
+  cron:
+    backup: yes
+    name: "populate FOIA data warehouse tables"
+    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/foia-dw1.kjb"
+    month: "*"
+    weekday: "*"
+    day: "*"
+    hour: "2"
+    minute: "0"
+    disabled: no
+    state: present
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 ###################################################
 # Create the JDBC and the Mondrian data sources 
@@ -257,6 +444,14 @@
   become_user: pentaho
   command:
     cmd: 'curl -k -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: upload the Mondrian schema
+  become: yes
+  become_user: pentaho
+  command:
+    cmd: 'curl -k -v -H "Content-Type: multipart/form-data" -X PUT -F uploadInput=@{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/mondrian_schema/{{ foia_mondrian_schema_file }} -F overwrite=true -F xmlaEnabledFlag=false -F parameters="Datasource=MariaDB Local" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/analysis/catalog/{{ foia_mondrian_schema_file | replace(".xml", "") }}'
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')
 
 #########################################################
 # Deploy the reports 
@@ -264,4 +459,8 @@
 
 - name: import reports from the zip file archive
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
 
+- name: import reports from the zip file archive
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw-2023.02.01-RC.01/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '>=')

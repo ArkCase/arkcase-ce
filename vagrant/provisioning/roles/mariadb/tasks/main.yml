@@ -47,7 +47,7 @@
     state: installed
     disable_gpg_check: yes
     name:
-      - MariaDB-server
+      - mariadb-server
       - MariaDB-client
   register: mariadb_install
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"

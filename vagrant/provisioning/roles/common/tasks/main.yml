@@ -180,3 +180,27 @@
           become: yes
           command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -deststorepass changeit -noprompt
       when: "arkcase_ts_stat.stat.exists == True"
+  
+- name: Install yum-utils
+  yum:
+   name: yum-utils
+   state: present
+
+- name: Import Corretto key
+  rpm_key:
+    key: https://yum.corretto.aws/corretto.key
+    state: present
+
+- name: Download Corretto repo file
+  get_url:
+    url: https://yum.corretto.aws/corretto.repo
+    dest: /etc/yum.repos.d/corretto.repo
+
+- name: Install Java 17 Amazon Corretto
+  yum:
+    name: java-17-amazon-corretto-devel
+    state: present
+
+- name: Set Java alternatives to OpenJDK 17
+  command: alternatives --set java /usr/lib/jvm/java-17-amazon-corretto/bin/java
+  become: yes
