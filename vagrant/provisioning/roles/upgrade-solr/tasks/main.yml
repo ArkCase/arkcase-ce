@@ -1,3 +1,18 @@
+- name: Populate service facts
+  service_facts:
+
+- name: install zookeeper
+  include_role: 
+    name: zookeeper
+  when: ansible_facts.services["zookeeper.service"] is not defined
+
+- name: restart zookeeper if not running
+  become: yes
+  systemd:
+    name: zookeeper
+    state: restarted
+  when: ansible_facts.services["zookeeper.service"].state != "running"
+
 - name: check for available disk space
   become: yes
   shell: df -h "{{ root_folder }}/" | awk 'NR==2 { print $4 }'
@@ -13,6 +28,18 @@
     space_available_formated: "{{ space_available.stdout | human_to_bytes | int }}"
     solr_data_formated: "{{ solr_data.stdout | human_to_bytes | int * 2 }}"
 
+# get solr mode it's either std - standalone or solrcloud
+- name: get solr mode
+  become: yes
+  uri:
+    validate_certs: no
+    url: https://{{ solr_host }}:8983/solr/admin/info/system?wt=json
+    return_content: yes
+  register: current_solr_mode
+
+- set_fact:
+    solr_mode: "{{ current_solr_mode | json_query('json.mode') }}"
+
 - name: check if we have some alias for our cores
   become: yes
   uri:
@@ -20,10 +47,12 @@
     url: https://{{ solr_host }}:8983/solr/admin/collections?action=LISTALIASES
     follow_redirects: none
   register: core_alias
+  when: enable_solr_cloud and solr_mode != "std"
 
 - name: output info about aliases for core
   debug:
     msg: "{{ core_alias.json }}"
+  when: enable_solr_cloud and solr_mode != "std"
 
 - name: upgrade and backup solr if space is available under root_folder
   block: 
@@ -69,7 +98,7 @@
         path: "{{ root_folder }}/data/solr"
         state: absent
 
-    - name: copy backup dir to new solr data dir
+    - name: copy backup dir to new solr data dir (solr cloud)
       become: yes
       copy:
         remote_src: yes
@@ -77,6 +106,22 @@
         dest: "{{ root_folder }}/data/solr"
         owner: solr
         group: solr
+      when: solr_mode != "std"
+    
+    - name: Add default solr data
+      become: yes
+      file:
+        path: "{{ root_folder }}/data/solr"
+        state: directory
+        owner: solr
+        group: solr
+      when: solr_mode == "std"
+
+    - name: Copy content from backup to new solr data dir (previous std mode)
+      become: yes
+      command: rsync -a "{{ root_folder }}/data/solr_backup/{{ item }}/" "{{ root_folder }}/data/solr/{{ item }}_shard1_replica_n1/"
+      loop: "{{ solr_cores }}"
+      when: solr_mode == "std"
 
     - name: restart service solr
       become: yes
