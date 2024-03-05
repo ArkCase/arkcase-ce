@@ -67,6 +67,8 @@
       tags: [core, solr, marketplace]
     - role: solr-replicas
       tags: [solr-replicas]
+    - role: solr-replicas-current-node
+      tags: [solr-replicas-current-node]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup, marketplace]
     - role: pentaho-ce
