@@ -43,6 +43,8 @@ outlook.exchange.integration:
   system_user_id: "{{ email_service_account }}"
 ################### Notification Plugin Configuration (notification.properties) ####################  
 notification:
+  #If true then email notifications will be sent for migrated legacy data
+  legacy.object.enabled: "{{ send_notifications_for_migrated_objects | default(true) }}"
   arkcase.url: "https://{{ external_host }}"
   arkcase.url.base: "https://{{ external_host }}/arkcase"
 onlyoffice.plugin:
