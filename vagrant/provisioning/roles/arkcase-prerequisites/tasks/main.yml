@@ -1,3 +1,13 @@
+- name: set Java 8 as Java Home (versions below 2023.02)
+  set_fact:
+    java_home_version: "/usr/lib/jvm/java-1.8.0-openjdk"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: set Java 11 as Java Home (versions equal and above 2023.02)
+  set_fact:
+    java_home_version: "/usr/lib/jvm/java-11-openjdk"
+  when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
+
 - name: Ensure group arkcase exists
   become: yes
   group:
@@ -142,7 +152,7 @@
           catalina_out: "{{ root_folder }}/log/arkcase/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/arkcase"
           log_folder: "{{ root_folder }}/log/arkcase"
-          java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
+          java_home: "{{java_home_version}}"
   register: tomcat_unarchived
 
 - name: add options to JAVA_OPTS
@@ -204,6 +214,6 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - PdfTron"
     block: |
-      export JAVA_OPTS="$JAVA_OPTS -Djava.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries:{{ root_folder }}/app/arkcase/lib"
+      export JAVA_OPTS="$JAVA_OPTS -Djava.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries"
   when: pdftron_viewer_license is defined
 

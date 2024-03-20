@@ -265,6 +265,7 @@
     - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
     - { regexp: 'uri="tcp', replace: 'uri="ssl' }
     - { regexp: 'uri="stomp://', replace: 'uri="stomp+ssl://' }
+    - { regexp: 'uri="amqp://', replace: 'uri="amqp+ssl://' }
 
 - name: JMX config
   block:
