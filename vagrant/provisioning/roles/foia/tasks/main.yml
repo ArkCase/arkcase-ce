@@ -18,6 +18,20 @@
     
 ### External UI portal
 
+- name: download foia UI portal (maven)
+  become: yes
+  become_user: apache
+  maven_artifact:
+    repository_url: "{{ repository_url }}/{{ arkcase_artifact_id }}.{{ arkcase_artifact_repository_type }}/"
+    username: "{{ nexus_username }}"
+    password: "{{ nexus_password }}"
+    group_id: "{{ portal_ui_group_id }}"
+    artifact_id: "{{ portal_ui_artifact_id }}"
+    version: "{{ portal_version }}"
+    extension: zip
+    dest: "{{ root_folder }}/tmp/httpd/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
+  when: arkcase_retrieve_strategy == "maven"
+
 - name: download foia UI portal 
   become: yes
   become_user: apache
@@ -27,6 +41,7 @@
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
   changed_when: false
+  when: arkcase_retrieve_strategy == "sftp"
 
 - name: copy foia UI portal to install folder (this will tell us if it actually changed)
   become: yes
@@ -189,6 +204,21 @@
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
   changed_when: false
+  when: arkcase_retrieve_strategy == "sftp"
+
+- name: download the FOIA REST portal webapp (maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}/{{ arkcase_artifact_id }}.{{ arkcase_artifact_repository_type }}/"
+    username: "{{ nexus_username }}"
+    password: "{{ nexus_password }}"
+    group_id: "{{ portal_api_group_id }}"
+    artifact_id: "{{ portal_api_artifact_id }}"
+    version: "{{ portal_version }}"
+    extension: war
+    dest: "{{ root_folder }}/install/arkcase/external-portal{{ foia_extension_formatted }}{{ portal_version_formatted }}.war"
+  when: arkcase_retrieve_strategy == "maven"
 
 - name: copy foia REST portal to install folder (this will tell us if it actually changed)
   become: yes
@@ -198,6 +228,7 @@
     src: "{{ root_folder }}/tmp/arkcase/external-portal{{ foia_extension_formatted }}{{ portal_version_formatted }}.war"
     dest: "{{ root_folder }}/install/arkcase/external-portal{{ foia_extension_formatted }}{{ portal_version_formatted }}.war"
   register: rest_portal_war
+  when: arkcase_retrieve_strategy == "sftp"
 
 - name: copy foia REST portal to ArkCase webapps folder
   become: yes

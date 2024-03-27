@@ -666,3 +666,34 @@ user_attribute_name: sAMAccountName
 
 microservice_protocol: http
 
+# foia_extension_formatted is only used by the foia play
+foia_extension_formatted: "{{ arkcase_extension_install | ternary('-' ~ arkcase_extension_id, '') }}"
+
+# arkcase_retrieve_strategy: "maven" if using nexus as artifacts provider 
+arkcase_artifact_repository_type: "release"
+repository_url: "https://project.armedia.com/nexus/repository"
+nexus_username: ""
+nexus_password: ""
+arkcase_group_id: "com.armedia.acm.acm-standard-applications"
+arkcase_artifact_id: "arkcase"
+
+config_server_group_id: "com.armedia.acm"
+config_server_artifact_id: "config-server"
+
+extension_version: ""
+extension_artifact_repository_type: ""
+arkcase_extension_artifact_id: ""
+arkcase_extension_group_id: ""
+
+configuration_extension_artifact_id: ""
+configuration_extension_artifact_group_id: ""
+configuration_extension_version: ""
+
+configuration_artifact_id: "arkcase-config-core"
+configuration_artifact_group_id: "com.armedia.arkcase"
+
+portal_ui_artifact_id: ""
+portal_ui_group_id: ""
+
+portal_api_artifact_id: ""
+portal_api_group_id: ""
