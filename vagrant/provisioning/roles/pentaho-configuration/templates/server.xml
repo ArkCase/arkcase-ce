@@ -25,7 +25,7 @@
   <Listener className="org.apache.catalina.security.SecurityListener" />
   -->
   <!--APR library loader. Documentation at /docs/apr.html -->
-  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" useAprConnector="true" SSLEngine="on" />
   <!-- Prevent memory leaks due to use of particular java/javax APIs-->
   <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
   <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
@@ -84,23 +84,38 @@
                    redirectPort="8443"
                    maxHttpHeaderSize="32768"
                    useBodyEncodingForURI="true"/> --><!-- makes sure that uri parameter are decoded as utf-8 -->
-    
-    <!-- Define a SSL/TLS HTTP/1.1 Connector on port 8443
-         This connector uses the NIO implementation that requires the JSSE
-         style configuration. When using the APR/native implementation, the
-         OpenSSL style configuration is required as described in the APR/native
-         documentation -->
-    <Connector port="2002" protocol="org.apache.coyote.http11.Http11NioProtocol" SSLEnabled="true"
-                   scheme="https" secure="true"
-                   clientAuth="false" sslEnabledProtocols="{{ ssl_version }}"
-                   keystoreFile="${catalina.home}/conf/keystore" keystorePass="password"
-                   truststoreFile="{{ java_trust_store }}" truststorePass="{{ java_trust_store_pass }}"
-                   connectionTimeout="40000" maxHttpHeaderSize="32768"
-                   useBodyEncodingForURI="true"
-                   proxyName="{{ external_host }}"
-                   proxyPort="443"
 
-                   />
+    <!-- Define a SSL/TLS HTTP/1.1 Connector on port 8443
+            This connector uses the APR/native implementation and OpenSSL.
+     -->
+    <Connector
+            port="2002"
+            maxThreads="150"
+            SSLEnabled="true"
+            SSLCertificateFile="{{ java_pem_store }}"
+            secure="true"
+            scheme="https"
+            address="0.0.0.0"
+            protocol="org.apache.coyote.http11.Http11AprProtocol"
+            maxHttpHeaderSize="32768"
+            connectionTimeout="40000"
+            useBodyEncodingForURI="true"
+            clientAuth="false"
+            hostName="{{ internal_host }}"
+            proxyName="{{ external_host }}"
+            proxyPort="443">
+            <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
+            <SSLHostConfig
+                honorCipherOrder="true"
+                ciphers="HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!kRSA"
+                hostName="{{ internal_host }}"
+                caCertificateFile="{{ ssl_ca }}"
+                protocols="{{ ssl_version }}">
+                <Certificate
+                  certificateFile="{{ ssl_cert }}"
+                  certificateKeyFile="{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/pentaho.key" />
+            </SSLHostConfig>
+    </Connector>
 
     <!-- Define an AJP 1.3 Connector on port 8009 -->
     <!--
@@ -145,7 +160,7 @@
         <!--
         <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
         -->
-
+        <Valve className="org.apache.catalina.valves.ErrorReportValve" showReport="false" showServerInfo="false" />
         <!-- Access log processes all example.
              Documentation at: /docs/config/valve.html
              Note: The pattern used is equivalent to using pattern="common" -->
