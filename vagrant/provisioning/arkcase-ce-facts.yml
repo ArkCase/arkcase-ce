@@ -178,7 +178,7 @@ email_convert_documents_to_pdf: false
 create_case_from_email_enabled: false
 create_complaint_from_email_enabled: false
 
-# retrieve arkcase from GitHub ("github") or SFTP ("sftp")
+# retrieve arkcase from GitHub ("github") or SFTP ("sftp") or MAVEN ("maven")
 arkcase_retrieve_strategy: "github"
 
 # arkcase_webapp_supported_version is for github (i.e, CE) downloads.
@@ -666,3 +666,31 @@ user_attribute_name: sAMAccountName
 
 microservice_protocol: http
 
+# for "maven" downloads on ArkCase artifacts 
+arkcase_artifact_repository_type: "release"
+repository_url: "https://project.armedia.com/nexus/repository"
+nexus_username: ""
+nexus_password: ""
+arkcase_group_id: "com.armedia.acm.acm-standard-applications"
+arkcase_artifact_id: "arkcase"
+
+config_server_group_id: "com.armedia.acm"
+config_server_artifact_id: "config-server"
+
+extension_version: ""
+extension_artifact_repository_type: ""
+arkcase_extension_artifact_id: ""
+arkcase_extension_group_id: ""
+
+configuration_extension_artifact_id: ""
+configuration_extension_artifact_group_id: ""
+configuration_extension_version: ""
+
+configuration_artifact_id: "arkcase-config-core"
+configuration_artifact_group_id: "com.armedia.arkcase"
+
+portal_ui_artifact_id: ""
+portal_ui_group_id: ""
+
+portal_api_artifact_id: ""
+portal_api_group_id: ""
