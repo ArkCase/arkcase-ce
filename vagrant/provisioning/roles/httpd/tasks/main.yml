@@ -190,6 +190,8 @@
     - "443/tcp"
     - "8443/tcp"
   when: enable_firewall is undefined or enable_firewall
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 
 

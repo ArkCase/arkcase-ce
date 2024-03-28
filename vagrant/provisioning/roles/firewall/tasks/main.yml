@@ -34,6 +34,8 @@
     - "61616/tcp"  # ActiveMQ JMS
     - "61613/tcp"  # ActiveMQ STOMP
     - "8161/tcp"   # ActiveMQ manager
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Reload firewalld
   become: yes

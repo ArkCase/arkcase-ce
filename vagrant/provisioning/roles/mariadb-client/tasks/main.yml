@@ -24,7 +24,7 @@
       baseurl = https://rpm.mariadb.org/10.4/rhel/$releasever/$basearch
       gpgkey= https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: MySQL python package name (CentOS 7)
   set_fact:
@@ -34,12 +34,12 @@
 - name: MySQL python package name (RHEL 8)
   set_fact:
     pkg_mysql_python: python3-mysql
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: MySQL python package name (RHEL 8.8)
   set_fact:
     pkg_mysql_python: python3-PyMySQL
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8" and ansible_distribution_version is match("8.8*")
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
 
 - name: install MariaDB packages (CentOS 7)
   become: yes
@@ -88,3 +88,5 @@
     - "{{ database_pentaho_hibernate_user | default('hibuser') }}"
     - "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
     - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"

@@ -169,6 +169,8 @@
     - "2281/tcp"
     - "2888/tcp"
     - "3888/tcp"
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Reload firewalld
   become: yes
