@@ -12,7 +12,7 @@
     name: https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
     state: present
     disable_gpg_check: yes
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: configure package names (CentOS 7)
   set_fact:
@@ -22,7 +22,7 @@
 - name: configure package names (RHEL 8)
   set_fact:
     pkg_python_psychopg: python3-psycopg2
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: Ensure PostgreSQL packages are installed.
   become: yes

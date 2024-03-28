@@ -8,7 +8,7 @@
   set_fact:
     pkg_python_jmespath: python3-jmespath
     path_libreoffice: /opt/libreoffice5.4
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: Alfresco packages
   become: yes
@@ -47,7 +47,7 @@
     - name: install libreoffice
       become: yes
       shell: yum -y install {{ root_folder }}/install/alfresco/LibreOffice_5.4.6.2_Linux_x86-64_rpm/RPMS/*.rpm
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
       
 - name: record Alfresco https port, so as to fix the share-config-custom.xml later
   set_fact:

@@ -50,14 +50,14 @@
 - name: MySQL python package name (RHEL 8)
   set_fact:
     pkg_mysql_python: python3-mysql
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 #needed to remove mariadb.repo in order to install python3-mysql
 #needed to remove mariadb.repo and install old fashioned yum install mariadb-server
-- name: MySQL python package name (RHEL 8.8)
+- name: MySQL python package name (RHEL 8.8 and above)
   set_fact:
     pkg_mysql_python: python3-PyMySQL
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
 
 - name: install MariaDB packages (CentOS 7)
   become: yes

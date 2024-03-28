@@ -7,7 +7,7 @@
   set_fact:
     pkg_python_jmespath: python3-jmespath
     path_libreoffice: /opt/libreoffice5.4
-  when: (ansible_distribution == "RedHat" or ansible_distribution == "Rocky") and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: Alfresco packages
   become: yes
