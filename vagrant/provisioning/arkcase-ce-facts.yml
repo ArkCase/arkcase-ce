@@ -178,7 +178,7 @@ email_convert_documents_to_pdf: false
 create_case_from_email_enabled: false
 create_complaint_from_email_enabled: false
 
-# retrieve arkcase from GitHub ("github") or SFTP ("sftp")
+# retrieve arkcase from GitHub ("github") or SFTP ("sftp") or MAVEN ("maven")
 arkcase_retrieve_strategy: "github"
 
 # arkcase_webapp_supported_version is for github (i.e, CE) downloads.
@@ -666,10 +666,7 @@ user_attribute_name: sAMAccountName
 
 microservice_protocol: http
 
-# foia_extension_formatted is only used by the foia play
-foia_extension_formatted: "{{ arkcase_extension_install | ternary('-' ~ arkcase_extension_id, '') }}"
-
-# arkcase_retrieve_strategy: "maven" if using nexus as artifacts provider 
+# for "maven" downloads on ArkCase artifacts 
 arkcase_artifact_repository_type: "release"
 repository_url: "https://project.armedia.com/nexus/repository"
 nexus_username: ""
