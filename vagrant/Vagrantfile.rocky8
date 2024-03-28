@@ -3,30 +3,6 @@
 
 # Vagrant.require_version ">= 2.1.0" # 2.1.0 minimum required for triggers
 
-# user = ENV['RH_SUBSCRIPTION_MANAGER_USER']
-# password = ENV['RH_SUBSCRIPTION_MANAGER_PW']
-
-# register_script = %{
-# if ! sudo subscription-manager status; then
-#   if [ "#{user}" = "" ] || [ "#{password}" = "" ]; then
-#     echo 'Required environment variables not found. Please set RH_SUBSCRIPTION_MANAGER_USER and RH_SUBSCRIPTION_MANAGER_PW'
-#     exit 1
-#   fi
-#   echo "registering..."
-#   sudo subscription-manager register --username=#{user} --password='#{password}' --auto-attach 
-# fi
-# }
-
-# unregister_script = %{
-#   if [ "#{user}" = "" ] || [ "#{password}" = "" ]; then
-#     echo 'Required environment variables not found. Please set RH_SUBSCRIPTION_MANAGER_USER and RH_SUBSCRIPTION_MANAGER_PW'
-#     exit 1
-#   fi
-# if sudo subscription-manager status; then
-#   sudo subscription-manager unregister
-# fi
-# }
-
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what

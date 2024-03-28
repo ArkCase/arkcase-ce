@@ -90,20 +90,20 @@
       - gcc 
       - gdb 
       - gnutls-devel 
-      - gpgme-devel #failed
+      - gpgme-devel
       - jansson-devel
       - keyutils-libs-devel 
       - krb5-workstation 
       - libacl-devel 
       - libaio-devel 
-      - libarchive-devel #failed
+      - libarchive-devel
       - libattr-devel 
       - libblkid-devel 
       - libtasn1 
       - libtasn1-tools 
       - libxml2-devel 
       - libxslt 
-      - lmdb-devel #failed
+      - lmdb-devel
       - openldap-devel 
       - pam-devel 
       - perl 
@@ -115,7 +115,7 @@
       - python3-gpg 
       - python36-devel 
       - readline-devel 
-      - rpcgen #failed
+      - rpcgen
       - systemd-devel 
       - tar 
       - zlib-devel
