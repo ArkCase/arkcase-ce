@@ -88,34 +88,33 @@
     <!-- Define a SSL/TLS HTTP/1.1 Connector on port 8443
             This connector uses the APR/native implementation and OpenSSL.
      -->
-    <Connector
-            port="2002"
-            maxThreads="150"
-            SSLEnabled="true"
-            SSLCertificateFile="{{ java_pem_store }}"
-            secure="true"
-            scheme="https"
-            address="0.0.0.0"
-            protocol="org.apache.coyote.http11.Http11AprProtocol"
-            maxHttpHeaderSize="32768"
-            connectionTimeout="40000"
-            useBodyEncodingForURI="true"
-            clientAuth="false"
-            hostName="{{ internal_host }}"
-            proxyName="{{ external_host }}"
-            proxyPort="443">
-            <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
-            <SSLHostConfig
-                honorCipherOrder="true"
-                ciphers="HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!kRSA"
-                hostName="{{ internal_host }}"
-                caCertificateFile="{{ ssl_ca }}"
-                protocols="{{ ssl_version }}">
-                <Certificate
-                  certificateFile="{{ ssl_cert }}"
-                  certificateKeyFile="{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/pentaho.key" />
-            </SSLHostConfig>
-    </Connector>
+      <Connector
+          port="2002"
+          maxThreads="150"
+          SSLEnabled="true"
+          secure="true"
+          scheme="https"
+          maxHttpHeaderSize="32768"
+          connectionTimeout="40000"
+          useBodyEncodingForURI="true"
+          address="0.0.0.0"
+          protocol="org.apache.coyote.http11.Http11AprProtocol"
+          clientAuth="false"
+          hostName="{{ internal_host }}"
+          proxyName="{{ external_host }}"
+          proxyPort="443">
+          <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
+          <SSLHostConfig
+              honorCipherOrder="true"
+              ciphers="HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!kRSA"
+              protocols="{{ ssl_version }}"
+              certificateVerification="none">
+              <Certificate certificateFile="{{ ssl_cert }}"
+                  certificateKeyFile="{{ root_folder }}/app/pentaho/pentaho-server/tomcat/conf/pentaho.key"
+                  certificateChainFile="{{ ssl_ca }}"
+                  type="RSA" />
+          </SSLHostConfig>
+      </Connector>
 
     <!-- Define an AJP 1.3 Connector on port 8009 -->
     <!--
