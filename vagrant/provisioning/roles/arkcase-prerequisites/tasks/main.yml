@@ -66,6 +66,8 @@
       vars:
         item: arkcase
   when: db_engine | default('mariadb') == "mariadb"
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -123,7 +125,7 @@
     state: present
     name:
       - python2
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: install the npm module 'husky' which seems required by some ArkCase versions
   become: yes

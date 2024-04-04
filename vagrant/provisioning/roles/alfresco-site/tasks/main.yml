@@ -70,14 +70,24 @@
     password: "{{ alfresco_admin_password }}"
   register: rm_container_out
 
+- name: install jmespath for python3.11
+  become: yes
+  command: python3.11 -m pip install jmespath
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+
+- name: install jmespath for python3
+  become: yes
+  command: python3 -m pip install jmespath
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+
 # the join filter is just to lift the only array member into a string...
 # there will be only 1 node with name documentLibrary, so this JSON filter
 # will always return a single-element array.
 - name: find the container node ref
-  set_fact:
-    container_noderef: "{{ rm_container_out.json | json_query(noderef_query) | join(',') }}"
   vars:
     noderef_query: "containers[?name=='documentLibrary'].nodeRef"
+  set_fact:
+    container_noderef: "{{ rm_container_out.json | json_query(noderef_query) | join(',') }}"
 
 - name: create the top-level category
   include_tasks: create-category.yml

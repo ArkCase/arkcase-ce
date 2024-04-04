@@ -6,7 +6,8 @@
 - name: set Alfresco facts (RHEL 8)
   set_fact:
     pkg_python_jmespath: python3-jmespath
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+    path_libreoffice: /opt/libreoffice5.4
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: Alfresco packages
   become: yes

@@ -10,7 +10,7 @@
     pkg_policycoreutils: "policycoreutils-python-utils"
     pkg_python_setuptools: "python3-setuptools"
     pkg_python_cryptography: "python3-cryptography"
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: set package names if we are on CentOS 7
   set_fact:
@@ -73,6 +73,8 @@
     executable: pip3
     name: pip
     extra_args: --upgrade
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
         
 - name: install firewalld
   become: yes
