@@ -25,6 +25,22 @@
     - "{{ root_folder }}/install/activemq"
     - "{{ root_folder }}/app/activemq/conf"
 
+#- name: Set Java alternatives to OpenJDK 17
+#  command: alternatives --set java /usr/lib/jvm/java-17-amazon-corretto/bin/java
+#  become: yes
+
+- name: Register Java 17 as an alternative
+  become: yes
+  ansible.builtin.command:
+    cmd: "alternatives --install /usr/bin/java java /usr/lib/jvm/jdk-17.0.1/bin/java 1"
+    
+- name: Set up Java 17 as an alternative
+  become: yes
+  ansible.builtin.alternatives:
+    name: java
+    path: "/usr/lib/jvm/jdk-17.0.1/bin/java"
+    priority: 1
+
 - name: Create log4j.properties file
   become: yes
   file:
@@ -54,6 +70,37 @@
   include_tasks: "{{ role_path }}/../common/tasks/logrotate.yml"
   loop:
     - activemq
+###################
+- name: Set activemq_path variable
+  set_fact:
+    activemq_path: "/opt/app/arkcase/app/activemq"
+
+- name: see if ActiveMQ already installed
+  become: yes
+  stat:
+    path: "{{ activemq_path }}"  
+  register: current_install
+
+- name: detect current version, if already installed
+  become: yes
+  shell: "{{ activemq_path }}/bin/activemq --version | grep 'ActiveMQ' | awk '{ print $2 }'"
+  register: current_version
+  when: current_install.stat.exists
+
+- name: move current version to backup location, if different from desired version
+  become: yes
+  shell: mv {{ activemq_path }} {{ activemq_path }}-{{ current_version.stdout }}
+  when: current_install.stat.exists and ( activemq_version != current_version.stdout )
+
+- name: make new ActiveMQ installation directory, if new version is an upgrade
+  become: yes
+  file:
+    path: "{{ activemq_path }}"
+    state: directory
+    group: "activemq"
+    owner: "activemq"
+    mode: 0755
+  when: current_install.stat.exists and ( activemq_version != current_version.stdout )
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
@@ -61,7 +108,7 @@
       dest: "{{ root_folder }}/install/activemq/apache-activemq-{{ activemq_version }}-bin.tar.gz"
       owner: "activemq"
       url: "https://archive.apache.org/dist/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz"
-
+###########################
 - name: unarchive ActiveMQ distribution
   become: yes
   become_user: activemq
@@ -106,13 +153,15 @@
       line: "# wrapper.java.additional.5=-Djavax.net.ssl.keyStore={{ java_key_store }}"
     - regexp: "^wrapper\\.java\\.additional\\.6=\\-Djavax\\.net\\.ssl\\.trustStore=%ACTIVEMQ_CONF%/broker.ts"
       line: "wrapper.java.additional.6=-Djavax.net.ssl.trustStore={{ java_trust_store }}"
+    - regexp: "^wrapper\\.java\\.command=\\java"
+      line: "wrapper.java.command=/usr/lib/jvm/java-11-openjdk/bin/java"
       
 
 - name: set activemq.log location
   become: yes
   become_user: activemq
   replace:
-    path: "{{ root_folder }}/app/activemq/conf/log4j.properties"
+    path: "{{ root_folder }}/app/activemq/conf/log4j2.properties"
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
   loop:
@@ -342,5 +391,9 @@
     name: activemq
     state: started
 
-    
+- name: Set Java alternatives to OpenJDK 8
+  command: alternatives --config java
+  become: yes
+  args:
+    stdin: "2"   
     
