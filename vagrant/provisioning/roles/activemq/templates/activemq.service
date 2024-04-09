@@ -14,7 +14,7 @@ RestartSec=10
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=activemq
-Environment="JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk"
+Environment="JAVA_HOME={{ activemq_java_home | default('/usr/lib/jvm/java-11-openjdk') }}"
 
 [Install]
 WantedBy=multi-user.target
