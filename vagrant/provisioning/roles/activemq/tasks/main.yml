@@ -71,10 +71,21 @@
     owner: "activemq"
     group: "activemq"
   loop:
-    - { regexp: "^ACTIVEMQ_HOME=", line: "ACTIVEMQ_HOME={{ root_folder }}/app/activemq" }
-    - { regexp: "^#RUN_AS_USER=$", line: "RUN_AS_USER=activemq" }
-    - { regexp: "^LOCKDIR=\"/var/lock/subsys\"", line: "LOCKDIR={{ root_folder }}/data/activemq" }
+    - regexp: "^ACTIVEMQ_HOME="
+      line: "ACTIVEMQ_HOME={{ root_folder }}/app/activemq"
+    - regexp: "^#RUN_AS_USER=$"
+      line: "RUN_AS_USER=activemq"
+    - regexp: "^LOCKDIR=\"/var/lock/subsys\""
+      line: "LOCKDIR={{ root_folder }}/data/activemq"
   when: activemq_unarchived is changed
+
+- name: set java version
+  become: yes
+  become_user: activemq
+  replace:
+    path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf"
+    regexp: "^wrapper.java.command=java"
+    replace: "wrapper.java.command={{ activemq_java_home | default('/usr/lib/jvm/java-11-openjdk') }}/bin/java"
 
 - name: set data folder and wrapper log location
   become: yes
@@ -86,30 +97,82 @@
     owner: "activemq"
     group: "activemq"
   loop:
-    - regexp: "^wrapper\\.java\\.additional\\.11=\\-Dactivemq.data=%ACTIVEMQ_DATA%"
-      line: "wrapper.java.additional.11=-Dactivemq.data={{ root_folder }}/data/activemq"
     - regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log"
       line: "wrapper.logfile={{ root_folder }}/log/activemq/wrapper.log"
     - regexp: "^wrapper\\.java\\.additional\\.3=\\-Djavax\\.net\\.ssl\\.keyStorePassword=password"
-      line: "wrapper.java.additional.3=-Dcom.redhat.fips=false"
+      line: "# wrapper.java.additional.3=-Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
     - regexp: "^wrapper\\.java\\.additional\\.4=\\-Djavax\\.net\\.ssl\\.trustStorePassword=password"
-      line: "wrapper.java.additional.4=-Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }}"
+      line: "wrapper.java.additional.3=-Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }}"
     - regexp: "^wrapper\\.java\\.additional\\.5=\\-Djavax\\.net\\.ssl\\.keyStore=%ACTIVEMQ_CONF%/broker.ks"
-      line: "wrapper.java.additional.5=-Djavax.net.ssl.trustStore={{ java_trust_store }}"
-      
+      line: "# wrapper.java.additional.5=-Djavax.net.ssl.keyStore={{ java_key_store }}"
+    - regexp: "^wrapper\\.java\\.additional\\.6=\\-Djavax\\.net\\.ssl\\.trustStore=%ACTIVEMQ_CONF%/broker.ts"
+      line: "wrapper.java.additional.4=-Djavax.net.ssl.trustStore={{ java_trust_store }}"
+    - regexp: "^wrapper\\.java\\.additional\\.7=\\-Dcom\\.sun\\.management\\.jmxremote"
+      line: "wrapper.java.additional.5=-Dcom.sun.management.jmxremote"
+    - regexp: "^wrapper\\.java\\.additional\\.8=\\-Dorg\\.apache\\.activemq\\.UseDedicatedTaskRunner=false"
+      line: "wrapper.java.additional.6=-Dorg.apache.activemq.UseDedicatedTaskRunner=false"
+    - regexp: "^wrapper\\.java\\.additional\\.9=\\-Djava\\.util\\.logging\\.config\\.file=logging\\.properties"
+      line: "wrapper.java.additional.7=-Djava.util.logging.config.file=logging.properties"
+    - regexp: "^wrapper\\.java\\.additional\\.10=\\-Dactivemq\\.conf=%ACTIVEMQ_CONF%"
+      line: "wrapper.java.additional.8=-Dactivemq.conf=%ACTIVEMQ_CONF%"
+    - regexp: "^wrapper\\.java\\.additional\\.11=\\-Dactivemq\\.data=%ACTIVEMQ_DATA%"
+      line: "wrapper.java.additional.9=-Dactivemq.data={{ root_folder }}/data/activemq"
+    - regexp: "^wrapper\\.java\\.additional\\.12=-\\Djava\\.security\\.auth\\.login\\.config=%ACTIVEMQ_CONF%\\/login\\.config"
+      line: "wrapper.java.additional.10=-Djava.security.auth.login.config=%ACTIVEMQ_CONF%/login.config"
+    - regexp: "^wrapper\\.java\\.additional\\.13=\\-Djolokia\\.conf=file:%ACTIVEMQ_CONF%\\/jolokia-access\\.xml"
+      line: "wrapper.java.additional.11=-Djolokia.conf=file:%ACTIVEMQ_CONF%/jolokia-access.xml" 
 
-- name: set activemq.log location
+- name: check for log4j.properties
+  stat:
+    path: "{{ root_folder }}/app/activemq/conf/log4j.properties"
+  register: log4j_stat
+
+- name: 
+  set_fact:
+    log4j_properties: "{{ log4j_stat.stat.exists | ternary('log4j.properties', 'log4j2.properties') }}"
+
+- name: set activemq.log location - log4j
   become: yes
   become_user: activemq
   replace:
-    path: "{{ root_folder }}/app/activemq/conf/log4j.properties"
+    path: "{{ root_folder }}/app/activemq/conf/{{ log4j_properties }}"
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
     owner: "activemq"
     group: "activemq"
   loop:
-    - { regexp: "^log4j\\.appender\\.logfile\\.file=\\$\\{activemq\\.data\\}\\/activemq\\.log", replace: "log4j.appender.logfile.file={{ root_folder }}/log/activemq/activemq.log" }
-    - { regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log", replace: "log4j.appender.audit.file={{ root_folder }}/log/activemq/audit.log" }
+    - regexp: "^log4j\\.appender\\.logfile\\.file=\\$\\{activemq\\.data\\}\\/activemq\\.log"
+      replace: "log4j.appender.logfile.file={{ root_folder }}/log/activemq/activemq.log"
+    - regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log"
+      replace: "log4j.appender.audit.file={{ root_folder }}/log/activemq/audit.log"
+
+- name: set activemq.log location - log4j2
+  become: yes
+  become_user: activemq
+  replace:
+    path: "{{ root_folder }}/app/activemq/conf/{{ log4j_properties }}"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "^appender\\.logfile\\.fileName=\\$\\{sys\\:activemq\\.data\\}\\/activemq\\.log"
+      replace: "appender.logfile.fileName={{ root_folder }}/log/activemq/activemq.log"
+    - regexp: "^appender\\.logfile\\.filePattern=\\$\\{sys\\:activemq\\.data\\}\\/activemq\\.log\\.%i"
+      replace: "appender.logfile.filePattern={{ root_folder }}/log/activemq/activemq.log.%i"
+    - regexp: "^appender\\.auditlog\\.fileName=\\$\\{sys\\:activemq\\.data\\}/audit\\.log"
+      replace: "appender.auditlog.fileName={{ root_folder }}/log/activemq/audit.log"
+    - regexp: "^appender\\.auditlog\\.filePattern=\\$\\{sys\\:activemq\\.data\\}/audit\\.log\\.%i"
+      replace: "appender.auditlog.filePattern={{ root_folder }}/log/activemq/audit.log.%i"
+  when: log4j_properties == 'log4j2.properties'
+
+- name: find highest java additional item
+  become: yes
+  become_user: activemq
+  shell: grep "^wrapper.java.additional" {{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf | awk -F. '{ print $4 }' | awk -F= '{ print $1 }' | tail -1
+  register: highest_additional
+
+- name: show highest number
+  debug:
+    msg: highest line is {{ highest_additional.stdout | int }}
 
 - name: update wrapper.conf
   become: yes
@@ -121,12 +184,22 @@
     owner: "activemq"
     group: "activemq"
   loop:
-    - { after: "^wrapper\\.java\\.additional\\.12.*", line: "wrapper.java.additional.13=-Dcom.sun.management.jmxremote.port=1616" }
-    - { after: "^wrapper\\.java\\.additional\\.13.*", line: "wrapper.java.additional.14=-Dcom.sun.management.jmxremote.authenticate=false" }
-    - { after: "^wrapper\\.java\\.additional\\.14.*", line: "wrapper.java.additional.15=-Dcom.sun.management.jmxremote.ssl=false" }
-    - { after: "^wrapper\\.java\\.additional\\.15.*", line: "wrapper.java.additional.16=-Xdebug -Xnoagent -Djava.compiler=NONE" }
-    - { after: "^wrapper\\.java\\.additional\\.16.*", line: "wrapper.java.additional.17=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005" }
-    - { after: "^wrapper\\.java\\.additional\\.17.*", line: "wrapper.java.additional.18=-Dlog4j.configuration=%ACTIVEMQ_CONF%/log4j.properties" }
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 1 }}=-Dcom.sun.management.jmxremote.port=1616"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 1 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 2 }}=-Dcom.sun.management.jmxremote.authenticate=false"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 2 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 3 }}=-Dcom.sun.management.jmxremote.ssl=false"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 3 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 4 }}=-Xdebug"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 4 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 5 }}=-Xnoagent"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 5 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 6 }}=-Djava.compiler=NONE"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 6 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 7 }}=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 7 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 8 }}=-Dcom.redhat.fips=false"
   when: activemq_unarchived is changed
 
 - name: jdbc support and dead letter queue policy
