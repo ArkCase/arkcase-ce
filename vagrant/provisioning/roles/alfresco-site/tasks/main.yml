@@ -70,6 +70,17 @@
     password: "{{ alfresco_admin_password }}"
   register: rm_container_out
 
+- name: download pip to install to python3.11 (needed for jmespath)
+  become: yes
+  get_url: 
+    url: "https://bootstrap.pypa.io/get-pip.py"
+    dest: "{{ root_folder }}/tmp/alfresco7"
+  register: python3_11_pip
+
+- name: Install pip for python3.11 (needed for jmespath)
+  become: yes
+  command: "/usr/bin/python3.11 {{ python3_11_pip.dest }}"
+
 - name: install jmespath for python3.11
   become: yes
   command: python3.11 -m pip install jmespath
@@ -82,7 +93,8 @@
 
 # the join filter is just to lift the only array member into a string...
 # there will be only 1 node with name documentLibrary, so this JSON filter
-# will always return a single-element array.
+# will always return a single-element array. 
+# If fail, execute ansible-playbook with only this tag
 - name: find the container node ref
   vars:
     noderef_query: "containers[?name=='documentLibrary'].nodeRef"
