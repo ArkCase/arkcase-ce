@@ -45,8 +45,6 @@
       folder_path: "{{ root_folder }}/app/arkcase"
     - name: arkcase_ui
       folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase/custom"
-    - name: arkcase_tmp
-      folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase/tmp"
     - name: arkcase_cache
       folder_path: "{{ root_folder }}/data/arkcase-home/.cache"
 
@@ -58,5 +56,24 @@
     user: "root"
     minute: "*/15"
     job: 'systemctl status arkcase || systemctl start arkcase'
+    state: present
+
+- name: copy script to restart ArkCase if JDK was updated since ArkCase was started
+  become: yes
+  become_method: sudo
+  copy:
+    backup: yes
+    src: check-java-update-since-arkcase-start.sh
+    dest: "{{ root_folder }}/common/check-java-update-since-arkcase-start.sh"
+    mode: u=rwx,g=r,o=r
+
+- name: run CRON job hourly to see if ArkCase needs restarting due to JDK update
+  become: yes
+  become_method: sudo
+  cron:
+    name: "restart arkcase if OpenJDK was updated"
+    user: "root"
+    special_time: "hourly"
+    job: "/bin/sh {{ root_folder }}/common/check-java-update-since-arkcase-start.sh"
     state: present
 

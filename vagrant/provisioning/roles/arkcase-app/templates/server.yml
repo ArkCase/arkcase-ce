@@ -43,6 +43,8 @@ outlook.exchange.integration:
   system_user_id: "{{ email_service_account }}"
 ################### Notification Plugin Configuration (notification.properties) ####################  
 notification:
+  #If true then email notifications will be sent for migrated legacy data
+  legacy.object.enabled: "{{ send_notifications_for_migrated_objects | default(true) }}"
   arkcase.url: "https://{{ external_host }}"
   arkcase.url.base: "https://{{ external_host }}/arkcase"
 onlyoffice.plugin:
@@ -179,11 +181,15 @@ pdftron:
     viewer:
       license: "{{ pdftron_audio_video_viewer_license | default('') }}"
 
+casefile:
+  plugin:
+    auto_create_calendar_folder: false
+
 ############# File service configuration for s3/alfresco
 fileManagement:
   fileRepositoryType: {{ file_repository_type | default("alfresco") }}
   s3:
-    url: "http://{{ internal_host }}:9000"
+    url: {{ s3_url | default("http{{ : }}//{{ internal_host }}:9000") }}
     region: {{ aws_s3_region | default("us-east-1") }}
     accessKey: {{ s3_access_key | default("minioadmin") }}
     secretKey: {{ s3_secret_key | default("minioadmin") }}

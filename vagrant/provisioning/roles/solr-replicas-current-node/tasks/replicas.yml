@@ -1,0 +1,5 @@
+- name: create replicas on current node
+  uri:
+    url: https://{{ solr_host }}:8983/solr/admin/collections?action=ADDREPLICA&collection={{ item }}&node={{ solr_host }}:8983_solr&shard=shard1
+  when: solr_host is defined and solr_host != ""
+

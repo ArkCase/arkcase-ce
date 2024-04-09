@@ -3,31 +3,21 @@
   mysql_db:
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
+    check_hostname: true
     name: "{{ s.schema }}"
     encoding: utf8
     state: present
-  when: s.script | length == 0
-- name: create {{ s.schema }} database (with schema)
-  become: yes
-  mysql_db:
-    login_host: "{{ database_host_name }}"
-    login_password: "{{ database_root_password }}"
-    name: "{{ s.schema }}"
-    encoding: utf8
-    state: import
-    target: "{{ root_folder }}/install/pentaho/{{ s.script }}"
-    single_transaction: yes
-  when: s.script | length > 0
 
 - name: create {{ s.user }} MySQL user with REQUIRESSL
   become: yes
   mysql_user:
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
+    check_hostname: true
     host: "%"
     name: "{{ s.user }}"
     password: "{{ default_database_password }}" 
-    priv: '{{ s.schema }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute{{ ",REQUIRESSL" if s.requiressl | default(false) else "" }}'
+    priv: '{{ s.schema }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,create temporary tables,trigger,create routine,alter routine,execute{{ ",REQUIRESSL" if s.requiressl | default(false) else "" }}'
     state: present
   when: ansible_version.full is version('2.10.0', '<')
 
@@ -36,10 +26,11 @@
   mysql_user:
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
+    check_hostname: true
     host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
     name: "{{ s.user }}"
     password: "{{ default_database_password }}"
-    priv: '{{ s.schema }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute{{ ",REQUIRESSL" if s.requiressl | default(false) else "" }}'
+    priv: '{{ s.schema }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,create temporary tables,trigger,create routine,alter routine,execute{{ ",REQUIRESSL" if s.requiressl | default(false) else "" }}'
     state: present
   no_log: true
   when: ansible_version.full is version('2.10.0', '<')
@@ -49,6 +40,7 @@
   mysql_user:
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
+    check_hostname: true
     host: "%"
     name: "{{ s.user }}"
     password: "{{ default_database_password }}" 

@@ -11,19 +11,19 @@
   loop:
     - schema: "hibernate"
       user: "hibuser"
-      script: ""
     - schema: "jackrabbit"
       user: "jcr_user"
-      script: ""
       requiressl: true
     - schema: "quartz"
       user: "pentaho_user"
-      script: "quartz-create-db.sql"
     - schema: "pentaho"
       user: "pentaho"
-      script: ""
   loop_control:
     loop_var: s
+  when: db_engine == 'mariadb'
+
+- name: issue the quartz DDL
+  shell: mysql -h{{ database_host }} -upentaho_user -p{{ default_database_password }} --ssl quartz < {{ root_folder }}/install/pentaho/quartz-create-db.sql
   when: db_engine == 'mariadb'
 
 - name: copy quartz DDL for PostgreSQL

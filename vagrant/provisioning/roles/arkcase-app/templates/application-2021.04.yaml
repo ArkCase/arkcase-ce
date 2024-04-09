@@ -81,3 +81,18 @@ management:
     web:  
       exposure: 
         include: '*'
+acm.activemq:
+  broker-url: "ssl://{{ activemq_host }}:61616"
+  keystore: "{{ java_p12_store_jdk8 }}"
+  keystore-password: "{{ java_key_store_pass }}"
+  truststore: "{{ java_trust_store }}"
+  truststore-password: "{{ java_trust_store_pass }}"
+  user: "{{ activemq_user | default('guest', true) }}"
+  password: "{{ activemq_password | default('guest', true) }}"
+  default-destination: configuration.changed
+  labels-destination: labels.changed
+  ldap-destination: ldap.changed
+  lookups-destination: lookups.changed
+  rules-destination: rules.changed
+  timeout: 10 #seconds
+

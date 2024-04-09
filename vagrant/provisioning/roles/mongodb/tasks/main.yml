@@ -75,4 +75,4 @@
 - name: create arkcase mongo database
   include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"
   vars:
-    ansible_python_interpreter: /bin/python3
+    ansible_python_interpreter: /bin/python3.9

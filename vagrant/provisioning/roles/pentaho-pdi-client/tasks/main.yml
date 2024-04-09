@@ -45,15 +45,6 @@
       - java-1.8.0-openjdk
       - java-1.8.0-openjdk-devel
 
-- name: kettle needs the ArkCase keystore in the JVM store
-  become: yes
-  java_cert:
-    cert_path: "{{ ssl_ca }}"
-    cert_alias: "arkcase-root"
-    keystore_pass: changeit
-    keystore_path: /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts
-    
-
 - name: download Pentaho PDI artifact
   become: yes
   become_user: pentaho-pdi
@@ -128,6 +119,15 @@
   file: 
     path: /home/pentaho-pdi/.pentaho
     state: directory
+
+- name: add no-fips to the license installer script
+  become: yes
+  become_user: pentaho-pdi
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/pentaho-pdi/license-installer/install_license.sh"
+    regexp: "DIR_REL -Dlog"
+    replace: "DIR_REL -Dcom.redhat.fips=false -Dlog"
 
 - name: install licenses, if necessary
   become: yes

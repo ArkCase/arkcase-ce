@@ -38,8 +38,6 @@
       tags: [core, haproxy, marketplace]
     - role: activemq
       tags: [core, activemq, marketplace]
-    - role: alfresco-search-services
-      tags: [alfresco-search-services]
     - role: alfresco-setup
       tags: [alfresco6]
     - role: alfresco-ce
@@ -69,6 +67,8 @@
       tags: [core, solr, marketplace]
     - role: solr-replicas
       tags: [solr-replicas]
+    - role: solr-replicas-current-node
+      tags: [solr-replicas-current-node]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup, marketplace]
     - role: pentaho-ce
@@ -103,7 +103,7 @@
     - role: arkcase-app
       tags: [arkcase-app, core, arkcase, upgrade, marketplace]
     - role: arkcase-api-gateway
-      tags: [core, arkcase-api-gateway, arkcase-microservices, marketplace]
+      tags: [core, upgrade, arkcase-api-gateway, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-eureka
       tags: [core, upgrade, arkcase-eureka, arkcase-microservices, marketplace]
@@ -112,7 +112,7 @@
       tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-ldap-authority
-      tags: [core, upgrade, arkcase-ldap-authority, arkcase-microservices, marketplace]
+      tags: [core, arkcase-ldap-authority, arkcase-microservices, marketplace]
       when: enable_microservices | default(false) and not (enable_saml_microservice | default(false))
     - role: arkcase-saml-authority
       tags: [arkcase-saml-authority]
@@ -165,7 +165,7 @@
       tags: [start-arkcase, core, arkcase, upgrade, marketplace]  
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
-      tags: [foia-analytical-reports, foia]
+      tags: [foia-analytical-reports]
     - role: tesseract
       tags: [core, arkcase, tesseract, marketplace]
     - role: firewall

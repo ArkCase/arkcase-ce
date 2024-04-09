@@ -105,7 +105,9 @@
             proxyName="{{ external_host }}"
             proxyPort="443"> 
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
-            <SSLHostConfig
+	    <SSLHostConfig
+              honorCipherOrder="true"
+              ciphers="HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!kRSA"
               hostName="{{ internal_host }}"
               caCertificateFile="{{ ssl_ca }}"
               protocols="{{ ssl_version }}">
@@ -159,6 +161,7 @@
         <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
         -->
 
+        <Valve className="org.apache.catalina.valves.ErrorReportValve" showReport="false" showServerInfo="false" />
         <!-- Access log processes all example.
              Documentation at: /docs/config/valve.html
              Note: The pattern used is equivalent to using pattern="common" -->
