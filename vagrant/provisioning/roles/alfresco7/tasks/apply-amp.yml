@@ -1,9 +1,9 @@
 - name: Change ownership of alfresco.war
+  become: yes
   ansible.builtin.file:
-    path: /opt/app/arkcase/app/alfresco7/webapps/alfresco.war
+    path: "{{ root_folder }}/app/alfresco7/webapps/alfresco.war"
     owner: alfresco7
     group: alfresco7
-  become: yes
 
 - name: apply {{ amp.title }} amp
   block:
@@ -13,13 +13,13 @@
     - name: list existing amps in {{ amp.target_war }}
       become: yes
       become_user: alfresco7
-      command: java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" list "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
+      command: /usr/lib/jvm/jdk-17.0.1/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" list "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
       register: installed_amps
       changed_when: false
     - name: apply {{ amp.title }}  amp if needed
       become: yes
       become_user: alfresco7
-      command: java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" install {{ amp.amp_path }} "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
+      command: /usr/lib/jvm/jdk-17.0.1/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" install {{ amp.amp_path }} "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
       when: 'amp.title not in installed_amps.stdout'
   when: alfresco_ee_version is version('7.3.0.1', '<')
 
@@ -31,12 +31,12 @@
     - name: list existing amps in {{ amp.target_war }} (java 11)
       become: yes
       become_user: alfresco7
-      command: /usr/lib/jvm/java-17-amazon-corretto/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" list "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
+      command: /usr/lib/jvm/jdk-17.0.1/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" list "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
       register: installed_amps
       changed_when: false
     - name: apply {{ amp.title }}  amp if needed (java 11)
       become: yes
       become_user: alfresco7
-      command: /usr/lib/jvm/java-17-amazon-corretto/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" install {{ amp.amp_path }} "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
+      command: /usr/lib/jvm/jdk-17.0.1/bin/java -jar "{{ root_folder }}/app/alfresco7/bin/alfresco-mmt.jar" install {{ amp.amp_path }} "{{ root_folder }}/app/alfresco7/webapps/{{ amp.target_war }}"
       when: 'amp.title not in installed_amps.stdout'
   when: alfresco_ee_version is version('7.3.0.1', '>=')    

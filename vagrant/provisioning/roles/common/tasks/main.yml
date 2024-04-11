@@ -186,21 +186,34 @@
    name: yum-utils
    state: present
 
-- name: Import Corretto key
-  rpm_key:
-    key: https://yum.corretto.aws/corretto.key
-    state: present
-
-- name: Download Corretto repo file
-  get_url:
-    url: https://yum.corretto.aws/corretto.repo
-    dest: /etc/yum.repos.d/corretto.repo
-
-- name: Install Java 17 Amazon Corretto
-  yum:
-    name: java-17-amazon-corretto-devel
-    state: present
-
-- name: Set Java alternatives to OpenJDK 17
-  command: alternatives --set java /usr/lib/jvm/java-17-amazon-corretto/bin/java
+- name: Download Java tar.gz file
   become: yes
+  get_url:
+    url: "https://download.java.net/java/GA/jdk17.0.1/2a2082e5a09d4267845be086888add4f/12/GPL/openjdk-17.0.1_linux-x64_bin.tar.gz"
+    dest: "/tmp/openjdk-17.0.1_linux-x64_bin.tar.gz"
+
+- name: Extract Java tar.gz file
+  become: yes
+  ansible.builtin.unarchive:
+    src: "/tmp/openjdk-17.0.1_linux-x64_bin.tar.gz"
+    dest: "/usr/lib/jvm/"
+
+- name: Add JAVA_HOME to ~/.bashrc
+  become: yes
+  lineinfile:
+    dest: ~/.bashrc
+    line: 'export JAVA_HOME=/usr/lib/jvm/jdk-17.0.1'
+    create: yes
+
+- name: Update PATH in ~/.bashrc
+  become: yes
+  lineinfile:
+    dest: ~/.bashrc
+    line: 'export PATH=$PATH:$JAVA_HOME/bin'
+    create: yes
+
+- name: Source ~/.bashrc
+  become: yes
+  shell:
+    cmd: "source ~/.bashrc"
+    executable: "/bin/bash"

@@ -405,8 +405,17 @@
       become: yes
       become_user: alfresco7
       stat:
-        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-{{ log4j_properties }}"
+        path: "{{ root_folder }}/app/alfresco7/shared/classes/alfresco/extension/ce-log4j.properties"
       register: log4j_exists
+    - name: Set log4j properties file name
+      set_fact:
+        log4j_properties: "log4j.properties"
+      when: log4j_exists.stat.exists
+
+    - name: Use log4j2 properties if log4j properties doesn't exist
+      set_fact:
+        log4j_properties: "log4j2.properties"
+      when: not log4j_exists.stat.exists
     - name: unzip default log4j.properties
       become: yes
       become_user: alfresco7
@@ -515,9 +524,3 @@
   until: _result.status == 200
   retries: 100
   delay: 5
-
-- name: Set Java alternatives to OpenJDK 8
-  command: alternatives --config java
-  become: yes
-  args:
-    stdin: "2"  
