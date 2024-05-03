@@ -26,7 +26,7 @@
       gpgcheck=1
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
-- name: configure MariaDB v10 repository (RHEL 8)
+- name: configure MariaDB v10 repository (Rocky 8)
   become: yes
   copy:
     dest: /etc/yum.repos.d/mariadb.repo
@@ -87,6 +87,8 @@
   become: yes
   yum:
     state: installed
+    enablerepo: mariadb
+    disablerepo: AppStream
     name:
       - MariaDB-server
       - MariaDB-client
