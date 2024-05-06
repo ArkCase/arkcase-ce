@@ -377,6 +377,7 @@
   become: yes
   command: firewall-cmd --state
   register: firewalld_state
+  failed_when: false
 
 - name: Expose pentaho app port
   become: yes
