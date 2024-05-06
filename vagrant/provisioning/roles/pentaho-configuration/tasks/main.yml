@@ -387,7 +387,7 @@
     state: enabled
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
-  when: "running" == firewalld_state.stdout
+  when: firewalld_state.stdout == 'runnng'
 
 - name: format extension version
   set_fact:
