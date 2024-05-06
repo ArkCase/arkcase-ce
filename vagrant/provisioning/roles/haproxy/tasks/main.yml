@@ -12,6 +12,12 @@
     path_stats_socket: "/var/opt/rh/rh-haproxy18/lib/haproxy/stats"
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
+- name: see if firewalld is running
+  become: yes
+  command: firewall-cmd --state
+  register: firewalld_state
+  failed_when: false
+
 - name: ensure web and proxy ports
   become: yes
   firewalld:
@@ -25,6 +31,7 @@
     - "8404/tcp"
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+  when: firewalld_state.stdout == 'runnng'
 
 - name: install epel-release 
   become: yes
