@@ -373,6 +373,11 @@
   delay: 5
   when: security_provider_updated is changed
 
+- name: see if firewalld is running
+  become: yes
+  command: firewall-cmd --state
+  register: firewalld_state
+
 - name: Expose pentaho app port
   become: yes
   firewalld:
@@ -382,6 +387,7 @@
     state: enabled
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+  when: "running" == firewalld_state.stdout
 
 - name: format extension version
   set_fact:
