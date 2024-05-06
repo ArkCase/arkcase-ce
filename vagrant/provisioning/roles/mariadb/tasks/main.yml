@@ -30,7 +30,7 @@
   become: yes
   copy:
     dest: /etc/yum.repos.d/mariadb.repo
-    force: no
+    force: yes
     content: |
       # MariaDB 10.4 RedHat repository list - created  2022-01-07
       # https://mariadb.org/download/
