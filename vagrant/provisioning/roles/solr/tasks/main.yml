@@ -183,7 +183,7 @@
 - name: Add Strict-Transport-Security header rule to jetty.xml
   become: yes
   blockinfile:
-    path: /opt/app/arkcase/app/solr/server/etc/jetty.xml
+    path: "{{ root_folder }}/app/solr/server/etc/jetty.xml"
     marker: "<!-- HSTS header -->"
     insertafter: "<!-- redirect root to solr -->"
     block: |
