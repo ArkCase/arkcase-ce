@@ -1281,3 +1281,4 @@
     remote_src: yes
     src: "{{ root_folder }}/install/arkcase/pdftron_libraries.zip"
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries"
+    mode: 0755
