@@ -43,5 +43,5 @@
     microservice:
       name: arkcase-file-management
       version: "{{ arkcase_file_management_version | default(arkcase_version) }}"
-      java_opts: "-Dserver.port=9068 -Xmx512M -Dspring.config.import=configserver:https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
+      java_opts: "-Dserver.port=9068 -Xmx{{ file_management_mem_max | default('512M',true)}} -Dspring.config.import=configserver:https://{{ config_server_host | default(internal_host) }}/config -Dspring.profiles.include={{ arkcase_portal_extension ~ ',' if arkcase_portal_extension != '' else '' }}server,runtime -Djava.net.preferIPv4Stack=true -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass }} -Djavax.net.ssl.keyStore={{ java_key_store }} -Djavax.net.ssl.trustStore={{ java_trust_store}} -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }}"
     ansible_python_interpreter: /usr/bin/python2
