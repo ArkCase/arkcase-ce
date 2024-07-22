@@ -12,6 +12,12 @@
     path_stats_socket: "/var/opt/rh/rh-haproxy18/lib/haproxy/stats"
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
+- name: see if firewalld is running
+  become: yes
+  command: firewall-cmd --state
+  register: firewalld_state
+  failed_when: false
+
 - name: ensure web and proxy ports
   become: yes
   firewalld:
@@ -25,6 +31,7 @@
     - "8404/tcp"
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+  when: firewalld_state.stdout == 'runnng'
 
 - name: install epel-release 
   become: yes
@@ -55,6 +62,14 @@
     group: haproxy
     mode: '0755'
 
+- name: See if rsyslog.conf exists
+  become: yes
+  stat:
+    path: /etc/rsyslog.conf
+  register: rsyslog_stat
+  changed_when: false
+  failed_when: false
+
 - name: Change rsyslog.conf for allow haproxy logging
   become: yes
   lineinfile:
@@ -68,6 +83,7 @@
     - regexp: '^\#\$UDPServerRun\ 514'
       line: '$UDPServerRun 514'
   register: rsyslog_configuration
+  when: rsyslog_stat.stat.exists
 
 - name: Allow SELinux write access on the haproxy log directory
   become: yes
@@ -91,6 +107,7 @@
     dest: /etc/rsyslog.d/haproxy.conf
     backup: yes
   register: haproxy_rsyslog
+  when: rsyslog_stat.stat.exists
 
 - name: remove default TLS policies
   become: yes
@@ -722,4 +739,4 @@
   systemd:
     name: rsyslog
     state: restarted
-  when: rsyslog_configuration is changed or haproxy_rsyslog is changed or allow_haproxy_logging is changed
+  when: rsyslog_stat.stat.exists and (rsyslog_configuration is changed or haproxy_rsyslog is changed or allow_haproxy_logging is changed)

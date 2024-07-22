@@ -214,12 +214,15 @@
     - title: Alfresco Share Services AMP
       amp_path: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/amps/alfresco-share-services.amp"
       target_war: alfresco.war
+      java_home: "{{ alfresco_java_home }}"
     - title: Governance Services
       amp_path: "{{ alfresco_rma_repo_amp }}"
       target_war: alfresco.war
+      java_home: "{{ alfresco_java_home }}"
     - title: AGS Share
       amp_path: "{{ alfresco_rma_share_amp}}"
       target_war: share.war
+      java_home: "{{ alfresco_java_home }}"
   loop_control:
     loop_var: amp
 
