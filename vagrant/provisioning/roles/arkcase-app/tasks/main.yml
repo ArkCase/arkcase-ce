@@ -266,7 +266,7 @@
   become: yes
   become_user: arkcase
   command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
 
 
 - name: format config version
