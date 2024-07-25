@@ -158,7 +158,7 @@
   become: yes
   become_user: arkcase
   maven_artifact:
-    repository_url: "{{ repository_url }}/{{ arkcase_artifact_id }}.{{ arkcase_artifact_repository_type }}/"
+    repository_url: "{{ repository_url }}/{{ arkcase_artifact_id }}.{{ config_server_artifact_repository_type | default(arkcase_artifact_repository_type) }}/"
     username: "{{ nexus_username }}"
     password: "{{ nexus_password }}"
     group_id: "{{ config_server_group_id }}"
