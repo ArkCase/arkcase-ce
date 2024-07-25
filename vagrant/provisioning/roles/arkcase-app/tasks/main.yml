@@ -213,8 +213,9 @@
     artifact_id: "{{ arkcase_extension_artifact_id }}"
     version: "{{ extension_version }}"
     extension: jar
+    keep_name: true
     dest: "{{ root_folder }}/install/arkcase"
-  when: arkcase_retrieve_strategy == "maven" and arkcase_extension_install | bool
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "maven" and arkcase_extension_install | bool
 
 - name: download extension (if configured)
   become: yes
@@ -224,7 +225,7 @@
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
     SSHPASS: "{{ sftp_extension_password }}"
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp" and arkcase_extension_install | bool
 
 - name: set extension config file name (extension id)
   set_fact:
@@ -248,7 +249,8 @@
     version: "{{ configuration_extension_version }}"
     extension: zip
     dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
-  when: arkcase_retrieve_strategy == "maven" and arkcase_extension_install | bool
+    keep_name: true
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "maven" and arkcase_extension_install | bool
 
 - name: download extension configuration (if configured)
   become: yes
@@ -258,7 +260,7 @@
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
     SSHPASS: "{{ sftp_extension_password }}"
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp" and arkcase_extension_install|bool
 
 - name: rename extension config zip to common file name
   become: yes
