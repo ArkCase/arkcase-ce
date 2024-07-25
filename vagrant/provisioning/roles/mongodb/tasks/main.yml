@@ -1,3 +1,16 @@
+# Mongo requires all folders above the log and data 
+# folders to have selinux type usr_t
+- name: configure parent folders with usr_t selinux type 
+  become: yes
+  file:
+    path: "{{ item }}"
+    setype: usr_t
+  loop:
+    - "{{ root_folder }}/.."
+    - "{{ root_folder }}"
+    - "{{ root_folder }}/data"
+    - "{{ root_folder }}/log"
+
 - name: configure Mongodb 4.0 repository
   become: yes
   copy:
