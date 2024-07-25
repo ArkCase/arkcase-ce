@@ -148,6 +148,7 @@
     version: "{{ arkcase_version }}"
     extension: war
     dest: "{{ root_folder }}/install/arkcase"
+    keep_name: true
   when: arkcase_retrieve_strategy == "maven"  
 
 - name: format config server version
@@ -166,6 +167,7 @@
     version: "{{ arkcase_config_server_version }}"
     extension: jar
     dest: "{{ root_folder }}/tmp/config-server"
+    keep_name: true
   when: arkcase_retrieve_strategy == "maven"
 
 - name: download config server jar file (if using sftp)
