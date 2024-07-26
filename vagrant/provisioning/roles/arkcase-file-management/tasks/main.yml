@@ -2,17 +2,18 @@
   become: yes
   yum:
     state: installed
-    name: python3-pip
+    name: python3.11-pip
   vars:
     ansible_python_interpreter: /usr/bin/python2
 
 - name: install Python boto3 library
   become: yes
   pip:
-    executable: pip3
-    name: ['boto3', 'botocore']
+    executable: pip3.11
+    name: ['packaging', 'boto3', 'botocore']
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: /usr/bin/python3.11
+    extra_args: --upgrade
 
 - name: Create buckets
   become: yes
@@ -24,7 +25,7 @@
     state: present
   with_items: "{{ file_management_s3_buckets }}"
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: /usr/bin/python3.11
   when: file_management_s3_url is defined and file_management_s3_buckets is defined
 
 - name: setup configuration file
