@@ -84,12 +84,9 @@
     dest: /tmp/
   when: not libreoffice_bin_exists.stat.exists
 
-- name: Ensure that libreoffice7.3-freedesktop-menus-7.3.5-2.noarch.rpm is removed
+- name: Ensure that libreoffice freedesktop-menus is removed
   become: yes
-  file:
-    path: /tmp/LibreOffice_{{ libreoffice_version | default('7.3.5.2') }}_Linux_x86-64_rpm/RPMS/libreoffice7.3-freedesktop-menus-{{ libreoffice_version | default('7.3.5-2') }}.noarch.rpm
-    state: absent
-  when: not libreoffice_bin_exists.stat.exists
+  shell: find /tmp -name libreoffice*-freedesktop-menus* -exec rm {} \;
 
 - name: install LibreOffice
   become: yes
