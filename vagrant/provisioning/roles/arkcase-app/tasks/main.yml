@@ -443,6 +443,42 @@
     state: link
   when: db_engine == 'postgresql'
 
+- name: unarchive .yarnrc from the arkcase.war
+  become: yes
+  become_user: arkcase
+  shell: unzip -o arkcase{{ arkcase_version_formatted }}.war resources/.yarnrc
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  register: yarn_rc_unzip
+  failed_when: false
+
+- name: see if the arkcase.war had a .yarnrc 
+  become: yes
+  become_user: arkcase
+  stat: 
+    path: "{{ root_folder }}/install/arkcase/resources/.yarnrc"
+  register: yarn_rc_stat
+  when: yarn_rc_unzip is changed 
+
+- name: update .yarnrc 
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/install/arkcase/resources/.yarnrc"
+    regexp: "project.armedia.com/nexus"
+    replace: "nexus.armedia.com"
+  when: yarn_rc_stat.stat.exists 
+  register: yarn_rc_updated
+
+- name: update arkcase.war with updated .yarnrc
+  become: yes
+  become_user: arkcase
+  command: zip -r -m arkcase{{ arkcase_version_formatted}}.war resources
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  when: yarn_rc_stat.stat.exists and yarn_rc_updated is changed
+
 - name: unarchive ArkCase search service jar
   become: yes
   become_user: arkcase
