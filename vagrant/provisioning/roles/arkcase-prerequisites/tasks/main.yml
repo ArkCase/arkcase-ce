@@ -214,6 +214,6 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - PdfTron"
     block: |
-      export JAVA_OPTS="$JAVA_OPTS -Djava.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries"
+      export JAVA_OPTS="$JAVA_OPTS -Djava.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries:$LD_LIBRARY_PATH"
   when: pdftron_viewer_license is defined
 
