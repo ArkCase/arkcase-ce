@@ -164,6 +164,8 @@
       - DNS:{{ snowbound_host }}
       - DNS:{{ solr_host }}
       - DNS:{{ public_host }}
+      - IP:{{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
+
 
 - name: filter subject alternate name list 
   set_fact:
