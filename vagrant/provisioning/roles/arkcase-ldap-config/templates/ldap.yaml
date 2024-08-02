@@ -4,8 +4,7 @@
       authUserPassword: ENC({{ encrypted_ldap_bind_password }})
       userSearchBase: {{ user_base | default(ldap_user_no_base) }}
       groupSearchBase: {{ group_base | default(ldap_group_no_base) }}
-      ldapUrl: 
-        - {{ ldap_url }}
+      ldapUrl: {{ arkcase_version is version('2022.03', '<') | ternary(ldap_url, [ ldap_url ]) }}
       userAttributes: cn,userAccountControl,sn,givenName,dn,distinguishedname,memberOf,sAMAccountName,userPrincipalName,uid,uidNumber,c,co,company,department,title,shadowMax,shadowLastChange,msDS-UserPasswordExpiryTimeComputed,modifyTimestamp,description,member
       userDomain: {{ ldap_user_domain }}
       syncPageSize: 500
