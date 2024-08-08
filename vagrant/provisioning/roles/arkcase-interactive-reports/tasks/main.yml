@@ -120,6 +120,8 @@
   when: pentaho_host != internal_host
 
 - name: Find interactive reports datasources in configuration
+  become: yes
+  become_user: arkcase
   find:
     paths: /home/arkcase/.arkcase/acm/reports/interactive/datasources
     patterns: '*.xmi'
