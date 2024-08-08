@@ -156,6 +156,8 @@
   register: interactive_reports
   
 - name: Install interactive reports from configuration
+  become: yes
+  become_user: arkcase
   command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ interactive_reports.files }}"
   register: interactive_install
