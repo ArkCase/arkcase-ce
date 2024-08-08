@@ -156,8 +156,10 @@
   register: interactive_reports
   
 - name: Install interactive reports from configuration
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}'"
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ interactive_reports.files }}"
+  register: interactive_install
+  failed_when: "'Import was successful' not in interactive_install.stdout"
 
 - name: Find static reports folder in configuration
   become: yes
@@ -169,6 +171,7 @@
   register: static_reports
 
 - name: Install static reports from configuration
-  command:
-    cmd: 'curl -k -v -X PUT --data-binary "@{{ item.path }}" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/repo/files/:public:{{ item.path | dirname | regex_replace(".*\/", "") }}:{{ item.path | basename | replace(" ","%20")}}'
+  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ item.path | dirname | regex_replace('.*\/', '') }} --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ static_reports.files }}"
+  register: static_install
+  failed_when: "'Import was successful' not in static_install.stdout"
