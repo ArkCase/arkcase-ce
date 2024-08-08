@@ -32,6 +32,15 @@
     src: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip"
     dest: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
 
+- name: Mondrian schema fixes
+  become: yes
+  become_user: pentaho
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/mondrian_schema/foiaSchema1.4.xml"
+    regexp: 'Cube name="FOIA Cube" visible="true"'
+    replace: 'Cube name="FOIA Cube 1.4" visible="true"'
+
 ##########################################################
 # Configure the Kettle job files and run the Kettle job.
 # This will create and populate the data warehouse tables.
