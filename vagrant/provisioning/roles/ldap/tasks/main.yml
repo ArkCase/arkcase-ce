@@ -110,6 +110,8 @@
     - "{{ ldap_core_portal_group_no_base }},{{ ldap_base }}"
     - "{{ ldap_core_portal_user_no_base }},{{ ldap_base }}"
   when: enable_microservices is defined and enable_microservices
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: add arkcase groups
   ldap_entry:
@@ -184,6 +186,8 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_core_portal_groups|flatten }}"
   when: enable_microservices is defined and enable_microservices
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: add users
   include_tasks: add-user.yml

@@ -83,6 +83,8 @@
     noderef_query: "containers[?name=='documentLibrary'].nodeRef"
   set_fact:
     container_noderef: "{{ rm_container_out.json | json_query(noderef_query) | join(',') }}"
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: create the top-level category
   include_tasks: create-category.yml

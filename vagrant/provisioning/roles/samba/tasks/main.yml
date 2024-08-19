@@ -134,6 +134,8 @@
   pip:
     executable: pip3
     name: python-config
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
     
 - name: configure Samba, this will take 5 - 10 minutes
   become: yes
