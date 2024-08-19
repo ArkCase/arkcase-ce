@@ -63,7 +63,7 @@ application:
     logoutUrl: "/logout"
 alfresco:
   admin:
-    baseurl: "https://{{ alfresco_host }}/alfresco/s/admin/admin-sync"
+    baseurl: "https://{{ ((alfresco_host | trim) == "") | ternary("alfresco", alfresco_host) }}/alfresco/s/admin/admin-sync"
     username: "admin"
     password: "ENC({{ encrypted_default_alfresco }})"
   sync:
