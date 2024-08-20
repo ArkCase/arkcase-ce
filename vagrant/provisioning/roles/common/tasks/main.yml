@@ -1,51 +1,52 @@
 - name: System details
-  debug: msg="{{ item }}"
-  with_items: 
+  ansible.builtin.debug:
+    msg: "{{ item }}"
+  with_items:
     - "{{ ansible_distribution }}"
     - "{{ ansible_distribution_version }}"
     - "{{ ansible_distribution_major_version }}"
 
-- name: set package names if we are on RHEL 8
-  set_fact:
+- name: Set package names if we are on RHEL 8
+  ansible.builtin.set_fact:
     pkg_policycoreutils: "policycoreutils-python-utils"
     pkg_python_setuptools: "python3-setuptools"
     pkg_python_cryptography: "python3-cryptography"
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
-- name: set package names if we are on CentOS 7
-  set_fact:
+- name: Set package names if we are on CentOS 7
+  ansible.builtin.set_fact:
     pkg_policycoreutils: "policycoreutils-python"
     pkg_python_setuptools: "python-setuptools"
     pkg_python_cryptography: "python-cryptography"
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-- name: list OS dependent package names
-  debug:
+- name: List OS dependent package names
+  ansible.builtin.debug:
     msg: "policycoreutils: {{ pkg_policycoreutils }}"
 
 
-- name: install epel (needed first)
-  become: yes
-  yum:
+- name: Install epel (needed first)
+  become: true
+  ansible.builtin.yum:
     state: installed
-    name: 
-      - epel-release        
+    name:
+      - epel-release
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-# At least on CentOS 7, we need to remove python3-pip, to get a clean 
-# install of python3-pip in the next task, which will actually create 
+# At least on CentOS 7, we need to remove python3-pip, to get a clean
+# install of python3-pip in the next task, which will actually create
 # /usr/bin/pip3.
-- name: remove pip2 that might come up along OS        
-  become: yes
-  yum:
+- name: Remove pip2 that might come up along OS
+  become: true
+  ansible.builtin.yum:
     state: absent
     name:
       - python-pip
       - python3-pip
 
-- name: install required packages
-  become: yes
-  yum:
+- name: Install required packages
+  become: true
+  ansible.builtin.yum:
     state: installed
     name:
       - java-11-openjdk
@@ -67,32 +68,32 @@
       - "{{ pkg_python_setuptools }}"
       - "{{ pkg_python_cryptography }}"
 
-- name: update pip
-  become: yes
-  pip:
+- name: Update pip
+  become: true
+  ansible.builtin.pip:
     executable: pip3
     name: pip
     extra_args: --upgrade
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
-        
-- name: install firewalld
-  become: yes
-  yum:
+
+- name: Install firewalld
+  become: true
+  ansible.builtin.yum:
     state: installed
     name: firewalld
   when: enable_firewall is undefined or enable_firewall
 
-- name: remove python2-passlib since it breaks solr password setting
-  become: yes
-  yum:
+- name: Remove python2-passlib since it breaks solr password setting
+  become: true
+  ansible.builtin.yum:
     state: absent
     name:
       - python2-passlib
 
-- name: folder structure for app, data and logs
-  become: yes
-  file:
+- name: Folder structure for app, data and logs
+  become: true
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
   loop:
@@ -105,22 +106,22 @@
     - "{{ root_folder }}/tmp"
 
 - name: Check whether I am inside a Docker container
-  stat:
+  ansible.builtin.stat:
     path: /.dockerenv
   register: stat_dockerenv_result
 
-- name: set hostname
-  become: yes
-  hostname:
+- name: Set hostname
+  become: true
+  ansible.builtin.hostname:
     name: "{{ internal_host }}"
   # Don't try to set the hostname when running inside Docker, this is
   # not possible. Instead, use `--hostname` on the `docker run`
   # command line.
   when: not stat_dockerenv_result.stat.exists
-    
-- name: add {{ internal_host }} to hosts file
-  become: yes
-  lineinfile:
+
+- name: Add to hosts file - {{ internal_host }}
+  become: true
+  ansible.builtin.lineinfile:
     path: /etc/hosts
     line: "{{ item }}"
   loop:
@@ -131,19 +132,18 @@
   # `docker run` command line.
   when: not stat_dockerenv_result.stat.exists
 
-- name: set timezone to UTC
-  become: yes
-  timezone:
+- name: Set timezone to UTC
+  become: true
+  community.general.timezone:
     name: "{{ time_zone | default('UTC') }}"
 
 - name: Set default locale to en_US.utf8
-  become: yes
-  command: localectl set-locale LANG=en_US.utf8
+  become: true
+  ansible.builtin.command: localectl set-locale LANG=en_US.utf8
 
 - name: Run CRON job every day at 1.05 to remove files older than 7 days
-  become: yes
-  become_method: sudo
-  cron:
+  become: true
+  ansible.builtin.cron:
     name: "remove_files"
     user: "root"
     hour: "1"
@@ -152,32 +152,32 @@
     state: present
 
 - name: Get the RDS common certifcate
-  become: yes
-  uri:
+  become: true
+  ansible.builtin.uri:
     creates: "{{ root_folder }}/common/rds-ca-2019-root.pem"
     dest: "{{ root_folder }}/common/rds-ca-2019-root.pem"
     url: https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
-    
-- name: Import server certificates to JDK truststore 
+
+- name: Import server certificates to JDK truststore
+  when: arkcase_ts_stat.stat.exists
   block:
-    - name: see if the Java truststore exists
-      become: yes
-      stat:
+    - name: See if the Java truststore exists
+      become: true
+      ansible.builtin.stat:
         path: "{{ java_trust_store }}"
       register: arkcase_ts_stat
       changed_when: false
-    - name: write Java key store and trust store
+    - name: Write Java key store and trust store
       block:
-        - name: add JDK 11 certs to Java trust store
-          become: yes
-          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
-        - name: add JDK 8 certs to Java trust store
-          become: yes
-          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
-        - name: add Arkcase server certs to Java 11 trust store
-          become: yes
-          command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -deststorepass changeit -noprompt
-        - name: add Arkcase server certs to Java 8 trust store
-          become: yes
-          command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -deststorepass changeit -noprompt
-      when: "arkcase_ts_stat.stat.exists == True"
+        - name: Add JDK 11 certs to Java trust store
+          become: true
+          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+        - name: Add JDK 8 certs to Java trust store
+          become: true
+          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+        - name: Add Arkcase server certs to Java 11 trust store
+          become: true
+          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -deststorepass changeit -noprompt
+        - name: Add Arkcase server certs to Java 8 trust store
+          become: true
+          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -deststorepass changeit -noprompt
