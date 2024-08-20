@@ -167,30 +167,9 @@
   changed_when: '"main frontend which proxys to the backends" in current_config.stdout'
   register: remove_default_config
 
-- name: See if we already have a cert file named for this host
-  become: true
-  ansible.builtin.stat:
-    path: /etc/pki/tls/certs/{{ internal_host }}.pem
-  register: host_pem_stat
-  changed_when: false
-
-- name: Count the subjects in the cert file for this host, if it exists
-  become: true
-  ansible.builtin.shell: set -o pipefail && grep subject /etc/pki/tls/certs/{{ internal_host }}.pem | wc -l
-  register: subject_count
-  changed_when: false
-
 - name: Generate cert/key file that haproxy can read (Let's Encrypt-style setup)
   become: true
   ansible.builtin.shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
-  when: not host_pem_stat.stat.exists or subject_count.stdout != '3'
-  changed_when: not host_pem_stat.stat.exists or subject_count.stdout != '3'
-
-- name: Generate cert/key file that haproxy can read (ADCS setup)
-  become: true
-  ansible.builtin.shell: cat {{ ssl_cert }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
-  when: host_pem_stat.stat.exists and subject_count.stdout == '3'
-  changed_when: host_pem_stat.stat.exists and subject_count.stdout == '3'
 
 - name: ArkCase configuration
   become: true
