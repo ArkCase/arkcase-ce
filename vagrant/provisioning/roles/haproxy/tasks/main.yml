@@ -210,7 +210,7 @@
         
         # for URLs that should not be called from outside, 
         # but only by services within our network.
-        acl only_arkcase_host src {{ arkcase_host | default('localhost') }} 127.0.0.1
+        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
         
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho
