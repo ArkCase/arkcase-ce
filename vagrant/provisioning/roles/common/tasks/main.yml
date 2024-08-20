@@ -125,7 +125,6 @@
     line: "{{ item }}"
   loop:
     - "{{ arkcase_host_address | default('127.0.0.1') }} arkcase-host"
-    - "127.0.0.1 {{ internal_host }}"
     - "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }} {{ internal_host }}"
   # Don't try to modify the `/etc/hosts` file when running inside
   # Docker, this is not possible. Instead, use `--add-host` on the
