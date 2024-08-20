@@ -1,28 +1,29 @@
-- name: set haproxy facts for RHEL 8
-  set_fact:
+- name: Set haproxy facts for RHEL 8
+  ansible.builtin.set_fact:
     pkg_haproxy: haproxy
     path_haproxy_cfg: "/etc/haproxy/haproxy.cfg"
     path_stats_socket: "/var/lib/haproxy/stats"
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
-- name: set haproxy facts CentOS 7
-  set_fact:
+- name: Set haproxy facts CentOS 7
+  ansible.builtin.set_fact:
     pkg_haproxy: "rh-haproxy18-haproxy"
     path_haproxy_cfg: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
     path_stats_socket: "/var/opt/rh/rh-haproxy18/lib/haproxy/stats"
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-- name: see if firewalld is running
-  become: yes
-  command: firewall-cmd --state
+- name: See if firewalld is running
+  become: true
+  ansible.builtin.command: firewall-cmd --state
   register: firewalld_state
   failed_when: false
+  changed_when: false
 
-- name: ensure web and proxy ports
-  become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
+- name: Ensure web and proxy ports
+  become: true
+  ansible.posix.firewalld:
+    immediate: true
+    permanent: true
     port: "{{ item }}"
     state: enabled
   loop:
@@ -33,29 +34,29 @@
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
   when: firewalld_state.stdout == 'runnng'
 
-- name: install epel-release 
-  become: yes
-  yum:
+- name: Install epel-release
+  become: true
+  ansible.builtin.yum:
     name: epel-release
     state: present
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-- name: install software collections
-  become: yes
-  yum:
+- name: Install software collections
+  become: true
+  ansible.builtin.yum:
     name: centos-release-scl
     state: present
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-- name: install haproxy 1.8
-  become: yes
-  yum: 
+- name: Install haproxy 1.8
+  become: true
+  ansible.builtin.yum:
     name: "{{ pkg_haproxy }}"
     state: present
 
-- name: haproxy folders
-  become: yes
-  file:
+- name: Haproxy folders
+  become: true
+  ansible.builtin.file:
     path: "{{ root_folder }}/log/haproxy"
     state: directory
     owner: haproxy
@@ -63,18 +64,18 @@
     mode: '0755'
 
 - name: See if rsyslog.conf exists
-  become: yes
-  stat:
+  become: true
+  ansible.builtin.stat:
     path: /etc/rsyslog.conf
   register: rsyslog_stat
   changed_when: false
   failed_when: false
 
 - name: Change rsyslog.conf for allow haproxy logging
-  become: yes
-  lineinfile:
+  become: true
+  ansible.builtin.lineinfile:
     path: /etc/rsyslog.conf
-    backup: yes
+    backup: true
     regex: "{{ item.regexp }}"
     line: "{{ item.line }}"
   loop:
@@ -86,8 +87,8 @@
   when: rsyslog_stat.stat.exists
 
 - name: Allow SELinux write access on the haproxy log directory
-  become: yes
-  sefcontext:
+  become: true
+  community.general.sefcontext:
     target: '{{ root_folder }}/log/haproxy'
     setype: haproxy_var_log_t
     state: present
@@ -96,24 +97,25 @@
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Apply new SELinux file context to filesystem
-  become: yes
-  command: restorecon -R -v {{ root_folder }}/log/haproxy
+  become: true
+  ansible.builtin.command: restorecon -R -v {{ root_folder }}/log/haproxy
   when: allow_haproxy_logging is changed
+  changed_when: allow_haproxy_logging is changed
 
 - name: Copy haproxy log configuration into rsyslog.d
-  become: yes
-  template:
+  become: true
+  ansible.builtin.template:
     src: haproxy-rsyslog.d
     dest: /etc/rsyslog.d/haproxy.conf
-    backup: yes
+    backup: true
   register: haproxy_rsyslog
   when: rsyslog_stat.stat.exists
 
-- name: remove default TLS policies
-  become: yes
-  lineinfile:
+- name: Remove default TLS policies
+  become: true
+  ansible.builtin.lineinfile:
     path: "{{ path_haproxy_cfg }}"
-    backup: yes
+    backup: true
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   loop:
@@ -122,12 +124,12 @@
     - regexp: '^    ssl-default-server-ciphers PROFILE=SYSTEM'
       line: '   # ssl-default-server-ciphers PROFILE=SYSTEM'
   register: default_tls_options
- 
-- name: increase 'timeout server' and 'timeout client'
-  become: yes
-  lineinfile:
+
+- name: Increase 'timeout server' and 'timeout client'
+  become: true
+  ansible.builtin.lineinfile:
     path: "{{ path_haproxy_cfg }}"
-    backup: yes
+    backup: true
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
   loop:
@@ -137,11 +139,11 @@
       line: 'timeout server          3m'
   register: timeout_settings
 
-- name: establish our preferred default policies
-  become: yes
-  lineinfile:
+- name: Establish our preferred default policies
+  become: true
+  ansible.builtin.lineinfile:
     path: "{{ path_haproxy_cfg }}"
-    backup: yes
+    backup: true
     line: "{{ item }}"
     insertafter: stats socket {{ path_stats_socket }}
   loop:
@@ -149,49 +151,31 @@
     - "    ssl-default-bind-ciphers  ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS"
     - "    tune.ssl.default-dh-param 2048"
     - "    # ArkCase Default TLS Options"
-    - "    log         127.0.0.1:514 local2" 
+    - "    log         127.0.0.1:514 local2"
   register: good_tls_options
-  
-- name: read current config
-  become: yes
-  command: cat {{ path_haproxy_cfg }}
+
+- name: Read current config
+  become: true
+  ansible.builtin.command: cat {{ path_haproxy_cfg }}
   register: current_config
   changed_when: false
-  
-- name: remove default frontend/backend configuration
-  become: yes
-  command: sed -i '/^# main frontend which proxys to the backends$/,$d' {{ path_haproxy_cfg }}
+
+- name: Remove default frontend/backend configuration
+  become: true
+  ansible.builtin.command: sed -i '/^# main frontend which proxys to the backends$/,$d' {{ path_haproxy_cfg }}
   when: '"main frontend which proxys to the backends" in current_config.stdout'
+  changed_when: '"main frontend which proxys to the backends" in current_config.stdout'
   register: remove_default_config
- 
-- name: see if we already have a cert file named for this host
-  become: yes
-  stat:
-    path: /etc/pki/tls/certs/{{ internal_host }}.pem
-  register: host_pem_stat
-  changed_when: false
 
-- name: count the subjects in the cert file for this host, if it exists
-  become: yes
-  shell: grep subject /etc/pki/tls/certs/{{ internal_host }}.pem | wc -l
-  register: subject_count
-  changed_when: false
- 
-- name: generate cert/key file that haproxy can read (Let's Encrypt-style setup)
-  become: yes
-  shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
-  when: not host_pem_stat.stat.exists or subject_count.stdout != '3'
+- name: Generate cert/key file that haproxy can read (Let's Encrypt-style setup)
+  become: true
+  ansible.builtin.shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
 
-- name: generate cert/key file that haproxy can read (ADCS setup)
-  become: yes
-  shell: cat {{ ssl_cert }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
-  when: host_pem_stat.stat.exists and subject_count.stdout == '3'
-    
 - name: ArkCase configuration
-  become: yes
-  blockinfile:
+  become: true
+  ansible.builtin.blockinfile:
     path: "{{ path_haproxy_cfg }}"
-    backup: yes
+    backup: true
     block: |
       frontend stats
         bind *:8404
@@ -200,18 +184,18 @@
         stats refresh 10s
         stats admin if LOCALHOST
         stats auth admin:{{ default_user_password }}
-      
+
       frontend main
         mode http
         bind *:80
 
         bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/haproxy.pem
         redirect scheme https code 301 if !{ ssl_fc }
-        
-        # for URLs that should not be called from outside, 
+
+        # for URLs that should not be called from outside,
         # but only by services within our network.
-        acl only_arkcase_host src {{ arkcase_host | default('localhost') }} 127.0.0.1
-        
+        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
+
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho
         acl acl_alfresco path_beg /alfresco
@@ -222,7 +206,7 @@
         acl acl_minio path_beg /api/minio
         acl acl_oidc path_beg /api/oidc
         acl acl_api_gateway path_beg /api
-        acl acl_config path_beg /config        
+        acl acl_config path_beg /config
         acl acl_root path -i /
 
         # redirections
@@ -247,7 +231,7 @@
         use_backend be_api_gateway if acl_api_gateway
         use_backend be_config if acl_config
 
-      #backend servers  
+      #backend servers
       backend be_solr
         http-response add-header X-Solr-Node %s
         mode http
@@ -304,7 +288,7 @@
         mode http
         option tcp-check
         server api_gateway0 {{ arkcase_host }}:9002
-      
+
       backend be_oidc
         http-response add-header X-OIDC-Node %s
         mode http
@@ -317,32 +301,32 @@
         mode http
         option tcp-check
         server config {{ arkcase_host }}:9999
-        http-request set-path %[path,regsub(^/config/,/)]  
+        http-request set-path %[path,regsub(^/config/,/)]
 
   register: arkcase_config
 
 - name: FOIA frontend part
-  become: yes
-  lineinfile:
-    backup: yes      
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "acl acl_arkcase path_beg /arkcase"
     line: "  acl acl_foia path_beg /foia"
   when: foia_portal_context is defined
 
 - name: Tell FOIA frontend which backend will use
-  become: yes
-  lineinfile:
-    backup: yes
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "# backend uses"
     line: "  use_backend be_foia if acl_foia"
-  when: foia_portal_context is defined  
+  when: foia_portal_context is defined
 
 - name: FOIA context, if needed
-  become: yes
-  blockinfile:
-    backup: yes
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
     marker: "# {mark} ANSIBLE MANAGED BLOCK FOIA CONTEXT"
     insertafter: "#backend servers"
     path: "{{ path_haproxy_cfg }}"
@@ -356,27 +340,27 @@
 
 ### Arkcase Portal frontend
 - name: ArkCase Portal frontend part
-  become: yes
-  lineinfile:
-    backup: yes      
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "acl acl_arkcase path_beg /arkcase"
     line: "  acl acl_arkcase_portal path_beg /{{ arkcase_portal_context | default('portal') }}"
   when: deploy_arkcase_portal | default(false)
 
 - name: Tell ArkCase Portal frontend which backend will use
-  become: yes
-  lineinfile:
-    backup: yes
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "# backend uses"
     line: "  use_backend be_arkcase_portal if acl_arkcase_portal"
   when: deploy_arkcase_portal | default(false)
 
 - name: ArkCase Portal context, if needed
-  become: yes
-  blockinfile:
-    backup: yes
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
     marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL CONTEXT"
     insertafter: "#backend servers"
     path: "{{ path_haproxy_cfg }}"
@@ -390,27 +374,27 @@
 
 ### Showcase frontend
 - name: Showcase frontend part
-  become: yes
-  lineinfile:
-    backup: yes      
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "acl acl_arkcase path_beg /arkcase"
     line: "  acl acl_showcase path_beg /showcase"
   when: deploy_showcase | default(false)
 
 - name: Tell Showcase frontend which backend will use
-  become: yes
-  lineinfile:
-    backup: yes
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "# backend uses"
     line: "  use_backend be_showcase if acl_showcase"
   when: deploy_showcase | default(false)
 
 - name: Showcase context, if needed
-  become: yes
-  blockinfile:
-    backup: yes
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
     marker: "# {mark} ANSIBLE MANAGED BLOCK SHOWCASE UI CONTEXT"
     insertafter: "#backend servers"
     path: "{{ path_haproxy_cfg }}"
@@ -424,27 +408,27 @@
 
 # Showcase backend / mock server
 - name: Showcase-backend frontend part
-  become: yes
-  lineinfile:
-    backup: yes      
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "acl acl_arkcase path_beg /arkcase"
     line: "  acl acl_showcase_backend path_beg /showcase/api"
   when: deploy_showcase | default(false)
 
 - name: Tell Showcase-backend frontend which backend will use
-  become: yes
-  lineinfile:
-    backup: yes
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "# backend uses"
     line: "  use_backend be_showcase_backend if acl_showcase_backend"
   when: deploy_showcase | default(false)
 
 - name: Showcase-backend context, if needed
-  become: yes
-  blockinfile:
-    backup: yes
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
     marker: "# {mark} ANSIBLE MANAGED BLOCK SHOWCASE CONTEXT"
     insertafter: "#backend servers"
     path: "{{ path_haproxy_cfg }}"
@@ -454,32 +438,32 @@
         mode http
         option tcp-check
         server showcase_backend0 {{ internal_host }}:3000
-        http-request set-path %[path,regsub(^/showcase/,/)] 
+        http-request set-path %[path,regsub(^/showcase/,/)]
   when: deploy_showcase | default(false)
 
 ### Storybook frontend
 - name: Storybook frontend part
-  become: yes
-  lineinfile:
-    backup: yes      
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "acl acl_arkcase path_beg /arkcase"
     line: "  acl acl_storybook path_beg /storybook"
   when: deploy_storybook | default(false)
 
 - name: Tell Storybook frontend which backend will use
-  become: yes
-  lineinfile:
-    backup: yes
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "# backend uses"
     line: "  use_backend be_storybook if acl_storybook"
   when: deploy_storybook | default(false)
 
 - name: Storybook context, if needed
-  become: yes
-  blockinfile:
-    backup: yes
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
     marker: "# {mark} ANSIBLE MANAGED BLOCK STORYBOOK UI CONTEXT"
     insertafter: "#backend servers"
     path: "{{ path_haproxy_cfg }}"
@@ -493,32 +477,33 @@
 
 # Confluent platform
 - name: Set up proxies to Confluent Platform services
+  when: enable_kafka is defined and enable_kafka == "yes"
   block:
-    - name: Populate haproxy.conf with frontend part 
-      become: yes
-      blockinfile:
+    - name: Populate haproxy.conf with frontend part
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL CONFLUENT PLATFORM CONTEXT"
         insertafter: "#arkcase.next services"
         path: "{{ path_haproxy_cfg }}"
         block: |
             acl acl_schema-registry path_beg /schema-registry
             acl acl_control-center path_beg /control-center
-            acl acl_control-center-ws path_beg /ws    
+            acl acl_control-center-ws path_beg /ws
 
     - name: Tell frontend part which backend servers will use
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND CONFLUENT PLATFORM CONTEXT"
         insertafter: "# backend uses"
         path: "{{ path_haproxy_cfg }}"
         block: |
             use_backend be_schema-registry if acl_schema-registry
-            use_backend be_control-center if acl_control-center            
+            use_backend be_control-center if acl_control-center
             use_backend be_control-center-ws if acl_control-center-ws
-    
+
     - name: Populate haproxy.conf with backend servers for Confluent platform
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND CONFLUENT PLATFORM CONTEXT"
         insertafter: "#backend servers"
         path: "{{ path_haproxy_cfg }}"
@@ -542,13 +527,12 @@
             server controlws {{ internal_host }}:9021
             reqrep (.*\/)control-center\/(.*)     \1\2
 
-  when: enable_kafka is defined and enable_kafka == "yes"
-
 - name: Set up proxies to Elasticsearch
+  when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
   block:
     - name: Populate haproxy.conf with frontend part
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ELASTICSEARCH CONTEXT"
         insertafter: "#arkcase.next services"
         path: "{{ path_haproxy_cfg }}"
@@ -556,8 +540,8 @@
             acl acl_elasticsearch path_beg /elasticsearch
 
     - name: Tell frontend part which backend servers will use
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ELASTICSEARCH CONTEXT"
         insertafter: "# backend uses"
         path: "{{ path_haproxy_cfg }}"
@@ -565,8 +549,8 @@
             use_backend be_elasticsearch if acl_elasticsearch
 
     - name: Populate haproxy.conf with backend servers for ElasticSearch
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ELASTICSEARCH CONTEXT"
         insertafter: "#backend servers"
         path: "{{ path_haproxy_cfg }}"
@@ -577,14 +561,14 @@
             option tcp-check
             server elasticsearch {{ internal_host }}:9200
             http-request set-path %[path,regsub(^/elasticsearch/,/)]
-  
-  when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
+
 
 - name: Set up proxies to Zipkin
+  when: enable_zipkin is defined and enable_zipkin == 'yes'
   block:
     - name: Populate haproxy.conf with frontend part
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL ZIPKIN CONTEXT"
         insertafter: "#arkcase.next services"
         path: "{{ path_haproxy_cfg }}"
@@ -594,8 +578,8 @@
             acl acl_zipkin path_beg /zipkin
 
     - name: Tell frontend part which backend servers will use
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND ZIPKIN CONTEXT"
         insertafter: "# backend uses"
         path: "{{ path_haproxy_cfg }}"
@@ -605,8 +589,8 @@
             use_backend be_zipkin if acl_zipkin
 
     - name: Populate haproxy.conf with backend servers for Zipkin
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND ZIPKIN CONTEXT"
         insertafter: "#backend servers"
         path: "{{ path_haproxy_cfg }}"
@@ -631,13 +615,13 @@
             option tcp-check
             server zipkin {{ internal_host }}:9411/zipkin
 
-  when: enable_zipkin is defined and enable_zipkin == 'yes'    
 
 - name: Set up proxies to Eureka
+  when: enable_eureka is defined and enable_eureka == 'yes'
   block:
     - name: Populate haproxy.conf with frontend part
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK ACL EUREKA CONTEXT"
         insertafter: "#arkcase.next services"
         path: "{{ path_haproxy_cfg }}"
@@ -647,8 +631,8 @@
             acl acl_eureka-dashboard path_beg /eureka-dashboard
 
     - name: Tell frontend part which backend servers will use
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK FRONTEND EUREKA CONTEXT"
         insertafter: "# backend uses"
         path: "{{ path_haproxy_cfg }}"
@@ -656,10 +640,10 @@
             use_backend be_gateway if acl_gateway
             use_backend be_eureka if acl_eureka
             use_backend be_eureka-dashboard if acl_eureka-dashboard
-          
+
     - name: Populate haproxy.conf with backend servers for Eureka
-      become: yes
-      blockinfile:
+      become: true
+      ansible.builtin.blockinfile:
         marker: "# {mark} ANSIBLE MANAGED BLOCK BACKEND EUREKA CONTEXT"
         insertafter: "#backend servers"
         path: "{{ path_haproxy_cfg }}"
@@ -682,61 +666,60 @@
             mode http
             option tcp-check
             server eureka-dashboard {{ arkcase_host }}:8761/eureka-dashboard
-  
-  when: enable_eureka is defined and enable_eureka == 'yes'
 
-- name: haproxy logrotate
-  become: yes
-  template:
-    src: rh-haproxy18-haproxy.logrotate.d 
+- name: Haproxy logrotate
+  become: true
+  ansible.builtin.template:
+    src: rh-haproxy18-haproxy.logrotate.d
     dest: "/etc/logrotate.d/rh-haproxy18-haproxy"
-    force: yes
-    backup: yes
+    force: true
+    backup: true
 
 - name: Ensure that haproxy service file exists
-  stat:
+  ansible.builtin.stat:
     path: /usr/lib/systemd/system/rh-haproxy18-haproxy.service
   register: haproxy_service
 
 - name: Rename HaProxy service name to haproxy
-  become: yes
-  command: mv /usr/lib/systemd/system/rh-haproxy18-haproxy.service /usr/lib/systemd/system/haproxy.service
+  become: true
+  ansible.builtin.command: mv /usr/lib/systemd/system/rh-haproxy18-haproxy.service /usr/lib/systemd/system/haproxy.service
   register: haproxy_service_name
   when: haproxy_service.stat.exists
+  changed_when: haproxy_service.stat.exists
 
 - name: Daemon reload if haproxy service uses another name
-  become: yes
-  systemd:
-    daemon_reload: yes
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
   when: haproxy_service_name is changed
 
-- name: enable haproxy to connect to any port
-  become: yes
-  seboolean:
+- name: Enable haproxy to connect to any port
+  become: true
+  ansible.posix.seboolean:
     name: haproxy_connect_any
-    state: yes
-    persistent: yes
+    state: true
+    persistent: true
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: enable and start haproxy
-  become: yes
-  systemd:
+- name: Enable and start haproxy
+  become: true
+  ansible.builtin.systemd:
     daemon_reload: true
     name: haproxy
-    enabled: yes
+    enabled: true
     state: started
 
-- name: restart haproxy if needed
-  become: yes
-  systemd:
+- name: Restart haproxy if needed
+  become: true
+  ansible.builtin.systemd:
     name: haproxy
     state: restarted
   when: good_tls_options is changed or default_tls_options is changed or remove_default_config is changed or arkcase_config is changed or timeout_settings is changed
 
 - name: Restart rsyslog service if needed
-  become: yes
-  systemd:
+  become: true
+  ansible.builtin.systemd:
     name: rsyslog
     state: restarted
   when: rsyslog_stat.stat.exists and (rsyslog_configuration is changed or haproxy_rsyslog is changed or allow_haproxy_logging is changed)
