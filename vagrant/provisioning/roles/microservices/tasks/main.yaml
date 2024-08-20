@@ -16,6 +16,7 @@
     src: codeit.el7.repo
     dest: /etc/yum.repos.d/
     backup: yes
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: upgrade httpd
   become: yes

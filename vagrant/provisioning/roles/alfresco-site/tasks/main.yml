@@ -73,6 +73,8 @@
 - name: install jmespath for python3
   become: yes
   command: python3 -m pip install jmespath
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 # the join filter is just to lift the only array member into a string...
@@ -81,10 +83,9 @@
 - name: find the container node ref
   vars:
     noderef_query: "containers[?name=='documentLibrary'].nodeRef"
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
   set_fact:
     container_noderef: "{{ rm_container_out.json | json_query(noderef_query) | join(',') }}"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: create the top-level category
   include_tasks: create-category.yml
