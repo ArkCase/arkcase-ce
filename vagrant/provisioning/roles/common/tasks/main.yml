@@ -158,15 +158,16 @@
     dest: "{{ root_folder }}/common/rds-ca-2019-root.pem"
     url: https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
 
+- name: See if the Java truststore exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ java_trust_store }}"
+  register: arkcase_ts_stat
+  changed_when: false
+
 - name: Import server certificates to JDK truststore
   when: arkcase_ts_stat.stat.exists
   block:
-    - name: See if the Java truststore exists
-      become: true
-      ansible.builtin.stat:
-        path: "{{ java_trust_store }}"
-      register: arkcase_ts_stat
-      changed_when: false
     - name: Write Java key store and trust store
       block:
         - name: Add JDK 11 certs to Java trust store
