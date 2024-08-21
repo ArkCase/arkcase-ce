@@ -145,17 +145,6 @@
       replace: "log4j.appender.logfile.file={{ root_folder }}/log/activemq/activemq.log"
     - regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log"
       replace: "log4j.appender.audit.file={{ root_folder }}/log/activemq/audit.log"
-
-- name: set activemq.log location - log4j2
-  become: yes
-  become_user: activemq
-  replace:
-    path: "{{ root_folder }}/app/activemq/conf/{{ log4j_properties }}"
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  loop:
-    - regexp: "^appender\\.logfile\\.fileName=\\$\\{sys\\:activemq\\.data\\}\\/activemq\\.log"
-      replace: "appender.logfile.fileName={{ root_folder }}/log/activemq/activemq.log"
     - regexp: "^appender\\.logfile\\.filePattern=\\$\\{sys\\:activemq\\.data\\}\\/activemq\\.log\\.%i"
       replace: "appender.logfile.filePattern={{ root_folder }}/log/activemq/activemq.log.%i"
     - regexp: "^appender\\.auditlog\\.fileName=\\$\\{sys\\:activemq\\.data\\}/audit\\.log"
@@ -395,6 +384,7 @@
     - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
     - { regexp: 'uri="tcp', replace: 'uri="ssl' }
     - { regexp: 'uri="stomp://', replace: 'uri="stomp+ssl://' }
+    - { regexp: 'uri="amqp://', replace: 'uri="amqp+ssl://' }
 
 - name: JMX config
   block:

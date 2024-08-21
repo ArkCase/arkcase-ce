@@ -508,7 +508,7 @@ pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
 
 pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
 
-solr_version: 8.8.2
+solr_version: 8.11.2
 solr_jmx_enabled: true
 # Cores are only needed for Solr before 8.8.2
 solr_cores:
@@ -531,7 +531,7 @@ default_database_password: "@rM3d1A!"
 
 # tomcat_major_version needed to build download URL
 tomcat_major_version: 9
-tomcat_version: 9.0.22
+tomcat_version: 9.0.82
 
 # use more complicated password for Alfresco admin user before you start with the installation
 alfresco_admin_password: "admin"
@@ -777,4 +777,6 @@ enableFileSync: false
 user_attribute_name: sAMAccountName
 
 microservice_protocol: http
+#For OS where ansible has python3+
+ansible_python3: /usr/bin/python3
 

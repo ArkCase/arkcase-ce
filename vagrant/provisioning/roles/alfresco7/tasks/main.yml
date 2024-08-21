@@ -6,7 +6,8 @@
 - name: set Alfresco facts (RHEL 8)
   set_fact:
     pkg_python_jmespath: python3-jmespath
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+    path_libreoffice: /opt/libreoffice5.4
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: Alfresco packages
   become: yes
@@ -214,12 +215,15 @@
     - title: Alfresco Share Services AMP
       amp_path: "{{ root_folder }}/install/alfresco7/{{ alfresco_zip_parent_folder }}/amps/alfresco-share-services.amp"
       target_war: alfresco.war
+      java_home: "{{ alfresco_java_home }}"
     - title: Governance Services
       amp_path: "{{ alfresco_rma_repo_amp }}"
       target_war: alfresco.war
+      java_home: "{{ alfresco_java_home }}"
     - title: AGS Share
       amp_path: "{{ alfresco_rma_share_amp}}"
       target_war: share.war
+      java_home: "{{ alfresco_java_home }}"
   loop_control:
     loop_var: amp
 

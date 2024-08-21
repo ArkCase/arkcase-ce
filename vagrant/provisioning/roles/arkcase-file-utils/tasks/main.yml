@@ -89,11 +89,9 @@
     dest: /tmp/
   when: not libreoffice_bin_exists.stat.exists
 
-- name: Ensure that freedesktop-menus is removed
+- name: Ensure that libreoffice freedesktop-menus is removed
   become: yes
-  shell: rm /tmp/LibreOffice*/RPMS/*freedesktop-menus*
-  register: freedesktop_removed
-  failed_when: freedesktop_removed.rc != 0 and freedesktop_removed.rc != 1
+  shell: find /tmp -name libreoffice*-freedesktop-menus* -exec rm {} \;
 
 - name: install LibreOffice, disabling the fapolicyd rpm plugin, since it causes a hang sometimes
   become: yes

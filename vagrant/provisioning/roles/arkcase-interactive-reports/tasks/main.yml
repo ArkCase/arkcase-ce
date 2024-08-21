@@ -1,19 +1,19 @@
-- name: list the data sources that already exist
-  become: yes
+- name: List the data sources that already exist
+  become: true
   become_user: pentaho
-  command: 
+  ansible.builtin.command:
     cmd: 'wget --no-check-certificate -O {{ root_folder }}/install/pentaho/datasources-list.json --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
   changed_when: false
 
-- name: read the list of data sources
-  become: yes
+- name: Read the list of data sources
+  become: true
   become_user: pentaho
-  command: cat {{ root_folder }}/install/pentaho/datasources-list.json
+  ansible.builtin.command: cat {{ root_folder }}/install/pentaho/datasources-list.json
   register: data_source_list
   changed_when: false
 
-- name: file to post to Pentaho to create the data source
-  become: yes
+- name: File to post to Pentaho to create the data source
+  become: true
   become_user: pentaho
   template:
     src: put_connection.json
@@ -21,69 +21,71 @@
   when: not '"MariaDB Local"' in data_source_list.stdout
 
 # the ansible uri module causes a timeout for some reason but wget works fine
-- name: create the ArkCase JDBC data source for interactive reports
-  command: 
+- name: Create the ArkCase JDBC data source for interactive reports
+  ansible.builtin.command:
     cmd: 'wget --no-check-certificate --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
   register: create_datasource_rest_call
   when: not '"MariaDB Local"' in data_source_list.stdout
 
 - name: Check if keep alive report exists
-  command: 
+  ansible.builtin.command:
     cmd: 'curl -k -v -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/getJobs'
-  register: scheduledJobs_out
+  register: scheduled_jobs_out
 
 - name: Copy keep alive files to /tmp
-  copy: src={{ item.src }} dest={{ item.dest }}
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
   with_items:
     - { src: 'DBConnectionDS.xmi', dest: '/tmp' }
     - { src: 'DBKeepAlive.prpti.zip', dest: '/tmp' }
     - { src: 'DBKeepAliveJob.xml', dest: '/tmp' }
-  when: '"KeepAliveJob" not in scheduledJobs_out.stdout'
+  when: '"KeepAliveJob" not in scheduled_jobs_out.stdout'
 
 - name: Deploy keep alive interactive reports datasource
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='DBConnectionDS' --file-path='/tmp/DBConnectionDS.xmi' --permission=true --overwrite=true --retainOwnership=true"
-  when: '"KeepAliveJob" not in scheduledJobs_out.stdout'
+  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='DBConnectionDS' --file-path='/tmp/DBConnectionDS.xmi' --permission=true --overwrite=true --retainOwnership=true"
+  when: '"KeepAliveJob" not in scheduled_jobs_out.stdout'
 
 - name: Deploy keep alive interactive report
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='/tmp/DBKeepAlive.prpti.zip'"
-  when: '"KeepAliveJob" not in scheduledJobs_out.stdout'
+  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='/tmp/DBKeepAlive.prpti.zip'"
+  when: '"KeepAliveJob" not in scheduled_jobs_out.stdout'
 
 - name: Schedule execution of keep alive report on every 30 min to keep connection alive
-  command:
+  ansible.builtin.command:
     cmd: 'curl -k -v -H "Content-Type: application/xml" --data @/tmp/DBKeepAliveJob.xml -X POST -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/scheduler/job'
-  when: '"KeepAliveJob" not in scheduledJobs_out.stdout'
+  when: '"KeepAliveJob" not in scheduled_jobs_out.stdout'
 
-- name: download configuration (if using sftp, and no extension is configured)
-  become: yes
+- name: Download configuration (if using sftp, and no extension is configured)
+  become: true
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip
+  ansible.builtin.command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip
   args:
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
   when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool and pentaho_host != internal_host
 
-- name: set extension config file name (extension id)
+- name: Set extension config file name (extension id)
   set_fact:
     extension_config_file_name: "arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_version_formatted }}.zip"
   when: arkcase_extension_id is defined 
 
-- name: set extension config file name (no extension id)
+- name: Set extension config file name (no extension id)
   set_fact:
     extension_config_file_name: "arkcase-config{{ arkcase_extension_version }}.zip"
   when: not arkcase_extension_id is defined
 
-- name: download extension configuration (if configured)
-  become: yes
+- name: Download extension configuration (if configured)
+  become: true
   become_user: arkcase
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ extension_config_file_name }}
+  ansible.builtin.command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_extension_user }}@{{ sftp_service_base_url }}:{{ sftp_extension_folder }}/{{ extension_config_file_name }}
   args:
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
     SSHPASS: "{{ sftp_extension_password }}"
   when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool and pentaho_host != internal_host
 
-- name: download configuration (if using GitHub)
+- name: Download configuration (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
     - name: ArkCase configuration
@@ -92,27 +94,27 @@
       url: https://github.com/ArkCase/.arkcase/archive/arkcase-{{ arkcase_version }}.zip
   when: arkcase_retrieve_strategy == "github" and pentaho_host != internal_host
 
-- name: rename extension config zip to common file name
-  become: yes
+- name: Rename extension config zip to common file name
+  become: true
   become_user: arkcase
-  command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
+  ansible.builtin.command: mv {{ root_folder }}/install/arkcase/{{ extension_config_file_name }} {{ root_folder }}/install/arkcase/arkcase-config.zip
   when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip" and pentaho_host != internal_host
 
-- name: format config version
+- name: Format config version
   set_fact:
     arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
 
-- name: rename core config zip to common file name
-  become: yes
+- name: Rename core config zip to common file name
+  become: true
   become_user: arkcase
-  command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
+  ansible.builtin.command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_configuration_classifier }}{{ arkcase_configuration_version_formatted }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
   when: arkcase_retrieve_strategy == "sftp" and not arkcase_extension_install|bool and pentaho_host != internal_host
 
-- name: unzip the configuration files
-  become: yes
+- name: Unzip the configuration files
+  become: true
   become_user: arkcase
   unarchive:
-    remote_src: yes
+    remote_src: true
     src: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
     dest: "/home/arkcase/.arkcase"
     creates: "/home/arkcase/.arkcase/acm/conf.yml"
@@ -120,19 +122,25 @@
   when: pentaho_host != internal_host
 
 - name: Find interactive reports datasources in configuration
+  become: true
+  become_user: arkcase
   find:
     paths: /home/arkcase/.arkcase/acm/reports/interactive/datasources
     patterns: '*.xmi'
-    recurse: no
+    recurse: false
   register: interactive_reports_datasources
-  
+
 - name: Install interactive reports datasources
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
+  become: true
+  become_user: arkcase
+  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ interactive_reports_datasources.files }}"
-  
+  register: datasource_install
+  failed_when: "'Import was successful' not in datasource_install.stdout"
+
 - name: Check if foia or core variant
-  become: yes
-  stat: 
+  become: true
+  stat:
     path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-foia.yaml
   register: arkcase_foia_yaml
 
@@ -141,28 +149,35 @@
     reports_folder: "{{ 'foia' if arkcase_foia_yaml.stat.exists == true else 'arkcase' }}"
 
 - name: Find interactive reports in configuration
-  become: yes
+  become: true
   become_user: arkcase
   find:
     paths: /home/arkcase/.arkcase/acm/reports/interactive/reports
     patterns: '*.zip'
-    recurse: no
+    recurse: false
   register: interactive_reports
-  
+
 - name: Install interactive reports from configuration
-  command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}'"
+  become: true
+  become_user: arkcase
+  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ reports_folder }} --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ interactive_reports.files }}"
+  register: interactive_install
+  failed_when: "'Import was successful' not in interactive_install.stdout"
 
 - name: Find static reports folder in configuration
-  become: yes
+  become: true
   become_user: arkcase
   find:
     paths: /home/arkcase/.arkcase/acm/reports/static/reports
     patterns: '*.prpt'
-    recurse: yes
+    recurse: true
   register: static_reports
 
 - name: Install static reports from configuration
-  command:
-    cmd: 'curl -k -v -X PUT --data-binary "@{{ item.path }}" -u {{ arkcase_admin_user }}:{{ arkcase_admin_password }} https://{{ external_host }}/pentaho/api/repo/files/:public:{{ item.path | dirname | regex_replace(".*\/", "") }}:{{ item.path | basename | replace(" ","%20")}}'
+  become: true
+  become_user: arkcase
+  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public/{{ item.path | dirname | regex_replace('.*\/', '') }} --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ static_reports.files }}"
+  register: static_install
+  failed_when: "'Import was successful' not in static_install.stdout"

@@ -443,6 +443,12 @@
     - name: pentaho
       folder_path: "{{ root_folder }}/app/pentaho"
 
+- name: see if firewalld is running
+  become: yes
+  command: firewall-cmd --state
+  register: firewalld_state
+  failed_when: false
+
 - name: Expose pentaho app port
   become: yes
   firewalld:
@@ -450,6 +456,9 @@
     permanent: yes
     immediate: yes
     state: enabled
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+  when: firewalld_state.stdout == 'runnng'
 
 - name: format extension version
   set_fact:

@@ -3,6 +3,8 @@
   pip:
     executable: pip3
     name: cryptography
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: create pki folder structure
   become: yes
@@ -148,6 +150,27 @@
     public_host: "{{ external_host }}"
   when: public_host is not defined
 
+- name: set subject alternate name list
+  set_fact:
+    subject_alt_names: 
+      - DNS:{{ external_host }}
+      - DNS:{{ internal_host }}
+      - DNS:{{ activemq_host }}
+      - DNS:{{ alfresco_host }}
+      - DNS:{{ arkcase_host }}
+      - DNS:{{ database_host }}
+      - DNS:{{ mariadb_host }}
+      - DNS:{{ pentaho_host }}
+      - DNS:{{ snowbound_host }}
+      - DNS:{{ solr_host }}
+      - DNS:{{ public_host }}
+      - IP:{{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
+
+
+- name: filter subject alternate name list 
+  set_fact:
+    good_subject_alt_names: "{{ subject_alt_names | reject('equalto', 'DNS:') | unique }}"
+
 - name: generate server csr
   become: yes
   openssl_csr:
@@ -171,18 +194,7 @@
     organizational_unit_name: Product Development
     email_address: info@arkcase.com
     common_name: "{{ internal_host }}"
-    subject_alt_name:
-      - DNS:{{ external_host }}
-      - DNS:{{ internal_host }}
-      - DNS:{{ activemq_host }}
-      - DNS:{{ alfresco_host }}
-      - DNS:{{ arkcase_host }}
-      - DNS:{{ database_host }}
-      - DNS:{{ mariadb_host }}
-      - DNS:{{ pentaho_host }}
-      - DNS:{{ snowbound_host }}
-      - DNS:{{ solr_host }}
-      - DNS:{{ public_host }}
+    subject_alt_name: "{{ good_subject_alt_names }}"
   register: server_csr
 
 # the server cert is signed with the intermediate key

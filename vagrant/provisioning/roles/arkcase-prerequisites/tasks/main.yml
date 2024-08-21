@@ -1,3 +1,13 @@
+- name: set Java 8 as Java Home (versions below 2023.02)
+  set_fact:
+    java_home_version: "/usr/lib/jvm/java-1.8.0-openjdk"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
+- name: set Java 11 as Java Home (versions equal and above 2023.02)
+  set_fact:
+    java_home_version: "/usr/lib/jvm/java-11-openjdk"
+  when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
+
 - name: Ensure group arkcase exists
   become: yes
   group:
@@ -57,6 +67,8 @@
       vars:
         item: arkcase
   when: db_engine | default('mariadb') == "mariadb"
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -118,7 +130,7 @@
     state: present
     name:
       - python2
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: install the npm module 'husky' which seems required by some ArkCase versions
   become: yes
@@ -145,7 +157,7 @@
           catalina_out: "{{ root_folder }}/log/arkcase/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/arkcase"
           log_folder: "{{ root_folder }}/log/arkcase"
-          java_home: "/usr/lib/jvm/java-1.8.0-openjdk"
+          java_home: "{{ java_home_version }}"
           fips_mode: "{{ fips_mode_arkcase | default('') }}"
           mem_min: "{{ arkcase_mem_min | default(4) }}g"
           mem_max: "{{ arkcase_mem_max | default(12) }}g"
@@ -211,6 +223,6 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - PdfTron"
     block: |
-      export JAVA_OPTS="$JAVA_OPTS -Djava.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries:{{ root_folder }}/app/arkcase/lib"
+      export JAVA_OPTS="$JAVA_OPTS -Djava.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries:$LD_LIBRARY_PATH -Dpdftron.html2pdf.library.path={{ root_folder }}/data/arkcase-home/.arkcase/libraries"
   when: pdftron_viewer_license is defined
 

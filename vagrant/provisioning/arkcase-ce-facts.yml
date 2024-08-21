@@ -178,7 +178,7 @@ email_convert_documents_to_pdf: false
 create_case_from_email_enabled: false
 create_complaint_from_email_enabled: false
 
-# retrieve arkcase from GitHub ("github") or SFTP ("sftp")
+# retrieve arkcase from GitHub ("github") or SFTP ("sftp") or MAVEN ("maven")
 arkcase_retrieve_strategy: "github"
 
 # arkcase_webapp_supported_version is for github (i.e, CE) downloads.
@@ -402,8 +402,9 @@ pentaho_ce_checksum: "sha1:3a27d54998f5001e0fd4cf843b727b0a127c7867"
 
 pentaho_server_url: "https://{{ external_host }}/arkcase/pentaho"
 
-solr_version: 8.8.2
+solr_version: 8.11.2
 solr_jmx_enabled: true
+upgrade_solr: false
 # Cores are only needed for Solr before 8.8.2
 solr_cores:
   - "acmAdvancedSearch"
@@ -425,7 +426,7 @@ default_database_password: "@rKc@3S!"
 
 # tomcat_major_version needed to build download URL
 tomcat_major_version: 9
-tomcat_version: 9.0.22
+tomcat_version: 9.0.82
 
 # use more complicated password for Alfresco admin user before you start with the installation
 alfresco_admin_password: "admin"
@@ -664,4 +665,34 @@ enableFileSync: false
 user_attribute_name: sAMAccountName
 
 microservice_protocol: http
+#For OS where ansible has python3+
+ansible_python3: /usr/bin/python3
 
+# for "maven" downloads on ArkCase artifacts 
+arkcase_artifact_repository_type: "release"
+repository_url: "https://project.armedia.com/nexus/repository"
+nexus_username: ""
+nexus_password: ""
+arkcase_group_id: "com.armedia.acm.acm-standard-applications"
+arkcase_artifact_id: "arkcase"
+
+config_server_group_id: "com.armedia.acm"
+config_server_artifact_id: "config-server"
+
+extension_version: ""
+extension_artifact_repository_type: ""
+arkcase_extension_artifact_id: ""
+arkcase_extension_group_id: ""
+
+configuration_extension_artifact_id: ""
+configuration_extension_artifact_group_id: ""
+configuration_extension_version: ""
+
+configuration_artifact_id: "arkcase-config-core"
+configuration_artifact_group_id: "com.armedia.arkcase"
+
+portal_ui_artifact_id: ""
+portal_ui_group_id: ""
+
+portal_api_artifact_id: ""
+portal_api_group_id: ""

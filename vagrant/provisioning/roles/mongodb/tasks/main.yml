@@ -1,3 +1,16 @@
+# Mongo requires all folders above the log and data 
+# folders to have selinux type usr_t
+- name: configure parent folders with usr_t selinux type 
+  become: yes
+  file:
+    path: "{{ item }}"
+    setype: usr_t
+  loop:
+    - "{{ root_folder }}/.."
+    - "{{ root_folder }}"
+    - "{{ root_folder }}/data"
+    - "{{ root_folder }}/log"
+
 - name: configure Mongodb 4.0 repository
   become: yes
   copy:
@@ -70,9 +83,9 @@
   pip:
     executable: pip3
     name: pymongo
-    version: 3.12.3
+    extra_args: --upgrade
 
 - name: create arkcase mongo database
   include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"
   vars:
-    ansible_python_interpreter: /bin/python3.9
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"

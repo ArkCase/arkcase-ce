@@ -180,6 +180,23 @@
     mode: '0644'
   when: solr_version is version('8.8.2', '>=')
 
+- name: Add Strict-Transport-Security header rule to jetty.xml
+  become: yes
+  blockinfile:
+    path: "{{ root_folder }}/app/solr/server/etc/jetty.xml"
+    marker: "<!-- HSTS header -->"
+    insertafter: "<!-- redirect root to solr -->"
+    block: |
+      <Call name="addRule">
+        <Arg>
+          <New class="org.eclipse.jetty.rewrite.handler.HeaderPatternRule">
+            <Set name="pattern">/*</Set>
+            <Set name="name">Strict-Transport-Security</Set>
+            <Set name="value">max-age=31536000; includeSubDomains</Set>
+          </New>
+        </Arg>
+      </Call>
+
 - name: restart solr
   become: yes
   systemd:

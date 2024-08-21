@@ -21,6 +21,8 @@
   loop_control:
     loop_var: s
   when: db_engine == 'mariadb'
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: issue the quartz DDL
   shell: mysql -h{{ database_host }} -upentaho_user -p{{ default_database_password }} --ssl quartz < {{ root_folder }}/install/pentaho/quartz-create-db.sql

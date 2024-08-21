@@ -19,15 +19,28 @@
     dest: /etc/yum.repos.d/mariadb.repo
     force: no
     content: |
+      [mariadb]
+      name = MariaDB
+      baseurl = https://rpm.mariadb.org/10.4/rhel/$releasever/$basearch
+      gpgkey= https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgcheck=1
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: configure MariaDB v10 repository (Rocky 8)
+  become: yes
+  copy:
+    dest: /etc/yum.repos.d/mariadb.repo
+    force: yes
+    content: |
       # MariaDB 10.4 RedHat repository list - created  2022-01-07
       # https://mariadb.org/download/
       [mariadb]
       name = MariaDB
-      baseurl = https://mirror.jaleco.com/mariadb/yum/10.4/rhel8-amd64
+      baseurl = http://yum.mariadb.org/10.6/rhel8-amd64
       module_hotfixes=1
-      gpgkey=https://mirror.jaleco.com/mariadb/yum/RPM-GPG-KEY-MariaDB
+      gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
 
 - name: MySQL python package name (CentOS 7)
   set_fact:
@@ -37,9 +50,16 @@
 - name: MySQL python package name (RHEL 8)
   set_fact:
     pkg_mysql_python: python3-mysql
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
-- name: install MariaDB packages
+#needed to remove mariadb.repo in order to install python3-mysql
+#needed to remove mariadb.repo and install old fashioned yum install mariadb-server
+- name: MySQL python package name (RHEL 8.8 and above)
+  set_fact:
+    pkg_mysql_python: python3-PyMySQL
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
+
+- name: install MariaDB packages (CentOS 7)
   become: yes
   yum:
     state: installed
@@ -47,8 +67,42 @@
     name:
       - MariaDB-server
       - MariaDB-client
-      - "{{ pkg_mysql_python }}"
   register: mariadb_install
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: install MariaDB packages (RHEL 8)
+  become: yes
+  yum:
+    state: installed
+    disable_gpg_check: yes
+    enablerepo: mariadb
+    disablerepo: rhel-8-for-x86_64-appstream-rpms
+    name:
+      - MariaDB-server
+      - MariaDB-client
+  register: mariadb_install
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: install MariaDB packages (Rocky 8)
+  become: yes
+  yum:
+    state: installed
+    enablerepo: mariadb
+    disablerepo: AppStream
+    name:
+      - MariaDB-server
+      - MariaDB-client
+  register: mariadb_install
+  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+
+- name: install MariaDB python library
+  become: yes
+  yum:
+    state: installed
+    disable_gpg_check: yes
+    name:
+      - "{{ pkg_mysql_python }}"
+
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:

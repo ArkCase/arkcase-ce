@@ -248,10 +248,10 @@
             secure="true" 
             scheme="https"
             address="0.0.0.0"
-            protocol="org.apache.coyote.http11.Http11AprProtocol"
             maxHttpHeaderSize="32768"
             connectionTimeout="40000"
             useBodyEncodingForURI="true">
+            protocol="org.apache.coyote.http11.Http11AprProtocol">
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
             <SSLHostConfig 
               honorCipherOrder="true"

@@ -134,9 +134,39 @@
   register: arkcase_war
   when: arkcase_retrieve_strategy == "sftp"
 
+- name: download arkcase war file (maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}/{{ arkcase_artifact_id }}.{{ arkcase_artifact_repository_type }}/"
+    username: "{{ nexus_username }}"
+    password: "{{ nexus_password }}"
+    group_id: "{{ arkcase_group_id }}"
+    artifact_id: "{{ arkcase_artifact_id }}"
+    version: "{{ arkcase_version }}"
+    extension: war
+    dest: "{{ root_folder }}/install/arkcase"
+    keep_name: true
+  when: arkcase_retrieve_strategy == "maven"  
+
 - name: format config server version
   set_fact:
     arkcase_config_server_version_formatted: "{{ '-' ~ arkcase_config_server_version if arkcase_config_server_version != '' else '' }}"
+
+- name: download config-server file (maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}/{{ arkcase_artifact_id }}.{{ config_server_artifact_repository_type | default(arkcase_artifact_repository_type) }}/"
+    username: "{{ nexus_username }}"
+    password: "{{ nexus_password }}"
+    group_id: "{{ config_server_group_id }}"
+    artifact_id: "{{ config_server_artifact_id }}"
+    version: "{{ arkcase_config_server_version }}"
+    extension: jar
+    dest: "{{ root_folder }}/tmp/config-server"
+    keep_name: true
+  when: arkcase_retrieve_strategy == "maven"
 
 - name: download config server jar file (if using sftp)
   become: yes
@@ -156,7 +186,7 @@
     src: "{{ root_folder }}/tmp/config-server/config-server{{ arkcase_config_server_version_formatted }}.jar"
     dest: "{{ root_folder }}/app/config-server/config-server.jar"
   register: config_server_jar
-  when: arkcase_retrieve_strategy == "sftp"
+  when: arkcase_retrieve_strategy == "sftp" or arkcase_retrieve_strategy == "maven"
 
 - name: ensure config server jar is executable
   become: yes
@@ -175,6 +205,21 @@
   debug:
     msg: "{{ arkcase_extension_configuration_version_formatted }}"
 
+- name: download extension file (maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}/{{ arkcase_extension_artifact_id }}.{{ extension_artifact_repository_type }}/"
+    username: "{{ nexus_username }}"
+    password: "{{ nexus_password }}"
+    group_id: "{{ arkcase_extension_group_id }}"
+    artifact_id: "{{ arkcase_extension_artifact_id }}"
+    version: "{{ extension_version }}"
+    extension: jar
+    keep_name: true
+    dest: "{{ root_folder }}/install/arkcase"
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "maven" and arkcase_extension_install | bool
+
 - name: download extension (if configured)
   become: yes
   become_user: arkcase
@@ -183,7 +228,7 @@
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
     SSHPASS: "{{ sftp_extension_password }}"
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp" and arkcase_extension_install | bool
 
 - name: set extension config file name (extension id)
   set_fact:
@@ -195,9 +240,20 @@
     extension_config_file_name: "arkcase-config{{ arkcase_extension_configuration_version }}.zip"
   when: not arkcase_extension_id is defined
 
-- name: output the extension config file name
-  debug:
-    msg: "{{ extension_config_file_name }}"
+- name: download configuration extension file (maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}/{{ arkcase_extension_artifact_id }}.{{ extension_artifact_repository_type }}/"
+    username: "{{ nexus_username }}"
+    password: "{{ nexus_password }}"
+    group_id: "{{ configuration_extension_artifact_group_id }}"
+    artifact_id: "{{ configuration_extension_artifact_id }}"
+    version: "{{ configuration_extension_version }}"
+    extension: zip
+    dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
+    keep_name: true
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "maven" and arkcase_extension_install | bool
 
 - name: download extension configuration (if configured)
   become: yes
@@ -207,18 +263,31 @@
     chdir: "{{ root_folder }}/install/arkcase"
   environment:
     SSHPASS: "{{ sftp_extension_password }}"
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install|bool
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp" and arkcase_extension_install|bool
 
 - name: rename extension config zip to common file name
   become: yes
   become_user: arkcase
   command: mv {{ root_folder }}/install/arkcase/arkcase-config-{{ arkcase_extension_id }}{{ arkcase_extension_configuration_version_formatted }}.zip {{ root_folder }}/install/arkcase/arkcase-config.zip
-  when: arkcase_retrieve_strategy == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
-
+  when: ( extension_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp" and arkcase_extension_install | bool and not extension_config_file_name  == "arkcase-config.zip"
 
 - name: format config version
   set_fact:
     arkcase_configuration_version_formatted: "{{ '-' ~ arkcase_configuration_version if arkcase_configuration_version != '' else '' }}"
+
+- name: download configuration file (maven)
+  become: yes
+  become_user: arkcase
+  maven_artifact:
+    repository_url: "{{ repository_url }}/{{ arkcase_artifact_id }}.{{ arkcase_artifact_repository_type }}/"
+    username: "{{ nexus_username }}"
+    password: "{{ nexus_password }}"
+    group_id: "{{ configuration_artifact_group_id }}"
+    artifact_id: "{{ configuration_artifact_id }}"
+    version: "{{ arkcase_version }}"
+    extension: zip
+    dest: "{{ root_folder }}/install/arkcase/arkcase-config.zip"
+  when: arkcase_retrieve_strategy == "maven" and not arkcase_extension_install | bool
 
 - name: download configuration (if using sftp, and no extension is configured)
   become: yes
@@ -316,23 +385,23 @@
     - src: config-server.service
       dest: /etc/systemd/system/config-server.service
 
-- name: copy config-server configuration file before version 2021.04
+- name: copy config-server configuration file before version 2021.04 or after 2023.01
   become: yes
   become_user: arkcase
   template:
     src: config-server.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version != "" and arkcase_version is version('2021.04', '<')
+  when: arkcase_version != "" and ( arkcase_version is version('2021.04', '<') or arkcase_version is version('2023.01', '>=') )
 
-- name: copy config-server configuration file after version 2021.04
+- name: copy config-server configuration file after version 2021.04 and before 2023.01
   become: yes
   become_user: arkcase
   template:
     src: config-server-2021.04.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
+  when: arkcase_version == "" or ( arkcase_version is version('2021.04', '>=') and arkcase_version is version('2023.01', '<') )
 
 ##### Mule TLS fixes #####
 - name: ensure custom/WEB-INF/classes exists
@@ -382,6 +451,42 @@
     state: link
   when: db_engine == 'postgresql'
 
+- name: unarchive .yarnrc from the arkcase.war
+  become: yes
+  become_user: arkcase
+  shell: unzip -o arkcase{{ arkcase_version_formatted }}.war resources/.yarnrc
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  register: yarn_rc_unzip
+  failed_when: false
+
+- name: see if the arkcase.war had a .yarnrc 
+  become: yes
+  become_user: arkcase
+  stat: 
+    path: "{{ root_folder }}/install/arkcase/resources/.yarnrc"
+  register: yarn_rc_stat
+  when: yarn_rc_unzip is changed 
+
+- name: update .yarnrc 
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/install/arkcase/resources/.yarnrc"
+    regexp: "project.armedia.com/nexus"
+    replace: "nexus.armedia.com"
+  when: yarn_rc_stat.stat.exists 
+  register: yarn_rc_updated
+
+- name: update arkcase.war with updated .yarnrc
+  become: yes
+  become_user: arkcase
+  command: zip -r -m arkcase{{ arkcase_version_formatted}}.war resources
+  args:
+    chdir: "{{ root_folder }}/install/arkcase"
+  when: yarn_rc_stat.stat.exists and yarn_rc_updated is changed
+
 - name: unarchive ArkCase search service jar
   become: yes
   become_user: arkcase
@@ -423,7 +528,7 @@
     src: application.yaml
     dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
-  when: arkcase_version != "" and arkcase_version is version('2021.04', '<')
+  when: arkcase_version == "" or (arkcase_version is version('2021.04', '<') or arkcase_version is version('2023.01', '>='))
 
 - name: application.yaml file after version 2021.04
   become: yes
@@ -432,7 +537,7 @@
     src: application-2021.04.yaml
     dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
-  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
+  when: arkcase_version != "" and (arkcase_version is version('2021.04', '>=') and arkcase_version is version('2023.01', '<'))
 
 - name: run config-server with application.yaml file
   become: yes
@@ -939,7 +1044,7 @@
     backup: yes
     src: arkcase-commons-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-commons-server.yaml
-  when: arkcase_version == "" or arkcase_version is version('2021.04', '>=')
+  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
 
 - name: server-specific configuration for arkcase-portal-cognito.yaml for version 2021.04
   become: yes
@@ -948,7 +1053,7 @@
     backup: yes
     src: arkcase-portal-cognito-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-cognito-server.yaml
-  when: (arkcase_version == "" or arkcase_version is version('2021.04', '>=')) and oidc_portal_access_key is defined
+  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
 
 # the rolesToGroups format changed during the 3.3.3 release cycle, so we need
 # one format for pre-3.3.3 versions, and another format for 3.3.3+
@@ -1237,3 +1342,4 @@
     remote_src: yes
     src: "{{ root_folder }}/install/arkcase/pdftron_libraries.zip"
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries"
+    mode: 0755

@@ -60,6 +60,8 @@
       tags: [alfresco-change-password]
     - role: remove-solr
       tags: [remove-solr]
+    - role: upgrade-solr
+      tags: [upgrade-solr]
     - role: zookeeper
       when: zookeeper_version is defined
       tags: [core, zookeeper]

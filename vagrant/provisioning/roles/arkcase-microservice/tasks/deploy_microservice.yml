@@ -41,7 +41,7 @@
     chdir: "{{ root_folder }}/tmp/{{ microservice.name }}"
   environment:
     SSHPASS: "{{ sftp_arkcase_password }}"
-  when: arkcase_retrieve_strategy == "sftp"
+  when: ( microservice_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp"
 
 - name: "copy {{ microservice.name }} jar file to app folder"
   become: yes
@@ -51,7 +51,7 @@
     src: "{{ root_folder }}/tmp/{{ microservice.name }}/{{ microservice.name }}{{ microservice_version_formatted }}.jar"
     dest: "{{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar"
   register: arkcase_api_gateway_jar
-  when: arkcase_retrieve_strategy == "sftp"
+  when: ( microservice_retrieve_strategy | default(arkcase_retrieve_strategy) ) == "sftp"
 
 - name: "ensure {{ microservice.name }} jar is executable"
   become: yes
