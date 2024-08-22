@@ -11,26 +11,27 @@
   become_user: pentaho
   file:
     path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
+    mode: '755'
     state: directory  
 
-    #- name: download FOIA analytical reports repository
-    #become: yes
-    # become_user: pentaho
-    #command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ item }}
-    #args:
-    # chdir: "{{ root_folder }}/install/pentaho"
-    #environment:
-    # SSHPASS: "{{ sftp_arkcase_password }}"
-    #loop:
-    # - foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip
+- name: download FOIA analytical reports repository
+  become: yes
+  become_user: pentaho
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/{{ item }}
+  args:
+    chdir: "{{ root_folder }}/install/pentaho"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  loop:
+    - foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip
 
-    #- name: unzip repository
-    # become: yes
-    # become_user: pentaho
-    #unarchive:
-    #  remote_src: yes
-    # src: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip"
-    # dest: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
+- name: unzip repository
+  become: yes
+  become_user: pentaho
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
 
 - name: Mondrian schema fixes
   become: yes
@@ -193,12 +194,12 @@
   become_user: pentaho
   shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION_CONSULTATION.ktr
 
-  #- name: run the job to create and populate the mondrian cubes
-  # become: yes
-  #become_user: pentaho-pdi
-  #shell: 
-  #  cmd: OPT="-Dcom.redhat.fips=false" ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb
-  #  chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
+- name: run the job to create and populate the mondrian cubes
+  become: yes
+  become_user: pentaho-pdi
+  shell: 
+    cmd: OPT="-Dcom.redhat.fips=false" ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb
+    chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
 
 - name: set the cron environment so as to be able to run the job
   become: yes
