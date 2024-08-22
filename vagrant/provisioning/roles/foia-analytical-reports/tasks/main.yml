@@ -11,6 +11,7 @@
   become_user: pentaho
   file:
     path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
+    mode: '0755'
     state: directory  
 
 - name: download FOIA analytical reports repository
