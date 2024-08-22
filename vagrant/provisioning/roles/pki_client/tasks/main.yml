@@ -91,6 +91,7 @@
    - "{{ java_pem_store }}"
    - "{{ ssl_ca }}"
    - "{{ root_folder }}/common/rds-ca-2019-root.pem"
+   - "{{ root_folder }}/common/rds-ca-2121-rsa4096-root.pem"
 
 - name: ensure secure permissions on private keys
   become: yes

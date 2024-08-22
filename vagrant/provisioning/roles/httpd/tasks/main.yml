@@ -186,17 +186,20 @@
 
 - name: open firewall port
   become: yes
-  firewalld:
-    port: "{{ item }}"
-    permanent: yes
-    state: enabled
-    immediate: yes
+  command: firewall-cmd --add-port {{ item }} --permanent
   loop:
     - "443/tcp"
     - "8443/tcp"
   when: enable_firewall is undefined or enable_firewall
+  register: firewall_updated
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+
+- name: reload firewall
+  become: yes
+  command: firewall-cmd --reload
+  when: firewall_updated is changed
+
 
 
 
