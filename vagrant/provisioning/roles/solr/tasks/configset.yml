@@ -50,7 +50,7 @@
     src: schema.xml
     dest: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/"
     mode: 0644
-  when: "schema_xml.stat.exists == false or 'AFDP' not in schema_contents.stdout"
+  when: "schema_xml.stat.exists == false or 'AFDP' not in schema_contents.stdout and not (enable_solr_snippets | default(false))"
 
 - name: apply solr-snippet-enabled.xml if needed
   become: yes
@@ -59,7 +59,7 @@
     src: solr-snippet-enabled.xml
     dest: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
     mode: 0644
-  when: "enable_solr_snippets == true"
+  when: "enable_solr_snippets | default(false)"
     
 - name: Delete default managed-schema
   become: yes
