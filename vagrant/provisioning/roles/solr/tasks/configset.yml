@@ -51,6 +51,15 @@
     dest: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/"
     mode: 0644
   when: "schema_xml.stat.exists == false or 'AFDP' not in schema_contents.stdout"
+
+- name: apply solr-snippet-enabled.xml if needed
+  become: yes
+  become_user: solr
+  copy:
+    src: solr-snippet-enabled.xml
+    dest: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
+    mode: 0644
+  when: "enable_solr_snippets == true"
     
 - name: Delete default managed-schema
   become: yes
