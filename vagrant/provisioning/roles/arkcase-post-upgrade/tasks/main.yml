@@ -10,14 +10,19 @@
   set_fact:
     latest_config_backup_folder: "{{ found_folders.files | sort(attribute='mtime',reverse=true) | first }}"
   ignore_errors: true
-    
-- name: restore config files (2021.03 and bellow)
+   
+- name: check for old acmSequenceConfiguration.json
   become: yes
   become_user: arkcase
-  command: cp {{ latest_config_backup_folder.path }}/acm/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/{{ item }}
-  loop:
-    - "acmSequenceConfiguration.json"
-  when: latest_config_backup_folder is defined and arkcase_version != "" and arkcase_version is version('2021.04', '<')
+  stat:
+    path: "{{ latest_config_backup_folder.path }}/acm/acmSequenceConfiguration.json"
+  register: sequence_config_stat
+
+- name: restore sequence configuration
+  become: yes
+  become_user: arkcase
+  command: cp {{ latest_config_backup_folder.path }}/acm/acmSequenceConfiguration.json {{ root_folder }}/data/arkcase-home/.arkcase/acm/acmSequenceConfiguration.json
+  when: latest_config_backup_folder is defined and sequence_config_stat.stat.exists 
 
 - name: Restore runtime files from previous backup
   become: yes
@@ -32,7 +37,7 @@
   stat:
     path="{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
   register: template_file
-  when: arkcase_version != "" and arkcase_version is version('2021.04', '<') and latest_config_backup_folder is defined
+  when: latest_config_backup_folder is defined
 
 - name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version  (2021.03 and bellow)
   become: yes
@@ -45,7 +50,7 @@
     mode: '0666'
     backup: true
     remote_src: yes
-  when:  arkcase_version != "" and arkcase_version is version('2021.04', '<') and template_file.stat.exists
+  when: latest_config_backup_folder is defined template_file.stat.exists
 
 - name: match the file naming (2021.03 and bellow)
   become: yes
