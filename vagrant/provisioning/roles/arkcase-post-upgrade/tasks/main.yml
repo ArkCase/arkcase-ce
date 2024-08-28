@@ -17,6 +17,7 @@
   stat:
     path: "{{ latest_config_backup_folder.path }}/acm/acmSequenceConfiguration.json"
   register: sequence_config_stat
+  when: latest_config_backup_folder is defined
 
 - name: restore sequence configuration
   become: yes
@@ -31,7 +32,7 @@
   when: latest_config_backup_folder is defined
   ignore_errors: true
 
-- name: find "templates-configuration.json" file (2021.03 and bellow)
+- name: find "templates-configuration.json" file 
   become: yes
   become_user: arkcase
   stat:
@@ -39,7 +40,7 @@
   register: template_file
   when: latest_config_backup_folder is defined
 
-- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version  (2021.03 and bellow)
+- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version
   become: yes
   become_user: arkcase
   copy:
@@ -50,7 +51,7 @@
     mode: '0666'
     backup: true
     remote_src: yes
-  when: latest_config_backup_folder is defined template_file.stat.exists
+  when: latest_config_backup_folder is defined and template_file.stat.exists
 
 - name: match the file naming (2021.03 and bellow)
   become: yes
