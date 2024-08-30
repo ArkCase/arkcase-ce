@@ -24,7 +24,7 @@
       tags: [core, mariadb, marketplace]
       when: db_engine | default('mariadb') == 'mariadb'
     - role: mariadb-client
-      tags: [core, mariadb, marketplace]
+      tags: [core, mariadb, mariadb-client, marketplace]
       when: db_engine | default('mariadb') == 'mariadb'
     - role: postgresql
       tags: [core, postgresql, marketplace]
