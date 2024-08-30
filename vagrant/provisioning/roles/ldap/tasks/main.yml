@@ -1,50 +1,51 @@
-- name: python LDAP package (RHEL 8)
-  set_fact:
+- name: Python LDAP package (RHEL 8)
+  ansible.builtin.set_fact:
     pkg_python_ldap: python3-ldap
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
-- name: python LDAP package (CentOS 7)
-  set_fact:
+- name: Python LDAP package (CentOS 7)
+  ansible.builtin.set_fact:
     pkg_python_ldap: python-ldap
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: LDAP required packages
-  become: yes
-  yum:
+  become: true
+  ansible.builtin.yum:
     state: installed
-    name: 
+    name:
       - openldap-clients
       - "{{ pkg_python_ldap }}"
 
-- name: install cryptography
-  become: yes
-  pip:
+- name: Install cryptography
+  become: true
+  ansible.builtin.pip:
     executable: pip3
     name: cryptography
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: list certs in the key store
-  become: yes
-  command: keytool -v -list -keystore "{{ java_trust_store }}" -storepass "{{ java_trust_store_pass }}"
+- name: List certs in the key store
+  become: true
+  ansible.builtin.command: keytool -v -list -keystore "{{ java_trust_store }}" -storepass "{{ java_trust_store_pass }}"
   register: cert_list
   changed_when: false
 
-- name: import the ldap cert to the ArkCase trust store
-  become: yes
-  java_cert:
+- name: Import the ldap cert to the ArkCase trust store
+  become: true
+  community.general.java_cert:
     cert_alias: "arkcase_ldap_cert"
     cert_url: "{{ ldap_host }}"
-    cert_port: "{{ ldap_port|int }}"
+    cert_port: "{{ ldap_port | int }}"
     keystore_path: "{{ java_trust_store }}"
     keystore_pass: "{{ java_trust_store_pass }}"
     state: present
   when: "'arkcase_ldap_cert' not in cert_list.stdout"
 
-- name: add arkcase ancestors
-  ldap_entry:
+- name: Add arkcase ancestors
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
     dn: "{{ item }}"
@@ -57,10 +58,11 @@
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: add arkcase organizational units
-  ldap_entry:
+- name: Add arkcase organizational units
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
     dn: "{{ item }}"
@@ -75,10 +77,11 @@
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: add portal organizational units
-  ldap_entry:
+- name: Add portal organizational units
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
     dn: "{{ item }}"
@@ -94,10 +97,11 @@
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: add core portal organizational units
-  ldap_entry:
+- name: Add core portal organizational units
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
     dn: "{{ item }}"
@@ -111,13 +115,14 @@
     - "{{ ldap_core_portal_user_no_base }},{{ ldap_base }}"
   when: enable_microservices is defined and enable_microservices
 
-- name: add arkcase groups
-  ldap_entry:
+- name: Add arkcase groups
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
-    dn: "CN={{ item.name }},{{ldap_group_base}}"
+    dn: "CN={{ item.name }},{{ ldap_group_base }}"
     objectClass:
       - group
       - top
@@ -125,14 +130,15 @@
       description: "{{ item.description }}"
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
-  loop: "{{ ldap_groups|flatten }}"
+  loop: "{{ ldap_groups | flatten }}"
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: remove portal group from ArkCase OU if exists
-  ldap_entry:
+- name: Remove portal group from ArkCase OU if exists
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
     dn: "CN={{ item.name }},{{ ldap_group_no_base }},{{ ldap_base }}"
@@ -144,15 +150,16 @@
       description: "{{ item.description }}"
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
-  loop: "{{ ldap_portal_groups|flatten }}"
+  loop: "{{ ldap_portal_groups | flatten }}"
   when: foia_portal_context is defined
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: add portal groups
-  ldap_entry:
+- name: Add portal groups
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
     dn: "CN={{ item.name }},{{ ldap_portal_group_no_base }},{{ ldap_base }}"
@@ -163,15 +170,16 @@
       description: "{{ item.description }}"
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
-  loop: "{{ ldap_portal_groups|flatten }}"  
+  loop: "{{ ldap_portal_groups | flatten }}"
   when: foia_portal_context is defined
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
-- name: add Core portal groups
-  ldap_entry:
+- name: Add Core portal groups
+  become: true
+  community.general.ldap_entry:
     server_uri: "{{ ldap_url }}"
-    validate_certs: no
+    validate_certs: false
     bind_dn: "{{ ldap_bind_user }}"
     bind_pw: "{{ ldap_bind_password }}"
     dn: "CN={{ item.name }},{{ ldap_core_portal_group_no_base }},{{ ldap_base }}"
@@ -182,19 +190,19 @@
       description: "{{ item.description }}"
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
-  loop: "{{ ldap_core_portal_groups|flatten }}"
+  loop: "{{ ldap_core_portal_groups | flatten }}"
   when: enable_microservices is defined and enable_microservices
 
-- name: add users
-  include_tasks: add-user.yml
-  loop: "{{ ldap_users }}"    
+- name: Add users
+  become: true
+  ansible.builtin.include_tasks: add-user.yml
+  loop: "{{ ldap_users }}"
   loop_control:
     loop_var: u
   vars:
     ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Make sure Samba passwords never expire
-  become: yes
-  command: '{{ root_folder }}/app/samba/bin/samba-tool domain passwordsettings set --max-pwd-age=0'
+  become: true
+  ansible.builtin.command: '{{ root_folder }}/app/samba/bin/samba-tool domain passwordsettings set --max-pwd-age=0'
   when: ldap_type == "samba"
-
