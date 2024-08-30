@@ -194,7 +194,6 @@
   when: enable_microservices is defined and enable_microservices
 
 - name: Add users
-  become: true
   ansible.builtin.include_tasks: add-user.yml
   loop: "{{ ldap_users }}"
   loop_control:
