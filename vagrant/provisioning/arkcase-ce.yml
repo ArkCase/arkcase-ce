@@ -78,3 +78,5 @@
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
       tags: [core]
+    - role: upgrade-log4j
+      tags: [upgrade-log4j]
