@@ -167,32 +167,32 @@
     job: 'find {{ root_folder }}/data/arkcase-home/fileserver -mtime +6 -type f -exec rm {} \;'
     state: present
 
-- name: Get the RDS common certifcate
+- name: Copy the RDS common certifcate
   become: true
-  ansible.builtin.uri:
-    creates: "{{ root_folder }}/common/rds-ca-2019-root.pem"
-    dest: "{{ root_folder }}/common/rds-ca-2019-root.pem"
-    url: https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+  ansible.builtin.copy:
+    src: rds-ca-2121-rsa4096-root.pem
+    dest: "{{ root_folder }}/common/rds-ca-2121-rsa4096-root.pem"
 
 - name: Get a secure Log4J version
   become: yes
   uri:
-    url: https://archive.apache.org/dist/logging/log4j/{{ log4j_version | default("2.19.0") }}/apache-log4j-{{ log4j_version | default("2.19.0") }}-bin.tar.gz
-    dest: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.tar.gz"
-    creates: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.tar.gz"
+    url: https://archive.apache.org/dist/logging/log4j/{{ log4j_version | default("2.19.0") }}/apache-log4j-{{ log4j_version | default("2.19.0") }}-bin.zip
+    dest: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.zip"
+    creates: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.zip"
 
+# NOTE: newer versions of Log4J seem to ship only zip archives, no longer tar.gz
 - name: unarchive Log4J jar files
   become: yes
   unarchive:
-    src: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.tar.gz"
+    src: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.zip"
     remote_src: yes
     dest: "{{ root_folder }}/common"
     extra_opts:
-      - --strip-components=1
+      - -j
     include:
-      - apache-log4j-2.19.0-bin/log4j-api-{{ log4j_version | default('2.19.0') }}.jar
-      - apache-log4j-2.19.0-bin/log4j-core-{{ log4j_version | default('2.19.0') }}.jar
-      - apache-log4j-2.19.0-bin/log4j-1.2-api-{{ log4j_version | default('2.19.0') }}.jar
+      - log4j-api-{{ log4j_version | default('2.19.0') }}.jar
+      - log4j-core-{{ log4j_version | default('2.19.0') }}.jar
+      - log4j-1.2-api-{{ log4j_version | default('2.19.0') }}.jar
     creates: "{{ root_folder }}/common/log4j-api-{{ log4j_version | default('2.19.0') }}.jar"
    
 - name: fapolicy settings for common, if fapolicyd is installed
