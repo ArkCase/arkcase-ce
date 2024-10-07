@@ -1,4 +1,5 @@
 - name: add {{ u.user_id }} user
+  become: true
   ldap_entry:
     server_uri: "{{ ldap_url }}"
     validate_certs: no
