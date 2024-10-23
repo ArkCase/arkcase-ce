@@ -96,13 +96,9 @@
 
 - name: Allow SELinux write access on the haproxy log directory
   become: true
-  community.general.sefcontext:
-    target: '{{ root_folder }}/log/haproxy'
-    setype: haproxy_var_log_t
-    state: present
+  ansible.builtin.command: semanage fcontext -a -t haproxy_var_log_t '{{ root_folder }}/log/haproxy'
   register: allow_haproxy_logging
   vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Apply new SELinux file context to filesystem
   become: true
@@ -209,10 +205,7 @@
         acl acl_pentaho path_beg /pentaho
         acl acl_arkcase path_beg /arkcase
         acl acl_config path_beg /config
-        acl acl_assets path_beg /assets 
-        acl acl_sse path_beg /api/sse
-        acl acl_minio path_beg /api/minio
-        acl acl_oidc path_beg /api/oidc
+        {{ 'acl acl_assets path_beg /assets' if (deploy_arkcase_portal | default(false)) else '' }}
         acl acl_api_gateway path_beg /api
         acl acl_root path -i /
 
@@ -229,7 +222,7 @@
         use_backend be_solr if acl_solr
         use_backend be_pentaho if acl_pentaho
         use_backend be_arkcase if acl_arkcase
-        use_backend be_assets if acl_assets
+        {{ 'use_backend be_assets if acl_assets' if (deploy_arkcase_portal | default(false)) else '' }}
         use_backend be_config if acl_config
 
       #backend servers
