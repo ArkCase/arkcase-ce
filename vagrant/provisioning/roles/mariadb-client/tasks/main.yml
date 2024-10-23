@@ -2,14 +2,14 @@
   become: yes
   copy:
     dest: /etc/yum.repos.d/mariadb.repo
-    force: no
+    force: yes
     content: |
       # MariaDB 10.4 RedHatEnterpriseLinux repository list - created 2023-03-01 19:04 UTC
       # https://mariadb.org/download/
       [mariadb]
       name = MariaDB
       # rpm.mariadb.org is a dynamic mirror if your preferred mirror goes offline. See https://mariadb.org/mirrorbits/ for details.
-      baseurl = https://rpm.mariadb.org/10.4/rhel/$releasever/$basearch
+      baseurl = https://rpm.mariadb.org/10.6/rhel/$releasever/$basearch
       #baseurl = https://mirror.rackspace.com/mariadb/yum/10.4/rhel/$releasever/$basearch
       module_hotfixes = 1
       # gpgkey = https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
@@ -21,29 +21,15 @@
   become: yes
   copy:
     dest: /etc/yum.repos.d/mariadb.repo
-    force: no
+    force: yes 
     content: |
       [mariadb]
       name = MariaDB
-      baseurl = https://rpm.mariadb.org/10.4/rhel/$releasever/$basearch
+      baseurl = https://rpm.mariadb.org/10.6/rhel/$releasever/$basearch
+      module_hotfixes = 1
       gpgkey= https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
-
-- name: MySQL python package name (CentOS 7)
-  set_fact:
-    pkg_mysql_python: MySQL-python
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
-
-- name: MySQL python package name (RHEL 8)
-  set_fact:
-    pkg_mysql_python: python3-mysql
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
-
-- name: MySQL python package name (RHEL 8.8)
-  set_fact:
-    pkg_mysql_python: python3-PyMySQL
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
 
 - name: install MariaDB packages (CentOS 7)
   become: yes
@@ -67,13 +53,25 @@
   register: mariadb_install
   when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
-- name: install MariaDB python library
+- name: install MariaDB packages (Rocky 8)
   become: yes
   yum:
     state: installed
-    disable_gpg_check: yes
+    enablerepo: mariadb
+    disablerepo: AppStream
     name:
-      - "{{ pkg_mysql_python }}"
+      - MariaDB-client
+  register: mariadb_install
+  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+
+- name: Install MariaDB python library
+  become: true
+  ansible.builtin.pip:
+    executable: "{{ pip_executable }}"
+    name: "PyMySQL"
+    extra_args: --upgrade
+  vars:
+    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python3') }}"
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
