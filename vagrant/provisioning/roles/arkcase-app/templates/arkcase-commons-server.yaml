@@ -36,3 +36,16 @@ recaptcha:
   configuration:
     secretKey: {{ secretKeyid_recaptcha | default('') }}
     verifyUrl: "https://www.google.com/recaptcha/api/siteverify"
+
+sitemapGenerator:
+  enabled: {{ enableSitemapGenerator | default(false) }}
+  #  Sets the JAXB output to be 'prettified', for ease. This will make the files larger.
+  formattedOutput: {{ formattedSitemapOutput | default(false) }}
+  # Whether the Filing/Docket Sitemaps should be gzipped after creation.
+  compressSiteMaps: {{ compressSiteMaps | default(true) }}
+  s3:
+    url: "{{ sitemap_s3_url }}"
+    region: "{{ sitemap_s3_region | default("us-east-1") }}"
+    accessKey: "{{ sitemap_s3_access_key | default("minioadmin") }}"
+    secretKey: "{{ sitemap_s3_secret_key | default("minioadmin") }}"
+    bucketName: "{{ sitemap_s3_bucket_name | default("sitemaps") }}"
