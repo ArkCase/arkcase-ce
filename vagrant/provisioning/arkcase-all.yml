@@ -81,6 +81,7 @@
       tags: [core, pentaho, pentaho-configuration, marketplace]
     - role: snowbound
       tags: [core, snowbound, marketplace]
+      when: (ecm_viewer | default('snowbound')) == 'snowbound'
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app, marketplace]
     - role: confluent-platform-install

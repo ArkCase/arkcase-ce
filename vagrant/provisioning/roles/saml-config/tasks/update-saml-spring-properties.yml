@@ -11,6 +11,8 @@
       replace: 'arkcase/acm/private/arkcase.ks'
     - regexp: 'type="java.lang.String" value="password"'
       replace: 'type="java.lang.String" value="{{ java_key_store_pass }}"'
+    - regexp: 'type="java.lang.String" value="AcMd3v\$"'
+      replace: 'type="java.lang.String" value="{{ java_key_store_pass }}"'
     - regexp: 'key="armedia" value="AcMd3v\$"'
       replace: key="{{ private_key_alias | default('arkcase_server') }}" value="{{ java_key_store_pass }}"
     - regexp: 'type="java.lang.String" value="armedia"'
