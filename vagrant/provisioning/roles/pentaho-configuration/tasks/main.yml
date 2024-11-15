@@ -166,11 +166,28 @@
     regexp: '\$\{catalina\.base\}\/logs'
     replace: "{{ root_folder }}/log/pentaho"
 
+- name: check for log4j2.xml
+  become: yes
+  become_user: pentaho
+  stat:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/classes/log4j.xml"
+  register: log4j_xml
+
+- name: set log4j.xml filename (log4j)
+  set_fact:
+    log4j2_name: "log4j.xml"
+  when: log4j_xml.stat.exists
+
+- name: set log4j.xml filename (log4j2)
+  set_fact:
+    log4j2_name: "log4j2.xml"
+  when: not log4j_xml.stat.exists
+
 - name: configure Pentaho log file locations
   become: yes
   become_user: pentaho
   replace:
-    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/classes/log4j.xml"
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/classes/{{ log4j2_name }}"
     backup: yes
     regexp: '\.\.\/logs\/'
     replace: "{{ root_folder }}/log/pentaho/"
@@ -232,7 +249,19 @@
         <res-auth>Container</res-auth>
       </resource-ref>
 
-- name: preauthentication setup
+- name: set preauth facts - Pentaho 8
+  set_fact:
+    preauth_jar_file: "v4-1.1.1"
+    spring_security_version: "4.2"
+  when: pentaho_major_version is version('9', '<')
+
+- name: set preauth facts - Pentaho 9
+  set_fact:
+    preauth_jar_file: "v5-1.4.0"
+    spring_security_version: "5.4"
+  when: pentaho_major_version is version('10', '<')
+
+- name: preauthentication setup - jar
   become: yes
   become_user: pentaho
   copy:
@@ -240,8 +269,18 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   loop:
-    - src: "arkcase-preauth-springsec-v4-1.1.1-bundled.jar"
+    - src: "arkcase-preauth-springsec-{{ preauth_jar_file }}-bundled.jar"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/tomcat/webapps/pentaho/WEB-INF/lib/"
+
+- name: preauthentication setup - config files
+  become: yes
+  become_user: pentaho
+  template:
+    backup: yes
+    force: yes
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
     - src: "applicationContext-spring-security.xml"
       dest: "{{ root_folder }}/app/pentaho/pentaho-server/pentaho-solutions/system/"
     - src: "arkcase-preauth.xml"

@@ -40,7 +40,7 @@
         - name: Tomcat
           dest: "{{ root_folder }}/common/apache-tomcat-{{ tomcat_version }}.tar.gz"
           owner: root
-          url: https://archive.apache.org/dist/tomcat/tomcat-{{ tomcat_major_version }}/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz
+          url: https://archive.apache.org/dist/tomcat/tomcat-{{ tomcat_version[0] }}/v{{ tomcat_version }}/bin/apache-tomcat-{{ tomcat_version }}.tar.gz
     - name: unarchive {{ tc.service }} Tomcat
       become: yes
       become_user: "{{ tc.user }}"
@@ -250,8 +250,11 @@
             address="0.0.0.0"
             maxHttpHeaderSize="32768"
             connectionTimeout="40000"
-            useBodyEncodingForURI="true">
-            protocol="org.apache.coyote.http11.Http11AprProtocol">
+            useBodyEncodingForURI="true"
+            protocol="org.apache.coyote.http11.Http11AprProtocol"
+            {{ ('proxyName="' + external_host + '"') if (tc.enable_proxy | default(false)) else '' }}
+            {{ ('proxyPort=443') if (tc.enable_proxy | default(false)) else '' }}
+            >
             <UpgradeProtocol className="org.apache.coyote.http2.Http2Protocol" />
             <SSLHostConfig 
               honorCipherOrder="true"

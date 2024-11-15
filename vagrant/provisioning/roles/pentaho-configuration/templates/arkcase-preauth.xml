@@ -7,11 +7,11 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:beans="http://www.springframework.org/schema/beans"
     xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
-                        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-4.2.xsd"
+                        http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-{{ spring_security_version }}.xsd"
                         default-lazy-init="true">
 
     <!-- Remember to set the right version (V2 or V3) in the classname -->
-    <beans:bean id="arkcasePreAuthFilter" class="com.armedia.arkcase.preauth.spring.ArkCasePreAuthenticatedProcessingFilterV4">
+    <beans:bean id="arkcasePreAuthFilter" class="com.armedia.arkcase.preauth.spring.ArkCasePreAuthenticatedProcessingFilterV{{ spring_security_version[0] }}">
         <!-- The name of the header to read the username from -->
         <beans:property name="principalRequestHeader" value="X-ARKCASE-EXTERNAL-USER" />
 
