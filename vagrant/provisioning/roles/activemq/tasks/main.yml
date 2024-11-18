@@ -176,7 +176,7 @@
     - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 5 }}.*"
       line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 6 }}=-Djava.compiler=NONE"
     - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 6 }}.*"
-      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 7 }}=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 7 }}=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5006"
   when: activemq_unarchived is changed
 
 - name: jdbc support and dead letter queue policy
