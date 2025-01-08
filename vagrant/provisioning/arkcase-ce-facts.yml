@@ -527,6 +527,11 @@ oidc_portal_jwk_set_uri: ""
 oidc_portal_token_uri: ""
 oidc_portal_user_info_url: ""
 
+dynamodb_region: ""
+dynamodb_access_key: ""
+dynamodb_secret_key: ""
+dynamodb_table_name: ""
+
 # OIDC authentication properties when using Core ArkCase OIDC implementation
 #oidc_registrationId: ""
 #oidc_clientId: ""
