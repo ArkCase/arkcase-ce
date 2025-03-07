@@ -196,21 +196,12 @@
   become_user: pentaho
   ansible.builtin.shell: sed -i 's~<nullif>arkcase-admin@arkcase.org</nullif>~<nullif>{{ arkcase_admin_user }}@{{ ldap_user_domain }}</nullif>~g' {{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/stages/STG_FOIA_ORGANIZATION_CONSULTATION.ktr
 
-<<<<<<< HEAD
-  #- name: run the job to create and populate the mondrian cubes
-  # become: yes
-  #become_user: pentaho-pdi
-  #shell: 
-  #  cmd: OPT="-Dcom.redhat.fips=false" ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb
-  #  chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
-=======
 - name: Run the job to create and populate the mondrian cubes
-  become: true
+  become: yes
   become_user: pentaho-pdi
-  ansible.builtin.command:
-    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb
+  ansible.builtin.shell: 
+    cmd: OPT="-Dcom.redhat.fips=false" ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb
     chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
->>>>>>> d6de0d67e8f6fa6a73905d785678fea79749e775
 
 - name: Set the cron environment so as to be able to run the job
   become: true
@@ -286,11 +277,6 @@
 # Deploy the reports
 #########################################################
 
-<<<<<<< HEAD
-- name: import reports from the zip file archive
-  shell: "OPT=-Dcom.redhat.fips=false {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
-
-=======
 - name: Import reports from the zip file archive
-  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
->>>>>>> d6de0d67e8f6fa6a73905d785678fea79749e775
+  ansible.builtin.shell: "OPT=-Dcom.redhat.fips=false {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
+
