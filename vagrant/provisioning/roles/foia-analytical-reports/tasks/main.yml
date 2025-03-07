@@ -277,6 +277,6 @@
 # Deploy the reports
 #########################################################
 
-- name: Import reports from the zip file archive
+- name: import reports from the zip file archive
   ansible.builtin.shell: "OPT=-Dcom.redhat.fips=false {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
 
