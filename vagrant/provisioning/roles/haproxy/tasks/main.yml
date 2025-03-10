@@ -403,7 +403,7 @@
         http-response add-header X-sitemap %s
         mode http
         option tcp-check
-        server prc-sitemap0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        server prc-sitemap0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/,/sitemap/)]
   when: enable_sitemap_config | default(false)
 
