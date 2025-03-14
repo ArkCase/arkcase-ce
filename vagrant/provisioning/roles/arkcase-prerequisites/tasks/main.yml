@@ -146,7 +146,7 @@
           shutdown_port: 4005
           jmx_remote_port: 40506
           jmx_rmi_port: 40507
-          http_port: 8080
+          http_port: "{{ arkcase_http_port | default(8080) }}"
           redirect_port: 4443
           ajp_port: 4009
           catalina_out: "{{ root_folder }}/log/arkcase/catalina.out"
