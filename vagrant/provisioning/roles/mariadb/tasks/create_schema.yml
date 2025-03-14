@@ -1,11 +1,6 @@
 - name: Install MariaDB python library
   become: true
-  ansible.builtin.pip:
-    executable: "{{ pip_executable }}"
-    name: "PyMySQL"
-    extra_args: --upgrade
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python3') }}"
+  command: pip{{ python_version }} install PyMySQL --upgrade
 
 - name: create {{ item }} MariaDB database when the database is running locally
   block:
