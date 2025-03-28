@@ -184,3 +184,5 @@
       tags: [foia-dev-reports, arkcase-developer]
     - role: arkcase-developer
       tags: [arkcase-developer]
+    - role: license-manager
+      tags: [license-manager]
