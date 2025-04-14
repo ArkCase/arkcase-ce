@@ -1,0 +1,10 @@
+- name: copy log4j-update.sh for log4j remediation
+  become: yes
+  template:
+    src: log4j-update.sh
+    dest: /root
+    mode: "+x"
+
+- name: Run the script and create log4j log file with the output
+  become: yes
+  script: /root/log4j-update.sh > /root/log4j_update_output
