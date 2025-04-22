@@ -131,6 +131,9 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
     <field name="last_modified" type="date" indexed="true" stored="true"/>
     <field name="links" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="content" type="text_general" indexed="true" stored="true" multiValued="true"/>
+
+    <field name="content_sentence" type="sentence_tokenizer" indexed="true" stored="true" multiValued="true"/>
+
     <field name="catch_all" type="text_no_html_tags_parseable" indexed="true" stored="false" multiValued="true"/>
     <field name="name" type="text_general" indexed="true" stored="true" multiValued="false"/> 
 
@@ -219,7 +222,7 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
 
     <copyField source="sourceFieldName" dest="destinationFieldName"/>
     -->
-    <!--ACM copy fileds -->
+    <!--ACM copy fields -->
     <copyField source="*_s" dest="catch_all"/>
     <copyField source="*_ss" dest="catch_all"/>
     <copyField source="*_i" dest="catch_all"/>
@@ -238,6 +241,9 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
 
     <!--End of ACM copy Fields-->
 
+    <!--  Special Content Parsing Copy Fields  -->
+    <copyField source="content" dest="content_sentence"/>
+    <!--  END Special Content Parsing Copy Fields  -->
 
     <!-- field type definitions. The "name" attribute is
                 just a label to be used by field definitions.  The "class"
@@ -801,6 +807,16 @@ http://lucene.apache.org/solr/guide/documents-fields-and-schema-design.html
         </analyzer>
     </fieldType>
 
+    <fieldType name="sentence_tokenizer" class="solr.TextField" multiValued="true">
+        <analyzer type="index">
+            <tokenizer class="solr.PatternTokenizerFactory" pattern="([.!?])"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+        <analyzer type="query">
+            <tokenizer class="solr.PatternTokenizerFactory" pattern="([.!?])"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+    </fieldType>
     <!-- end of ACM field types -->
 
 
