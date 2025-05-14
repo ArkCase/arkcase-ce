@@ -49,8 +49,8 @@
   ansible.builtin.yum:
     state: installed
     name:
-      - java-11-openjdk
-      - java-11-openjdk-devel
+      - java-11-amazon-corretto
+      - java-11-amazon-corretto-devel
       - java-1.8.0-openjdk
       - java-1.8.0-openjdk-devel
       - "{{ pkg_policycoreutils }}"
@@ -172,13 +172,13 @@
       block:
         - name: Add JDK 11 certs to Java trust store
           become: true
-          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
         - name: Add JDK 8 certs to Java trust store
           become: true
           ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
         - name: Add Arkcase server certs to Java 11 trust store
           become: true
-          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -deststorepass changeit -noprompt
+          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts -deststorepass changeit -noprompt
         - name: Add Arkcase server certs to Java 8 trust store
           become: true
           ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -deststorepass changeit -noprompt

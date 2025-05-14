@@ -26,8 +26,8 @@
     state: installed
     name:
       - python3-pip
-      - java-11-openjdk
-      - java-11-openjdk-devel
+      - java-11-amazon-corretto
+      - java-11-amazon-corretto-devel
 
 - name: install Python crypto library
   become: yes
@@ -87,7 +87,7 @@
               path: "{{ ssl_ca }}"
         - name: add JDK certs to Java trust store
           become: yes
-          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+          command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
       when: "arkcase_ks_stat.stat.exists == False"
 
 # zookeeper requires p12 file extension to tell what kind of keystore and trust store it is

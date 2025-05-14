@@ -98,7 +98,7 @@
     - regexp: '^#SOLR_PORT=8983$'
       replace: 'SOLR_PORT=8984'
     - regexp: '^#SOLR_JAVA_HOME=""$'
-      replace: 'SOLR_JAVA_HOME=/usr/lib/jvm/java-11-openjdk'
+      replace: 'SOLR_JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto'
     - regexp: '^#SOLR_HOST="192.168.1.1"'
       replace: 'SOLR_HOST="{{ internal_host }}"'
 
