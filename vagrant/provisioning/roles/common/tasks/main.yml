@@ -49,8 +49,8 @@
   ansible.builtin.yum:
     state: installed
     name:
-      - java-11-openjdk
-      - java-11-openjdk-devel
+#      - java-11-openjdk
+#      - java-11-openjdk-devel
       - java-1.8.0-openjdk
       - java-1.8.0-openjdk-devel
       - "{{ pkg_policycoreutils }}"
@@ -67,6 +67,46 @@
       - python3-pip
       - "{{ pkg_python_setuptools }}"
       - "{{ pkg_python_cryptography }}"
+
+- name: Download Amazon Corretto 11 JDK
+  become: true
+  get_url:
+    url: https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.tar.gz
+    dest: /tmp/corretto-11.tar.gz
+
+- name: Extract Corretto JDK
+  become: true
+  unarchive:
+    src: /tmp/corretto-11.tar.gz
+    dest: /usr/lib/jvm
+    remote_src: yes
+
+- name: Set environment variables
+  become: true
+  copy:
+    dest: /etc/profile.d/corretto11.sh
+    content: |
+      export JAVA_HOME=/usr/lib/jvm/$(ls /usr/lib/jvm/)
+      export PATH=$JAVA_HOME/bin:$PATH
+  mode: '0755'
+
+- name: Apply environment variables
+  become: true
+  shell: source /etc/profile.d/corretto11.sh
+  ignore_errors: true
+
+- name: Install development tools
+  become: true
+  dnf:
+    name: "@Development Tools"
+    state: present
+
+- name: See if the Java truststore exists
+  become: true
+  ansible.builtin.stat:
+    path: "{{ java_trust_store }}"
+  register: arkcase_ts_stat
+  changed_when: false
 
 - name: Update pip
   become: true
@@ -172,13 +212,13 @@
       block:
         - name: Add JDK 11 certs to Java trust store
           become: true
-          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
         - name: Add JDK 8 certs to Java trust store
           become: true
           ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
         - name: Add Arkcase server certs to Java 11 trust store
           become: true
-          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-11-openjdk/lib/security/cacerts -deststorepass changeit -noprompt
+          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64/lib/security/cacerts -deststorepass changeit -noprompt
         - name: Add Arkcase server certs to Java 8 trust store
           become: true
           ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -deststorepass changeit -noprompt
