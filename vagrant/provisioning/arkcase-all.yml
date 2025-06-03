@@ -184,3 +184,6 @@
       tags: [foia-dev-reports, arkcase-developer]
     - role: arkcase-developer
       tags: [arkcase-developer]
+    - role: java-corretto-11
+      tags: [java-corretto]
+

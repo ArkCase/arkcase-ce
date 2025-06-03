@@ -81,26 +81,6 @@
     dest: /usr/lib/jvm
     remote_src: yes
 
-- name: Set environment variables
-  become: true
-  copy:
-    dest: /etc/profile.d/corretto11.sh
-    content: |
-      export JAVA_HOME=/usr/lib/jvm/$(ls /usr/lib/jvm/)
-      export PATH=$JAVA_HOME/bin:$PATH
-  mode: '0755'
-
-- name: Apply environment variables
-  become: true
-  shell: source /etc/profile.d/corretto11.sh
-  ignore_errors: true
-
-- name: Install development tools
-  become: true
-  dnf:
-    name: "@Development Tools"
-    state: present
-
 - name: See if the Java truststore exists
   become: true
   ansible.builtin.stat:
