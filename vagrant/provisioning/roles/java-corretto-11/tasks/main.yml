@@ -71,7 +71,6 @@
 
 - name: Update JAVA_HOME in config-server.service
   become: yes
-  become_user: arkcase
   ansible.builtin.replace:
     path: /etc/systemd/system/config-server.service
     regexp: '^Environment=JAVA_HOME=.*$'
@@ -79,7 +78,6 @@
 
 - name: Update JAVA_HOME in activemq.service
   become: yes
-  become_user: activemq
   ansible.builtin.replace:
     path: /etc/systemd/system/activemq.service
     regexp: '^Environment=JAVA_HOME=.*$'
