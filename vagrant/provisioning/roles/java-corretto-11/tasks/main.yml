@@ -70,26 +70,33 @@
   register: tomcat_unarchived
 
 - name: Update JAVA_HOME in config-server.service
+  become: yes
+  become_user: arkcase
   ansible.builtin.replace:
     path: /etc/systemd/system/config-server.service
     regexp: '^Environment=JAVA_HOME=.*$'
     replace: 'Environment=JAVA_HOME=/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64'
 
 - name: Update JAVA_HOME in activemq.service
+  become: yes
+  become_user: activemq
   ansible.builtin.replace:
     path: /etc/systemd/system/activemq.service
     regexp: '^Environment=JAVA_HOME=.*$'
     replace: 'Environment=JAVA_HOME=/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64'
 
 - name: Reload systemd daemon
+  become: yes
   ansible.builtin.command: systemctl daemon-reexec
 
 - name: Restart config-server
+  become: yes
   ansible.builtin.service:
     name: config-server
     state: restarted
 
 - name: Restart activemq
+  become: yes
   ansible.builtin.service:
     name: activemq
     state: restarted
