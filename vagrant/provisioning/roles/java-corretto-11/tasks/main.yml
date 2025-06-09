@@ -110,6 +110,7 @@
     state: restarted
 
 - name: Remove Java 11 OpenJDK RPM packages
+  become: yes
   package:
     name:
       - java-11-openjdk
@@ -118,6 +119,7 @@
     state: absent
 
 - name: Remove residual Java 11 directories
+  become: yes
   file:
     path: "{{ item }}"
     state: absent
