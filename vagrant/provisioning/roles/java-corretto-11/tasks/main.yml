@@ -4,6 +4,13 @@
     url: https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.tar.gz
     dest: /tmp/corretto-11.tar.gz
 
+- name: Update Corretto repo baseurl
+  become: yes
+  replace:
+    path: /etc/yum.repos.d/corretto.repo
+    regexp: '^baseurl=.*'
+    replace: 'baseurl=https://yum.corretto.aws/x86_64'
+
 - name: Extract Corretto JDK
   become: yes
   unarchive:
@@ -98,3 +105,21 @@
   ansible.builtin.service:
     name: activemq
     state: restarted
+
+- name: Remove Java 11 OpenJDK RPM packages
+  become: yes
+  package:
+    name:
+      - java-11-openjdk
+      - java-11-openjdk-devel
+      - java-11-openjdk-headless
+    state: absent
+
+- name: Remove residual Java 11 directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/java/java-11-openjdk
+    - /usr/share/doc/java-11-openjdk-11.0.24.0.8-3.el8.x86_64
