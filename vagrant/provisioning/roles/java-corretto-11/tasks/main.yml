@@ -8,7 +8,7 @@
   become: yes
   replace:
     path: /etc/yum.repos.d/corretto.repo
-    regexp: '^baseurl=https://rpm\.corretto\.aws/x86_64'
+    regexp: '^baseurl=.*'
     replace: 'baseurl=https://yum.corretto.aws/x86_64'
 
 - name: Extract Corretto JDK
