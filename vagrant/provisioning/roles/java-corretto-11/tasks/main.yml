@@ -4,6 +4,16 @@
     url: https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.tar.gz
     dest: /tmp/corretto-11.tar.gz
 
+- name: Disable corretto repo by setting enabled=0
+  become: yes
+  ansible.builtin.ini_file:
+    path: /etc/yum.repos.d/corretto.repo
+    section: 'corretto'
+    option: 'enabled'
+    value: '0'
+    state: present
+    backup: yes
+
 - name: Extract Corretto JDK
   become: yes
   unarchive:
@@ -98,3 +108,19 @@
   ansible.builtin.service:
     name: activemq
     state: restarted
+
+- name: Remove Java 11 OpenJDK RPM packages
+  package:
+    name:
+      - java-11-openjdk
+      - java-11-openjdk-devel
+      - java-11-openjdk-headless
+    state: absent
+
+- name: Remove residual Java 11 directories
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/java/java-11-openjdk
+    - /usr/share/doc/java-11-openjdk-11.0.24.0.8-3.el8.x86_64
