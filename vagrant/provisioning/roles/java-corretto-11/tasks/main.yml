@@ -4,13 +4,19 @@
     url: https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.tar.gz
     dest: /tmp/corretto-11.tar.gz
 
+- name: Check if Corretto repo file exists
+  stat:
+    path: /etc/yum.repos.d/corretto.repo
+  register: corretto_repo_file
+  
 - name: Update Corretto repo baseurl
   become: yes
   replace:
     path: /etc/yum.repos.d/corretto.repo
     regexp: '^baseurl=.*'
     replace: 'baseurl=https://yum.corretto.aws/x86_64'
-
+  when: corretto_repo_file.stat.exists
+  
 - name: Extract Corretto JDK
   become: yes
   unarchive:
