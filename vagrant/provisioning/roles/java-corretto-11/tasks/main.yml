@@ -1,3 +1,9 @@
+- name: Import Amazon Corretto GPG key
+  become: yes
+  ansible.builtin.rpm_key:
+    key: https://yum.corretto.aws/corretto.key
+    state: present
+
 - name: Install Amazon Corretto 11 from RPM URL
   become: yes
   ansible.builtin.yum:
