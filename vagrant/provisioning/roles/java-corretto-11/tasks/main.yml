@@ -42,6 +42,11 @@
 
 #Arkcase
 
+- name: set Java 8 as Java Home (versions below 2023.02)
+  set_fact:
+    java_home_version: "/usr/lib/jvm/java-1.8.0-openjdk"
+  when: arkcase_version != "" and arkcase_version is version('2023.02', '<')
+
 - name: set Java 11 as Java Home (versions equal and above 2023.02)
   set_fact:
     java_home_version: "/usr/lib/jvm/java-11-amazon-corretto"
