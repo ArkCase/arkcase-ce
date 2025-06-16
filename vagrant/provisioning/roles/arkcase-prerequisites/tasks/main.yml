@@ -5,7 +5,7 @@
 
 - name: set Java 11 as Java Home (versions equal and above 2023.02)
   set_fact:
-    java_home_version: "/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64"
+    java_home_version: "/usr/lib/jvm/java-11-amazon-corretto"
   when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 
 - name: Ensure group arkcase exists

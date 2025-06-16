@@ -7,7 +7,7 @@ ExecStart={{ root_folder }}/app/config-server/config-server.jar
 SuccessExitStatus=143
 Environment=LOGGING_FILE_NAME={{ root_folder }}/log/config-server/acmConfigServer.log
 Environment=_JAVA_OPTIONS=-Djava.io.tmpdir={{ root_folder }}/data/config-server/tmp
-Environment=JAVA_HOME={{ java_home_version | default('/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64') }}
+Environment=JAVA_HOME={{ java_home_version | default('/usr/lib/jvm/java-11-amazon-corretto') }}
 WorkingDirectory={{ root_folder }}/app/config-server
 User=arkcase
 Group=arkcase
