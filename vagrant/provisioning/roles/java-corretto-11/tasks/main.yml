@@ -1,22 +1,8 @@
-- name: Download Amazon Corretto 11 JDK
+- name: Install Amazon Corretto 11 from RPM URL
   become: yes
-  get_url:
-    url: https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.tar.gz
-    dest: /tmp/corretto-11.tar.gz
-
-- name: Update Corretto repo baseurl
-  become: yes
-  replace:
-    path: /etc/yum.repos.d/corretto.repo
-    regexp: '^baseurl=.*'
-    replace: 'baseurl=https://yum.corretto.aws/x86_64'
-
-- name: Extract Corretto JDK
-  become: yes
-  unarchive:
-    src: /tmp/corretto-11.tar.gz
-    dest: /usr/lib/jvm
-    remote_src: yes
+  ansible.builtin.yum:
+    name: https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.rpm
+    state: present
 
 - name: See if the Java truststore exists
   become: yes
@@ -32,10 +18,10 @@
       block:
         - name: Add JDK 11 certs to Java trust store
           become: true
-          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
+          ansible.builtin.command: keytool -importkeystore -srckeystore /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts -srcstorepass changeit -destkeystore "{{ java_trust_store }}" -deststorepass {{ java_trust_store_pass }} -noprompt
         - name: Add Arkcase server certs to Java 11 trust store
           become: true
-          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64/lib/security/cacerts -deststorepass changeit -noprompt
+          ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts -deststorepass changeit -noprompt
 
 #Activemq
 
@@ -45,14 +31,14 @@
   replace:
     path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf"
     regexp: "^wrapper.java.command=.*"
-    replace: "wrapper.java.command={{ activemq_java_home | default('/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64') }}/bin/java"
+    replace: "wrapper.java.command={{ activemq_java_home | default('/usr/lib/jvm/java-11-amazon-corretto') }}/bin/java"
 
 
 #Arkcase
 
 - name: set Java 11 as Java Home (versions equal and above 2023.02)
   set_fact:
-    java_home_version: "/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64"
+    java_home_version: "/usr/lib/jvm/java-11-amazon-corretto"
   when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 
 - include_tasks: "{{ role_path }}/../tomcat/tasks/main.yml"
@@ -81,14 +67,14 @@
   ansible.builtin.replace:
     path: /etc/systemd/system/config-server.service
     regexp: '^Environment=JAVA_HOME=.*$'
-    replace: 'Environment=JAVA_HOME=/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64'
+    replace: 'Environment=JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto'
 
 - name: Update JAVA_HOME in activemq.service
   become: yes
   ansible.builtin.replace:
     path: /etc/systemd/system/activemq.service
     regexp: '^Environment=JAVA_HOME=.*$'
-    replace: 'Environment=JAVA_HOME=/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64'
+    replace: 'Environment=JAVA_HOME=/usr/lib/jvm/java-11-amazon-corretto'
 
 - name: Reload systemd daemon
   become: yes

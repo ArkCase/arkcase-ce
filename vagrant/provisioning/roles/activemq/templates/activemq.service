@@ -14,7 +14,7 @@ RestartSec=10
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=activemq
-Environment="JAVA_HOME={{ activemq_java_home | default('/usr/lib/jvm/amazon-corretto-11.0.27.6.1-linux-x64') }}"
+Environment="JAVA_HOME={{ activemq_java_home | default('/usr/lib/jvm/java-11-amazon-corretto') }}"
 
 [Install]
 WantedBy=multi-user.target
