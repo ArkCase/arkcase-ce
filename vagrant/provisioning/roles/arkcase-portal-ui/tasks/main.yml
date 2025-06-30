@@ -50,7 +50,7 @@
   become: yes
   become_user: apache
   stat:
-    path: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}"
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}/robots.txt"
   register: arkcase_portal_robots_txt
 
 - name: copy robots.txt if it exists

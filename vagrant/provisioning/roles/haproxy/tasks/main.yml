@@ -413,8 +413,8 @@
   ansible.builtin.lineinfile:
     backup: true
     path: "{{ path_haproxy_cfg }}"
-    insertafter: "  acl acl_robots path_beg /robots.txt"
-    line: "  acl acl_sitemap path_beg /{{ arkcase_portal_context | default('portal') }}/sitemap"
+    insertbefore: "  acl acl_sitemap path_beg /{{ arkcase_portal_context | default('portal') }}/sitemap"
+    line:  "  acl acl_robots path_beg /robots.txt"
   when: enable_sitemap_config | default(false)
 
 - name: Tell ArkCase Portal Robots.txt which backend to use
