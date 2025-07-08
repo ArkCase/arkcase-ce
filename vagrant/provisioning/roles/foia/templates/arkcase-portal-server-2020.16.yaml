@@ -35,3 +35,9 @@ portal:
 
 
 configServerUri: "{{ internal_host }}/config"
+
+
+loginGov: {{ loginGov_authenticated_mode | default(false) }}
+Login.gov:
+  redirectUri: "https://{{ external_host }}/{{ foia_portal_context }}/portal/login"
+  logOutRedirectUri: "https://{{ external_host }}/{{ foia_portal_context }}/portal"
