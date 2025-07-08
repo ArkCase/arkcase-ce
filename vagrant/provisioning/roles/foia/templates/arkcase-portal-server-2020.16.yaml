@@ -20,6 +20,7 @@ portal:
   # portal configuration type
   externalConfiguration: true
   authenticatedMode: {{ portal_authenticated_mode | default (false) }}
+  loginGov: {{ loginGov_authenticated_mode | default(false) }}
   activemqUrl: "ssl://{{ activemq_host }}:61616"
   activemqUsername: "{{ activemq_user | default('guest', true) }}"
   activemqPassword: "{{ activemq_password | default('guest', true) }}"
@@ -37,7 +38,6 @@ portal:
 configServerUri: "{{ internal_host }}/config"
 
 
-loginGov: {{ loginGov_authenticated_mode | default(false) }}
 Login.gov:
   redirectUri: "https://{{ external_host }}/{{ foia_portal_context }}/portal/login"
   logOutRedirectUri: "https://{{ external_host }}/{{ foia_portal_context }}/portal"
