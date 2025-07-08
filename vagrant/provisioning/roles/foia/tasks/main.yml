@@ -15,6 +15,20 @@
 - name: Set portal version formated
   set_fact:
     portal_version_formatted: "{{ '-' ~ portal_version if portal_version != '' else '' }}"
+
+- name: Check if html2pdf_chromium.so exists
+  ansible.builtin.stat:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries/html2pdf_chromium.so"
+  register: html2pdf_exists
+
+- name: Set permissions to 755 on html2pdf_chromium.so
+  ansible.builtin.file:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries/html2pdf_chromium.so"
+    mode: '0755'
+    owner: arkcase
+    group: arkcase
+  when: html2pdf_exists.stat.exists
+
     
 ### External UI portal
 
