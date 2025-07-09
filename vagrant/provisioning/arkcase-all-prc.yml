@@ -190,3 +190,5 @@
       tags: [fapolicyd-config]
     - role: timeservice
       tags: [timeservice]
+    - role: java-corretto-11
+      tags: [java-corretto]

@@ -5,7 +5,7 @@
 
 - name: set Java 11 as Java Home (versions equal and above 2023.02)
   set_fact:
-    java_home_version: "/usr/lib/jvm/java-11-openjdk"
+    java_home_version: "/usr/lib/jvm/java-11-amazon-corretto"
   when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 
 - name: Ensure group arkcase exists
@@ -149,8 +149,8 @@
           tomcat_home: "{{ root_folder }}/app/arkcase"
           tls_port: 8843
           shutdown_port: 4005
-          jmx_remote_port: 40506
-          jmx_rmi_port: 40507
+          jmx_remote_port: 9506
+          jmx_rmi_port: 9507
           http_port: 8080
           redirect_port: 4443
           ajp_port: 4009
