@@ -1,0 +1,192 @@
+---
+- hosts: all
+  roles:
+    - role: common
+      tags: [core, common, marketplace]
+    - role: arkcase-pre-upgrade
+      tags: [arkcase-pre-upgrade, upgrade]   
+    - role: pki
+      tags: [pki]
+    - role: pki_client
+      tags: [core, pki_client, marketplace]
+    - role: samba
+      tags: [samba, marketplace]
+    - role: ldap
+      tags: [core, ldap, marketplace]
+      when: ldap_url is defined
+    - role: ldap-portal
+      tags: [ldap-portal]
+      when: ldap_portal_url is defined
+    - role: mongodb
+      tags: [microservices, mongodb]
+      when: enable_mongo | default(false)
+    - role: mariadb
+      tags: [core, mariadb, marketplace]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: mariadb-client
+      tags: [core, mariadb, mariadb-client, marketplace]
+      when: db_engine | default('mariadb') == 'mariadb'
+    - role: postgresql
+      tags: [core, postgresql, marketplace]
+      when: db_engine | default('mariadb') == 'postgresql'
+    - role: postgresql-client
+      tags: [core, postgresql, postgresql-client, marketplace]
+      when: db_engine | default('mariadb') == 'postgresql'
+    - role: httpd
+      tags: [core, httpd, marketplace]
+    - role: haproxy
+      tags: [core, haproxy, marketplace]
+    - role: activemq
+      tags: [core, activemq, marketplace]
+    - role: alfresco-setup
+      tags: [alfresco6]
+    - role: alfresco-ce
+      tags: [alfresco6]
+    - role: alfresco
+      tags: [alfresco6]
+    - role: alfresco-site
+      tags: [alfresco6]
+    - role: alfresco7-setup
+      tags: [core, alfresco, alfresco-setup, marketplace]
+    - role: alfresco7-ce
+      tags: [core, alfresco, alfresco-ce, arkcase-ce, marketplace]
+    - role: alfresco-ee
+      tags: [alfresco-ee]
+    - role: alfresco7
+      tags: [core, alfresco, marketplace]
+    - role: alfresco-site
+      tags: [core, alfresco, alfresco-site, marketplace]
+    - role: alfresco-change-password
+      tags: [alfresco-change-password]
+    - role: remove-solr
+      tags: [remove-solr]
+    - role: upgrade-solr
+      tags: [upgrade-solr]
+    - role: zookeeper
+      when: zookeeper_version is defined
+      tags: [core, zookeeper]
+    - role: solr
+      tags: [core, solr, marketplace]
+    - role: solr-replicas
+      tags: [solr-replicas]
+    - role: solr-replicas-current-node
+      tags: [solr-replicas-current-node]
+    - role: pentaho-setup
+      tags: [core, pentaho, pentaho-setup, marketplace]
+    - role: pentaho-ce
+      tags: [pentaho-ce, arkcase-ce]
+    - role: pentaho-ee
+      tags: [pentaho-ee, arkcase-ee]
+    - role: pentaho-configuration
+      tags: [core, pentaho, pentaho-configuration, marketplace]
+    - role: snowbound
+      tags: [core, snowbound, marketplace]
+      when: (ecm_viewer | default('snowbound')) == 'snowbound'
+    - role: snowbound-app
+      tags: [core, snowbound, snowbound-app, marketplace]
+    - role: confluent-platform-install
+      when: enable_kafka is defined and enable_kafka == "yes"
+      tags: [microservices, confluent]
+    - role: elasticsearch-install
+      when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
+      tags: [microservices, elasticsearch]
+    - role: microservices
+      tags: [microservices, microservice-install]
+    - role: minio
+      tags: [microservices, minio]
+      when: enable_minio | default(false)
+    - role: pentaho-license
+      tags: [pentaho-license, pentaho-ee, arkcase-ee]   
+    - role: arkcase-prerequisites
+      tags: [arkcase-prerequisites, core, arkcase, upgrade, marketplace]
+    - role: showcase
+      tags: [showcase]
+    - role: storybook
+      tags: [storybook]
+    - role: arkcase-app
+      tags: [arkcase-app, core, arkcase, upgrade, marketplace]
+    - role: arkcase-api-gateway
+      tags: [core, upgrade, arkcase-api-gateway, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-eureka
+      tags: [core, upgrade, arkcase-eureka, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-audit
+      tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-ldap-authority
+      tags: [core, arkcase-ldap-authority, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false) and not (enable_saml_microservice | default(false))
+    - role: arkcase-saml-authority
+      tags: [arkcase-saml-authority]
+      when: enable_microservices | default(false) and enable_saml_microservice | default(false)
+    - role: arkcase-portal
+      tags: [core, upgrade, arkcase-portal, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-schema
+      tags: [core, upgrade, arkcase-schema, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-sse
+      tags: [core, upgrade, arkcase-sse, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-email
+      tags: [core, upgrade, arkcase-email, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-file-management
+      tags: [core, upgrade, arkcase-file-management, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-file-utils
+      tags: [core, upgrade, arkcase-file-utils, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false)
+    - role: arkcase-cognito
+      tags: [ core, upgrade, arkcase-cognito, arkcase-microservices ]
+      when: enable_microservices | default(false)
+    - role: arkcase-extra-microservices
+      tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false) and arkcase_extra_microservices is defined
+    - role: arkcase-portal-ui
+      tags: [core, upgrade, arkcase-portal-ui, arkcase-microservices, marketplace]
+      when: deploy_arkcase_portal | default(false)
+    - role: foia
+      tags: [foia]
+    - role: privacy
+      tags: [privacy]
+    - role: hr
+      tags: [hr]
+    - role: legal
+      tags: [legal]
+    - role: saml-config
+      tags: [upgrade-saml]
+    - role: oidc-config
+      tags: [oidc-config, upgrade]
+    - role: arkcase-post-upgrade
+      tags: [arkcase-post-upgrade, upgrade]
+    - role: pentaho-pdi-client
+      when: foia_analytical_reports_version is defined
+      tags: [pentaho-pdi-client, foia-analytical-reports]
+    - role: start-arkcase
+      tags: [start-arkcase, core, arkcase, upgrade, marketplace]  
+    - role: foia-analytical-reports
+      when: foia_analytical_reports_version is defined
+      tags: [foia-analytical-reports]
+    - role: tesseract
+      tags: [core, arkcase, tesseract, marketplace]
+    - role: firewall
+      when: enable_firewall is undefined or enable_firewall
+      tags: [firewall, core, marketplace]
+    - role: arkcase-interactive-reports
+      tags: [core, interactive-reports]
+    - role: disable-admin
+      tags: [disable-admin, marketplace]
+    - role: disable-solr-user
+      tags: [disable-solr-user, marketplace]
+    - role: arkcase-dev-reports
+      tags: [arkcase-dev-reports, arkcase-developer]
+    - role: foia-dev-reports
+      tags: [foia-dev-reports, arkcase-developer]
+    - role: arkcase-developer
+      tags: [arkcase-developer]
+    - role: fapolicyd-config
+      tags: [fapolicyd-config]
+    - role: timeservice
+      tags: [timeservice]
