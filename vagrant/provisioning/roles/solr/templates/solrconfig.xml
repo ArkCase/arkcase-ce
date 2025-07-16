@@ -1239,6 +1239,16 @@
     <processor class="solr.RunUpdateProcessorFactory"/>
   </updateRequestProcessorChain>
 
+  <updateRequestProcessorChain name="default">
+    <!-- Increase maximum field size due to sentence parsing issue from AKS-3301 -->
+    <processor class="solr.FieldValueMutator">
+      <str name="maxFieldLength">51200</str> <!-- Set to 50 KB, up from 32 KB default -->
+    </processor>
+    <processor class="solr.LogUpdateProcessorFactory"/>
+    <processor class="solr.DistributedUpdateProcessorFactory"/>
+    <processor class="solr.RunUpdateProcessorFactory"/>
+  </updateRequestProcessorChain>
+
   <!-- Deduplication
 
        An example dedup update processor that creates the "id" field
