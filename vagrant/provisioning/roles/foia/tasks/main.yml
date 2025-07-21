@@ -22,6 +22,8 @@
   register: html2pdf_exists
 
 - name: Set permissions to 755 on html2pdf_chromium.so
+  become: yes
+  become_user: arkcase
   ansible.builtin.file:
     path: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries/html2pdf_chromium.so"
     mode: '0755'
