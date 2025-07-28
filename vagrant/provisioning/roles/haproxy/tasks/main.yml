@@ -378,7 +378,7 @@
   ansible.builtin.lineinfile:
     backup: true
     path: "{{ path_haproxy_cfg }}"
-    insertafter: "acl acl_arkcase_portal path_beg /{{ arkcase_portal_context | default('portal') }}"
+    insertbefore: "acl acl_arkcase_portal path_beg /{{ arkcase_portal_context | default('portal') }}"
     line: "  acl acl_sitemap path_beg /{{ arkcase_portal_context | default('portal') }}/sitemap"
   when: enable_sitemap_config | default(false)
 
@@ -405,6 +405,40 @@
         option tcp-check
         server prc-sitemap0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/,/sitemap/)]
+  when: enable_sitemap_config | default(false)
+
+### Portal Robots.txt proxy rules
+- name: ArkCase Portal Robots.txt setup
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    insertbefore: "  acl acl_sitemap path_beg /{{ arkcase_portal_context | default('portal') }}/sitemap"
+    line:  "  acl acl_robots path_beg /robots.txt"
+  when: enable_sitemap_config | default(false)
+
+- name: Tell ArkCase Portal Robots.txt which backend to use
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_robots if acl_robots"
+  when: enable_sitemap_config | default(false)
+
+- name: ArkCase Portal Robots.txt context, if needed
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL Robots.txt CONTEXT"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+      backend be_robots
+        http-response add-header X-ARKCASE-PORTAL-Node %s
+        mode http
+        option tcp-check
+        server arkcase_portal0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   when: enable_sitemap_config | default(false)
 
 ### Showcase frontend

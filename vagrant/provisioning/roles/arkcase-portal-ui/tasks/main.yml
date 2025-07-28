@@ -45,3 +45,19 @@
     src: "{{ root_folder }}/install/httpd/arkcase-portal{{ arkcase_portal_extension_formatted }}-ui{{ arkcase_portal_ui_version_formatted }}.zip"
     dest: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}/"
   when: arkcase_portal_zip is changed
+
+- name: see if arkcase portal UI robots.txt exists
+  become: yes
+  become_user: apache
+  stat:
+    path: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}/robots.txt"
+  register: arkcase_portal_robots_txt
+
+- name: copy robots.txt if it exists
+  become: yes
+  become_user: apache
+  copy:
+    remote_src: yes
+    src: "{{ root_folder }}/data/httpd/htdocs/{{ arkcase_portal_context }}/robots.txt"
+    dest: "{{ root_folder }}/data/httpd/htdocs/robots.txt"
+  when: arkcase_portal_robots_txt.stat.exists == true
