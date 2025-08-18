@@ -422,10 +422,6 @@
       # --- Path Matches for SPA URLs ---
       acl is_docket_path path_reg ^/portal/dockets/([0-9]+)$
       acl is_filing_path path_reg ^/portal/filings/([0-9]+)$
-      
-      # --- Extract docket/filing IDs ---
-      http-request set-var(req.docket_id) path,regsub(^/portal/dockets/,"") if is_docket_path
-      http-request set-var(req.filing_id) path,regsub(^/portal/filings/,"") if is_filing_path
   when: enable_search_bot_portal_redirects | default(false)
 
 - name: Create GoogleBot (etc) portal backend instructions
@@ -451,12 +447,12 @@
         mode http
         option tcp-check
         server prc-docket-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/,/render/docket/%[var(req.docket_id)])]
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/dockets/,/render/docket/]
       backend be_filing_redirect
         mode http
         option tcp-check
         server prc-filing-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/,/render/filing/%[var(req.filing_id)])]
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/filings/,/render/filing/]
   when: enable_search_bot_portal_redirects | default(false)
 
 ### Showcase frontend
