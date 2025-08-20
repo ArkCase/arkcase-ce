@@ -439,6 +439,7 @@
   become: true
   ansible.builtin.blockinfile:
     backup: true
+    path: "{{ path_haproxy_cfg }}"
     marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL Details Webcrawler CONTEXT"
     insertafter: "#backend servers"
     block: |
@@ -447,12 +448,12 @@
         mode http
         option tcp-check
         server prc-docket-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/dockets/,/render/docket/]
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/dockets/,/render/docket/)]
       backend be_filing_redirect
         mode http
         option tcp-check
         server prc-filing-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/filings/,/render/filing/]
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/filings/,/render/filing/)]
   when: enable_search_bot_portal_redirects | default(false)
 
 ### Showcase frontend
