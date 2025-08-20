@@ -426,7 +426,7 @@
 
 - name: Create GoogleBot (etc) portal backend instructions
   become: true
-  ansible.builtin.lineinfile:
+  ansible.builtin.blockinfile:
     backup: true
     path: "{{ path_haproxy_cfg }}"
     insertafter: "# backend uses"
