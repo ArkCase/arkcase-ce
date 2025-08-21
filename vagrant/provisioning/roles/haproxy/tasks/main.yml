@@ -407,6 +407,55 @@
         http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/,/sitemap/)]
   when: enable_sitemap_config | default(false)
 
+### Portal Googlebot/etc redirects
+- name: Enable GoogleBot (etc) portal redirect
+  become: true
+  ansible.builtin.blockinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: true
+    insertafter: "acl acl_arkcase_portal path_beg /{{ arkcase_portal_context | default('portal') }}"
+    block: |
+      ##### Custom GoogleBot handler
+      # --- Bot Detection ---
+      acl is_search_bot hdr_sub(user-agent) -i -m reg -i (Googlebot|bingbot|DuckDuckBot)
+      
+      # --- Path Matches for SPA URLs ---
+      acl is_docket_path path_reg ^/portal/dockets/([0-9]+)$
+      acl is_filing_path path_reg ^/portal/filings/([0-9]+)$
+  when: enable_search_bot_portal_redirects | default(false)
+
+- name: Create GoogleBot (etc) portal backend instructions
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    block: |  
+      use_backend be_docket_redirect if is_search_bot is_docket_path
+      use_backend be_filing_redirect if is_search_bot is_filing_path
+  when: enable_search_bot_portal_redirects | default(false)
+
+- name: Create GoogleBot/(ETC) portal context
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL Details Webcrawler CONTEXT"
+    insertafter: "#backend servers"
+    block: |
+      # --- Redirection Backend ---
+      backend be_docket_redirect
+        mode http
+        option tcp-check
+        server prc-docket-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/dockets/,/render/docket/)]
+      backend be_filing_redirect
+        mode http
+        option tcp-check
+        server prc-filing-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/filings/,/render/filing/)]
+  when: enable_search_bot_portal_redirects | default(false)
+
 ### Showcase frontend
 - name: Showcase frontend part
   become: true
