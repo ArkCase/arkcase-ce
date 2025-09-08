@@ -55,17 +55,17 @@
   register: mariadb_install
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-- name: install MariaDB packages (RHEL 8)
-  become: yes
-  yum:
-    state: installed
-    disable_gpg_check: yes
-    enablerepo: mariadb
-    disablerepo: rhel-8-for-x86_64-appstream-rpms
-    name:
-      - MariaDB-client
-  register: mariadb_install
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  #- name: install MariaDB packages (RHEL 8)
+  # become: yes
+  #yum:
+  #  state: installed
+  #  disable_gpg_check: yes
+  #  enablerepo: mariadb
+  #  disablerepo: rhel-8-for-x86_64-appstream-rpms
+  #  name:
+  #    - MariaDB-client
+  #register: mariadb_install
+  #when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
 
 - name: install MariaDB python library
   become: yes

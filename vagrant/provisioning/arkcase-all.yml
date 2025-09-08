@@ -168,6 +168,8 @@
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
       tags: [foia-analytical-reports]
+    - role: foia-reports-deploy
+      tags: [foia-reports-deploy]
     - role: tesseract
       tags: [core, arkcase, tesseract, marketplace]
     - role: firewall

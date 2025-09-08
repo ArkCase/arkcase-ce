@@ -133,7 +133,7 @@
 - name: Install interactive reports datasources
   become: true
   become_user: arkcase
-  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
+  ansible.builtin.command: "/bin/bash {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ pentaho_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --resource-type=DATASOURCE --datasource-type=METADATA --metadata-domain-id='{{ item.path | basename | splitext | first }}' --file-path='{{ item.path }}' --permission=true --overwrite=true --retainOwnership=true"
   with_items: "{{ interactive_reports_datasources.files }}"
   register: datasource_install
   failed_when: "'Import was successful' not in datasource_install.stdout"
