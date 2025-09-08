@@ -787,3 +787,5 @@ ansible_python3: /usr/bin/python3
 
 # Set to true to use the alternative Solr schema, which allows for Solr Highlighting of File Content. 
 enable_solr_snippets: false
+ark_solr_customizations_jar_checksum: "43a2e407a4bc75f6e91ad7c06838f572bc7d711e"
+ark_solr_customizations_jar_sha512_checksum: "284b342b3f93108dc2f5b1ee9799943df184b46e4ad6a62b15fcee22918b83fac8d186fb8fa4a8edb0830bc1439cab3b7a848e7378837f8bf0f9de555c5b1c8e"
