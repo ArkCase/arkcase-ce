@@ -4,6 +4,27 @@
   file:
     path: "{{ root_folder }}/app/solr/contrib/arkcase/lib/"
     state: directory
+  when: "enable_solr_snippets | default(false)"
+
+- name: create public key for signing Solr plugin jar (jar sig must be provided)
+  become: yes
+  command: openssl rsa -in {{ solr_plugin_pem_file | default('/etc/tls/private/arkcase-root.pem') }} -pubout -outform DER -out {{ root_folder }}/common/solr_plugin_key.der
+  when: "(ark_solr_custom_jar_sig is defined and ark_solr_custom_jar_sig != "" and enable_solr_snippets)  | default(false)"
+
+- name: Create key directory to Zookeeper
+  become: yes
+  command: '{{ root_folder }}/app/zookeeper/bin/zkCli.sh create "/keys"'
+  when: "(ark_solr_custom_jar_sig is defined and ark_solr_custom_jar_sig != "" and enable_solr_snippets)  | default(false)"
+
+- name: Create key/exe directory to Zookeeper
+  become: yes
+  command: '{{ root_folder }}/app/zookeeper/bin/zkCli.sh create "/keys/exe"'
+  when: "(ark_solr_custom_jar_sig is defined and ark_solr_custom_jar_sig != "" and enable_solr_snippets)  | default(false)"
+
+- name: Add Solr Plugin Public key to Zookeeper
+  become: yes
+  command: '{{ root_folder }}/app/zookeeper/bin/zkCli.sh create /keys/exe/pub_plugin_key.der {{ root_folder }}/common/solr_plugin_key.der'
+  when: "(ark_solr_custom_jar_sig is defined and ark_solr_custom_jar_sig != "" and enable_solr_snippets)  | default(false)"
 
 - name: add arkSolrCustomizations.jar when Snippets are enabled
   become: yes
@@ -72,11 +93,17 @@
       curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/.system/blob?omitHeader=true
   when: "enable_solr_snippets | default(false)"
 
-- name: Add arkSolrCustomizations.jar as a runtime lib
+- name: Add signed arkSolrCustomizations.jar as a runtime lib
   ansible.builtin.command:
     cmd: >
-      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { name":"arkSolrCustomizations", "version":1, "sha512": {{ ark_solr_customizations_jar_sha512_checksum }}'
-  when: "enable_solr_snippets | default(false)"
+      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }}, "sig": {{ ark_solr_custom_jar_sig }} } }'
+  when: "(ark_solr_custom_jar_sig is defined and ark_solr_custom_jar_sig != "" and enable_solr_snippets) | default(false)"
+
+- name: Add arkSolrCustomizations.jar as a runtime lib without sig value
+  ansible.builtin.command:
+    cmd: >
+      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }}, "sig": {{ ark_solr_custom_jar_sig }} } }'
+  when: "(not (ark_solr_custom_jar_sig is defined and ark_solr_custom_jar_sig != "") and enable_solr_snippets) | default(false)"
 
 - name: update schema.xml to use the custom tokenizer
   become: yes
