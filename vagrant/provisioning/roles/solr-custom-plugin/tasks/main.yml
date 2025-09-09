@@ -101,13 +101,13 @@
     timeout: 300
   when: systemd_solr_updated is changed
 
-- name: add arkSolrCustomizations.jar to the .system blob (required for Solr Cloud mode)
+- name: Add arkSolrCustomizations.jar to the .system blob (required for Solr Cloud mode)
   ansible.builtin.command:
     cmd: >
       curl -X POST -H 'Content-Type: application/octet-stream' --data-binary @roles/files/arkSolrCustomizations.jar --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/.system/blob/arkSolrCustomizations
   when: enable_solr_snippets | default(false)
 
-- name: Confirm arkSolrCustomizations.jar to the .system blob (required for Solr Cloud mode)
+- name: Confirm arkSolrCustomizations.jar has been added to the .system blob
   ansible.builtin.command:
     cmd: >
       curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/.system/blob?omitHeader=true
@@ -118,13 +118,13 @@
     msg: "ark_solr_custom_jar_sig == {{ ark_solr_custom_jar_sig }}"
   when: use_signed_plugin | default(false)
 
-- name: Add signed arkSolrCustomizations.jar as a runtime lib
+- name: Enable signed arkSolrCustomizations.jar as a runtime lib
   ansible.builtin.command:
     cmd: >
       curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }}, "sig": {{ ark_solr_custom_jar_sig }} } }'
   when: use_signed_plugin | default(false)
 
-- name: Add arkSolrCustomizations.jar as a runtime lib without sig value
+- name: Enable arkSolrCustomizations.jar as a runtime lib without sig value
   ansible.builtin.command:
     cmd: >
       curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }}, "sig": {{ ark_solr_custom_jar_sig }} } }'
