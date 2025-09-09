@@ -790,5 +790,7 @@ enable_solr_snippets: false
 ark_solr_customizations_jar_checksum: "43a2e407a4bc75f6e91ad7c06838f572bc7d711e"
 
 # Solr Plugin PEM File requires the path to where the file is stored.
+# IMPORTANT: If a new PEM file is provided, the ArkSolrCustomizations.jar MUST BE RE-SIGNED based on the provided file.
+# See https://solr.apache.org/guide/8_11/adding-custom-plugins-in-solrcloud-mode.html#securing-runtime-libraries for details
 solr_plugin_pem_file: ""
 ark_solr_custom_jar_sig: ""
