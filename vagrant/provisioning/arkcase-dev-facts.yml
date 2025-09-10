@@ -787,7 +787,7 @@ ansible_python3: /usr/bin/python3
 
 # Set to true to use the alternative Solr schema, which allows for Solr Highlighting of File Content. 
 enable_solr_snippets: false
-ark_solr_customizations_jar_checksum: "43a2e407a4bc75f6e91ad7c06838f572bc7d711e"
+ark_solr_customizations_jar_checksum: "09414d78e16a45898cd7c78eb8cbbdbf05fbe5c3"
 
 # Solr Plugin PEM File requires the path to where the file is stored. This does not move the file from the installer to that location.
 # IMPORTANT: If a new PEM file is provided, the ArkSolrCustomizations.jar MUST BE RE-SIGNED based on the provided file.
