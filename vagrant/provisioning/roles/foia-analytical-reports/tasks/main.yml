@@ -179,7 +179,7 @@
       line: "ARKCASE_REST_ENDPOINT_LOOKUPS=https://{{ external_host }}/arkcase/api/latest/service/config/lookups"
     - regexp: "ARKCASE_REST_ENDPOINT_HOLIDAYS=https{{ ':' }}//acm-arkcase/arkcase/api/latest/service/holidayConfig"
       line: "ARKCASE_REST_ENDPOINT_HOLIDAYS=https://{{ external_host }}/arkcase/api/latest/service/holidayConfig"
-    - regexp: "ARKCASE_REST_ENDPOINT_LABELS=https{{ ':' }}//acm-arkcase/arkcase/api/latest/plugin/admin/labelmanagement/admin-resource?lang=en&ns=core"
+    - regexp: "ARKCASE_REST_ENDPOINT_LABELS=https{{ ':' }}//acm-arkcase/arkcase/api/latest/plugin/admin/labelmanagement/admin-resource\\?lang=en&ns=core"
       line: "ARKCASE_REST_ENDPOINT_LABELS=https://{{ external_host }}/arkcase/api/latest/plugin/admin/labelmanagement/admin-resource?lang=en&ns=core"
     - regexp: "ARKCASE_USER=arkcase-admin@arkcase.org"
       line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
