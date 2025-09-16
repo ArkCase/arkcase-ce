@@ -127,7 +127,7 @@
 - name: Enable arkSolrCustomizations.jar as a runtime lib without sig value
   ansible.builtin.command:
     cmd: >
-      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }}, "sig": {{ ark_solr_custom_jar_sig }} } }'
+      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }} } }'
   when: use_signed_plugin is undefined or (not use_signed_plugin)
 
 - name: update schema.xml to use the custom tokenizer
