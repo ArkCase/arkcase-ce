@@ -171,6 +171,31 @@
   ansible.builtin.lineinfile:
     backup: true
     backrefs: true
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_endpoints.properties"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - regexp: "ARKCASE_REST_ENDPOINT_LOOKUPS=https{{ ':' }}//acm-arkcase/arkcase/api/latest/service/config/lookups"
+      line: "ARKCASE_REST_ENDPOINT_LOOKUPS=https://{{ external_host }}/arkcase/api/latest/service/config/lookups"
+    - regexp: "ARKCASE_REST_ENDPOINT_HOLIDAYS=https{{ ':' }}//acm-arkcase/arkcase/api/latest/service/holidayConfig"
+      line: "ARKCASE_REST_ENDPOINT_HOLIDAYS=https://{{ external_host }}/arkcase/api/latest/service/holidayConfig"
+    - regexp: "ARKCASE_REST_ENDPOINT_LABELS=https{{ ':' }}//acm-arkcase/arkcase/api/latest/plugin/admin/labelmanagement/admin-resource\\?lang=en&ns=core"
+      line: "ARKCASE_REST_ENDPOINT_LABELS=https://{{ external_host }}/arkcase/api/latest/plugin/admin/labelmanagement/admin-resource?lang=en&ns=core"
+    - regexp: "ARKCASE_USER=arkcase-admin@arkcase.org"
+      line: "ARKCASE_USER={{ arkcase_admin_user }}@{{ ldap_user_domain }}"
+    - regexp: "ARKCASE_PASS=password"
+      line: "ARKCASE_PASS={{ arkcase_admin_password }}"
+    - regexp: "TRUSTSTORE_PATH=/some/path/to/truststore"
+      line: "TRUSTSTORE_PATH={{ java_trust_store }}"
+    - regexp: "TRUSTSTORE_PASSWORD=password"
+      line: "TRUSTSTORE_PASSWORD={{ java_trust_store_pass }}"
+
+- name: Setup Arkcase REST config
+  become: true
+  become_user: pentaho
+  ansible.builtin.lineinfile:
+    backup: true
+    backrefs: true
     path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/config/arkcase_config.properties"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
