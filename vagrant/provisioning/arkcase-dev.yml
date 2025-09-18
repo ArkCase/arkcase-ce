@@ -79,3 +79,5 @@
       tags: [core, privacy, reports, privacy-dev-reports]
     - role: arkcase-developer
       tags: [core, arkcase, arkcase-developer]
+    - role: solr-custom-plugin
+      tags: [solr-custom-plugin]
