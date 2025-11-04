@@ -36,14 +36,13 @@
 
 - name: install expect, zip/unzip, Java 8
   become: yes
-  yum:
-    state: installed
-    name:
-      - expect
-      - zip
-      - unzip
-      - java-1.8.0-openjdk
-      - java-1.8.0-openjdk-devel
+  command: dnf install -y "{{ item }}"
+  loop:
+    - expect
+    - zip
+    - unzip
+    - java-1.8.0-openjdk
+    - java-1.8.0-openjdk-devel
 
 - name: kettle needs the ArkCase keystore in the JVM store
   become: yes
