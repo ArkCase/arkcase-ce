@@ -10,19 +10,11 @@
 
 - name: LDAP required packages
   become: true
-  ansible.builtin.yum:
-    state: installed
-    name:
-      - openldap-clients
-      - "{{ pkg_python_ldap }}"
+  command: dnf install -y openldap-clients python3.12-devel
 
-- name: Install cryptography
-  become: true
-  ansible.builtin.pip:
-    executable: pip3
-    name: cryptography
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+- name: install cryptography
+  become: yes
+  command: "{{ ansible_pip3 | default('pip3') }} install cryptography {{ pkg_python_ldap }}"
 
 - name: List certs in the key store
   become: true
