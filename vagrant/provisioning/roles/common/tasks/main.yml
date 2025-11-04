@@ -20,53 +20,10 @@
     pkg_python_cryptography: "python-cryptography"
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
-- name: List OS dependent package names
-  ansible.builtin.debug:
-    msg: "policycoreutils: {{ pkg_policycoreutils }}"
-
-
 - name: Install epel (needed first)
   become: true
-  ansible.builtin.yum:
-    state: installed
-    name:
-      - epel-release
+  command: dnf install -y epel-release
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
-
-# At least on CentOS 7, we need to remove python3-pip, to get a clean
-# install of python3-pip in the next task, which will actually create
-# /usr/bin/pip3.
-- name: Remove pip2 that might come up along OS
-  become: true
-  ansible.builtin.yum:
-    state: absent
-    name:
-      - python-pip
-      - python3-pip
-
-- name: Install required packages
-  become: true
-  ansible.builtin.yum:
-    state: installed
-    name:
-#      - java-11-openjdk
-#      - java-11-openjdk-devel
-      - java-1.8.0-openjdk
-      - java-1.8.0-openjdk-devel
-      - "{{ pkg_policycoreutils }}"
-      - zip
-      - unzip
-      - git
-      - net-tools
-      - "@Development Tools"
-      - bzip2
-      - tar
-      - wget
-      - sshpass
-      - python3
-      - python3-pip
-      - "{{ pkg_python_setuptools }}"
-      - "{{ pkg_python_cryptography }}"
 
 - name: Import Amazon Corretto GPG key
   become: yes
@@ -74,11 +31,27 @@
     key: https://yum.corretto.aws/corretto.key
     state: present
 
-- name: Install Amazon Corretto 11 from RPM URL
-  become: yes
-  ansible.builtin.yum:
-    name: https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.rpm
-    state: present
+- name: Install required packages
+  become: true
+  command: dnf install -y "{{ item }}"
+  loop:
+    - java-1.8.0-openjdk
+    - java-1.8.0-openjdk-devel
+    - "{{ pkg_policycoreutils }}"
+    - zip
+    - unzip
+    - git
+    - net-tools
+    - "@Development Tools"
+    - bzip2
+    - tar
+    - wget
+    - sshpass
+    - python3
+    - python3-pip
+    - "{{ pkg_python_setuptools }}"
+    - "{{ pkg_python_cryptography }}"
+    - https://corretto.aws/downloads/latest/amazon-corretto-11-x64-linux-jdk.rpm
 
 - name: See if the Java truststore exists
   become: true
@@ -87,28 +60,14 @@
   register: arkcase_ts_stat
   changed_when: false
 
-- name: Update pip
-  become: true
-  ansible.builtin.pip:
-    executable: pip3
-    name: pip
-    extra_args: --upgrade
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
-
 - name: Install firewalld
   become: true
-  ansible.builtin.yum:
-    state: installed
-    name: firewalld
+  command: dnf install -y firewalld
   when: enable_firewall is undefined or enable_firewall
 
 - name: Remove python2-passlib since it breaks solr password setting
   become: true
-  ansible.builtin.yum:
-    state: absent
-    name:
-      - python2-passlib
+  command: dnf remove -y python2-passlib
 
 - name: Folder structure for app, data and logs
   become: true
