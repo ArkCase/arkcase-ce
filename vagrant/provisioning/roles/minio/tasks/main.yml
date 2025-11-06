@@ -25,25 +25,21 @@
     - "log"
     - "tmp"
 
-- name: ensure minio port
+- name: ensure minio port immediately
   become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
-    port: "{{ minio_port | default(9000) }}/tcp"
-    state: enabled
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+  command: firewall-cmd --add-port "{{ minio_port | default(9000) }}/tcp"
 
-- name: ensure minio console port
+- name: ensure minio port permanently
   become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
-    port: "{{ minio_console_port | default(8001) }}/tcp"
-    state: enabled
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+  command: firewall-cmd --permanent --add-port "{{ minio_port | default(9000) }}/tcp"
+
+- name: ensure minio console port immediately
+  become: yes
+  command: firewall-cmd --add-port "{{ minio_console_port | default(8001) }}/tcp"
+
+- name: ensure minio console port permanently
+  become: yes
+  command: firewall-cmd --permanent --add-port "{{ minio_console_port | default(8001) }}/tcp"
 
 - name: download minio file from internet
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
