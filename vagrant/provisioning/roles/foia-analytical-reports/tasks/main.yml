@@ -135,7 +135,7 @@
   ansible.builtin.cron:
     backup: true
     name: "populate FOIA data warehouse tables"
-    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb"
+    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb"
     month: "*"
     weekday: "*"
     day: "*"
@@ -193,13 +193,9 @@
   become_user: pentaho
   ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/{{ reports_download_path }}' --permission=true --overwrite=true --retainOwnership=true"
 
-- name: fail early
-  fail:
-    msg: check if earlier tasks worked
-
 - name: Run the job to create and populate the mondrian cubes
   become: true
   become_user: pentaho-pdi
   ansible.builtin.command:
-    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/foia-dw1.kjb
+    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb
     chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
