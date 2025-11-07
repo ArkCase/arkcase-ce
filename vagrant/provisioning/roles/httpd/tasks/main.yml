@@ -1,11 +1,6 @@
 - name: install httpd
   become: yes
-  yum:
-    state: present
-    name:
-      - httpd
-      - mod_ssl
-      - mod_ldap
+  command: dnf install -y httpd mod_ssl mod_ldap
 
 - name: httpd folders
   become: yes

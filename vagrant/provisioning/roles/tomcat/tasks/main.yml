@@ -2,12 +2,7 @@
   block:
     - name: install prerequisites to build native library
       become: yes
-      yum:
-        state: present
-        name: 
-          - "@Development Tools"
-          - openssl-devel
-          - apr-devel
+      command: dnf -y install "@Development Tools" openssl-devel apr-devel
           
     - name: see if Tomcat already installed
       become: yes
@@ -107,7 +102,7 @@
         force: no
         content: |
           #!/bin/sh
-          LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CATALINA_HOME/lib
+          LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CATALINA_HOME/lib{{ ":" + tc.extra_lib_path if tc.extra_lib_path is defined else "" }}
           export LD_LIBRARY_PATH
     - name: configure Tomcat to use native connector
       become: yes
