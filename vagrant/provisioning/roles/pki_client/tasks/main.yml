@@ -1,10 +1,6 @@
 - name: install cryptography
   become: yes
-  pip:
-    executable: pip3
-    name: cryptography
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+  command: "{{ ansible_pip3 | default('pip3') }} install cryptography"
 
 - name: see if rsa private key exists
   stat:

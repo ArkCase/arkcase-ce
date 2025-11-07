@@ -76,21 +76,6 @@
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
 
-- name: remove pip2 that might come up along OS
-  become: yes
-  yum:
-    state: absent
-    name:
-      - python3-pip
-
-- name: install pip3
-  become: yes
-  yum:
-    state: present
-    name:
-      - python3-pip
-
-
 # might also need: curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py ; python3 get-pip.py --force-reinstall
 - name: install Python Excel module
   become: yes
@@ -366,9 +351,9 @@
     db_service_name: "{{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if arkcase_host == database_host else '' }}"
     activemq_service_name: "{{ 'activemq.service' if activemq_host == arkcase_host else '' }}"
     samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
+    alfresco7_service_name: "{{ 'alfresco7.service' if (file_repository_type | default('alfresco')) == 'alfresco' and alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
+    alfresco_service_name: "{{ 'alfresco.service' if (file_repository_type | default('alfresco')) == 'alfresco' and alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
     solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host and service_file_solr.stat.exists == True else '' }}"
-    alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
-    alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:

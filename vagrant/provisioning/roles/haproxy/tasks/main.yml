@@ -19,7 +19,7 @@
   failed_when: false
   changed_when: false
 
-# using Python 3.9, or Python 2, no firewall module can be found or installed, 
+# using Python 3.9, or Python 2, no firewall module can be found or installed,
 # so we have to use commands instead
 - name: Ensure web and proxy ports
   become: true
@@ -37,25 +37,19 @@
 
 - name: Install epel-release
   become: true
-  ansible.builtin.yum:
-    name: epel-release
-    state: present
+  command: yum install -y epel-release
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: Install software collections
   become: true
-  ansible.builtin.yum:
-    name: centos-release-scl
-    state: present
+  command: yum install -y centos-release-scl
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: Install haproxy 1.8
   become: true
-  ansible.builtin.yum:
-    name: "{{ pkg_haproxy }}"
-    state: present
+  command: dnf install -y "{{ pkg_haproxy }}"
 
-- name: Haproxy folders
+- name: Haproxy log folder
   become: true
   ansible.builtin.file:
     path: "{{ root_folder }}/log/haproxy"
@@ -63,6 +57,10 @@
     owner: haproxy
     group: haproxy
     mode: '0755'
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "haproxy_var_log_t"
+    selevel: "s0"
 
 - name: See if rsyslog.conf exists
   become: true
@@ -86,29 +84,6 @@
       line: '$UDPServerRun 514'
   register: rsyslog_configuration
   when: rsyslog_stat.stat.exists
-
-# Python 3.9 has no selinux module
-- name: see if SELinux context needs to be added
-  become: yes
-  command: ls -ldZ {{ root_folder}}/log/haproxy
-  register: haproxy_logging_context
-  changed_when: false
-
-- name: Allow SELinux write access on the haproxy log directory
-  become: true
-  community.general.sefcontext:
-    target: '{{ root_folder }}/log/haproxy'
-    setype: haproxy_var_log_t
-    state: present
-  register: allow_haproxy_logging
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
-
-- name: Apply new SELinux file context to filesystem
-  become: true
-  ansible.builtin.command: restorecon -R -v {{ root_folder }}/log/haproxy
-  when: allow_haproxy_logging is changed
-  changed_when: allow_haproxy_logging is changed
 
 - name: Copy haproxy log configuration into rsyslog.d
   become: true
@@ -707,7 +682,7 @@
         mode http
         option tcp-check
         server showcase_backend0 {{ internal_host }}:3000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-        http-request set-path %[path,regsub(^/showcase/,/)] 
+        http-request set-path %[path,regsub(^/showcase/,/)]
   when: deploy_showcase | default(false)
 
 ### Storybook frontend
@@ -1026,4 +1001,4 @@
   ansible.builtin.systemd:
     name: rsyslog
     state: restarted
-  when: rsyslog_stat.stat.exists and (rsyslog_configuration is changed or haproxy_rsyslog is changed or allow_haproxy_logging is changed)
+  when: rsyslog_stat.stat.exists and (rsyslog_configuration is changed or haproxy_rsyslog is changed)

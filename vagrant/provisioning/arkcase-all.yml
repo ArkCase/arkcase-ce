@@ -189,5 +189,5 @@
     - role: java-corretto-11
       tags: [java-corretto]
     - role: solr-custom-plugin
-      tags: [ solr-custom-plugin ]
+      tags: [solr-custom-plugin]
 
