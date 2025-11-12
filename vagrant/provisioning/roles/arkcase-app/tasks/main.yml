@@ -76,6 +76,10 @@
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
 
+- name: install required pip modules for Python Excel module
+  become: yes
+  command: "{{ ansible_pip3 | default('pip3') }} install setuptools"
+
 - name: install Python Excel module
   become: yes
   pip:
