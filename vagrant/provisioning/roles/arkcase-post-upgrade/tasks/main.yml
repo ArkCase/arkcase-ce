@@ -6,6 +6,10 @@
   set_fact:
     restore_more_config_files: "{{ arkcase_version != '' and latest_config_backup_folder is defined and older_config_in_use }}"
 
+- name: log incoming versions
+  debug:
+    msg: "arkcase-version: {{ arkcase_version }}; latest_config_backup_folder: {{ latest_config_backup_folder }}; older_config_in_use: {{ older_config_in_use }}; restore_more_config_files: {{ restore_more_config_files }}"
+
 - name: Get folders in a folder
   find:
     paths: "{{ root_folder }}/data/arkcase-home"
@@ -19,7 +23,7 @@
     latest_config_backup_folder: "{{ found_folders.files | sort(attribute='mtime',reverse=true) | first }}"
   ignore_errors: true
     
-- name: restore config files (2021.03 and bellow)
+- name: restore config files (2021.03 and below)
   become: yes
   become_user: arkcase
   command: cp {{ latest_config_backup_folder.path }}/acm/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/{{ item }}
@@ -38,7 +42,7 @@
   become: yes
   become_user: arkcase
   stat:
-    path="{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
+    path: "{{ latest_config_backup_folder.path }}/acm/templates-configuration.json"
   register: template_file
   when: restore_more_config_files
 
