@@ -20,6 +20,7 @@
     doj_backup_folder_path: "{{ root_folder }}/install/pentaho/doj-backup-{{ ansible_date_time.iso8601 }}"
  
 - name: Create backup directory
+  become: true
   file:
     path: "{{ doj_backup_folder_path }}"
     state: directory
