@@ -28,7 +28,8 @@
     group: pentaho
     mode: '0755'
  
-- name: Backup existing FOIA files if present
+- name: Backup existing DOJ files if present
+  become: true
   command: mv "{{ item }}" "{{ doj_backup_folder_path }}/"
   args:
     removes: "{{ item }}"
