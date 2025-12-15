@@ -85,14 +85,14 @@
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app, upgrade, marketplace]
     - role: confluent-platform-install
-      when: enable_kafka is defined and enable_kafka == "yes" and enable_legacy_microservices | default(true)
+      when: enable_kafka is defined and enable_kafka == "yes" and enable_microservices | default(false)
       tags: [microservices, confluent]
     - role: elasticsearch-install
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
       tags: [microservices, elasticsearch]
     - role: microservices
       tags: [microservices]
-      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
+      when: enable_microservices | default(false)
     - role: minio
       tags: [microservices, minio]
       when: enable_minio | default(false)
@@ -143,8 +143,12 @@
       tags: [ core, upgrade, arkcase-cognito, arkcase-microservices ]
       when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-extra-microservices
-      tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false) and arkcase_extra_microservices is defined
+      tags: [ core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace ]
+      when:
+        - enable_microservices | default(false) | bool
+        - enable_dockets | default(false) | bool
+        - arkcase_extra_microservices is defined
+        - (arkcase_extra_microservices | length) > 0
     - role: arkcase-portal-ui
       tags: [core, upgrade, arkcase-portal-ui, arkcase-microservices, marketplace]
       when: deploy_arkcase_portal | default(false)

@@ -153,7 +153,7 @@
   become: true
   ansible.builtin.shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
 
-- name: ArkCase configuration (when enable_legacy_microservices is true)
+- name: ArkCase configuration (microservices)
   become: true
   ansible.builtin.blockinfile:
     path: "{{ path_haproxy_cfg }}"
@@ -286,10 +286,10 @@
         http-request set-path %[path,regsub(^/config/,/)]
 
   register: arkcase_config
-  when: enable_legacy_microservices | default(true) | bool
+  when: enable_microservices | default(false) | bool
 
 
-- name: ArkCase configuration (when enable_legacy_microservices is false)
+- name: ArkCase configuration (non-microservices default)
   become: true
   ansible.builtin.blockinfile:
     path: "{{ path_haproxy_cfg }}"
@@ -419,7 +419,7 @@
         http-request set-path %[path,regsub(^/config/,/)]
 
   register: arkcase_config
-  when: not (enable_legacy_microservices | default(true) | bool)
+  when: not (enable_microservices | default(false) | bool)
 
 - name: FOIA frontend part
   become: true
@@ -677,7 +677,7 @@
 
 # Confluent platform
 - name: Set up proxies to Confluent Platform services
-  when: enable_kafka is defined and enable_kafka == "yes" and enable_legacy_microservices | default(true)
+  when: enable_kafka is defined and enable_kafka == "yes" and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
@@ -764,7 +764,7 @@
 
 
 - name: Set up proxies to Zipkin
-  when: enable_zipkin is defined and enable_zipkin == 'yes' and enable_legacy_microservices | default(true)
+  when: enable_zipkin is defined and enable_zipkin == 'yes' and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
@@ -817,7 +817,7 @@
 
 
 - name: Set up proxies to Eureka
-  when: enable_eureka is defined and enable_eureka == 'yes' and enable_legacy_microservices | default(false)
+  when: enable_eureka is defined and enable_eureka == 'yes' and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
