@@ -85,13 +85,14 @@
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app, upgrade, marketplace]
     - role: confluent-platform-install
-      when: enable_kafka is defined and enable_kafka == "yes"
+      when: enable_kafka is defined and enable_kafka == "yes" and enable_legacy_microservices | default(true)
       tags: [microservices, confluent]
     - role: elasticsearch-install
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
       tags: [microservices, elasticsearch]
     - role: microservices
       tags: [microservices]
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: minio
       tags: [microservices, minio]
       when: enable_minio | default(false)
@@ -107,40 +108,40 @@
       tags: [arkcase-app, core, arkcase, upgrade, marketplace]
     - role: arkcase-api-gateway
       tags: [core, upgrade, arkcase-api-gateway, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-eureka
       tags: [core, upgrade, arkcase-eureka, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-audit
       tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-ldap-authority
       tags: [core, upgrade, arkcase-ldap-authority, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false) and not (enable_saml_microservice | default(false))
+      when: enable_microservices | default(false)  and enable_legacy_microservices | default(true) and not (enable_saml_microservice | default(false))
     - role: arkcase-saml-authority
       tags: [arkcase-saml-authority]
-      when: enable_microservices | default(false) and enable_saml_microservice | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true) and enable_saml_microservice | default(false)
     - role: arkcase-portal
       tags: [core, upgrade, arkcase-portal, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-schema
       tags: [core, upgrade, arkcase-schema, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-sse
       tags: [core, upgrade, arkcase-sse, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-email
       tags: [core, upgrade, arkcase-email, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-file-management
       tags: [core, upgrade, arkcase-file-management, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-file-utils
       tags: [core, upgrade, arkcase-file-utils, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-cognito
       tags: [ core, upgrade, arkcase-cognito, arkcase-microservices ]
-      when: enable_microservices | default(false)
+      when: enable_microservices | default(false) and enable_legacy_microservices | default(true)
     - role: arkcase-extra-microservices
       tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
       when: enable_microservices | default(false) and arkcase_extra_microservices is defined
