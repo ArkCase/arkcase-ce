@@ -362,23 +362,23 @@
     - src: config-server.service
       dest: /etc/systemd/system/config-server.service
 
-- name: copy config-server configuration file before version 2021.04 or after 2023.01
+- name: copy config-server configuration file (non-kafka)
   become: yes
   become_user: arkcase
   template:
     src: config-server.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version != "" and ( arkcase_version is version('2021.04', '<') or arkcase_version is version('2023.01', '>=') )
+  when: not (enable_kafka | default(false) | bool)
 
-- name: copy config-server configuration file after version 2021.04 and before 2023.01
+- name: copy config-server configuration file (kafka-enabled style)
   become: yes
   become_user: arkcase
   template:
     src: config-server-2021.04.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version == "" or ( arkcase_version is version('2021.04', '>=') and arkcase_version is version('2023.01', '<') )
+  when: enable_kafka | default(false) | bool
 
 ##### Mule TLS fixes #####
 - name: ensure custom/WEB-INF/classes exists
@@ -505,16 +505,16 @@
     src: application.yaml
     dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
-  when: arkcase_version == "" or (arkcase_version is version('2021.04', '<') or arkcase_version is version('2023.01', '>='))
+  when: not (enable_kafka | default(false) | bool)
 
-- name: application.yaml file after version 2021.04
+- name: application.yaml file (kafka-enabled style)
   become: yes
   become_user: arkcase
   template:
     src: application-2021.04.yaml
     dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
-  when: arkcase_version != "" and (arkcase_version is version('2021.04', '>=') and arkcase_version is version('2023.01', '<'))
+  when: enable_kafka | default(false) | bool
 
 - name: run config-server with application.yaml file
   become: yes
@@ -1008,7 +1008,7 @@
     backup: yes
     src: arkcase-commons-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-commons-server.yaml
-  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
+  when: ((enable_microservices | default(false) | bool) or (enable_dockets | default(false) | bool)) and (arkcase_version == "" or (arkcase_version is version('2021.04', '>=')))
 
 - name: server-specific configuration for arkcase-portal-cognito.yaml for version 2021.04
   become: yes
@@ -1017,7 +1017,7 @@
     backup: yes
     src: arkcase-portal-cognito-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-cognito-server.yaml
-  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
+  when: ((enable_microservices | default(false) | bool) or (enable_dockets | default(false) | bool)) and (arkcase_version == "" or (arkcase_version is version('2021.04', '>=')))
 
 # the rolesToGroups format changed during the 3.3.3 release cycle, so we need
 # one format for pre-3.3.3 versions, and another format for 3.3.3+
