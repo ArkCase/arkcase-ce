@@ -3,7 +3,12 @@ Description={{ microservice.name }}
 After=syslog.target
 
 [Service]
+{% if enable_dockets | default(false) | bool %}
+EnvironmentFile={{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.conf
+ExecStart={{ java_home_version | default('/usr/lib/jvm/java-11-amazon-corretto') }}/bin/java $JAVA_OPTS -jar {{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar {{ microservice.boot_opts | default("") }}
+{% else %}
 ExecStart={{ root_folder }}/app/{{ microservice.name }}/{{ microservice.name }}.jar {{ microservice.boot_opts | default("") }}
+{% endif %}
 SuccessExitStatus=143
 WorkingDirectory={{ root_folder }}/app/{{ microservice.name }}
 User=arkcase
