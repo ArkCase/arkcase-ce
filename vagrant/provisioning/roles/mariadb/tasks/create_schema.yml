@@ -3,11 +3,6 @@
     pkg_mysql_python: python3-mysql
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
-- name: MySQL python package name (RHEL 8.8)
-  set_fact:
-    pkg_mysql_python: pymysql
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
-
 - name: install MariaDB python library
   become: yes
   command: "{{ ansible_pip3 | default('pip3') }} install {{ pkg_mysql_python }}"
