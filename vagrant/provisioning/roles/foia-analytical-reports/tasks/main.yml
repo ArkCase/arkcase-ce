@@ -15,6 +15,29 @@
     etl_download_path: "{{ doj_reports_artifact_id }}{{ foia_analytical_reports_version_formatted }}.jar"
     reports_download_path: "{{ doj_reports_artifact_id }}{{ foia_analytical_reports_version_formatted }}-reports.zip"
 
+- name: Create DOJ backup folder with timestamp
+  set_fact:
+    doj_backup_folder_path: "{{ root_folder }}/install/pentaho/doj-backup-{{ ansible_date_time.iso8601 }}"
+ 
+- name: Create backup directory
+  become: true
+  file:
+    path: "{{ doj_backup_folder_path }}"
+    state: directory
+    owner: pentaho
+    group: pentaho
+    mode: '0755'
+ 
+- name: Backup existing DOJ files if present
+  become: true
+  command: mv "{{ item }}" "{{ doj_backup_folder_path }}/"
+  args:
+    removes: "{{ item }}"
+  loop:
+    - "{{ root_folder }}/install/pentaho/{{ etl_download_path }}"
+    - "{{ root_folder }}/install/pentaho/{{ reports_download_path }}"
+    - "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
+
 - name: Create install folder
   become: true
   become_user: pentaho

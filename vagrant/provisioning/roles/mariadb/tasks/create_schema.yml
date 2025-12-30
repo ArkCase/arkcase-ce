@@ -3,20 +3,16 @@
     pkg_mysql_python: python3-mysql
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
-- name: MySQL python package name (RHEL 8.8 and above)
+- name: MySQL python package name (RHEL 8.8)
   set_fact:
-    pkg_mysql_python: python3-PyMySQL
+    pkg_mysql_python: pymysql
   when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
 
 - name: install MariaDB python library
   become: yes
-  yum:
-    state: installed
-    disable_gpg_check: yes
-    name:
-      - "{{ pkg_mysql_python }}"
+  command: "{{ ansible_pip3 | default('pip3') }} install {{ pkg_mysql_python }}"
 
-- name: create {{ item }} MariaDB database when the database is running locally
+- name: create {{ item }} MariaDB database when the databae is running locally and (ansible>2.9)
   block:
     - name: create {{ item }} database
       become: yes
@@ -47,7 +43,7 @@
           SSL:
         priv: '{{ item }}.*:ALL'
         state: present
-  when: internal_host == database_host
+  when: ansible_version.full is version('2.10.0', '>=') and internal_host == database_host
 
 - name: create {{ item }} MariaDB database when the database is on another host and Ansible < 2.10.0
   block:

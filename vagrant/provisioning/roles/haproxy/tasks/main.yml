@@ -154,7 +154,7 @@
   become: true
   ansible.builtin.shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
 
-- name: ArkCase configuration
+- name: ArkCase configuration (microservices)
   become: true
   ansible.builtin.blockinfile:
     path: "{{ path_haproxy_cfg }}"
@@ -264,6 +264,140 @@
         http-request set-path %[path,regsub(^/config/,/)]
 
   register: arkcase_config
+  when: enable_microservices | default(false) | bool
+
+
+- name: ArkCase configuration (non-microservices default)
+  become: true
+  ansible.builtin.blockinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: true
+    block: |
+      frontend stats
+        bind *:8404
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats admin if LOCALHOST
+        stats auth admin:{{ default_user_password }}
+
+      frontend main
+        mode http
+        bind *:80
+
+        bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/haproxy.pem
+        redirect scheme https code 301 if !{ ssl_fc }
+
+        # for URLs that should not be called from outside,
+        # but only by services within our network.
+        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
+
+        acl acl_solr path_beg /solr
+        acl acl_pentaho path_beg /pentaho
+        acl acl_alfresco path_beg /alfresco
+        acl acl_share path_beg /share
+        acl acl_snowbound path_beg /VirtualViewerJavaHTML5
+        acl acl_arkcase path_beg /arkcase
+        acl acl_minio path_beg /api/minio
+        acl acl_oidc path_beg /api/oidc
+        acl acl_prc_dockets path_beg /api/prc-dockets
+        acl acl_config path_beg /config
+        acl acl_root path -i /
+
+        # redirections
+        redirect code 301 location /arkcase if acl_root
+
+        #arkcase.next services
+
+        # ensure internal sites only visible internally
+        http-request deny if acl_solr !only_arkcase_host
+        http-request deny if acl_config !only_arkcase_host
+
+        # backend uses
+        use_backend be_solr if acl_solr
+        use_backend be_pentaho if acl_pentaho
+        use_backend be_alfresco if acl_alfresco
+        use_backend be_share if acl_share
+        use_backend be_snowbound if acl_snowbound
+        use_backend be_arkcase if acl_arkcase
+        use_backend be_minio if acl_minio
+        use_backend be_oidc if acl_oidc
+        use_backend be_prc_dockets if acl_prc_dockets
+        use_backend be_config if acl_config
+
+      #backend servers
+      backend be_solr
+        http-response add-header X-Solr-Node %s
+        mode http
+        balance roundrobin
+        option tcp-check
+        server solr0 {{ solr_host }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_pentaho
+        http-response add-header X-Pentaho-Node %s
+        mode http
+        option tcp-check
+        server pentaho0 {{ pentaho_host }}:2002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_alfresco
+        http-response add-header X-Afresco-Node %s
+        mode http
+        option tcp-check
+        server alfresco0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_share
+        http-response add-header X-Share-Node %s
+        mode http
+        option tcp-check
+        server share0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_snowbound
+        http-response add-header X-Snowbound-Node %s
+        mode http
+        option tcp-check
+        server snowbound0 {{ snowbound_host }}:2005 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+      
+      backend be_arkcase
+        http-response add-header X-ArkCase-Node %s
+        mode http
+        option tcp-check
+        server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_minio
+        http-response add-header X-Minio-Node %s
+        mode http
+        option tcp-check
+        server minio0 {{ arkcase_host }}:9000
+        http-request set-path %[path,regsub(^/api/minio/,/)]
+
+      backend be_prc_dockets
+        http-response add-header X-PRC-Dockets-Node %s
+        mode http
+        option tcp-check
+        server prc_dockets0 {{ arkcase_host }}:9082
+      
+      backend be_api_gateway
+        http-response add-header X-API-Gateway-Node %s
+        mode http
+        option tcp-check
+        server api_gateway0 {{ arkcase_host }}:9002
+
+      backend be_oidc
+        http-response add-header X-OIDC-Node %s
+        mode http
+        option tcp-check
+        server oidc0 {{ arkcase_host }}:9100
+        http-request set-path %[path,regsub(^/api/oidc/,/)]
+
+      backend be_config
+        http-response add-header X-Config %s
+        mode http
+        option tcp-check
+        server config {{ arkcase_host }}:9999
+        http-request set-path %[path,regsub(^/config/,/)]
+
+  register: arkcase_config
+  when: not (enable_microservices | default(false) | bool)
 
 - name: microservice frontend
   become: yes
@@ -721,7 +855,7 @@
 
 # Confluent platform
 - name: Set up proxies to Confluent Platform services
-  when: enable_kafka is defined and enable_kafka == "yes"
+  when: enable_kafka is defined and enable_kafka == "yes" and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
@@ -808,7 +942,7 @@
 
 
 - name: Set up proxies to Zipkin
-  when: enable_zipkin is defined and enable_zipkin == 'yes'
+  when: enable_zipkin is defined and enable_zipkin == 'yes' and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
@@ -861,7 +995,7 @@
 
 
 - name: Set up proxies to Eureka
-  when: enable_eureka is defined and enable_eureka == 'yes'
+  when: enable_eureka is defined and enable_eureka == 'yes' and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
