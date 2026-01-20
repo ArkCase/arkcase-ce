@@ -170,6 +170,9 @@
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
       tags: [foia-analytical-reports, foia]
+    - role: raw-data-report
+      when: raw_data_etl_report_version is defined
+      tags: [raw-data-report]
     - role: tesseract
       tags: [core, arkcase, tesseract, marketplace]
     - role: firewall
