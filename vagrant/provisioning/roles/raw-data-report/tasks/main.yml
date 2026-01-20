@@ -50,7 +50,7 @@
   become: yes
   command: "{{ ansible_pip3 | default('pip3') }} install lxml"
 
-- name: Download Raw Data report ETL job repository
+- name: Download Raw Data report JAR
   become: yes
   become_user: pentaho-pdi
   maven_artifact:
@@ -62,17 +62,13 @@
     dest: "{{ root_folder }}/install/pentaho-pdi"
     keep_name: true
 
-- name: Download Raw Data report repository
+- name: Copy Raw Data JAR to reports folder as ZIP
   become: yes
   become_user: pentaho-pdi
-  maven_artifact:
-    repository_url: "{{ maven_repository_url }}/{{ raw_data_report_repository_id }}/"
-    group_id: "{{ raw_data_report_group_id }}"
-    artifact_id: "{{ raw_data_report_artifact_id }}"
-    version: "{{ raw_data_etl_report_version }}"
-    extension: jar
+  copy:
+    src: "{{ root_folder }}/install/pentaho-pdi/{{ etl_download_path }}"
     dest: "{{ root_folder }}/install/pentaho-pdi/{{ reports_download_path }}"
-    keep_name: true
+    remote_src: true
 
 - name: Unzip ETL repository
   become: true
