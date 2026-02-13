@@ -1,13 +1,11 @@
 - name: Install Tomcat for {{ tc.service }}
   block:
-    - name: install prerequisites to build native library
+    - name: install build tools
       become: yes
-      yum:
-        state: present
-        name: 
-          - "@Development Tools"
-          - openssl-devel
-          - apr-devel
+      command: dnf -y groupinstall "Development Tools"
+    - name: install other tools needed to build tomcat native
+      become: yes
+      command: dnf -y install openssl-devel apr-devel
     - name: see if Tomcat already installed
       become: yes
       stat:
