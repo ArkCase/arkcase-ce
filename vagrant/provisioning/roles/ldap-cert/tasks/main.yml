@@ -1,0 +1,32 @@
+- name: Install cryptography
+  become: true
+  command: pip{{ python_version }} install cryptography --upgrade
+
+- name: read LDAP server cert
+  community.crypto.get_certificate:
+    host: "{{ ldap_host }}"
+    port: "{{ ldap_port }}"
+    get_certificate_chain: true
+    asn1_base64: true
+  register: ldap_server_cert
+
+- name: write LDAP server cert to trusted cert store
+  become: yes
+  copy:
+    dest: /etc/pki/ca-trust/source/ldap_server_cert.pem
+    content: "{{ ldap_server_cert.verified_chain | last }}"
+    backup: true
+    force: yes
+  register: ldap_server_cert_pem
+
+- name: update trusted certs
+  become: yes
+  command: update-ca-trust
+  when: ldap_server_cert_pem is changed
+
+# it seems `update-ca-trust` does not properly update the 
+# Java key store for some reason.
+- name: add LDAP server cert to Java key store
+  become: yes
+  command: keytool -import -keystore /etc/pki/ca-trust/extracted/java/cacerts -storepass {{ java_trust_store_pass }}  -alias ldap_server_ca -file /etc/pki/ca-trust/source/ldap_server_cert.pem
+  when: ldap_server_cert_pem is changed
