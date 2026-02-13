@@ -15,6 +15,22 @@
 - name: Set portal version formated
   set_fact:
     portal_version_formatted: "{{ '-' ~ portal_version if portal_version != '' else '' }}"
+
+- name: Check if html2pdf_chromium.so exists
+  ansible.builtin.stat:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries/html2pdf_chromium.so"
+  register: html2pdf_exists
+
+- name: Set permissions to 755 on html2pdf_chromium.so
+  become: yes
+  become_user: arkcase
+  ansible.builtin.file:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries/html2pdf_chromium.so"
+    mode: '0755'
+    owner: arkcase
+    group: arkcase
+  when: html2pdf_exists.stat.exists
+
     
 ### External UI portal
 
@@ -35,7 +51,7 @@
 - name: download foia UI portal 
   become: yes
   become_user: apache
-  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/external-web-portal-ui{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip
   args:
     chdir: "{{ root_folder }}/tmp/httpd"
   environment:
@@ -48,8 +64,8 @@
   become_user: apache
   copy:
     remote_src: yes
-    src: "{{ root_folder }}/tmp/httpd/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
-    dest: "{{ root_folder }}/install/httpd/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
+    src: "{{ root_folder }}/tmp/httpd/external-web-portal-ui{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
+    dest: "{{ root_folder }}/install/httpd/external-web-portal-ui{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
   register: foia_zip
 
 - name: see if foia web folder exists
@@ -77,7 +93,7 @@
   become_user: apache
   unarchive:
     remote_src: yes
-    src: "{{ root_folder }}/install/httpd/foia{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
+    src: "{{ root_folder }}/install/httpd/external-web-portal-ui{{ foia_extension_formatted }}{{ portal_version_formatted }}.zip"
     dest: "{{ root_folder }}/data/httpd/htdocs/{{ foia_portal_context }}/"
   when: foia_zip is changed
 
@@ -190,7 +206,7 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   loop:
-    - src: "{{ java_p12_store_jdk8 }}"
+    - src: "{{ java_key_store }}"
       dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ks"
     - src: "{{ java_trust_store }}"
       dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ts"
