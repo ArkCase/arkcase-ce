@@ -1,0 +1,28 @@
+# for this role to work on RHEL8-based hosts 
+# (RHEL 8, Rocky 8, AlmaLinux 8 etc) you may need 
+# to upgrade Ansible.  But this higher version of 
+# Ansible may in turns break other role.  So you 
+# may need to upgrade Ansible to run this role, 
+# and downgrade it after:
+#
+# pip3.12 install ansible --upgrade
+# ... run this role...
+# pip3.12 install ansible==9.13.0
+
+- include_tasks: server_cert.yml
+  args:
+    apply:
+      vars:
+        sc:
+          role: "LDAP"
+          host: "{{ ldap_host }}"
+          port: "{{ ldap_port }}"
+
+- include_tasks: server_cert.yml
+  args:
+    apply:
+      vars:
+        sc:
+          role: "SAML"
+          host: "{{ saml_federation_host }}"
+          port: "443"

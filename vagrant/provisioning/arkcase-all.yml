@@ -17,8 +17,8 @@
     - role: ldap-portal
       tags: [ldap-portal]
       when: ldap_portal_url is defined
-    - role: ldap-cert
-      tags: [ldap-cert]
+    - role: server-cert
+      tags: [server-cert]
     - role: mongodb
       tags: [microservices, mongodb]
       when: enable_mongo | default(false)

@@ -355,6 +355,11 @@
     path: "{{ root_folder }}/app/alfresco7"
   register: alfresco7_path
 
+- name: check for the old Alfresco folder
+  stat:
+    path: "{{ root_folder }}/app/alfresco"
+  register: alfresco_path
+
 - name: check for Solr service file
   stat:
     path: /etc/systemd/system/solr.service
@@ -368,7 +373,7 @@
     samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
     solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host and service_file_solr.stat.exists == True else '' }}"
     alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
-    alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
+    alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco_path.stat.exists == True else '' }}"
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:

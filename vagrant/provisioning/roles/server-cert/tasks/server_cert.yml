@@ -1,0 +1,30 @@
+- name: Install cryptography
+  become: true
+  command: pip{{ python_version }} install cryptography --upgrade
+
+- name: read {{ sc.role }}  server cert
+  community.crypto.get_certificate:
+    host: "{{ sc.host }}"
+    port: "{{ sc.port }}"
+    get_certificate_chain: true
+    asn1_base64: true
+  register: server_cert
+
+- name: write {{ sc.role }} server cert to trusted cert store
+  become: yes
+  copy:
+    dest: /etc/pki/ca-trust/source/anchors/{{ sc.role | lower }}_server_cert.pem
+    content: "{{ server_cert.verified_chain | last }}"
+    backup: true
+    force: yes
+  register: server_cert_pem
+
+- name: update trusted certs
+  become: yes
+  command: update-ca-trust
+  when: server_cert_pem is changed
+
+- name: add {{ sc.role }} server cert to Java key store
+  become: yes
+  command: keytool -import -noprompt -keystore {{ java_key_store }} -storepass {{ java_key_store_pass }}  -alias {{ sc.role | lower }}_server_ca -file /etc/pki/ca-trust/source/{{ sc.role | lower }}_server_cert.pem
+  when: server_cert_pem is changed
