@@ -41,6 +41,7 @@
       become: yes
       mysql_db:
         login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user }}"
         login_password: "{{ database_root_password }}"
         name: "{{ item }}"
         encoding: utf8
@@ -49,6 +50,7 @@
       become: yes
       mysql_user:
         login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user }}"
         login_password: "{{ database_root_password }}"
         host: "%"
         name: "{{ item }}"
@@ -60,6 +62,7 @@
       become: yes
       mysql_user:
         login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user }}"
         login_password: "{{ database_root_password }}"
         host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
         name: "{{ item }}"
@@ -75,6 +78,7 @@
       become: yes
       mysql_db:
         login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user }}"
         login_password: "{{ database_root_password }}"
         name: "{{ item }}"
         encoding: utf8
@@ -84,6 +88,7 @@
       become: yes
       mysql_user:
         login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user }}"
         login_password: "{{ database_root_password }}"
         host: "%"
         name: "{{ item }}"
@@ -98,6 +103,7 @@
       become: yes
       mysql_user:
         login_host: "{{ database_host_name }}"
+        login_user: "{{ database_root_user }}"
         login_password: "{{ database_root_password }}"
         host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
         name: "{{ item }}"
