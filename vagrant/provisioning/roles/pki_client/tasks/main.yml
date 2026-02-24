@@ -73,13 +73,13 @@
 - name: generate FIPS key store
   become: yes
   command: keytool -importkeystore -srckeystore {{ java_p12_store_jdk8 }} -srcstoretype PKCS12 -srcstorepass {{ java_key_store_pass }} -destkeystore {{ java_fips_store }} -deststorepass {{ java_key_store_pass }} -deststoretype BCFKS -providername BCFIPS -provider org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider -providerpath {{ root_folder }}/common/bc-fips-{{ bc_fips_version | default("1.0.2.3") }}.jar -J-Dcom.redhat.fips=false
-  when: not arkcase_fips_stat.stat.exists
+  when: not arkcase_fips_stat.stat.exists and (deploy_bc_fips_jar | default(false))
 
 - name: ensure shared permissions on different TLS artifacts
   become: yes
-  file:
-    path: "{{ item }}"
-    mode: 0644
+  command: chmod 0644 "{{ item }}"
+  register: chmod_result
+  failed_when: chmod_result.rc != 0 and chmod_result.rc != 1
   loop:
    - "{{ java_p12_store }}"
    - "{{ java_p12_store_jdk8 }}"

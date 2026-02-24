@@ -2,23 +2,23 @@
   ansible.builtin.debug:
     msg: "{{ item }}"
   with_items:
-    - "{{ ansible_distribution }}"
-    - "{{ ansible_distribution_version }}"
-    - "{{ ansible_distribution_major_version }}"
+    - "{{ ansible_facts['distribution'] }}"
+    - "{{ ansible_facts['distribution_version'] }}"
+    - "{{ ansible_facts['distribution_major_version'] }}"
 
 - name: Set package names if we are on RHEL 8
   ansible.builtin.set_fact:
     pkg_policycoreutils: "policycoreutils-python-utils"
     pkg_python_setuptools: "python3-setuptools"
     pkg_python_cryptography: "python3-cryptography"
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: Set package names if we are on CentOS 7
   ansible.builtin.set_fact:
     pkg_policycoreutils: "policycoreutils-python"
     pkg_python_setuptools: "python-setuptools"
     pkg_python_cryptography: "python-cryptography"
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: List OS dependent package names
   ansible.builtin.debug:
@@ -26,45 +26,12 @@
 
 - name: Install epel (needed first)
   become: true
-  ansible.builtin.yum:
-    state: installed
-    name:
-      - epel-release
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
-
-# At least on CentOS 7, we need to remove python3-pip, to get a clean
-# install of python3-pip in the next task, which will actually create
-# /usr/bin/pip3.
-- name: Remove pip2 that might come up along OS
-  become: true
-  ansible.builtin.yum:
-    state: absent
-    name:
-      - python-pip
-      - python3-pip
+  command: yum install -y epel-release
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: Install required packages
   become: true
-  ansible.builtin.yum:
-    state: installed
-    name:
-      - java-11-openjdk
-      - java-11-openjdk-devel
-      - java-1.8.0-openjdk
-      - java-1.8.0-openjdk-devel
-      - "{{ pkg_policycoreutils }}"
-      - zip
-      - unzip
-      - git
-      - net-tools
-      - "@Development Tools"
-      - bzip2
-      - tar
-      - wget
-      - sshpass
-      - python3
-      - "{{ pkg_python_setuptools }}"
-      - "{{ pkg_python_cryptography }}"
+  command: yum -y install java-11-openjdk java-11-openjdk-devel java-1.8.0-openjdk java-1.8.0-openjdk-devel "{{ pkg_policycoreutils }}" zip unzip git net-tools "@Development Tools" bzip2 tar wget sshpass python3 "{{ pkg_python_setuptools }}" "{{ pkg_python_cryptography }}"
 
 - name: Update pip
   become: true
@@ -72,17 +39,12 @@
 
 - name: Install firewalld
   become: true
-  ansible.builtin.yum:
-    state: installed
-    name: firewalld
+  command: yum -y install firewalld
   when: enable_firewall is undefined or enable_firewall
 
 - name: Remove python2-passlib since it breaks solr password setting
   become: true
-  ansible.builtin.yum:
-    state: absent
-    name:
-      - python2-passlib
+  command: yum -y remove python2-passlib
 
 - name: Folder structure for app, data and logs
   become: true
@@ -120,7 +82,7 @@
     line: "{{ item }}"
   loop:
     - "{{ arkcase_host_address | default('127.0.0.1') }} arkcase-host"
-    - "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }} {{ internal_host }}"
+    - "{{ ansible_facts['default_ipv4.address'] | default(ansible_facts['all_ipv4_addresses'][0]) }} {{ internal_host }}"
   # Don't try to modify the `/etc/hosts` file when running inside
   # Docker, this is not possible. Instead, use `--add-host` on the
   # `docker run` command line.
