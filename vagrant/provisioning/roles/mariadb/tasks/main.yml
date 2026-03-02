@@ -205,8 +205,7 @@
 
 - name: initialize database structures if needed
   become: yes
-  become_user: mysql
-  command: mysql_install_db
+  command: mysql_install_db --defaults-file=/etc/my.cnf.d/server.cnf --user=mysql
   args:
     chdir: "{{ mariadb_data_folder }}"
     creates: "{{ mariadb_data_folder }}/mysql/"
