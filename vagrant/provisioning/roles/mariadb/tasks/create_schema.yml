@@ -22,17 +22,6 @@
           SSL:
         priv: '{{ item }}.*:ALL'
         state: present 
-    - name: create {{ item }} MySQL user (IP address)
-      become: yes
-      mysql_user:
-        login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
-        host: "127.0.0.1"
-        name: "{{ item }}"
-        password: "{{ default_database_password }}" 
-        tls_requires:
-          SSL:
-        priv: '{{ item }}.*:ALL'
-        state: present
   when: internal_host == database_host
 
 - name: create {{ item }} MariaDB database when the database is on another host and Ansible < 2.10.0

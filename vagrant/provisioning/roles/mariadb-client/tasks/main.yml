@@ -60,6 +60,19 @@
       owner: "root"
       url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 
+- name: ensure root user can login via tcp when database is local
+  become: yes
+  mysql_user:
+    login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
+    host: "{{ internal_host_ip | default(ansible_facts['default_ipv4.address'] | default(ansible_facts['all_ipv4_addresses'][0])) }}"
+    name: "root"
+    password: "{{ database_root_password }}"
+    tls_requires:
+      SSL:
+    priv: '*.*:ALL'
+    state: present
+  when: internal_host == database_host
+
 - name: create database schemas
   include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
   loop:
