@@ -3,14 +3,14 @@
     pkg_haproxy: haproxy
     path_haproxy_cfg: "/etc/haproxy/haproxy.cfg"
     path_stats_socket: "/var/lib/haproxy/stats"
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: Set haproxy facts CentOS 7
   ansible.builtin.set_fact:
     pkg_haproxy: "rh-haproxy18-haproxy"
     path_haproxy_cfg: "/etc/opt/rh/rh-haproxy18/haproxy/haproxy.cfg"
     path_stats_socket: "/var/opt/rh/rh-haproxy18/lib/haproxy/stats"
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: See if firewalld is running
   become: true
@@ -37,23 +37,17 @@
 
 - name: Install epel-release
   become: true
-  ansible.builtin.yum:
-    name: epel-release
-    state: present
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  command: yum -y install epel-release
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: Install software collections
   become: true
-  ansible.builtin.yum:
-    name: centos-release-scl
-    state: present
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  command: yum -y install centos-release-scl
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: Install haproxy 1.8
   become: true
-  ansible.builtin.yum:
-    name: "{{ pkg_haproxy }}"
-    state: present
+  command: yum -y install "{{ pkg_haproxy }}"
 
 - name: Haproxy folders
   become: true
@@ -199,7 +193,7 @@
 
         # for URLs that should not be called from outside,
         # but only by services within our network.
-        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
+        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_facts["default_ipv4.address"] | default(ansible_facts["all_ipv4_addresses"][0])) }}
 
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho

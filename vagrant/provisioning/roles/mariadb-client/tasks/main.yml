@@ -15,7 +15,7 @@
       # gpgkey = https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgkey = https://mirror.rackspace.com/mariadb/yum/RPM-GPG-KEY-MariaDB
       gpgcheck = 1
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: configure MariaDB v10 repository (RHEL 8)
   become: yes
@@ -29,40 +29,25 @@
       module_hotfixes = 1
       gpgkey= https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: install MariaDB packages (CentOS 7)
   become: yes
-  yum:
-    state: installed
-    disable_gpg_check: yes
-    name:
-      - MariaDB-client
+  command: yum -y --nogpgcheck install MariaDB-client
   register: mariadb_install
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: install MariaDB packages (RHEL 8)
   become: yes
-  yum:
-    state: installed
-    disable_gpg_check: yes
-    enablerepo: mariadb
-    disablerepo: rhel-8-for-x86_64-appstream-rpms
-    name:
-      - MariaDB-client
+  command: yum -y --nogpgcheck --enablerepo mariadb --disablerepo rhel-8-for-x86_64-appstream-rpms install MariaDB-client
   register: mariadb_install
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "RedHat" and ansible_facts["distribution_major_version"] == "8"
 
 - name: install MariaDB packages (Rocky 8)
   become: yes
-  yum:
-    state: installed
-    enablerepo: mariadb
-    disablerepo: AppStream
-    name:
-      - MariaDB-client
+  command: yum -y --enablerepo mariadb --disablerepo AppStream install MariaDB-client
   register: mariadb_install
-  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
 - name: Install MariaDB python library
   become: true
@@ -84,5 +69,3 @@
     - "{{ database_pentaho_hibernate_user | default('hibuser') }}"
     - "{{ database_pentaho_jackrabbit_user | default('jcr_user') }}"
     - "{{ database_pentaho_quartz_user | default('pentaho_user') }}"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
