@@ -9,6 +9,6 @@
 - name: Reload firewalld
   become: yes
   command: firewall-cmd --reload
-  when: solr_port_fw
+  when: solr_port_fw is changed
   
 

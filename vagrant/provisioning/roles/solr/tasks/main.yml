@@ -5,10 +5,7 @@
 
 - name: solr required packages
   become: yes
-  yum:
-    state: present
-    name:
-      - lsof
+  command: yum -y install lsof
 
 - name: Ensure group solr exists
   become: yes
