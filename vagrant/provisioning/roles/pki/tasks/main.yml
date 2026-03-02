@@ -65,6 +65,19 @@
   when: root_csr is changed
   register: root_cert
 
+- name: copy root CA cert to os trust store
+  become: yes
+  copy: 
+    remote_src: true 
+    src: "/etc/tls/ca/arkcase-root.crt" 
+    dest: "/etc/pki/ca-trust/source/anchors/arkcase-root.crt"
+  register: root_ca_copied
+
+- name: update os trust store if needed
+  become: yes
+  command: update-ca-trust extract
+  when: root_ca_copied is changed
+
 - name: generate intermediate private key
   become: yes
   openssl_privatekey:
