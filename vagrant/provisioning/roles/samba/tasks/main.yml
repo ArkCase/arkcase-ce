@@ -129,10 +129,21 @@
   loop:
     - path: "{{ ssl_key }}"
       name: arkcase-server.pem
-    - path: "{{ ssl_cert }}"
-      name: arkcase-server.crt
     - path: "{{ ssl_ca }}"
       name: arkcase-chain.crt
+
+# the server cert needs the whole chain
+- name: create server chain cert
+  become: yes
+  shell: cat {{ ssl_cert }} /etc/tls/crt/arkcase-intermediate.crt /etc/tls/ca/arkcase-root.crt | tee {{ root_folder }}/app/samba/private/arkcase-server.crt
+  args:
+    creates: "{{ root_folder }}/app/samba/private/arkcase-server.crt"
+
+- name: set mode for server chain cert
+  become: yes
+  file: 
+    path: "{{ root_folder }}/app/samba/private/arkcase-server.crt"
+    mode: 0600
 
 - name: set TLS propertes
   become: yes
