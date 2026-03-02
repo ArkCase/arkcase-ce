@@ -81,29 +81,29 @@
    
 # dnf install python3-pyasn1 python3-markdown
  
-      #- name: configure Samba, this will take 5 - 10 minutes
-      #  become: yes
-      #  command: ./configure --enable-debug --enable-selftest --with-ads --with-systemd --with-winbind --with-shared-modules='!vfs_snapper' --prefix={{ root_folder }}/app/samba --datarootdir={{ root_folder }}/data/samba --with-logdir={{ root_folder }}/log/samba --localstatedir={{ root_folder }}/data/samba  --libdir={{ root_folder }}/app/samba/lib
-      #  args:
-      #    chdir: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}"
-      #    creates: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}/.lock-wscript"
-      #  register: samba_configured
-      #
-      #- name: build Samba, this will take 10 - 20 minutes
-      #  become: yes
-      #  command: make
-      #  args:
-      #    chdir: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}"
-      #  when: samba_configured is changed
-      #  register: samba_build
-      #
-      #- name: install Samba
-      #  become: yes
-      #  command: make install
-      #  args:
-      #    chdir: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}"
-      #  register: samba_install
-      #  when: samba_build is changed
+- name: configure Samba, this will take 5 - 10 minutes
+  become: yes
+  command: ./configure --enable-debug --enable-selftest --with-ads --with-systemd --with-winbind --with-shared-modules='!vfs_snapper' --prefix={{ root_folder }}/app/samba --datarootdir={{ root_folder }}/data/samba --with-logdir={{ root_folder }}/log/samba --localstatedir={{ root_folder }}/data/samba  --libdir={{ root_folder }}/app/samba/lib
+  args:
+    chdir: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}"
+    creates: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}/.lock-wscript"
+  register: samba_configured
+
+- name: build Samba, this will take 10 - 20 minutes
+  become: yes
+  command: make
+  args:
+    chdir: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}"
+  when: samba_configured is changed
+  register: samba_build
+
+- name: install Samba
+  become: yes
+  command: make install
+  args:
+    chdir: "{{ root_folder }}/install/samba/samba-{{ samba_version }}/samba-{{ samba_version }}"
+  register: samba_install
+  when: samba_build is changed
 
 - name: provision {{ samba_domain }} domain
   become: yes
