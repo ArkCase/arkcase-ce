@@ -1,28 +1,14 @@
-- name: Python LDAP package (RHEL 8)
-  ansible.builtin.set_fact:
-    pkg_python_ldap: python3-ldap
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
-
-- name: Python LDAP package (CentOS 7)
-  ansible.builtin.set_fact:
-    pkg_python_ldap: python-ldap
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
-
 - name: LDAP required packages
   become: true
-  ansible.builtin.yum:
-    state: installed
-    name:
-      - openldap-clients
-      - "{{ pkg_python_ldap }}"
+  command: yum install -y openldap-clients python{{ python_version }}-devel
 
-- name: Install cryptography
+- name: required python packages 
   become: true
   ansible.builtin.pip:
-    executable: pip3
-    name: cryptography
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+    executable: "{{ pip_executable }}"
+    name: 
+    - cryptography
+    - python-ldap
 
 - name: read LDAP server cert
   community.crypto.get_certificate:
@@ -58,8 +44,6 @@
     attributes:
       description: "{{ item }}"
   loop: "{{ ldap_ancestor_ous }}"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Add arkcase organizational units
   become: true
@@ -77,8 +61,6 @@
   loop:
     - "{{ ldap_group_base }}"
     - "{{ ldap_user_base }}"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Add portal organizational units
   become: true
@@ -97,8 +79,6 @@
     - "{{ ldap_portal_group_no_base }},{{ ldap_base }}"
     - "{{ ldap_portal_user_no_base }},{{ ldap_base }}"
   when: foia_portal_context is defined
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Add core portal organizational units
   become: true
@@ -134,8 +114,6 @@
       samAccountName: "{{ item.name }}"
       cn: "{{ item.name }}"
   loop: "{{ ldap_groups | flatten }}"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Remove portal group from ArkCase OU if exists
   become: true
@@ -155,8 +133,6 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_portal_groups | flatten }}"
   when: foia_portal_context is defined
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Add portal groups
   become: true
@@ -175,8 +151,6 @@
       cn: "{{ item.name }}"
   loop: "{{ ldap_portal_groups | flatten }}"
   when: foia_portal_context is defined
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Add Core portal groups
   become: true
@@ -201,8 +175,6 @@
   loop: "{{ ldap_users }}"
   loop_control:
     loop_var: u
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
 
 - name: Make sure Samba passwords never expire
   become: true
