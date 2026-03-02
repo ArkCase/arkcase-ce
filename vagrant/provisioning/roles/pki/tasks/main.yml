@@ -1,8 +1,16 @@
+- name: install packaging
+  become: yes
+  pip:
+    executable: "{{ pip_executable }}"
+    name: 
+    - packaging
+
 - name: install cryptography
   become: yes
   pip:
-    executable: pip3
-    name: cryptography
+    executable: "{{ pip_executable }}"
+    name: 
+    - cryptography
 
 - name: create pki folder structure
   become: yes
