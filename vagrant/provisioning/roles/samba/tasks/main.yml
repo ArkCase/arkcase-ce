@@ -35,91 +35,33 @@
 
 - name: install upstream repository (CentOS 7)
   become: yes
-  yum:
-    state: present
-    disable_gpg_check: yes
-    name: https://repo.ius.io/ius-release-el7.rpm
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  command: yum --nogpgcheck -y install https://repo.ius.io/ius-release-el7.rpm
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: install subscription-manager on Rocky8
   become: yes
-  yum:
-    name: subscription-manager
-    state: present
-  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+  command: yum -y install subscription-manager
+  when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
 - name: install upstream repository (RHEL 8)
   become: yes
   command: subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "RedHat" and ansible_facts["distribution_major_version"] == "8"
 
 - name: Samba and LDAP required packages (CentOS 7)
   become: yes
-  yum:
-    state: installed
-    name: 
-      - lmdb
-      - lmdb-devel
-      - gpgme-devel
-      - jansson-devel
-      - libarchive-devel
-      - python-devel
-      - gnutls-devel
-      - libacl-devel
-      - openldap-devel
-      - openldap-clients
-      - pam-devel
-      - python-ldap
-      - python-firewall
-      - python36u
-      - python36u-devel
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  command: yum -y install lmdb lmdb-devel gpgme-devel jansson-devel libarchive-devel python-devel gnutls-devel libacl-devel openldap-devel openldap-clients pam-devel python-ldap python-firewall python36u python36u-devel 
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
-# add this command: yum --enablerepo=powertools install gpgme-devel libarchive-devel lmdb-devel rpcgen
 - name: install specified packages 
   become: yes
   command: yum --enablerepo=powertools install gpgme-devel libarchive-devel lmdb-devel rpcgen -y
-  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
 - name: Samba and LDAP required packages (RHEL 8)
   become: yes
-  yum:
-    state: installed
-    name:
-      - docbook-style-xsl 
-      - gcc 
-      - gdb 
-      - gnutls-devel 
-      - gpgme-devel
-      - jansson-devel
-      - keyutils-libs-devel 
-      - krb5-workstation 
-      - libacl-devel 
-      - libaio-devel 
-      - libarchive-devel
-      - libattr-devel 
-      - libblkid-devel 
-      - libtasn1 
-      - libtasn1-tools 
-      - libxml2-devel 
-      - libxslt 
-      - lmdb-devel
-      - openldap-devel 
-      - pam-devel 
-      - perl 
-      - perl-ExtUtils-MakeMaker 
-      - perl-Parse-Yapp 
-      - popt-devel 
-      - python3-cryptography
-      - python3-dns 
-      - python3-gpg 
-      - python36-devel 
-      - readline-devel 
-      - rpcgen
-      - systemd-devel 
-      - tar 
-      - zlib-devel
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+  command: yum -y install docbook-style-xsl gcc gdb gnutls-devel gpgme-devel jansson-devel keyutils-libs-devel krb5-workstation libacl-devel libaio-devel libarchive-devel libattr-devel libblkid-devel libtasn1 libtasn1-tools libxml2-devel libxslt lmdb-devel openldap-devel pam-devel perl perl-ExtUtils-MakeMaker perl-Parse-Yapp popt-devel python3-cryptography python3-dns python3-gpg python36-devel readline-devel rpcgen systemd-devel tar zlib-devel
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: link python3 executable
   become: yes
@@ -127,13 +69,15 @@
     src: /usr/bin/python3.6
     path: /usr/bin/python3
     state: link
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: install Python packages
   become: yes
   pip:
-    executable: pip3
-    name: python-config
+    executable: "{{ pip_executable }}"
+    name: 
+    - python-config
+    - firewall
     
 - name: configure Samba, this will take 5 - 10 minutes
   become: yes
@@ -229,11 +173,7 @@
 
 - name: open Samba TLS port in firewall
   become: yes
-  firewalld:
-    zone: public
-    port: 636/tcp
-    permanent: yes
-    state: enabled
+  command: firewall-cmd --add-port 636/tcp --zone public --permanent
   register: samba_firewall
   when: enable_firewall is undefined or enable_firewall
 
