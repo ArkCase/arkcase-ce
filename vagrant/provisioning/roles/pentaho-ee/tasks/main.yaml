@@ -1,9 +1,6 @@
 - name: install expect
   become: yes
-  yum:
-    state: installed
-    name:
-      - expect
+  command: yum install -y expect
 
 - name: download Pentaho EE artifacts
   become: yes
