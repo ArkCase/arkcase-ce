@@ -67,8 +67,6 @@
       vars:
         item: arkcase
   when: db_engine | default('mariadb') == "mariadb"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 }}"
 
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -78,39 +76,15 @@
       owner: root
       url: https://dl.yarnpkg.com/rpm/yarn.repo
 
+- name: required packages to run ArkCase webapp
+  become: yes
+  command: yum install -y npm nodejs
+
 - name: Get yarn version
   become: yes
   shell: "yarn -v"
   register: yarn_version
   ignore_errors: yes
-
-- name: get node_version
-  become: yes
-  shell: "node -v"
-  register: node_version
-  ignore_errors: yes
-
-- name: get npm version
-  become: yes
-  shell: "npm -v"
-  register: npm_version
-  ignore_errors: yes
-
-- name: required packages (npm) to run ArkCase webapp
-  become: yes
-  yum:
-    state: present
-    name:
-      - npm
-  when: npm_version.stdout == ""
-
-- name: required packages (node) to run ArkCase webapp
-  become: yes
-  yum:
-    state: present
-    name:
-      - nodejs
-  when: node_version.stdout == ""
 
 # need to download the yarn package, then install with RPM,
 # due to it not being packaged right for FIPS mode
@@ -126,8 +100,8 @@
 
 - name: install python2 (needed on RHEL8)
   become: yes
-  command: yum install python2
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+  command: yum install -y python2
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: install the npm module 'husky' which seems required by some ArkCase versions
   become: yes
