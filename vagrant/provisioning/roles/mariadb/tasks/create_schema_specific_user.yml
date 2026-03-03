@@ -1,3 +1,9 @@
+- name: ensure Python MySQL library is installed
+  become: yes
+  ansible.builtin.pip:
+    executable: "{{ pip_executable }}"
+    name: PyMySQL
+
 - name: create {{ s.schema }} database (empty schema)
   become: yes
   mysql_db:
