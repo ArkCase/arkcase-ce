@@ -92,7 +92,6 @@
             port="2002"
             maxThreads="150"
             SSLEnabled="true"
-            SSLCertificateFile="{{ java_pem_store }}"
             secure="true"
             scheme="https"
             address="0.0.0.0"
@@ -100,7 +99,6 @@
             maxHttpHeaderSize="32768"
             connectionTimeout="40000"
             useBodyEncodingForURI="true"
-            clientAuth="false"
             hostName="{{ internal_host }}"
             proxyName="{{ external_host }}"
             proxyPort="443"> 
@@ -108,7 +106,6 @@
 	    <SSLHostConfig
               honorCipherOrder="true"
               ciphers="HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!kRSA"
-              hostName="{{ internal_host }}"
               caCertificateFile="{{ ssl_ca }}"
               protocols="{{ ssl_version }}">
               <Certificate
