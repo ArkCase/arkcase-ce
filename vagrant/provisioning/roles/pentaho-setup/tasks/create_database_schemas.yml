@@ -1,9 +1,9 @@
 - name: copy quartz DDL
   become: yes
-  become_user: pentaho
   copy:
     src: "quartz-create-db.sql"
     dest: "{{ root_folder }}/install/pentaho/"
+    owner: "pentaho"
   when: db_engine == 'mariadb'
     
 - name: create hibernate schema (ansible will always report quartz as changed)
