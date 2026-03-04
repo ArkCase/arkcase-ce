@@ -1299,9 +1299,10 @@
 - name: register if pdftron license key is added
   become: yes
   become_user: arkcase
-  command: grep -Fxq {{ pdftron_license_key }} /home/arkcase/.arkcase/acm/licenses/pdfnet_sdk_license.txt
+  command: grep -Fxq "{{ pdftron_license_key }}" /home/arkcase/.arkcase/acm/licenses/pdfnet_sdk_license.txt
   register: license_key
   when: pdftron_license_key is defined and pdf_net_license_file.stat.exists
+  failed_when: license_key.rc not in [0,1]
 
 - name: add pdfTron license if defined
   become: yes
