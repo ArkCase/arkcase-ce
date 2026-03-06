@@ -1,36 +1,44 @@
+- name: Check if MongoDB root user siteRootAdmin exists
+  command: >-
+    mongo admin --eval "db.getUser('arkcase')"
+  register: mongodb_siteRootAdmin
+- debug: msg="{{mongodb_siteRootAdmin.stdout}}"
+
 - name: Create MongoDB root user siteRootAdmin
-  mongodb_user:
-    login_host: "{{ internal_host }}"
-    login_port: "{{ mongodb_port | default(27017) }}"
-    database: "admin"
-    name: arkcase
-    password: '{{ default_user_password }}'
-    roles: "root"
-    ssl: yes
+  when: mongodb_siteRootAdmin.stdout.find('userId') == -1
+  command: >-
+    mongo admin --eval "db.createUser({user: 'arkcase', pwd: '{{ default_user_password }}', roles: [{ role: 'root', db: 'admin' }]})"
+
+# Unsure if we need to trigger an update if the user already exists
+#- name: Update existing MongoDB root user siteRootAdmin
+#  when: mongodb_siteRootAdmin.stdout.find('userId') != -1
+#  command: >-
+#    mongo admin --eval "db.updateUser('arkcase', {pwd: '{{ default_user_password }}', roles: [{ role: 'root', db: 'admin' }]})"
+
+- name: Check if MongoDB administrative user siteUserAdmin exists
+  command: >-
+    mongo admin --eval "db.getUser('{{ microservice_mongodb_username }}')"
+  register: mongodb_siteUserAdmin
+- debug: msg="{{mongodb_siteUserAdmin.stdout}}"
 
 - name: Create MongoDB administrative user siteUserAdmin
-  mongodb_user:
-    login_host: "{{ internal_host }}"
-    login_user: arkcase
-    login_password: '{{ default_user_password }}'
-    login_port: "{{ mongodb_port | default(27017) }}"
-    database: "{{ microservice_mongodb_database }}"
-    name: "{{ microservice_mongodb_username }}"
-    password: '{{ microservice_mongodb_password }}'
-    roles:
-      - { db: "admin", role: "readWrite" }
-      - { db: "{{ microservice_mongodb_database }}", role: "readWrite" }
-    ssl: yes
+  when: mongodb_siteUserAdmin.stdout.find('userId') == -1
+  command: >-
+    mongo admin --eval "db.createUser({user: '{{ microservice_mongodb_username }}', pwd: '{{ microservice_mongodb_password }}', roles: [{ role: 'readWrite', db: '{{ microservice_mongodb_database }}' }, { role: 'readWrite', db: 'admin' }]})"
 
-- name: Create pass_db database
-  mongodb_user:
-    login_host: "{{ internal_host }}"
-    login_user: arkcase
-    login_password: '{{ default_user_password }}'
-    login_port: "{{ mongodb_port | default(27017) }}"
-    database: "pass_db"
-    name: "pass_db"
-    password: '{{ default_user_password }}'
-    roles:
-      - { db: "pass_db", role: "readWrite" }
-    ssl: yes
+# Unsure if we need to trigger an update if the user already exists
+#- name: Update MongoDB administrative user siteUserAdmin
+#  when: mongodb_siteUserAdmin.stdout.find('userId') != -1
+#  command: >-
+#    mongo admin --eval "db.updateUser('{{ microservice_mongodb_username }}', {pwd: '{{ microservice_mongodb_password }}', roles: [{ role: 'readWrite', db: '{{ microservice_mongodb_database }}' }, { role: 'readWrite', db: 'admin' }]})"
+
+- name: Check if MongoDB pass_db user exists
+  command: >-
+    mongo admin --eval "db.getUser('{{ microservice_mongodb_username }}')"
+  register: mongodb_pass_db
+- debug: msg="{{mongodb_pass_db.stdout}}"
+
+- name: Create pass_db user
+  when: mongodb_pass_db.stdout.find('userId') == -1
+  command: >-
+    mongo admin --eval "db.createUser({user: 'pass_db', pwd: '{{ default_user_password }}', roles: [{ role: 'readWrite', db: 'pass_db' }]})"

@@ -25,20 +25,25 @@
       gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
 
 - name: ensure mongodb port
+  become: true
+  command: firewall-cmd --add-port "{{ mongodb_port | default(27017) }}/tcp" --permanent
+  register: firewall_ports_updated
+
+- name: See if firewalld is running
+  become: true
+  ansible.builtin.command: firewall-cmd --state
+  register: firewalld_state
+  failed_when: false
+  changed_when: false
+
+- name: reload the firewall if needed
   become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
-    port: "{{ mongodb_port | default(27017) }}/tcp"
-    state: enabled
+  command: firewall-cmd --reload
+  when: firewall_ports_updated is changed and firewalld_state.stdout == 'running'
 
 - name: install Mongodb
   become: yes
-  yum:
-    state: installed
-    disable_gpg_check: yes
-    name:
-      - mongodb-org
+  command: yum -y install mongodb-org
   register: mongodb_install
 
 - name: Mongodb folders
