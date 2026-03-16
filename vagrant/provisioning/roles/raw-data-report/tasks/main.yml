@@ -61,6 +61,7 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho-pdi"
     keep_name: true
+    checksum_alg: sha1
 
 - name: Copy Raw Data JAR to reports folder as ZIP
   become: yes
