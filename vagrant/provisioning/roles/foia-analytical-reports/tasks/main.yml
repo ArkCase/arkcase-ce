@@ -100,6 +100,16 @@
     src: "{{ root_folder }}/install/pentaho/{{ etl_download_path }}"
     dest: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
 
+- name: Force correct ownership and group write permissions after unzip
+  become: true
+  ansible.builtin.file:
+    path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
+    owner: pentaho
+    group: pentaho_group
+    mode: '2775'
+    state: directory
+    recurse: yes
+
 
 # TODO remove this if it's really not needed
 #- name: Mondrian schema fixes
