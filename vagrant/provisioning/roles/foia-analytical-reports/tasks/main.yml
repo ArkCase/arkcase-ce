@@ -18,6 +18,22 @@
 - name: Create DOJ backup folder with timestamp
   set_fact:
     doj_backup_folder_path: "{{ root_folder }}/install/pentaho/doj-backup-{{ ansible_date_time.iso8601 }}"
+
+- name: Ensure common group exists
+  become: true
+  ansible.builtin.group:
+    name: pentaho_group
+    state: present
+
+- name: Add users to group
+  become: true
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: pentaho_group
+    append: yes
+  loop:
+    - pentaho
+    - pentaho-pdi
  
 - name: Create backup directory
   become: true
@@ -40,10 +56,11 @@
 
 - name: Create install folder
   become: true
-  become_user: pentaho
   ansible.builtin.file:
     path: "{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}"
-    mode: '0755'
+    owner: pentaho
+    group: pentaho_group
+    mode: '2775'
     state: directory
 
 - name: install python modules needed by maven_artifacts
