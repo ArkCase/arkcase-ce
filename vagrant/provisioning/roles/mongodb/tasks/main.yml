@@ -85,10 +85,7 @@
 
 - name: install pymongo
   become: yes
-  pip:
-    executable: pip3
-    name: pymongo
-    extra_args: --upgrade
+  command: /usr/bin/python{{ python_version }} -m pip install pymongo --upgrade
 
 - name: create arkcase mongo database
   include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"

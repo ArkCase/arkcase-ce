@@ -87,7 +87,7 @@
     - name: "MariaDB JDBC Driver"
       dest: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
       owner: "root"
-      url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+      url: "https://dlm.mariadb.com/4550298/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 
 - name: MariaDB folders
   become: yes
