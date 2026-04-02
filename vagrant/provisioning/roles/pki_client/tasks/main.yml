@@ -1,6 +1,6 @@
 - name: install cryptography
   become: yes
-  command: pip{{ python_version }} install cryptography --upgrade
+  command: /usr/bin/python{{ python_version }} -m pip install cryptography --upgrade
 
 - name: see if rsa private key exists
   stat:

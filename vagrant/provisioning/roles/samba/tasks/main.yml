@@ -66,18 +66,18 @@
 - name: link python3 executable
   become: yes
   file:
-    src: /usr/bin/python3.6
+    src: /usr/bin/python{{ python_version }}
     path: /usr/bin/python3
     state: link
   when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
-- name: install Python packages
+- name: install python-config
   become: yes
-  pip:
-    executable: "{{ pip_executable }}"
-    name: 
-    - python-config
-    - firewall
+  command: /usr/bin/python{{ python_version }} -m pip install python-config --upgrade
+
+- name: install  firewall
+  become: yes
+  command: /usr/bin/python{{ python_version }} -m pip install  firewall --upgrade
    
 # dnf install python3-pyasn1 python3-markdown
  

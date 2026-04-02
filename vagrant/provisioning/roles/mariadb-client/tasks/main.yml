@@ -51,7 +51,7 @@
 
 - name: Install MariaDB python library
   become: true
-  command: pip{{ python_version }} install PyMySQL --upgrade
+  command: /usr/bin/python{{ python_version }} -m pip install PyMySQL --upgrade
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:

@@ -32,12 +32,14 @@
   loop:
     - activemq
 
-- include_tasks: "{{ role_path }}/../common/tasks/download.yml"
-  loop:
-    - name: "ActiveMQ"
-      dest: "{{ root_folder }}/install/activemq/apache-activemq-{{ activemq_version }}-bin.tar.gz"
-      owner: "activemq"
-      url: "https://archive.apache.org/dist/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz"
+- name: download ActiveMQ if needed (no checksum)
+  become: yes
+  command: wget --read-timeout=1200 https://archive.apache.org/dist/activemq/{{ activemq_version }}/apache-activemq-{{ activemq_version }}-bin.tar.gz -O {{ root_folder }}/install/activemq/apache-activemq-{{ activemq_version }}-bin.tar.gz
+# wget --read-timeout=1200 https://archive.apache.org/dist/activemq/5.18.6/apache-activemq-5.18.6-bin.tar.gz -O /opt/arkcase/install/activemq/apache-activemq-5.18.6-bin.tar.gz
+
+- name: correct ActiveMQ ownership
+  become: yes
+  command: chown -R activemq:activemq {{ root_folder }}/install/activemq/apache-activemq-{{ activemq_version }}-bin.tar.gz
 
 - name: unarchive ActiveMQ distribution
   become: yes

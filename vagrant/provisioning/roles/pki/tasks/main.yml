@@ -1,16 +1,10 @@
 - name: install packaging
   become: yes
-  pip:
-    executable: "{{ pip_executable }}"
-    name: 
-    - packaging
+  command: /usr/bin/python{{ python_version }} -m pip install packaging --upgrade
 
 - name: install cryptography
   become: yes
-  pip:
-    executable: "{{ pip_executable }}"
-    name: 
-    - cryptography
+  command: /usr/bin/python{{ python_version }} -m pip install cryptography --upgrade
 
 - name: create pki folder structure
   become: yes

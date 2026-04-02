@@ -1,6 +1,6 @@
 - name: Install MariaDB python library
   become: true
-  command: pip{{ python_version }} install PyMySQL --upgrade
+  command: /usr/bin/python{{ python_version }} -m pip install PyMySQL --upgrade
 
 - name: create {{ item }} MariaDB database when the database is running locally
   block:

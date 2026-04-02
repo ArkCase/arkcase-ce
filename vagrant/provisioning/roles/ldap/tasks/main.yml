@@ -2,13 +2,13 @@
   become: true
   command: yum install -y openldap-clients python{{ python_version }}-devel
 
-- name: required python packages 
-  become: true
-  ansible.builtin.pip:
-    executable: "{{ pip_executable }}"
-    name: 
-    - cryptography
-    - python-ldap
+- name: install cryptography
+  become: yes
+  command: /usr/bin/python{{ python_version }} -m pip install cryptography --upgrade
+
+- name: install python-ldap
+  become: yes
+  command: /usr/bin/python{{ python_version }} -m pip install python-ldap --upgrade
 
 - name: read LDAP server cert
   community.crypto.get_certificate:
