@@ -364,6 +364,7 @@
   when: file_repository_type == "alfresco"
 
 - name: Alfresco back ends
+  become: yes
   blockinfile:
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK ALFRESCO BACK ENDS"
@@ -447,6 +448,7 @@
   when: foia_portal_context is defined
 
 - name: microservice back ends
+  become: yes
   blockinfile:
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK MICROSERVICE BACK ENDS"
@@ -489,6 +491,7 @@
   when: enable_microservices
 
 - name: minio back end
+  become: yes
   blockinfile:
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK MINIO BACK END"
