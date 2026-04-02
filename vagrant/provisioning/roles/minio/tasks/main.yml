@@ -25,25 +25,9 @@
     - "log"
     - "tmp"
 
-- name: ensure minio port
-  become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
-    port: "{{ minio_port | default(9000) }}/tcp"
-    state: enabled
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
-
-- name: ensure minio console port
-  become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
-    port: "{{ minio_console_port | default(8001) }}/tcp"
-    state: enabled
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+- name: Expose required ports for minio
+  include_tasks: firewall.yml
+  when: enable_firewall is undefined or enable_firewall
 
 - name: download minio file from internet
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -74,7 +58,8 @@
 
 - name: copy the private key
   become: yes
-  ansible.builtin.copy:
+  copy:
+    remote_src: yes
     src: "{{ ssl_key }}"
     dest: "{{ root_folder }}/app/minio/private.key"
     owner: minio
@@ -83,7 +68,8 @@
 
 - name: copy the certificate
   become: yes
-  ansible.builtin.copy:
+  copy:
+    remote_src: yes
     src: "{{ ssl_cert }}"
     dest: "{{ root_folder }}/app/minio/public.crt"
     owner: minio

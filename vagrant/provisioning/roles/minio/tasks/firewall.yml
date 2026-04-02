@@ -1,0 +1,14 @@
+- name: Expose minio app port
+  become: yes
+  command: firewall-cmd --add-port {{ item }} --permanent
+  with_items: 
+    - "{{ minio_port | default(9000) }}/tcp"
+    - "{{ minio_console_port | default(8001) }}/tcp"
+  register: minio_port_fw
+
+- name: Reload firewalld
+  become: yes
+  command: firewall-cmd --reload
+  when: minio_port_fw is changed
+  
+
