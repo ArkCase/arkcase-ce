@@ -165,5 +165,5 @@
   become: true
   become_user: pentaho-pdi
   ansible.builtin.command:
-    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}/main.kjb
+    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}/j_raw_data_excel_report.kjb -param:REQUEST_NUMBER_COLUMN={{ request_number_column | default('cm_case_number', true) }}
     chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
