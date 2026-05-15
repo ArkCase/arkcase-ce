@@ -17,7 +17,7 @@
 
 - name: Create Raw Data backup folder with timestamp
   set_fact:
-    raw_data_backup_folder_path: "{{ root_folder }}/install/pentaho-pdi/raw-data-backup-{{ ansible_date_time.iso8601 }}"
+    raw_data_backup_folder_path: "{{ root_folder }}/install/pentaho-pdi/raw-data-backup-{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"
  
 - name: Create backup directory
   become: true
@@ -165,5 +165,13 @@
   become: true
   become_user: pentaho-pdi
   ansible.builtin.command:
-    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}/j_raw_data_excel_report.kjb -param:REQUEST_NUMBER_COLUMN={{ request_number_column | default('cm_case_number', true) }}
+    cmd: >
+      ./kitchen.sh
+      -file://{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}/j_raw_data_excel_report.kjb
+      -param:REQUEST_NUMBER_COLUMN={{ request_number_column | default('cm_case_number', true) }}
+      -param:START_DATE="'{{ rdr_start_date | default('2025-10-01 00:00:00', true) }}'"
+      -param:END_DATE="'{{ rdr_end_date | default('2026-09-30 23:59:59', true) }}'"
+      -param:RDR_NAME={{ rdr_name | default('Raw_Data_Report', true) }}
+      -level=Debug
+      -logfile=/home/pentaho-pdi/rdr-etl-{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}.log
     chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
