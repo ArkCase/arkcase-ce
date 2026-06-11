@@ -19,20 +19,21 @@
   failed_when: false
   changed_when: false
 
+# using Python 3.9, or Python 2, no firewall module can be found or installed,
+# so we have to use commands instead
 - name: Ensure web and proxy ports
   become: true
-  ansible.posix.firewalld:
-    immediate: true
-    permanent: true
-    port: "{{ item }}"
-    state: enabled
+  command: firewall-cmd --add-port "{{ item }}" --permanent
   loop:
     - "80/tcp"
     - "443/tcp"
     - "8404/tcp"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
-  when: firewalld_state.stdout == 'runnng'
+  register: firewall_ports_updated
+
+- name: reload the firewall if needed
+  become: yes
+  command: firewall-cmd --reload
+  when: firewall_ports_updated is changed and firewalld_state.stdout == 'runnng'
 
 - name: Install epel-release
   become: true
@@ -158,6 +159,7 @@
   ansible.builtin.blockinfile:
     path: "{{ path_haproxy_cfg }}"
     backup: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE CONFIG"
     block: |
       frontend stats
         bind *:8404
@@ -180,15 +182,13 @@
 
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho
-        acl acl_alfresco path_beg /alfresco
-        acl acl_share path_beg /share
-        acl acl_snowbound path_beg /VirtualViewerJavaHTML5
         acl acl_arkcase path_beg /arkcase
+        acl acl_config path_beg /config
+        acl acl_assets path_beg /assets 
         acl acl_sse path_beg /api/sse
         acl acl_minio path_beg /api/minio
         acl acl_oidc path_beg /api/oidc
         acl acl_api_gateway path_beg /api
-        acl acl_config path_beg /config
         acl acl_root path -i /
 
         # redirections
@@ -203,14 +203,8 @@
         # backend uses
         use_backend be_solr if acl_solr
         use_backend be_pentaho if acl_pentaho
-        use_backend be_alfresco if acl_alfresco
-        use_backend be_share if acl_share
-        use_backend be_snowbound if acl_snowbound
         use_backend be_arkcase if acl_arkcase
-        use_backend be_sse if acl_sse
-        use_backend be_minio if acl_minio
-        use_backend be_oidc if acl_oidc
-        use_backend be_api_gateway if acl_api_gateway
+        use_backend be_assets if acl_assets
         use_backend be_config if acl_config
 
       #backend servers
@@ -219,31 +213,15 @@
         mode http
         balance roundrobin
         option tcp-check
-        server solr0 {{ solr_host }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        server solr0 {{ solr_node_1 }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        {{ 'server solr1 ' + solr_node_2 + ':8983 check fall 3 rise 2 check ssl verify required ca-file ' + ssl_ca if solr_node_2 != '' else '' }}
+        {{ 'server solr2 ' + solr_node_3 + ':8983 check fall 3 rise 2 check ssl verify required ca-file ' + ssl_ca if solr_node_3 != '' else '' }}
 
       backend be_pentaho
         http-response add-header X-Pentaho-Node %s
         mode http
         option tcp-check
         server pentaho0 {{ pentaho_host }}:2002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-
-      backend be_alfresco
-        http-response add-header X-Afresco-Node %s
-        mode http
-        option tcp-check
-        server alfresco0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-
-      backend be_share
-        http-response add-header X-Share-Node %s
-        mode http
-        option tcp-check
-        server share0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-
-      backend be_snowbound
-        http-response add-header X-Snowbound-Node %s
-        mode http
-        option tcp-check
-        server snowbound0 {{ snowbound_host }}:2005 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
       backend be_arkcase
         http-response add-header X-ArkCase-Node %s
@@ -282,7 +260,7 @@
         http-response add-header X-Config %s
         mode http
         option tcp-check
-        server config {{ arkcase_host }}:9999
+        server config {{ arkcase_host }}:9999 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/config/,/)]
 
   register: arkcase_config
@@ -421,6 +399,113 @@
   register: arkcase_config
   when: not (enable_microservices | default(false) | bool)
 
+- name: microservice frontend
+  become: yes
+  blockinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK MICROSERVICE FRONT END"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    block: |
+              acl acl_sse path_beg /api/sse
+              acl acl_oidc path_beg /api/oidc
+              acl acl_cognito path_beg /api/cognito
+              acl acl_ldap_authority path_beg /api/auth/ldap
+              acl acl_portal_prc path_beg /api/arkcase-portal-prc
+              acl acl_portal path_beg /api/arkcase-portal/
+              acl acl_schema path_beg /api/schema
+              acl acl_file_management path_beg /api/file-management
+              acl acl_file_utils path_beg /api/file-utils
+              acl acl_api_gateway path_beg /api
+  when: enable_microservices
+
+- name: minio frontend
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    line: "  acl acl_minio path_beg /api/minio"
+  when: enable_minio
+
+- name: snowbound frontend
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    line: "  acl acl_snowbound path_beg /VirtualViewerJavaHTML5"
+  when: ecm_viewer == "snowbound"
+
+- name: snowbound backend use
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_snowbound if acl_snowbound"
+  when: ecm_viewer == "snowbound"
+
+- name: snowbound back end
+  become: yes
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK SNOWBOUND BACKEND"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+           backend be_snowbound
+             http-response add-header X-Snowbound-Node %s
+             mode http
+             option tcp-check
+             server snowbound0 {{ snowbound_host }}:2005 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  when: ecm_viewer == "snowbound"
+
+- name: alfresco frontend
+  become: yes
+  blockinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ALFRESCO FRONT END USES"
+    insertafter: "acl acl_arkcase path_beg /arkcase"
+    block: |
+            acl acl_alfresco path_beg /alfresco
+            acl acl_share path_beg /share
+  when: file_repository_type == "alfresco"
+
+- name: Alfresco back end uses
+  become: yes
+  blockinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ALFRESCO BACK END USES"
+    insertafter: "# backend uses"
+    block: |
+            use_backend be_alfresco if acl_alfresco
+            use_backend be_share if acl_share
+  when: file_repository_type == "alfresco"
+
+- name: Alfresco back ends
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ALFRESCO BACK ENDS"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+           backend be_alfresco
+             http-response add-header X-Afresco-Node %s
+             mode http
+             option tcp-check
+             server alfresco0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+           backend be_share
+             http-response add-header X-Share-Node %s
+             mode http
+             option tcp-check
+             server share0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+  when: file_repository_type == "alfresco"
+
+
 - name: FOIA frontend part
   become: true
   ansible.builtin.lineinfile:
@@ -439,6 +524,35 @@
     line: "  use_backend be_foia if acl_foia"
   when: foia_portal_context is defined
 
+- name: microservice backend uses
+  become: yes
+  blockinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK MICROSERVICE BACK END USES"
+    insertafter: "# backend uses"
+    block: |
+              use_backend be_sse if acl_sse
+              use_backend be_oidc if acl_oidc
+              use_backend be_cognito if acl_cognito
+              use_backend be_ldap_authority if acl_ldap_authority
+              use_backend be_portal_prc if acl_portal_prc
+              use_backend be_portal if acl_portal
+              use_backend be_schema if acl_schema
+              use_backend be_file_management if acl_file_management
+              use_backend be_file_utils if acl_file_utils
+              use_backend be_api_gateway if acl_api_gateway
+  when: enable_microservices
+
+- name: minio backend uses
+  become: yes
+  lineinfile:
+    backup: yes
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_minio if acl_minio"
+  when: enable_minio
+
 - name: FOIA context, if needed
   become: true
   ansible.builtin.blockinfile:
@@ -453,6 +567,63 @@
         option tcp-check
         server foia0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
   when: foia_portal_context is defined
+
+- name: microservice back ends
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK MICROSERVICE BACK ENDS"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+            backend be_sse
+              http-response add-header X-SSE-Node %s
+              mode http
+              option tcp-check
+              server sse0 {{ arkcase_host }}:9050 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/sse/,/)]
+
+            backend be_api_gateway
+              http-response add-header X-API-Gateway-Node %s
+              mode http
+              option tcp-check
+              server api_gateway0 {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+            backend be_oidc
+              http-response add-header X-OIDC-Node %s
+              mode http
+              option tcp-check
+              server oidc0 {{ arkcase_host }}:9100 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/oidc/,/)]
+
+            backend be_cognito
+              http-response add-header X-Cognito-Node %s
+              mode http
+              option tcp-check
+              server cognito0 {{ arkcase_host }}:9100 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/cognito/,/)]
+
+            backend be_ldap_authority
+              http-response add-header X-LDAP-Authority-Node %s
+              mode http
+              option tcp-check
+              server ldap-authority0 {{ arkcase_host }}:9090 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/auth/ldap/,/)]
+  when: enable_microservices
+
+- name: minio back end
+  blockinfile:
+    backup: yes
+    marker: "# {mark} ANSIBLE MANAGED BLOCK MINIO BACK END"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+            backend be_minio
+              http-response add-header X-Minio-Node %s
+              mode http
+              option tcp-check
+              server minio0 {{ arkcase_host }}:9000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/minio/,/)]
+  when: enable_minio
 
 ### Arkcase Portal frontend
 - name: ArkCase Portal frontend part
@@ -486,6 +657,13 @@
         mode http
         option tcp-check
         server arkcase_portal0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+       backend be_assets
+        http-response add-header x-arkcase-assets-node %s
+        mode http
+        option tcp-check
+        server arkcase_assets0 {{ internal_host }}:488 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/assets/,/portal/assets/)]
   when: deploy_arkcase_portal | default(false)
 
 ### Portal Sitemap
@@ -637,7 +815,7 @@
         http-response add-header X-SHOWCASE-BACKEND-Node %s
         mode http
         option tcp-check
-        server showcase_backend0 {{ internal_host }}:3000
+        server showcase_backend0 {{ internal_host }}:3000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
         http-request set-path %[path,regsub(^/showcase/,/)]
   when: deploy_showcase | default(false)
 
@@ -712,7 +890,7 @@
             http-response add-header X-Schema-registry %s
             mode http
             option tcp-check
-            server schema-registry {{ internal_host }}:8081
+            server schema-registry {{ internal_host }}:8081 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             reqrep ^([^\ ]*\ /)schema-registry[/]?(.*)     \1\2
 
           backend be_control-center
@@ -724,7 +902,7 @@
           backend be_control-center-ws
             mode http
             option tcp-check
-            server controlws {{ internal_host }}:9021
+            server controlws {{ internal_host }}:9021 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             reqrep (.*\/)control-center\/(.*)     \1\2
 
 - name: Set up proxies to Elasticsearch
@@ -759,7 +937,7 @@
             http-response add-header X-Elasticsearch %s
             mode http
             option tcp-check
-            server elasticsearch {{ internal_host }}:9200
+            server elasticsearch {{ internal_host }}:9200 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/elasticsearch/,/)]
 
 
@@ -799,21 +977,21 @@
             http-response add-header X-Zipkin-Health %s
             mode http
             option tcp-check
-            server zipkin-health {{ internal_host }}:9411
+            server zipkin-health {{ internal_host }}:9411 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin-api
             http-response add-header X-Zipkin-Api %s
             mode http
             option tcp-check
-            server zipkin-api {{ internal_host }}:9411
+            server zipkin-api {{ internal_host }}:9411 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/zipkin/,/)]
 
           backend be_zipkin
             http-response add-header X-Zipkin %s
             mode http
             option tcp-check
-            server zipkin {{ internal_host }}:9411/zipkin
+            server zipkin {{ internal_host }}:9411/zipkin check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
 
 - name: Set up proxies to Eureka
@@ -828,7 +1006,6 @@
         block: |
             acl acl_gateway path_beg /adk
             acl acl_eureka path_beg /eureka
-            acl acl_eureka-dashboard path_beg /eureka-dashboard
 
     - name: Tell frontend part which backend servers will use
       become: true
@@ -840,7 +1017,6 @@
             use_backend be_gateway if acl_gateway
             use_backend be_eureka if acl_eureka
             use_backend be_eureka-dashboard if acl_eureka-dashboard
-
     - name: Populate haproxy.conf with backend servers for Eureka
       become: true
       ansible.builtin.blockinfile:
@@ -852,14 +1028,49 @@
             http-response add-header X-Gateway %s
             mode http
             option tcp-check
-            server gateway {{ arkcase_host }}:9002
+            server gateway {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/adk/,/)]
+
+          backend be_portal
+            http-response add-header X-Portal-Api %s
+            mode http
+            option tcp-check
+            server gateway {{ arkcase_host }}:9040 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/arkcase-portal/,/)]
+
+          backend be_portal_prc
+            http-response add-header X-Prc-Portal-Api %s
+            mode http
+            option tcp-check
+            server gateway {{ arkcase_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/arkcase-portal-prc/,/)]
+
+          backend be_schema
+            http-response add-header X-Schema %s
+            mode http
+            option tcp-check
+            server gateway {{ arkcase_host }}:9099 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/schema/,/)]
+
+          backend be_file_management
+            http-response add-header X-File-Management %s
+            mode http
+            option tcp-check
+            server file-management0 {{ arkcase_host }}:9068 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/file-management/,/)]
+
+          backend be_file_utils
+            http-response add-header X-File-Utils %s
+            mode http
+            option tcp-check
+            server file-utils0 {{ arkcase_host }}:9078 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+            http-request set-path %[path,regsub(^/api/file-utils/,/)]
 
           backend be_eureka
             http-response add-header X-Eureka %s
             mode http
             option tcp-check
-            server eureka {{ arkcase_host }}:8761/eureka
+            server eureka {{ arkcase_host }}:8761/eureka check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
           backend be_eureka-dashboard
             http-response add-header X-Eureka-Dashboard %s
@@ -893,9 +1104,16 @@
     daemon_reload: true
   when: haproxy_service_name is changed
 
-- name: Enable haproxy to connect to any port
-  become: true
-  command: setsebool -P haproxy_connect_any true
+# python3.9 has no sepolicy module
+- name: see if haproxy_connect_any is already enabled
+  become: yes
+  command: getsebool haproxy_connect_any
+  register: haproxy_connect_status
+
+- name: enable haproxy to connect to any port
+  become: yes
+  command: setsebool -P haproxy_connect_any 1
+  when: '"--> on" not in haproxy_connect_status.stdout'
 
 - name: Enable and start haproxy
   become: true

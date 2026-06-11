@@ -8,6 +8,8 @@ Type=simple
 User=cp-ksql
 Group=confluent
 Environment="LOG_DIR={{ root_folder }}/log/ksql"
+Environment="KSQL_LOG4J_OPTS=-Dlog4j.configuration=file:{{ root_folder }}/app/ksql/log4j-rolling.properties"
+Environment="KSQL_OPTS=-Dcom.redhat.fips=false -Djava.io.tmpdir={{ root_folder }}/tmp/ksql/ -Dorg.xerial.snappy.tempdir={{ root_folder }}/app/ksql/"
 ExecStart=/usr/bin/ksql-server-start {{ root_folder }}/app/ksql/ksql-server.properties
 TimeoutStopSec=180
 Restart=no

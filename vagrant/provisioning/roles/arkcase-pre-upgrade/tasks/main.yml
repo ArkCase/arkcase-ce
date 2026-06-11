@@ -22,7 +22,6 @@
 
 - name: Delete all but last 5 backups
   become: yes
-  become_user: arkcase
   shell: |
          cd {{ root_folder }}/data/arkcase-home
          ls -atp | grep ".arkcase-backup*"| tail -n +6 | xargs -d '\n' -r rm -rf
@@ -49,9 +48,19 @@
 
 - name: cleanup Tomcat folders
   become: yes
-  become_user: arkcase
-  shell: rm -rf {{ item }}/*
+  shell: rm -rf {{ item }}
   loop:
     - "{{ root_folder }}/tmp/arkcase/"
     - "{{ root_folder }}/app/arkcase/work/Catalina/localhost/arkcase"
 
+- name: recreate Tomcat folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: arkcase
+    owner: arkcase
+    mode: 0755
+  loop:
+    - "{{ root_folder }}/tmp/arkcase/"
+    - "{{ root_folder }}/app/arkcase/work/Catalina/localhost/arkcase"

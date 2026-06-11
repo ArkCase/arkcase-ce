@@ -23,7 +23,6 @@
   debug:
     msg: "arkcase-version: {{ arkcase_version }}; latest_config_backup_folder: {{ latest_config_backup_folder }}; older_config_in_use: {{ older_config_in_use }}; restore_more_config_files: {{ restore_more_config_files }}"
 
-
 - name: restore config files (2021.03 and below)
   become: yes
   become_user: arkcase
@@ -47,7 +46,7 @@
   register: template_file
   when: restore_more_config_files
 
-- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version  (2021.03 and bellow)
+- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version
   become: yes
   become_user: arkcase
   copy:
@@ -122,7 +121,16 @@
       export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=ldap"
   when: '"-Dspring.profiles.active" not in setenv_contents.stdout'
 
-- name: copy pdftron annotation files
+- name: find "pdftron" folder
+  become: yes
+  become_user: arkcase
+  stat:
+    path="{{ latest_config_backup_folder.path }}/pdftron/"
+  register: pdftron_folder
+  when: latest_config_backup_folder is defined
+
+
+- name: copy pdftron annotation files if needed
   become: yes
   become_user: arkcase
   copy:
@@ -131,3 +139,5 @@
     remote_src: yes
   with_fileglob:
     - "{{ latest_config_backup_folder.path }}/pdftron/annotations/*"
+  when: latest_config_backup_folder is defined and pdftron_folder.stat.exists
+

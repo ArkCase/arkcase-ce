@@ -8,6 +8,8 @@ Type=simple
 User=cp-kafka-rest
 Group=confluent
 Environment="LOG_DIR={{ root_folder }}/log/kafka-rest"
+Environment="KAFKAREST_LOG4J_OPTS=-Dlog4j.configuration=file:{{ root_folder }}/app/kafka-rest/log4j.properties"
+Environment="KAFKAREST_OPTS=-Dcom.redhat.fips=false -Djava.io.tmpdir={{ root_folder }}/tmp/kafka-rest/"
 ExecStart=/usr/bin/kafka-rest-start {{ root_folder }}/app/kafka-rest/kafka-rest.properties
 LimitNOFILE=100000
 TimeoutStopSec=180

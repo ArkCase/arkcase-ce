@@ -170,3 +170,12 @@
   become: yes
   command: firewall-cmd --reload
   when: zookeeper_ports is changed
+
+- name: fapolicy settings for ZooKeeper, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: zookeeper
+      folder_path: "{{ root_folder }}/app/zookeeper"
+    - name: jre_security
+      folder_path: /usr/lib/jvm/java-1.8.0/jre/lib/ext
+

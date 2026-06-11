@@ -8,6 +8,8 @@ Type=simple
 User=cp-kafka
 Group=confluent
 Environment="LOG_DIR={{ root_folder }}/log/kafka"
+Environment="KAFKA_LOG4J_OPTS=-Dlog4j.configuration=file:{{ root_folder }}/app/kafka/log4j.properties"
+Environment="KAFKA_OPTS=-Dcom.redhat.fips=false -Djava.io.tmpdir={{ root_folder }}/tmp/kafka/ -Dorg.xerial.snappy.tempdir={{ root_folder }}/app/kafka"
 ExecStart=/usr/bin/kafka-server-start {{root_folder}}/app/kafka/server.properties
 ExecStop=/usr/bin/kafka-server-stop
 LimitNOFILE=1000000

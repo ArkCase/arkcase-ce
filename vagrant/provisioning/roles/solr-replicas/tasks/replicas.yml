@@ -1,0 +1,9 @@
+- name: create replicas on node 2, if necessary
+  uri:
+    url: https://{{ solr_node_2 }}:8983/solr/admin/collections?action=ADDREPLICA&collection={{ item }}&node={{ solr_node_2 }}:8983_solr&shard=shard1
+  when: solr_node_2 | default("") != ""
+
+- name: create replicas on node 3, if necessary
+  uri:
+    url: https://{{ solr_node_3 }}:8983/solr/admin/collections?action=ADDREPLICA&collection={{ item }}&node={{ solr_node_3 }}:8983_solr&shard=shard1
+  when: solr_node_3 | default("") != ""

@@ -19,10 +19,10 @@ logging:
 jms.message.buffer.window: 1
 acm.activemq:
   broker-url: "ssl://{{ activemq_host }}:61616"
-  keystore: "{{ java_key_store }}"
-  keystore-password: "{{ default_user_password }}"
+  keystore: "{{ java_p12_store_jdk8 }}"
+  keystore-password: "{{ java_key_store_pass }}"
   truststore: "{{ java_trust_store }}"
-  truststore-password: "{{ default_user_password }}"
+  truststore-password: "{{ java_trust_store_pass }}"
   user: "{{ activemq_user | default('guest', true) }}"
   password: "{{ activemq_password | default('guest', true) }}"
   default-destination: configuration.changed

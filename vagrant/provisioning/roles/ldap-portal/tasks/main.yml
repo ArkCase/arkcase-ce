@@ -1,43 +1,45 @@
+- name: python LDAP package (RHEL 8)
+  set_fact:
+    pkg_python_ldap: python3-ldap
+  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+
+- name: python LDAP package (CentOS 7)
+  set_fact:
+    pkg_python_ldap: python-ldap
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
 - name: LDAP required packages
   become: yes
   yum:
     state: installed
     name: 
       - openldap-clients
-      - python-ldap
+      - "{{ pkg_python_ldap }}"
 
 - name: install cryptography
   become: yes
   pip:
     name: cryptography
 
-- name: list certs in the key store
-  become: yes
-  command: keytool -v -list -keystore "{{ java_trust_store }}" -storepass "{{ java_trust_store_pass }}"
-  register: cert_list
-  changed_when: false
+- name: read LDAP server cert
+  community.crypto.get_certificate:
+    host: "{{ ldap_host }}"
+    port: "{{ ldap_port }}"
+  register: ldap_server_cert
 
-- name: import the ldap cert to the ArkCase trust store
+- name: write LDAP server cert to trusted cert store
   become: yes
-  java_cert:
-    cert_alias: "arkcase_ldap_cert"
-    cert_url: "{{ ldap_host }}"
-    cert_port: "{{ ldap_port|int }}"
-    keystore_path: "{{ java_trust_store }}"
-    keystore_pass: "{{ java_trust_store_pass }}"
-    state: present
-  when: "'arkcase_ldap_cert' not in cert_list.stdout"
+  copy:
+    dest: /etc/pki/ca-trust/source/ldap_server_cert.pem
+    content: "{{ ldap_server_cert.cert }}"
+    backup: true
+    force: yes
+  register: ldap_server_cert_pem
 
-- name: import the ldap cert to the ArkCase trust store
+- name: update trusted certs
   become: yes
-  java_cert:
-    cert_alias: "arkcase_ldap_portal_cert"
-    cert_url: "{{ ldap_portal_host }}"
-    cert_port: "{{ ldap_portal_port|int }}"
-    keystore_path: "{{ java_trust_store }}"
-    keystore_pass: "{{ java_trust_store_pass }}"
-    state: present
-  when: "'arkcase_ldap_portal_cert' not in cert_list.stdout"
+  command: update-ca-trust
+  when: ldap_server_cert_pem is changed
 
 - name: add arkcase ancestors
   ldap_entry:

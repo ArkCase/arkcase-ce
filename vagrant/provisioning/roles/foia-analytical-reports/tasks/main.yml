@@ -78,6 +78,7 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho"
     keep_name: true
+    checksum_alg: sha1
 
 - name: Download FOIA analytical reports repository
   become: yes
@@ -91,6 +92,7 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho/{{ reports_download_path }}"
     keep_name: true
+    checksum_alg: sha1
 
 - name: Unzip ETL repository
   become: true
@@ -171,6 +173,8 @@
       value: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/pentaho-pdi/.local/bin:/home/pentaho-pdi/bin"
     - name: SHELL
       value: /bin/bash
+    - name: OPT
+      value: "-Dcom.redhat.fips=false"
 
 - name: Schedule the job to run every day at 2 AM
   become: true
@@ -231,10 +235,10 @@
 # Deploy the reports
 #########################################################
 
-- name: Import reports from the zip file archive
+- name: import reports from the zip file archive
   become: true
   become_user: pentaho
-  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/{{ reports_download_path }}' --permission=true --overwrite=true --retainOwnership=true"
+  ansible.builtin.shell: "OPT=-Dcom.redhat.fips=false {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/{{ reports_download_path }}' --permission=true --overwrite=true --retainOwnership=true"
 
 - name: Run the job to create and populate the mondrian cubes
   become: true

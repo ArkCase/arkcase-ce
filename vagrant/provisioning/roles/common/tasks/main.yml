@@ -74,6 +74,7 @@
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
+    mode: "u+rwx,g+rx,o+rx"
   loop:
     - "{{ root_folder }}"
     - "{{ root_folder }}/app"
@@ -108,7 +109,7 @@
   # Don't try to modify the `/etc/hosts` file when running inside
   # Docker, this is not possible. Instead, use `--add-host` on the
   # `docker run` command line.
-  when: not stat_dockerenv_result.stat.exists
+  when: not stat_dockerenv_result.stat.exists and not (aws_client | default(false))
 
 - name: Set timezone to UTC
   become: true
@@ -118,6 +119,22 @@
 - name: Set default locale to en_US.utf8
   become: true
   ansible.builtin.command: localectl set-locale LANG=en_US.utf8
+
+- name: Ensure cron doesn't send mails (the sendmail processes hang forever)
+  become: yes
+  ansible.builtin.replace:
+    backup: yes
+    path: /etc/sysconfig/crond
+    regexp: "^CRONDARGS=$"
+    replace: "CRONDARGS= -s -m off"
+  register: disable_cron_email
+
+- name: restart crond if needed
+  become: yes
+  ansible.builtin.systemd:
+    name: crond
+    state: restarted
+  when: disable_cron_email is changed
 
 - name: Run CRON job every day at 1.05 to remove files older than 7 days
   become: true
@@ -135,6 +152,46 @@
     creates: "{{ root_folder }}/common/rds-ca-2019-root.pem"
     dest: "{{ root_folder }}/common/rds-ca-2019-root.pem"
     url: https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+
+- name: Get a secure Log4J version
+  become: yes
+  uri:
+    url: https://archive.apache.org/dist/logging/log4j/{{ log4j_version | default("2.19.0") }}/apache-log4j-{{ log4j_version | default("2.19.0") }}-bin.tar.gz
+    dest: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.tar.gz"
+    creates: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.tar.gz"
+
+- name: unarchive Log4J jar files
+  become: yes
+  unarchive:
+    src: "{{ root_folder }}/common/apache-log4j-{{ log4j_version | default('2.19.0') }}-bin.tar.gz"
+    remote_src: yes
+    dest: "{{ root_folder }}/common"
+    extra_opts:
+      - --strip-components=1
+    include:
+      - apache-log4j-2.19.0-bin/log4j-api-{{ log4j_version | default('2.19.0') }}.jar
+      - apache-log4j-2.19.0-bin/log4j-core-{{ log4j_version | default('2.19.0') }}.jar
+      - apache-log4j-2.19.0-bin/log4j-1.2-api-{{ log4j_version | default('2.19.0') }}.jar
+    creates: "{{ root_folder }}/common/log4j-api-{{ log4j_version | default('2.19.0') }}.jar"
+
+- name: fapolicy settings for common, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: arkcase_common
+      folder_path: "{{ root_folder }}/common"
+
+- name: change default logrotate.conf settings - rotate daily, keep 4
+  become: yes
+  replace:
+    backup: yes
+    path: /etc/logrotate.conf
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "weekly"
+      replace: "daily"
+    - regexp: "4"
+      replace: "7"
 
 - name: See if the Java truststore exists
   become: true

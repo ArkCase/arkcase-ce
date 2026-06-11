@@ -24,8 +24,13 @@
   register: collection_stat
   when: solr_cloud 
 
+# the above check for if the collection already exists, doesn't work 
+# on the 2nd and subsequent solr nodes.
 - name: Create {{ item }} collection (Solr Cloud)
   become: yes
   become_user: solr
   shell: "{{ root_folder }}/app/solr/bin/solr create -c {{ item }} -n arkcaseConfig"
   when: solr_cloud and collection_stat.stat.exists == False
+  register: create_collection_cmd
+  failed_when: create_collection_cmd.rc != 0 and "Collection '" + item + "' already exists!" not in create_collection_cmd.stderr
+  changed_when: create_collection_cmd.rc == 0

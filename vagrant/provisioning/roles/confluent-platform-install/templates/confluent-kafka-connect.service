@@ -7,6 +7,9 @@ After=network.target confluent-kafka.target
 Type=simple
 User=cp-kafka-connect
 Group=confluent
+Environment="LOG_DIR={{ root_folder }}/log/kafka-connect"
+Environment="KAFKA_LOG4J_OPTS=-Dlog4j.configuration=file:{{ root_folder }}/app/kafka/connect-log4j.properties"
+Environment="KAFKA_OPTS=-Dcom.redhat.fips=false -Djava.io.tmpdir={{ root_folder }}/tmp/kafka-connect/"
 ExecStart=/usr/bin/connect-distributed {{ root_folder }}/app/kafka/connect-distributed.properties
 TimeoutStopSec=180
 Restart=no
