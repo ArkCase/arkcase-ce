@@ -23,7 +23,7 @@
 - name: Install epel (needed first)
   become: true
   command: dnf install -y epel-release
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: Import Amazon Corretto GPG key
   become: yes
