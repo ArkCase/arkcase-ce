@@ -98,22 +98,6 @@
   register: npm_version
   ignore_errors: yes
 
-- name: required packages (yarn) to run ArkCase webapp
-  become: yes
-  command: dnf install -y yarn
-  when: yarn_version.stdout == ""
-
-- name: required packages (npm) to run ArkCase webapp
-  become: yes
-  command: dnf install -y npm
-  when: npm_version.stdout == ""
-
-- name: required packages (node) to run ArkCase webapp
-  become: yes
-  command: dnf install -y nodejs
-  when: node_version.stdout == ""
-
->>>>>>> 9b6c0563708b493d9ef05bbc86ab75118cf178b8
 # need to download the yarn package, then install with RPM,
 # due to it not being packaged right for FIPS mode
 - name: download required packages (yarn) to run ArkCase webapp
