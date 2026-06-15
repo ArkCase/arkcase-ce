@@ -1,10 +1,15 @@
+- name: Python LDAP package (RHEL 8)
+  ansible.builtin.set_fact:
+    pkg_python_ldap: python-ldap
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
+
 - name: LDAP required packages
   become: true
   command: dnf install -y openldap-clients python3.12-devel
 
-- name: install cryptography
+- name: install required python libraries
   become: yes
-  command: "{{ ansible_pip3 | default('pip3') }} install cryptography {{ pkg_python_ldap }}"
+  command: "{{ pip_executable }} install cryptography {{ pkg_python_ldap }}"
 
 - name: read LDAP server cert
   community.crypto.get_certificate:
