@@ -23,7 +23,6 @@
   debug:
     msg: "arkcase-version: {{ arkcase_version }}; latest_config_backup_folder: {{ latest_config_backup_folder }}; older_config_in_use: {{ older_config_in_use }}; restore_more_config_files: {{ restore_more_config_files }}"
 
-
 - name: restore config files (2021.03 and below)
   become: yes
   become_user: arkcase

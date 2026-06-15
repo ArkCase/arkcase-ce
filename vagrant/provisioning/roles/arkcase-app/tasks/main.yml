@@ -76,15 +76,15 @@
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
 
+# might also need: curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py ; python3 get-pip.py --force-reinstall
 - name: install required pip modules for Python Excel module
   become: yes
   command: "{{ ansible_pip3 | default('pip3') }} install setuptools"
 
-# might also need: curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py ; python3 get-pip.py --force-reinstall
 - name: install Python Excel module
   become: yes
   become_user: arkcase
-  command: "{{ ansible_pip3 | default('pip3') }} install --upgrade openpyxl lxml"
+  command: "{{ ansible_pip3 | default('pip3') }} install --user --upgrade openpyxl lxml"
 
 - name: download ArkCase war file and config server jar file (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -360,9 +360,9 @@
     db_service_name: "{{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if arkcase_host == database_host else '' }}"
     activemq_service_name: "{{ 'activemq.service' if activemq_host == arkcase_host else '' }}"
     samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
-    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host and service_file_solr.stat.exists == True else '' }}"
     alfresco7_service_name: "{{ 'alfresco7.service' if (file_repository_type | default('alfresco')) == 'alfresco' and alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
     alfresco_service_name: "{{ 'alfresco.service' if (file_repository_type | default('alfresco')) == 'alfresco' and alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
+    solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host and service_file_solr.stat.exists == True else '' }}"
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:

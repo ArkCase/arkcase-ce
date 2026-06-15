@@ -173,7 +173,7 @@
       - log4j-core-{{ log4j_version | default('2.19.0') }}.jar
       - log4j-1.2-api-{{ log4j_version | default('2.19.0') }}.jar
     creates: "{{ root_folder }}/common/log4j-api-{{ log4j_version | default('2.19.0') }}.jar"
-   
+
 - name: fapolicy settings for common, if fapolicyd is installed
   include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
   loop:

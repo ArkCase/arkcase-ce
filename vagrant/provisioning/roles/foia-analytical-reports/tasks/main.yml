@@ -78,6 +78,7 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho"
     keep_name: true
+    checksum_alg: sha1
 
 - name: Download FOIA analytical reports repository
   become: yes
@@ -91,6 +92,7 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho/{{ reports_download_path }}"
     keep_name: true
+    checksum_alg: sha1
 
 - name: Unzip ETL repository
   become: true
@@ -236,7 +238,7 @@
 - name: import reports from the zip file archive
   become: true
   become_user: pentaho
-  ansible.builtin.shell: "OPT=-Dcom.redhat.fips=false {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/reports/foia.zip' --permission=true --overwrite=true --retainOwnership=true"
+  ansible.builtin.shell: "OPT=-Dcom.redhat.fips=false {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/{{ reports_download_path }}' --permission=true --overwrite=true --retainOwnership=true"
 
 - name: Run the job to create and populate the mondrian cubes
   become: true

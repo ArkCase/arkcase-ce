@@ -19,7 +19,7 @@
   failed_when: false
   changed_when: false
 
-# using Python 3.9, or Python 2, no firewall module can be found or installed, 
+# using Python 3.9, or Python 2, no firewall module can be found or installed,
 # so we have to use commands instead
 - name: Ensure web and proxy ports
   become: true
@@ -813,7 +813,7 @@
         mode http
         option tcp-check
         server showcase_backend0 {{ internal_host }}:3000 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-        http-request set-path %[path,regsub(^/showcase/,/)] 
+        http-request set-path %[path,regsub(^/showcase/,/)]
   when: deploy_showcase | default(false)
 
 ### Storybook frontend
@@ -1101,9 +1101,16 @@
     daemon_reload: true
   when: haproxy_service_name is changed
 
-- name: Enable haproxy to connect to any port
-  become: true
-  command: setsebool -P haproxy_connect_any true
+# python3.9 has no sepolicy module
+- name: see if haproxy_connect_any is already enabled
+  become: yes
+  command: getsebool haproxy_connect_any
+  register: haproxy_connect_status
+
+- name: enable haproxy to connect to any port
+  become: yes
+  command: setsebool -P haproxy_connect_any 1
+  when: '"--> on" not in haproxy_connect_status.stdout'
 
 - name: Enable and start haproxy
   become: true
