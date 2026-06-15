@@ -5,7 +5,7 @@
 
 - name: set Java 11 as Java Home (versions equal and above 2023.02)
   set_fact:
-    java_home_version: "/usr/lib/jvm/java-11-openjdk"
+    java_home_version: "/usr/lib/jvm/java-11-amazon-corretto"
   when: arkcase_version == "" or arkcase_version is version('2023.02', '>=')
 
 - name: Ensure group arkcase exists
@@ -98,10 +98,20 @@
   shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/arkcase/yarn*.rpm
   when: yarn_version.stdout == ""
 
+- name: install required package (npm)
+  become: yes
+  command: dnf install -y npm
+  when: npm_version.stdout == ""
+
+- name: required packages (node) to run ArkCase webapp
+  become: yes
+  command: dnf install -y nodejs
+  when: node_version.stdout == ""
+
 - name: install python2 (needed on RHEL8)
   become: yes
-  command: yum install -y python2
-  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
+  command: dnf install -y python2
+  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
 
 - name: install the npm module 'husky' which seems required by some ArkCase versions
   become: yes
@@ -120,8 +130,8 @@
           tomcat_home: "{{ root_folder }}/app/arkcase"
           tls_port: 8843
           shutdown_port: 4005
-          jmx_remote_port: 40506
-          jmx_rmi_port: 40507
+          jmx_remote_port: 9506
+          jmx_rmi_port: 9507
           http_port: 8080
           redirect_port: 4443
           ajp_port: 4009
@@ -186,7 +196,7 @@
     dest: /usr/bin/yq
     mode: '0755'
 
-- name: add PdfTron java librabries to java arguments
+- name: add PdfTron java libraries to java arguments
   become: yes
   become_user: arkcase
   blockinfile:

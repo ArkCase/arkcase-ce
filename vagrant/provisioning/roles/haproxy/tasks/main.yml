@@ -37,19 +37,19 @@
 
 - name: Install epel-release
   become: true
-  command: yum -y install epel-release
-  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
+  command: yum install -y epel-release
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: Install software collections
   become: true
-  command: yum -y install centos-release-scl
-  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
+  command: yum install -y centos-release-scl
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
 
 - name: Install haproxy 1.8
   become: true
-  command: yum -y install "{{ pkg_haproxy }}"
+  command: dnf install -y "{{ pkg_haproxy }}"
 
-- name: Haproxy folders
+- name: Haproxy log folder
   become: true
   ansible.builtin.file:
     path: "{{ root_folder }}/log/haproxy"
@@ -57,6 +57,10 @@
     owner: haproxy
     group: haproxy
     mode: '0755'
+    seuser: "system_u"
+    serole: "object_r"
+    setype: "haproxy_var_log_t"
+    selevel: "s0"
 
 - name: See if rsyslog.conf exists
   become: true
@@ -80,25 +84,6 @@
       line: '$UDPServerRun 514'
   register: rsyslog_configuration
   when: rsyslog_stat.stat.exists
-
-# Python 3.9 has no selinux module
-- name: see if SELinux context needs to be added
-  become: yes
-  command: ls -ldZ {{ root_folder}}/log/haproxy
-  register: haproxy_logging_context
-  changed_when: false
-
-- name: Allow SELinux write access on the haproxy log directory
-  become: true
-  ansible.builtin.command: semanage fcontext -a -t haproxy_var_log_t '{{ root_folder }}/log/haproxy'
-  register: allow_haproxy_logging
-  vars:
-
-- name: Apply new SELinux file context to filesystem
-  become: true
-  ansible.builtin.command: restorecon -R -v {{ root_folder }}/log/haproxy
-  when: allow_haproxy_logging is changed
-  changed_when: allow_haproxy_logging is changed
 
 - name: Copy haproxy log configuration into rsyslog.d
   become: true
@@ -169,7 +154,7 @@
   become: true
   ansible.builtin.shell: cat {{ ssl_cert }} {{ ssl_ca }} {{ ssl_key }} > /etc/pki/tls/certs/haproxy.pem
 
-- name: ArkCase configuration
+- name: ArkCase configuration (microservices)
   become: true
   ansible.builtin.blockinfile:
     path: "{{ path_haproxy_cfg }}"
@@ -276,6 +261,140 @@
         http-request set-path %[path,regsub(^/config/,/)]
 
   register: arkcase_config
+  when: enable_microservices | default(false) | bool
+
+
+- name: ArkCase configuration (non-microservices default)
+  become: true
+  ansible.builtin.blockinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: true
+    block: |
+      frontend stats
+        bind *:8404
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats admin if LOCALHOST
+        stats auth admin:{{ default_user_password }}
+
+      frontend main
+        mode http
+        bind *:80
+
+        bind *:443 force-tlsv12 ssl crt /etc/pki/tls/certs/haproxy.pem
+        redirect scheme https code 301 if !{ ssl_fc }
+
+        # for URLs that should not be called from outside,
+        # but only by services within our network.
+        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
+
+        acl acl_solr path_beg /solr
+        acl acl_pentaho path_beg /pentaho
+        acl acl_alfresco path_beg /alfresco
+        acl acl_share path_beg /share
+        acl acl_snowbound path_beg /VirtualViewerJavaHTML5
+        acl acl_arkcase path_beg /arkcase
+        acl acl_minio path_beg /api/minio
+        acl acl_oidc path_beg /api/oidc
+        acl acl_prc_dockets path_beg /api/prc-dockets
+        acl acl_config path_beg /config
+        acl acl_root path -i /
+
+        # redirections
+        redirect code 301 location /arkcase if acl_root
+
+        #arkcase.next services
+
+        # ensure internal sites only visible internally
+        http-request deny if acl_solr !only_arkcase_host
+        http-request deny if acl_config !only_arkcase_host
+
+        # backend uses
+        use_backend be_solr if acl_solr
+        use_backend be_pentaho if acl_pentaho
+        use_backend be_alfresco if acl_alfresco
+        use_backend be_share if acl_share
+        use_backend be_snowbound if acl_snowbound
+        use_backend be_arkcase if acl_arkcase
+        use_backend be_minio if acl_minio
+        use_backend be_oidc if acl_oidc
+        use_backend be_prc_dockets if acl_prc_dockets
+        use_backend be_config if acl_config
+
+      #backend servers
+      backend be_solr
+        http-response add-header X-Solr-Node %s
+        mode http
+        balance roundrobin
+        option tcp-check
+        server solr0 {{ solr_host }}:8983 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_pentaho
+        http-response add-header X-Pentaho-Node %s
+        mode http
+        option tcp-check
+        server pentaho0 {{ pentaho_host }}:2002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_alfresco
+        http-response add-header X-Afresco-Node %s
+        mode http
+        option tcp-check
+        server alfresco0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_share
+        http-response add-header X-Share-Node %s
+        mode http
+        option tcp-check
+        server share0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_snowbound
+        http-response add-header X-Snowbound-Node %s
+        mode http
+        option tcp-check
+        server snowbound0 {{ snowbound_host }}:2005 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+      
+      backend be_arkcase
+        http-response add-header X-ArkCase-Node %s
+        mode http
+        option tcp-check
+        server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+
+      backend be_minio
+        http-response add-header X-Minio-Node %s
+        mode http
+        option tcp-check
+        server minio0 {{ arkcase_host }}:9000
+        http-request set-path %[path,regsub(^/api/minio/,/)]
+
+      backend be_prc_dockets
+        http-response add-header X-PRC-Dockets-Node %s
+        mode http
+        option tcp-check
+        server prc_dockets0 {{ arkcase_host }}:9082
+      
+      backend be_api_gateway
+        http-response add-header X-API-Gateway-Node %s
+        mode http
+        option tcp-check
+        server api_gateway0 {{ arkcase_host }}:9002
+
+      backend be_oidc
+        http-response add-header X-OIDC-Node %s
+        mode http
+        option tcp-check
+        server oidc0 {{ arkcase_host }}:9100
+        http-request set-path %[path,regsub(^/api/oidc/,/)]
+
+      backend be_config
+        http-response add-header X-Config %s
+        mode http
+        option tcp-check
+        server config {{ arkcase_host }}:9999
+        http-request set-path %[path,regsub(^/config/,/)]
+
+  register: arkcase_config
+  when: not (enable_microservices | default(false) | bool)
 
 - name: microservice frontend
   become: yes
@@ -544,6 +663,90 @@
         http-request set-path %[path,regsub(^/assets/,/portal/assets/)]
   when: deploy_arkcase_portal | default(false)
 
+### Portal Sitemap
+- name: ArkCase Portal Sitemap part
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "acl acl_arkcase_portal path_beg /{{ arkcase_portal_context | default('portal') }}"
+    line: "  acl acl_sitemap path_beg /{{ arkcase_portal_context | default('portal') }}/sitemap"
+  when: enable_sitemap_config | default(false)
+
+- name: Tell ArkCase Portal Sitemap which backend to use
+  become: true
+  ansible.builtin.lineinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    line: "  use_backend be_sitemap if acl_sitemap"
+  when: enable_sitemap_config | default(false)
+
+- name: ArkCase Portal Sitemap context, if needed
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL SITEMAP CONTEXT"
+    insertafter: "#backend servers"
+    path: "{{ path_haproxy_cfg }}"
+    block: |
+      backend be_sitemap
+        http-response add-header X-sitemap %s
+        mode http
+        option tcp-check
+        server prc-sitemap0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/,/sitemap/)]
+  when: enable_sitemap_config | default(false)
+
+### Portal Googlebot/etc redirects
+- name: Enable GoogleBot (etc) portal redirect
+  become: true
+  ansible.builtin.blockinfile:
+    path: "{{ path_haproxy_cfg }}"
+    backup: true
+    insertafter: "acl acl_arkcase_portal path_beg /{{ arkcase_portal_context | default('portal') }}"
+    block: |
+      ##### Custom GoogleBot handler
+      # --- Bot Detection ---
+      acl is_search_bot hdr_sub(user-agent) -i -m reg -i (Googlebot|bingbot|DuckDuckBot)
+      
+      # --- Path Matches for SPA URLs ---
+      acl is_docket_path path_reg ^/portal/dockets/([0-9]+)$
+      acl is_filing_path path_reg ^/portal/filings/([0-9]+)$
+  when: enable_search_bot_portal_redirects | default(false)
+
+- name: Create GoogleBot (etc) portal backend instructions
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    insertafter: "# backend uses"
+    block: |  
+      use_backend be_docket_redirect if is_search_bot is_docket_path
+      use_backend be_filing_redirect if is_search_bot is_filing_path
+  when: enable_search_bot_portal_redirects | default(false)
+
+- name: Create GoogleBot/(ETC) portal context
+  become: true
+  ansible.builtin.blockinfile:
+    backup: true
+    path: "{{ path_haproxy_cfg }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK ARKCASE PORTAL Details Webcrawler CONTEXT"
+    insertafter: "#backend servers"
+    block: |
+      # --- Redirection Backend ---
+      backend be_docket_redirect
+        mode http
+        option tcp-check
+        server prc-docket-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/dockets/,/render/docket/)]
+      backend be_filing_redirect
+        mode http
+        option tcp-check
+        server prc-filing-redirect0 {{ internal_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+        http-request set-path %[path,regsub(^/{{ arkcase_portal_context | default('portal') }}/filings/,/render/filing/)]
+  when: enable_search_bot_portal_redirects | default(false)
+
 ### Showcase frontend
 - name: Showcase frontend part
   become: true
@@ -649,7 +852,7 @@
 
 # Confluent platform
 - name: Set up proxies to Confluent Platform services
-  when: enable_kafka is defined and enable_kafka == "yes"
+  when: enable_kafka is defined and enable_kafka == "yes" and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
@@ -736,7 +939,7 @@
 
 
 - name: Set up proxies to Zipkin
-  when: enable_zipkin is defined and enable_zipkin == 'yes'
+  when: enable_zipkin is defined and enable_zipkin == 'yes' and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
@@ -789,7 +992,7 @@
 
 
 - name: Set up proxies to Eureka
-  when: enable_eureka is defined and enable_eureka == 'yes'
+  when: enable_eureka is defined and enable_eureka == 'yes' and enable_microservices | default(false)
   block:
     - name: Populate haproxy.conf with frontend part
       become: true
@@ -898,16 +1101,9 @@
     daemon_reload: true
   when: haproxy_service_name is changed
 
-# python3.9 has no sepolicy module
-- name: see if haproxy_connect_any is already enabled
-  become: yes
-  command: getsebool haproxy_connect_any
-  register: haproxy_connect_status
-
-- name: enable haproxy to connect to any port
-  become: yes
-  command: setsebool -P haproxy_connect_any 1
-  when: '"--> on" not in haproxy_connect_status.stdout'
+- name: Enable haproxy to connect to any port
+  become: true
+  command: setsebool -P haproxy_connect_any true
 
 - name: Enable and start haproxy
   become: true
@@ -929,4 +1125,4 @@
   ansible.builtin.systemd:
     name: rsyslog
     state: restarted
-  when: rsyslog_stat.stat.exists and (rsyslog_configuration is changed or haproxy_rsyslog is changed or allow_haproxy_logging is changed)
+  when: rsyslog_stat.stat.exists and (rsyslog_configuration is changed or haproxy_rsyslog is changed)

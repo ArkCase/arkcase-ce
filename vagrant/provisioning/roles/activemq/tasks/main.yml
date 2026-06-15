@@ -85,7 +85,7 @@
   replace:
     path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf"
     regexp: "^wrapper.java.command=java"
-    replace: "wrapper.java.command={{ activemq_java_home | default('/usr/lib/jvm/java-11-openjdk') }}/bin/java"
+    replace: "wrapper.java.command={{ activemq_java_home | default('/usr/lib/jvm/java-11-amazon-corretto') }}/bin/java"
 
 - name: set data folder and wrapper log location
   become: yes

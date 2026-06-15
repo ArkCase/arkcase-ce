@@ -1,6 +1,6 @@
 - name: install cryptography
   become: yes
-  command: pip{{ python_version }} install cryptography --upgrade
+  command: "{{ ansible_pip3 | default('pip3') }} install --upgrade cryptography"
 
 - name: see if rsa private key exists
   stat:

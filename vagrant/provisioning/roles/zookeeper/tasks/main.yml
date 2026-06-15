@@ -169,7 +169,7 @@
 # directly instead.
 - name: Expose Zookeeper app port
   become: yes
-  command: firewall-cmd --add-port {{ item }} --permanent
+  command: firewall-cmd --permanent --add-port "{{ item }}"
   register: zookeeper_ports
   loop:
     - "2182/tcp"

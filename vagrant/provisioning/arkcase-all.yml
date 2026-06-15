@@ -1,5 +1,7 @@
 ---
 - hosts: all
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3.12"
   roles:
     - role: common
       tags: [core, common, marketplace]
@@ -87,13 +89,14 @@
     - role: snowbound-app
       tags: [core, snowbound, snowbound-app, marketplace]
     - role: confluent-platform-install
-      when: enable_kafka is defined and enable_kafka == "yes"
+      when: enable_kafka is defined and enable_kafka == "yes" and enable_microservices | default(false)
       tags: [microservices, confluent]
     - role: elasticsearch-install
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
       tags: [microservices, elasticsearch]
     - role: microservices
       tags: [microservices, microservice-install]
+      when: enable_microservices | default(false)
     - role: minio
       tags: [microservices, minio]
       when: enable_minio | default(false)
@@ -144,8 +147,8 @@
       tags: [ core, upgrade, arkcase-cognito, arkcase-microservices ]
       when: enable_microservices | default(false)
     - role: arkcase-extra-microservices
-      tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
-      when: enable_microservices | default(false) and arkcase_extra_microservices is defined
+      tags: [ core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace ]
+      when: ((enable_microservices | default(false) | bool) or (enable_dockets | default(false) | bool)) and arkcase_extra_microservices is defined
     - role: arkcase-portal-ui
       tags: [core, upgrade, arkcase-portal-ui, arkcase-microservices, marketplace]
       when: deploy_arkcase_portal | default(false)
@@ -170,7 +173,10 @@
       tags: [start-arkcase, core, arkcase, upgrade, marketplace]  
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
-      tags: [foia-analytical-reports]
+      tags: [foia-analytical-reports, foia]
+    - role: raw-data-report
+      when: raw_data_etl_report_version is defined
+      tags: [raw-data-report]
     - role: tesseract
       tags: [core, arkcase, tesseract, marketplace]
     - role: firewall
@@ -192,3 +198,8 @@
       tags: [fapolicyd-config]
     - role: timeservice
       tags: [timeservice]
+    - role: java-corretto-11
+      tags: [java-corretto]
+    - role: solr-custom-plugin
+      tags: [solr-custom-plugin]
+

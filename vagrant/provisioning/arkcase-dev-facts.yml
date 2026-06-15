@@ -636,6 +636,11 @@ oidc_portal_jwk_set_uri: ""
 oidc_portal_token_uri: ""
 oidc_portal_user_info_url: ""
 
+dynamodb_region: ""
+dynamodb_access_key: ""
+dynamodb_secret_key: ""
+dynamodb_table_name: ""
+
 # OIDC authentication properties when using Core ArkCase OIDC implementation
 #oidc_registrationId: ""
 #oidc_clientId: ""
@@ -782,3 +787,16 @@ ansible_python3: /usr/bin/python3
 
 # Set to true to use the alternative Solr schema, which allows for Solr Highlighting of File Content. 
 enable_solr_snippets: false
+ark_solr_customizations_jar_checksum: "09414d78e16a45898cd7c78eb8cbbdbf05fbe5c3"
+
+# Solr Plugin PEM File requires the path to where the file is stored. This does not move the file from the installer to that location.
+# IMPORTANT: If a new PEM file is provided, the ArkSolrCustomizations.jar MUST BE RE-SIGNED based on the provided file.
+# See https://solr.apache.org/guide/8_11/adding-custom-plugins-in-solrcloud-mode.html#securing-runtime-libraries for details
+# Default pem used is found within this repo at vagrant/provisioning/roles/pki-dev/files/tls/private/arkcase-root.pem
+solr_plugin_pem_file: ""
+
+# If Solr is to be configured to ONLY use signed jars,
+# then that expected signature must be provided below EVEN IF USING THE DEFAULT PEM arkcase-root.pem!
+# If that signature isn't based on the provided arkcase-root.pem, then solr_plugin_pem_file must point to the correct PEM file
+# for Solr to be able to load the plugin.
+ark_solr_custom_jar_sig: ""

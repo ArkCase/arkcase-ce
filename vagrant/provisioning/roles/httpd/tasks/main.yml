@@ -1,6 +1,6 @@
 - name: install httpd
   become: yes
-  command: yum -y install httpd mod_ssl mod_ldap
+  command: dnf install -y httpd mod_ssl mod_ldap
 
 - name: httpd folders
   become: yes
