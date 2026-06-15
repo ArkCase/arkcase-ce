@@ -7,7 +7,7 @@
 
 - name: install cryptography
   become: yes
-  command: "{{ ansible_pip3 | default('pip3') }} install --upgrade cryptography"
+  command: "{{ pip_executable }} install --upgrade cryptography"
 
 - name: create pki folder structure
   become: yes
