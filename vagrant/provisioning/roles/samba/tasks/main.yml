@@ -36,12 +36,12 @@
 - name: install upstream repository (CentOS 7)
   become: yes
   command: dnf install -y --nogpgcheck https://repo.ius.io/ius-release-el7.rpm
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: install subscription-manager on Rocky8
   become: yes
   command: dnf install -y subscription-manager
-  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
 - name: install upstream repository (RHEL 8)
   become: yes
@@ -67,12 +67,12 @@
     - python-firewall
     - python36u
     - python36u-devel
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: install specified packages
   become: yes
   command: yum --enablerepo=powertools install -y gpgme-devel libarchive-devel lmdb-devel rpcgen
-  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
 - name: Samba and LDAP required packages (RHEL 8)
   become: yes
@@ -111,7 +111,9 @@
     - systemd-devel
     - tar
     - zlib-devel
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+    - python3-pyasn1
+    - python3-markdown
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: link python3 executable
   become: yes
@@ -123,11 +125,10 @@
 
 - name: install Python packages
   become: yes
-  pip:
-    executable: "{{ pip_executable }}"
-    name: 
-    - python-config
-    - firewall
+  command: "{{ pip_executable | default('pip3') }} install --upgrade {{ item }}"
+  loop: 
+  - python-config
+  - firewall
    
 # dnf install python3-pyasn1 python3-markdown
  
