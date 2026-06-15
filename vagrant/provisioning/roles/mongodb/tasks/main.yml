@@ -11,31 +11,37 @@
     - "{{ root_folder }}/data"
     - "{{ root_folder }}/log"
 
-- name: configure Mongodb 4.0 repository
+- name: install python libraries
+  become: yes
+  command: "{{ pip_executable }} install --upgrade pymongo"
+
+- name: configure Mongodb 4.2 repository
   become: yes
   copy:
     dest: /etc/yum.repos.d/mongodb-org.repo
-    force: no
+    force: yes
     content: |
-      [mongodb-org-4.0]
+      [mongodb-org-4.2]
       name=MongoDB Repository
-      baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.0/x86_64/
+      baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.2/x86_64/
       gpgcheck=1
       enabled=1
-      gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
+      gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc
 
 - name: ensure mongodb port
   become: yes
-  firewalld:
-    immediate: yes
-    permanent: yes
-    port: "{{ mongodb_port | default(27017) }}/tcp"
-    state: enabled
+  command: firewall-cmd --permanent --add-port "{{ mongodb_port | default(27017) }}/tcp"
+  register: mongo_firewall
+
+- name: restart firewall if needed
+  become: yes
+  command: firewall-cmd --reload
+  when: mongo_firewall is changed
 
 - name: install Mongodb
   become: yes
   yum:
-    state: installed
+    state: latest
     disable_gpg_check: yes
     name:
       - mongodb-org
@@ -58,6 +64,32 @@
       setype: "mongod_log_t"
   register: mongodb_folder_structure
 
+- name: create folder to hold MongoDB key
+  become: yes
+  file:
+    path: /etc/mongod
+    state: directory
+    group: mongod
+    owner: mongod
+
+- name: see if MongoD key exists
+  become: yes
+  stat:
+    path: /etc/mongod/mongod.key
+  register: mongod_key
+
+- name: create a TLS key per Mongo specs
+  become: yes
+  shell: cat /etc/pki/tls/certs/{{ internal_host }}.crt /etc/pki/tls/certs/{{ internal_host }}_ca_chain.pem /etc/pki/tls/private/{{ internal_host }}_key.pem | tee /etc/mongod/mongod.key
+  when: not mongod_key.stat.exists
+
+- name: set proper ownership on TLS key
+  become: yes
+  file:
+    path: /etc/mongod/mongod.key
+    group: mongod
+    owner: mongod
+
 - name: Mongodb config
   become: yes
   template:
@@ -78,14 +110,6 @@
     name: mongod
     state: started
 
-- name: install pymongo
-  become: yes
-  pip:
-    executable: pip3
-    name: pymongo
-    extra_args: --upgrade
 
 - name: create arkcase mongo database
   include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"
-  vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
