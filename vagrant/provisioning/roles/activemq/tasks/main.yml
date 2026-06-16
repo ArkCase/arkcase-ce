@@ -310,8 +310,12 @@
   become: yes
   become_user: activemq
   ansible.builtin.file:
-    path: "{{ root_folder }}/app/activemq/lib/optional/log4j-1.2.17.jar"
+    path: "{{ root_folder }}/app/activemq/lib/optional/{{ item }}.jar"
     state: absent
+  loop:
+    - "log4j-1.2.17"
+    - "slf4j-log4j12-1.7.25"
+
 
 - name: ActiveMQ Log4J fixes - add acceptable log4j 
   become: yes
@@ -324,6 +328,7 @@
     - api
     - core
     - 1.2-api
+    - slf4j-impl
 
 - include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
   loop:
