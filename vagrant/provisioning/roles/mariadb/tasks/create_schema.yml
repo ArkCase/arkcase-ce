@@ -1,16 +1,16 @@
 - name: MySQL python package name (RHEL 8)
   set_fact:
     pkg_mysql_python: PyMySQL
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: MySQL python package name (RHEL 8.8)
   set_fact:
     pkg_mysql_python: pymysql
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8" and ansible_facts["distribution_version"] is version('8.8', 'ge')
 
 - name: install MariaDB python library
   become: yes
-  command: "{{ ansible_pip3 | default('pip3') }} install --root-user-action ignore {{ pkg_mysql_python }}"
+  command: "{{ pip_executable }} install --upgrade {{ pkg_mysql_python }}"
 
 - name: create {{ item }} MariaDB database when the databae is running locally
   block:
@@ -78,7 +78,7 @@
         login_host: "{{ database_host_name }}"
         login_user: "{{ database_root_user }}"
         login_password: "{{ database_root_password }}"
-        host: "{{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}"
+        host: "{{ ansible_facts['default_ipv4.address'] | default(ansible_facts['_all_ipv4_addresses[0]']) }}"
         name: "{{ item }}"
         password: "{{ default_database_password }}"
         priv: '{{ item }}.*:select,insert,update,delete,create,drop,index,alter,lock tables,create view,trigger,create routine,alter routine,execute,create temporary tables'

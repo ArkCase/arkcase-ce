@@ -52,11 +52,10 @@
     pkg_mysql_python: python3-mysql
   when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
-
 - name: MySQL python package name (RHEL 8.8 and above)
   set_fact:
     pkg_mysql_python: pymysql
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8" and ansible_distribution_version is version('8.8', 'ge')
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8" and ansible_facts["distribution_version"] is version('8.8', 'ge')
 
 - name: install MariaDB packages (CentOS 7)
   become: yes
@@ -78,7 +77,7 @@
 
 - name: install MariaDB python library
   become: yes
-  command: "{{ ansible_pip3 | default('pip3') }} install --upgrade {{ pkg_mysql_python }}"
+  command: "{{ pip_executable }} install --upgrade {{ pkg_mysql_python }}"
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:

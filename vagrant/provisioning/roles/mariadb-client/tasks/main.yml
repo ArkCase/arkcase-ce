@@ -11,7 +11,7 @@
       baseurl = http://yum.mariadb.org/10.11/centos7-amd64
       gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: configure MariaDB v10 repository (RHEL 8)
   become: yes
@@ -25,7 +25,7 @@
       gpgkey= https://rpm.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
       module_hotfixes=1
-  when: ansible_distribution == "RedHat" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "RedHat" and ansible_facts["distribution_major_version"] == "8"
 
 - name: configure MariaDB v10 repository (Rocky 8)
   become: yes
@@ -41,17 +41,17 @@
       module_hotfixes=1
       gpgkey=https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
       gpgcheck=1
-  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
 - name: MySQL python package name (CentOS 7)
   set_fact:
     pkg_mysql_python: MySQL-python
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: MySQL python package name (RHEL 8)
   set_fact:
     pkg_mysql_python: pymysql
-  when: ansible_distribution in ["RedHat","Rocky"] and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] in ["RedHat","Rocky"] and ansible_facts["distribution_major_version"] == "8"
 
 - name: install MariaDB packages (CentOS 7)
   become: yes
@@ -69,11 +69,11 @@
   become: yes
   command: dnf install -y --enablerepo mariadb --disablerepo AppStream MariaDB-server MariaDB-client
   register: mariadb_install
-  when: ansible_distribution == "Rocky" and ansible_distribution_major_version == "8"
+  when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
 - name: install MariaDB python library
   become: yes
-  command: "{{ ansible_pip3 | default('pip3') }} install --root-user-action ignore {{ pkg_mysql_python }}"
+  command: "{{ pip_executable }} install --upgrade {{ pkg_mysql_python }}"
 
 - include_tasks: "{{ role_path }}/../common/tasks/download.yml"
   loop:
