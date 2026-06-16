@@ -25,21 +25,20 @@
     - "log"
     - "tmp"
 
-- name: ensure minio port immediately
-  become: yes
-  command: firewall-cmd --add-port "{{ minio_port | default(9000) }}/tcp"
-
 - name: ensure minio port permanently
   become: yes
   command: firewall-cmd --permanent --add-port "{{ minio_port | default(9000) }}/tcp"
-
-- name: ensure minio console port immediately
-  become: yes
-  command: firewall-cmd --add-port "{{ minio_console_port | default(8001) }}/tcp"
+  register: minio_port
 
 - name: ensure minio console port permanently
   become: yes
   command: firewall-cmd --permanent --add-port "{{ minio_console_port | default(8001) }}/tcp"
+  register: minio_console_port
+
+- name: reload firewall if needed
+  become: yes
+  command: firewall-cmd --reload
+  when: minio_port is changed or minio_console_port is changed
 
 - name: download minio file from internet
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -71,6 +70,7 @@
 - name: copy the private key
   become: yes
   ansible.builtin.copy:
+    remote_src: true
     src: "{{ ssl_key }}"
     dest: "{{ root_folder }}/app/minio/private.key"
     owner: minio
@@ -80,6 +80,7 @@
 - name: copy the certificate
   become: yes
   ansible.builtin.copy:
+    remote_src: true
     src: "{{ ssl_cert }}"
     dest: "{{ root_folder }}/app/minio/public.crt"
     owner: minio
