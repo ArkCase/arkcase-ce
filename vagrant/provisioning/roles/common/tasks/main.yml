@@ -218,3 +218,26 @@
         - name: Add Arkcase server certs to Java 8 trust store
           become: true
           ansible.builtin.command: keytool -importkeystore -srckeystore "{{ java_trust_store }}" -srcstorepass {{ java_trust_store_pass }} -destkeystore /usr/lib/jvm/java-1.8.0-openjdk/jre/lib/security/cacerts -deststorepass changeit -noprompt
+
+- name: check state of Corretto 11 cacerts file
+  become: true
+  stat:
+    path: /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts
+  register: corretto_cacerts
+
+- name: backup Coretto original cacerts file if needed
+  become: true
+  command: 
+    cmd: mv /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts.original
+    removes: /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts
+    creates: /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts.original
+  when: corretto_cacerts.stat.exists and corretto_cacerts.stat.isreg
+  register: coretto_cacerts_backup
+
+- name: link the system keystore to the Coretto cacerts file if needed
+  become: true
+  file:
+    src: /etc/pki/ca-trust/extracted/java/cacerts
+    path: /usr/lib/jvm/java-11-amazon-corretto/lib/security/cacerts
+    state: link
+  when: coretto_cacerts_backup is changed
