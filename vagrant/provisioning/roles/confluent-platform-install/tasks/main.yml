@@ -39,7 +39,7 @@
 
 - name: set Confluent Platform version
   set_fact:
-    confluent_platform_version: "{{ confluent_scala_version | default(2.12) if confluent_major_version is version('6.0', '<') else confluent_major_version + '.' + confluent_minor_version }}"
+    confluent_platform_version: "{{ confluent_scala_version | default(2.12) if confluent_major_version is version('6.0', '<') else (confluent_major_version | string)  + '.' + (confluent_minor_version | string) }}"
 
 # YUM/DNF will not install the packages in FIPS mode, since the packages don't have proper digests
 # See https://access.redhat.com/solutions/4460971
@@ -581,11 +581,14 @@
     state: started
   when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_kafka_connect_updated is changed)
 
-- name: Expose Kafka port
+- name: Expose Kafka port if needed
   become: yes
-  firewalld:
-    port: "{{ kafka_port | default(9092) }}/tcp"
-    permanent: true
-    state: enabled
-    immediate: yes
+  command: firewall-cmd --permanent --add-port "{{ kafka_port | default(9092) }}/tcp"
   when: enable_kafka is defined and enable_kafka == "yes"
+  register: kafka_firewall
+
+- name: Restart firewall if needed
+  become: yes
+  command: firewall-cmd --reload
+  when: kafka_firewall is changed
+
