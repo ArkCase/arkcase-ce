@@ -261,13 +261,13 @@
   set_fact:
     preauth_jar_file: "v4-1.1.1"
     spring_security_version: "4.2"
-  when: pentaho_major_version is version('9', '<')
+  when: pentaho_major_version is version('8', '>=') and pentaho_major_version is version('9', '<')
 
 - name: set preauth facts - Pentaho 9
   set_fact:
     preauth_jar_file: "v5-1.4.0"
     spring_security_version: "5.4"
-  when: pentaho_major_version is version('10', '<')
+  when: pentaho_major_version is version('9', '>=') and pentaho_major_version is version('10', '<')
 
 - name: preauthentication setup - jar
   become: yes
