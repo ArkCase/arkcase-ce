@@ -1,14 +1,3 @@
-- name: Expose Microservices ports
-  become: yes
-  firewalld:
-    port: "{{ item }}"
-    permanent: true
-    state: enabled
-    immediate: yes
-  register: microservices_ports
-  loop:
-    - "{{ kafka_port | default(9092) }}/tcp"   # Kafka
-
 # CentOS 7 ships with HTTPD version 2.4.6. We need at least version 2.4.11 for the SubstituteMaxLineLength directive
 # RHEL 8 has httpd v2.4.37 so this repository is only needed on CentOS 7
 - name: Copy the HTTPD CodeIT repo
@@ -17,7 +6,7 @@
     src: codeit.el7.repo
     dest: /etc/yum.repos.d/
     backup: yes
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: upgrade httpd
   become: yes
