@@ -31,19 +31,19 @@
   register: firewall_ports_updated
 
 - name: reload the firewall if needed
-  become: yes
+  become: true
   command: firewall-cmd --reload
   when: firewall_ports_updated is changed and firewalld_state.stdout == 'runnng'
 
 - name: Install epel-release
   become: true
   command: yum install -y epel-release
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: Install software collections
   become: true
   command: yum install -y centos-release-scl
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts["distribution"] == "CentOS" and ansible_facts["distribution_major_version"] == "7"
 
 - name: Install haproxy 1.8
   become: true
@@ -233,13 +233,6 @@
         server sse0 {{ arkcase_host }}:9050
         http-request set-path %[path,regsub(^/api/sse/,/)]
 
-      backend be_minio
-        http-response add-header X-Minio-Node %s
-        mode http
-        option tcp-check
-        server minio0 {{ arkcase_host }}:9000
-        http-request set-path %[path,regsub(^/api/minio/,/)]
-
       backend be_api_gateway
         http-response add-header X-API-Gateway-Node %s
         mode http
@@ -287,7 +280,7 @@
 
         # for URLs that should not be called from outside,
         # but only by services within our network.
-        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0])) }}
+        acl only_arkcase_host src {{ arkcase_host | default(internal_host) }} 127.0.0.1 {{ internal_host_ip | default(ansible_facts["default_ipv4.address"] | default(ansible_facts["all_ipv4_addresses"][0])) }}
 
         acl acl_solr path_beg /solr
         acl acl_pentaho path_beg /pentaho
@@ -313,11 +306,8 @@
         # backend uses
         use_backend be_solr if acl_solr
         use_backend be_pentaho if acl_pentaho
-        use_backend be_alfresco if acl_alfresco
-        use_backend be_share if acl_share
         use_backend be_snowbound if acl_snowbound
         use_backend be_arkcase if acl_arkcase
-        use_backend be_minio if acl_minio
         use_backend be_oidc if acl_oidc
         use_backend be_prc_dockets if acl_prc_dockets
         use_backend be_config if acl_config
@@ -336,17 +326,6 @@
         option tcp-check
         server pentaho0 {{ pentaho_host }}:2002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
-      backend be_alfresco
-        http-response add-header X-Afresco-Node %s
-        mode http
-        option tcp-check
-        server alfresco0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-
-      backend be_share
-        http-response add-header X-Share-Node %s
-        mode http
-        option tcp-check
-        server share0 {{ alfresco_host }}:7070 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
       backend be_snowbound
         http-response add-header X-Snowbound-Node %s
@@ -359,13 +338,6 @@
         mode http
         option tcp-check
         server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-
-      backend be_minio
-        http-response add-header X-Minio-Node %s
-        mode http
-        option tcp-check
-        server minio0 {{ arkcase_host }}:9000
-        http-request set-path %[path,regsub(^/api/minio/,/)]
 
       backend be_prc_dockets
         http-response add-header X-PRC-Dockets-Node %s
@@ -397,7 +369,7 @@
   when: not (enable_microservices | default(false) | bool)
 
 - name: microservice frontend
-  become: yes
+  become: true
   blockinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -417,7 +389,7 @@
   when: enable_microservices
 
 - name: minio frontend
-  become: yes
+  become: true
   lineinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -426,7 +398,7 @@
   when: enable_minio
 
 - name: snowbound frontend
-  become: yes
+  become: true
   lineinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -435,7 +407,7 @@
   when: ecm_viewer == "snowbound"
 
 - name: snowbound backend use
-  become: yes
+  become: true
   lineinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -444,7 +416,7 @@
   when: ecm_viewer == "snowbound"
 
 - name: snowbound back end
-  become: yes
+  become: true
   blockinfile:
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK SNOWBOUND BACKEND"
@@ -459,7 +431,7 @@
   when: ecm_viewer == "snowbound"
 
 - name: alfresco frontend
-  become: yes
+  become: true
   blockinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -471,7 +443,7 @@
   when: file_repository_type == "alfresco"
 
 - name: Alfresco back end uses
-  become: yes
+  become: true
   blockinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -483,6 +455,7 @@
   when: file_repository_type == "alfresco"
 
 - name: Alfresco back ends
+  become: true
   blockinfile:
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK ALFRESCO BACK ENDS"
@@ -522,7 +495,7 @@
   when: foia_portal_context is defined
 
 - name: microservice backend uses
-  become: yes
+  become: true
   blockinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -542,7 +515,7 @@
   when: enable_microservices
 
 - name: minio backend uses
-  become: yes
+  become: true
   lineinfile:
     backup: yes
     path: "{{ path_haproxy_cfg }}"
@@ -608,6 +581,7 @@
   when: enable_microservices
 
 - name: minio back end
+  become: yes
   blockinfile:
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK MINIO BACK END"
@@ -1103,12 +1077,12 @@
 
 # python3.9 has no sepolicy module
 - name: see if haproxy_connect_any is already enabled
-  become: yes
+  become: true
   command: getsebool haproxy_connect_any
   register: haproxy_connect_status
 
 - name: enable haproxy to connect to any port
-  become: yes
+  become: true
   command: setsebool -P haproxy_connect_any 1
   when: '"--> on" not in haproxy_connect_status.stdout'
 
