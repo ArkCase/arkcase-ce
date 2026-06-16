@@ -20,7 +20,7 @@
     - role: server-cert
       tags: [server-cert]
     - role: mongodb
-      tags: [microservices, mongodb]
+      tags: [mongodb]
       when: enable_mongo | default(false)
     - role: mariadb
       tags: [core, mariadb, marketplace]
@@ -86,15 +86,15 @@
       tags: [core, snowbound, snowbound-app, upgrade, marketplace]
     - role: confluent-platform-install
       when: enable_kafka is defined and enable_kafka == "yes" and enable_microservices | default(false)
-      tags: [microservices, confluent]
+      tags: [confluent]
     - role: elasticsearch-install
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
-      tags: [microservices, elasticsearch]
+      tags: [elasticsearch]
     - role: microservices
       tags: [microservices, microservice-install]
       when: enable_microservices | default(false)
     - role: minio
-      tags: [microservices, minio]
+      tags: [minio]
       when: enable_minio | default(false)
     - role: pentaho-license
       tags: [pentaho-license, pentaho-ee, arkcase-ee]   
