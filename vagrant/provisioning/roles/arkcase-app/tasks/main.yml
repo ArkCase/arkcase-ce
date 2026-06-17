@@ -79,12 +79,11 @@
 # might also need: curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py ; python3 get-pip.py --force-reinstall
 - name: install required pip modules for Python Excel module
   become: yes
-  command: "{{ ansible_pip3 | default('pip3') }} install setuptools"
+  command: "{{ pip_executable }} install --upgrade setuptools"
 
 - name: install Python Excel module
   become: yes
-  become_user: arkcase
-  command: "{{ ansible_pip3 | default('pip3') }} install --user --upgrade openpyxl lxml"
+  command: "{{ pip_executable }} install --upgrade openpyxl lxml"
 
 - name: download ArkCase war file and config server jar file (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
