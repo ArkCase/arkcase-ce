@@ -11,40 +11,39 @@
     - "{{ root_folder }}/data"
     - "{{ root_folder }}/log"
 
-- name: install python libraries
-  become: yes
-  command: "{{ pip_executable }} install --upgrade pymongo"
-
-- name: configure Mongodb 4.2 repository
+- name: configure Mongodb 4.0 repository
   become: yes
   copy:
     dest: /etc/yum.repos.d/mongodb-org.repo
-    force: yes
+    force: true
     content: |
-      [mongodb-org-4.2]
+      [mongodb-org-4.0]
       name=MongoDB Repository
-      baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.2/x86_64/
+      baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/4.0/x86_64/
       gpgcheck=1
       enabled=1
-      gpgkey=https://www.mongodb.org/static/pgp/server-4.2.asc
+      gpgkey=https://www.mongodb.org/static/pgp/server-4.0.asc
 
 - name: ensure mongodb port
-  become: yes
-  command: firewall-cmd --permanent --add-port "{{ mongodb_port | default(27017) }}/tcp"
-  register: mongo_firewall
+  become: true
+  command: firewall-cmd --add-port "{{ mongodb_port | default(27017) }}/tcp" --permanent
+  register: firewall_ports_updated
 
-- name: restart firewall if needed
+- name: See if firewalld is running
+  become: true
+  ansible.builtin.command: firewall-cmd --state
+  register: firewalld_state
+  failed_when: false
+  changed_when: false
+
+- name: reload the firewall if needed
   become: yes
   command: firewall-cmd --reload
-  when: mongo_firewall is changed
+  when: firewall_ports_updated is changed and firewalld_state.stdout == 'running'
 
 - name: install Mongodb
   become: yes
-  yum:
-    state: latest
-    disable_gpg_check: yes
-    name:
-      - mongodb-org
+  command: yum -y install mongodb-org
   register: mongodb_install
 
 - name: Mongodb folders
@@ -110,6 +109,9 @@
     name: mongod
     state: started
 
+- name: install pymongo
+  become: yes
+  command: "{{ pip_executable }} install --upgrade pymongo"
 
 - name: create arkcase mongo database
   include_tasks: "{{ role_path }}/../mongodb/tasks/create_user_database.yml"
