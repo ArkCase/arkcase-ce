@@ -1332,7 +1332,7 @@
     path: "/home/arkcase/.arkcase/libraries"
     state: directory
 
-- name: unzip the PDFTron libraries files
+- name: unzip the PDFTron libraries files to ArkCase home
   become: yes
   become_user: arkcase
   unarchive:
@@ -1340,3 +1340,18 @@
     src: "{{ root_folder }}/install/arkcase/pdftron_libraries.zip"
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/libraries"
     mode: 0755
+
+- name: unzip the PDFTron libraries files to Tomcat lib
+  become: yes
+  become_user: arkcase
+  unarchive:
+    remote_src: yes
+    src: "{{ root_folder }}/install/arkcase/pdftron_libraries.zip"
+    dest: "{{ root_folder }}/app/arkcase/lib/"
+    mode: 0755
+
+- name: copy PDFtron jar to Tomcat lib
+  become: yes
+  become_user: arkcase
+  shell: cp {{ root_folder }}/data/arkcase-home/.arkcase/libraries/PDFNet-*.jar {{ root_folder }}/app/arkcase/lib/
+
