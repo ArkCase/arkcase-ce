@@ -226,26 +226,6 @@
         option tcp-check
         server arkcase0 {{ arkcase_host }}:8843 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
 
-      backend be_sse
-        http-response add-header X-SSE-Node %s
-        mode http
-        option tcp-check
-        server sse0 {{ arkcase_host }}:9050
-        http-request set-path %[path,regsub(^/api/sse/,/)]
-
-      backend be_api_gateway
-        http-response add-header X-API-Gateway-Node %s
-        mode http
-        option tcp-check
-        server api_gateway0 {{ arkcase_host }}:9002
-
-      backend be_oidc
-        http-response add-header X-OIDC-Node %s
-        mode http
-        option tcp-check
-        server oidc0 {{ arkcase_host }}:9100
-        http-request set-path %[path,regsub(^/api/oidc/,/)]
-
       backend be_config
         http-response add-header X-Config %s
         mode http
@@ -345,19 +325,6 @@
         option tcp-check
         server prc_dockets0 {{ arkcase_host }}:9082
       
-      backend be_api_gateway
-        http-response add-header X-API-Gateway-Node %s
-        mode http
-        option tcp-check
-        server api_gateway0 {{ arkcase_host }}:9002
-
-      backend be_oidc
-        http-response add-header X-OIDC-Node %s
-        mode http
-        option tcp-check
-        server oidc0 {{ arkcase_host }}:9100
-        http-request set-path %[path,regsub(^/api/oidc/,/)]
-
       backend be_config
         http-response add-header X-Config %s
         mode http
@@ -539,6 +506,7 @@
   when: foia_portal_context is defined
 
 - name: microservice back ends
+  become: true
   blockinfile:
     backup: yes
     marker: "# {mark} ANSIBLE MANAGED BLOCK MICROSERVICE BACK ENDS"
@@ -578,6 +546,41 @@
               option tcp-check
               server ldap-authority0 {{ arkcase_host }}:9090 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
               http-request set-path %[path,regsub(^/api/auth/ldap/,/)]
+
+            backend be_portal
+              http-response add-header X-Portal-Api %s
+              mode http
+              option tcp-check
+              server gateway {{ arkcase_host }}:9040 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/arkcase-portal/,/)]
+  
+            backend be_portal_prc
+              http-response add-header X-Prc-Portal-Api %s
+              mode http
+              option tcp-check
+              server gateway {{ arkcase_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/arkcase-portal-prc/,/)]
+  
+            backend be_schema
+              http-response add-header X-Schema %s
+              mode http
+              option tcp-check
+              server gateway {{ arkcase_host }}:9099 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/schema/,/)]
+  
+            backend be_file_management
+              http-response add-header X-File-Management %s
+              mode http
+              option tcp-check
+              server file-management0 {{ arkcase_host }}:9068 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/file-management/,/)]
+  
+            backend be_file_utils
+              http-response add-header X-File-Utils %s
+              mode http
+              option tcp-check
+              server file-utils0 {{ arkcase_host }}:9078 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
+              http-request set-path %[path,regsub(^/api/file-utils/,/)]
   when: enable_microservices
 
 - name: minio back end
@@ -988,6 +991,7 @@
             use_backend be_gateway if acl_gateway
             use_backend be_eureka if acl_eureka
             use_backend be_eureka-dashboard if acl_eureka-dashboard
+
     - name: Populate haproxy.conf with backend servers for Eureka
       become: true
       ansible.builtin.blockinfile:
@@ -1002,40 +1006,6 @@
             server gateway {{ arkcase_host }}:9002 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
             http-request set-path %[path,regsub(^/adk/,/)]
 
-          backend be_portal
-            http-response add-header X-Portal-Api %s
-            mode http
-            option tcp-check
-            server gateway {{ arkcase_host }}:9040 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-            http-request set-path %[path,regsub(^/api/arkcase-portal/,/)]
-
-          backend be_portal_prc
-            http-response add-header X-Prc-Portal-Api %s
-            mode http
-            option tcp-check
-            server gateway {{ arkcase_host }}:9082 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-            http-request set-path %[path,regsub(^/api/arkcase-portal-prc/,/)]
-
-          backend be_schema
-            http-response add-header X-Schema %s
-            mode http
-            option tcp-check
-            server gateway {{ arkcase_host }}:9099 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-            http-request set-path %[path,regsub(^/api/schema/,/)]
-
-          backend be_file_management
-            http-response add-header X-File-Management %s
-            mode http
-            option tcp-check
-            server file-management0 {{ arkcase_host }}:9068 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-            http-request set-path %[path,regsub(^/api/file-management/,/)]
-
-          backend be_file_utils
-            http-response add-header X-File-Utils %s
-            mode http
-            option tcp-check
-            server file-utils0 {{ arkcase_host }}:9078 check fall 3 rise 2 check ssl verify required ca-file {{ ssl_ca }}
-            http-request set-path %[path,regsub(^/api/file-utils/,/)]
 
           backend be_eureka
             http-response add-header X-Eureka %s
