@@ -77,12 +77,14 @@
     group: minio
     mode: 0600
 
-- name: copy the certificate
+- name: copy the full cert chain
   become: yes
-  ansible.builtin.copy:
-    remote_src: true
-    src: "{{ ssl_cert }}"
-    dest: "{{ root_folder }}/app/minio/public.crt"
+  ansible.builtin.shell: cat {{ ssl_cert }} {{ ssl_ca }} | tee {{ root_folder }}/app/minio/public.crt
+
+- name: set owner of cert chain
+  become: yes
+  ansible.builtin.file:
+    path: "{{ root_folder }}/app/minio/public.crt"
     owner: minio
     group: minio
 
