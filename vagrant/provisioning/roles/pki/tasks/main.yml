@@ -200,6 +200,7 @@
     extended_key_usage_critical: no
     extended_key_usage:
       - serverAuth
+      - clientAuth
     digest: sha256
     path: "/etc/tls/csr/arkcase-server.csr"
     privatekey_path: "{{ ssl_key }}"
