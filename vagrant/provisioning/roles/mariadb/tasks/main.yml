@@ -71,7 +71,7 @@
 
 - name: install MariaDB packages (Rocky 8)
   become: yes
-  command: dnf install -y --enablerepo mariadb --disablerepo AppStream MariaDB-server MariaDB-client
+  command: dnf install -y --enablerepo mariadb MariaDB-server MariaDB-client
   register: mariadb_install
   when: ansible_facts["distribution"] == "Rocky" and ansible_facts["distribution_major_version"] == "8"
 
@@ -84,7 +84,7 @@
     - name: "MariaDB JDBC Driver"
       dest: "{{ root_folder }}/common/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
       owner: "root"
-      url: "https://downloads.mariadb.com/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
+      url: "https://dlm.mariadb.com/4765303/Connectors/java/connector-java-{{ mariadb_jdbc_version }}/mariadb-java-client-{{ mariadb_jdbc_version }}.jar"
 
 - name: MariaDB folders
   become: yes
