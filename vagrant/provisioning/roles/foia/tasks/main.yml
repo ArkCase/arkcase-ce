@@ -329,3 +329,28 @@
     owner: arkcase
     group: arkcase
     mode: '0666'
+
+- name: Write login.gov base64 key to temp file
+  become: yes
+  ansible.builtin.copy:
+    content: "{{ loginGov_site_key_der_b64 }}"
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/.loginGovPrivate.der.b64"
+    owner: arkcase
+    group: arkcase
+    mode: '0600'
+  when: loginGov_site_key_der_b64 is defined and loginGov_site_key_der_b64 <> ""
+  register: loginGov_site_key
+
+- name: Decode login.gov base64 key to DER
+  ansible.builtin.shell:
+    shell: base64 -d "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/.loginGovPrivate.der.b64" > "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/loginGovPrivate.der"
+  when: loginGov_site_key is changed
+
+- name: Set permissions on login.gov DER
+  ansible.builtin.file:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/loginGovPrivate.der"
+    owner: arkcase
+    group: arkcase
+    mode: '0600'
+  when: loginGov_site_key is changed
+
