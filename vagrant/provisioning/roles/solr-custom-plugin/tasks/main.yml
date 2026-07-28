@@ -1,0 +1,152 @@
+- name: create custom solr plugin library directory
+  become: yes
+  become_user: solr
+  file:
+    path: "{{ root_folder }}/app/solr/contrib/arkcase/lib/"
+    state: directory
+  when: enable_solr_snippets | default(false)
+
+- name: set flag if this should configure the Signed jar
+  set_fact:
+    use_signed_plugin:
+    when:
+    - ark_solr_custom_jar_sig is defined
+    - ark_solr_custom_jar_sig|length >0
+    - enable_solr_snippets
+
+- name: set Plugin PEM file for jar signing (with custom PEM)
+  set_fact:
+    plugin_pem_file: "{{ solr_plugin_pem_file }}"
+    when:
+      - solr_plugin_pem_file is defined
+      - solr_plugin_pem_file|length > 0
+
+- name: set plugin PEM file for Jar signing (use default PEM)
+  set_fact:
+    plugin_pem_file: "/etc/tls/private/arkcase-root.pem"
+    when: solr_plugin_pem_file is undefined or (solr_plugin_pem_file|length == 0)
+
+- name: create public key for signing Solr plugin jar (jar sig must be provided)
+  become: yes
+  command: openssl rsa -in {{ plugin_pem_file | default('/etc/tls/private/arkcase-root.pem') }} -pubout -outform DER -out {{ root_folder }}/common/solr_plugin_key.der
+  when: use_signed_plugin
+
+- name: Create key directory to Zookeeper
+  become: yes
+  command: '{{ root_folder }}/app/zookeeper/bin/zkCli.sh create "/keys"'
+  when: use_signed_plugin | default(false)
+
+- name: Create key/exe directory to Zookeeper
+  become: yes
+  command: '{{ root_folder }}/app/zookeeper/bin/zkCli.sh create "/keys/exe"'
+  when: use_signed_plugin | default(false)
+
+- name: Add Solr Plugin Public key to Zookeeper
+  become: yes
+  command: '{{ root_folder }}/app/zookeeper/bin/zkCli.sh create /keys/exe/pub_plugin_key.der {{ root_folder }}/common/solr_plugin_key.der'
+  when: use_signed_plugin | default(false)
+
+- name: add arkSolrCustomizations.jar when Snippets are enabled
+  become: yes
+  become_user: solr
+  copy:
+    src: arkSolrCustomizations.jar
+    dest: "{{ root_folder }}/app/solr/contrib/arkcase/lib/arkSolrCustomizations.jar"
+    mode: "0644"
+    checksum: "{{ ark_solr_customizations_jar_checksum }}"
+  when: "enable_solr_snippets | default(false)"
+
+- name: add arkSolrCustomizations.jar location to solrconfig.xml
+  become: yes
+  become_user: solr
+  ansible.builtin.lineinfile:
+    path: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/solrconfig.xml"
+    backup: true
+    line: '  <lib dir="${solr.install.dir:../../../..}/contrib/arkcase/lib" regex=".*\.jar" />'
+    insertbefore: " <!-- an exact 'path' can be used instead of a 'dir' to specify a"
+  when: "enable_solr_snippets | default(false)"
+
+- name: read current solr service
+  become: yes
+  command: cat /etc/systemd/system/solr.service
+  register: solr_service_file
+  changed_when: false
+
+- name: enable runtime libs with Solr
+  become: yes
+  replace:
+    backup: yes
+    path: /etc/systemd/system/solr.service
+    regexp: "/app/solr/bin/solr start"
+    replace: "/app/solr/bin/solr start -a -Denable.runtime.lib=true"
+  when: "'-a -Denable.runtime.lib=true' not in solr_service_file.stdout"
+  register: systemd_solr_updated
+
+- name: reload daemon files if needed
+  become: yes
+  command: systemctl daemon-reload
+  when: systemd_solr_updated is changed
+
+- name: restart Solr if needed
+  become: yes
+  systemd:
+    name: solr
+    state: restarted
+  when: systemd_solr_updated is changed
+
+- name: wait for Solr to come back, if it was restarted
+  wait_for:
+    port: 8983
+    delay: 15
+    timeout: 300
+  when: systemd_solr_updated is changed
+
+- name: Add arkSolrCustomizations.jar to the .system blob (required for Solr Cloud mode)
+  ansible.builtin.command:
+    cmd: >
+      curl -X POST -H 'Content-Type: application/octet-stream' --data-binary @roles/files/arkSolrCustomizations.jar --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/.system/blob/arkSolrCustomizations
+  when: enable_solr_snippets | default(false)
+
+- name: Confirm arkSolrCustomizations.jar has been added to the .system blob
+  ansible.builtin.command:
+    cmd: >
+      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/.system/blob?omitHeader=true
+  when: enable_solr_snippets | default(false)
+
+- name: Debug signature
+  debug:
+    msg: "ark_solr_custom_jar_sig == {{ ark_solr_custom_jar_sig }}"
+  when: use_signed_plugin | default(false)
+
+- name: Enable signed arkSolrCustomizations.jar as a runtime lib
+  ansible.builtin.command:
+    cmd: >
+      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { "name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }}, "sig": {{ ark_solr_custom_jar_sig }} } }'
+  when: use_signed_plugin | default(false)
+
+- name: Enable arkSolrCustomizations.jar as a runtime lib without sig value
+  ansible.builtin.command:
+    cmd: >
+      curl --insecure https://{{ internal_host }}:{{ solr_port | default('8983') }}/solr/acmAdvancedSearch/config -H 'Content-type:application/json' -d '{   "add-runtimelib": { "name":"arkSolrCustomizations", "version":1, "sha1": {{ ark_solr_customizations_jar_checksum }} } }'
+  when: use_signed_plugin is undefined or (not use_signed_plugin)
+
+- name: update schema.xml to use the custom tokenizer
+  become: yes
+  replace:
+    backup: yes
+    path: "{{ root_folder }}/app/solr/server/solr/configsets/arkcase/conf/schema.xml"
+    regexp: 'class="solr.PatternTokenizerFactory"'
+    replace: 'class="com.armedia.solr.tokenizers.ArkPatternTokenizerFactory"'
+  when: enable_solr_snippets | default(false)
+
+- name: upload configuration file
+  become: yes
+  become_user: solr
+  shell: "{{ root_folder }}/app/solr/bin/solr zk upconfig localhost:2182 -n arkcaseConfig -d {{ root_folder }}/app/solr/server/solr/configsets/arkcase"
+  when: enable_solr_cloud is defined and enable_solr_cloud
+
+- name: restart Solr again
+  become: yes
+  systemd:
+    name: solr
+    state: restarted

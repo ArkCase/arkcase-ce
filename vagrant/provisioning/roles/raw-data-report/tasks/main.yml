@@ -1,0 +1,177 @@
+###################################################
+# Get the Raw Data report project and unzip it
+###################################################
+
+- name: Set report facts
+  ansible.builtin.set_fact:
+    raw_data_etl_report_version_formatted: "{{ '-' ~ raw_data_etl_report_version if raw_data_etl_report_version != '' else '' }}"
+    raw_data_report_repository_id: "arkcase"
+    raw_data_report_group_id: "com.armedia.arkcase.reports.etl"
+    raw_data_report_artifact_id: "raw-data-etl"
+    database_port: "{{ '3306' if 'mariadb' == db_engine else '5432' }}"
+
+- name: set derived report facts
+  ansible.builtin.set_fact:
+    etl_download_path: "{{ raw_data_report_artifact_id }}{{ raw_data_etl_report_version_formatted }}.jar"
+    reports_download_path: "{{ raw_data_report_artifact_id }}{{ raw_data_etl_report_version_formatted }}.zip"
+
+- name: Create Raw Data backup folder with timestamp
+  set_fact:
+    raw_data_backup_folder_path: "{{ root_folder }}/install/pentaho-pdi/raw-data-backup-{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"
+ 
+- name: Create backup directory
+  become: true
+  file:
+    path: "{{ raw_data_backup_folder_path }}"
+    state: directory
+    owner: pentaho-pdi
+    group: pentaho-pdi
+    mode: '0755'
+ 
+- name: Backup existing Raw Data files if present
+  become: true
+  command: mv "{{ item }}" "{{ raw_data_backup_folder_path }}/"
+  args:
+    removes: "{{ item }}"
+  loop:
+    - "{{ root_folder }}/install/pentaho-pdi/{{ etl_download_path }}"
+    - "{{ root_folder }}/install/pentaho-pdi/{{ reports_download_path }}"
+    - "{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}"
+
+- name: Create install folder
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.file:
+    path: "{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}"
+    mode: '0755'
+    state: directory
+
+- name: install python modules needed by maven_artifacts
+  become: yes
+  command: "{{ ansible_pip3 | default('pip3') }} install lxml"
+
+- name: Download Raw Data report JAR
+  become: yes
+  become_user: pentaho-pdi
+  maven_artifact:
+    repository_url: "{{ maven_repository_url }}/{{ raw_data_report_repository_id }}/"
+    group_id: "{{ raw_data_report_group_id }}"
+    artifact_id: "{{ raw_data_report_artifact_id }}"
+    version: "{{ raw_data_etl_report_version }}"
+    extension: jar
+    dest: "{{ root_folder }}/install/pentaho-pdi"
+    keep_name: true
+    checksum_alg: sha1
+
+- name: Copy Raw Data JAR to reports folder as ZIP
+  become: yes
+  become_user: pentaho-pdi
+  copy:
+    src: "{{ root_folder }}/install/pentaho-pdi/{{ etl_download_path }}"
+    dest: "{{ root_folder }}/install/pentaho-pdi/{{ reports_download_path }}"
+    remote_src: true
+
+- name: Unzip ETL repository
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.unarchive:
+    remote_src: true
+    src: "{{ root_folder }}/install/pentaho-pdi/{{ etl_download_path }}"
+    dest: "{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}"
+
+
+##########################################################
+# Configure the Kettle job files and run the Kettle job.
+# This will create and populate the data warehouse tables.
+##########################################################
+
+- name: Get the encrypted password for the kettle job
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.shell: "set -o pipefail && {{ root_folder }}/app/pentaho-pdi/data-integration/encr.sh -kettle '{{ rds_password | default(default_database_password) }}' | grep Encrypted"
+  register: encr_password
+  changed_when: false
+
+- name: Get the encrypted password for the cache clean jobs
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.shell: "set -o pipefail && {{ root_folder }}/app/pentaho-pdi/data-integration/encr.sh -kettle '{{ arkcase_admin_password }}' | grep Encrypted"
+  register: arkcase_admin_encr_password
+  changed_when: false
+
+- name: Ensure shared database connection folder exists
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.file:
+    path: /home/pentaho-pdi/.kettle
+    mode: '0755'
+    state: directory
+
+- name: Write shared database connection file
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.template:
+    backup: true
+    mode: '0644'
+    src: shared.xml
+    dest: /home/pentaho-pdi/.kettle/shared.xml
+
+- name: Kettle properties file
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.template:
+    backup: true
+    mode: '0644'
+    src: kettle.properties
+    dest: /home/pentaho-pdi/.kettle/kettle.properties
+
+###################################################
+# Create the JDBC and the Mondrian data sources
+###################################################
+
+- name: List the data sources that already exist
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.command:
+    cmd: 'wget --no-check-certificate -O {{ root_folder }}/install/pentaho-pdi/datasources-list.json --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/datasource/jdbc/connection'
+  changed_when: false
+
+- name: Read the list of data sources
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.command: cat {{ root_folder }}/install/pentaho-pdi/datasources-list.json
+  register: data_source_list
+  changed_when: false
+
+- name: File to post to pentaho-pdi to create the data source
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.template:
+    src: put_connection.json
+    dest: "{{ root_folder }}/install/pentaho-pdi/put_connection.json"
+    mode: '0644'
+  when: not '"ArkCase"' in data_source_list.stdout
+
+# the ansible uri module causes a timeout for some reason but wget works fine
+- name: Create the ArkCase JDBC data source for Raw Data reports
+  ansible.builtin.command:
+    cmd: 'wget --no-check-certificate --user={{ arkcase_admin_user }} --password "{{ arkcase_admin_password }}" --post-file {{ root_folder }}/install/pentaho-pdi/put_connection.json --header="Content-Type: application/json" https://{{ internal_host }}:2002/pentaho/plugin/data-access/api/connection/add'
+  register: create_datasource_rest_call
+  when: not '"ArkCase"' in data_source_list.stdout
+
+
+
+- name: Run the job to create raw data report
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.command:
+    cmd: >
+      ./kitchen.sh
+      -file://{{ root_folder }}/install/pentaho-pdi/raw-data-report-etl{{ raw_data_etl_report_version_formatted }}/j_raw_data_excel_report.kjb
+      -param:REQUEST_NUMBER_COLUMN={{ request_number_column | default('cm_case_number', true) }}
+      -param:START_DATE="'{{ rdr_start_date | default('2025-10-01 00:00:00', true) }}'"
+      -param:END_DATE="'{{ rdr_end_date | default('2026-09-30 23:59:59', true) }}'"
+      -param:RDR_NAME={{ rdr_name | default('Raw_Data_Report', true) }}
+      -level=Debug
+      -logfile=/home/pentaho-pdi/rdr-etl-{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}.log
+    chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"

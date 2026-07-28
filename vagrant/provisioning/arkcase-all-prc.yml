@@ -1,10 +1,8 @@
 ---
 - hosts: all
-  vars:
-    ansible_python_interpreter: "/usr/bin/python3.12"
   roles:
     - role: common
-      tags: [core, common, upgrade, marketplace]
+      tags: [core, common, marketplace]
     - role: arkcase-pre-upgrade
       tags: [arkcase-pre-upgrade, upgrade]   
     - role: pki
@@ -15,12 +13,10 @@
       tags: [samba, marketplace]
     - role: ldap
       tags: [core, ldap, marketplace]
-      when: ldap_portal_url is undefined
+      when: ldap_url is defined
     - role: ldap-portal
       tags: [ldap-portal]
       when: ldap_portal_url is defined
-    - role: server-cert
-      tags: [server-cert]
     - role: mongodb
       tags: [microservices, mongodb]
       when: enable_mongo | default(false)
@@ -42,8 +38,6 @@
       tags: [core, haproxy, marketplace]
     - role: activemq
       tags: [core, activemq, marketplace]
-    - role: alfresco-search-services
-      tags: [alfresco-search-services]
     - role: alfresco-setup
       tags: [alfresco6]
     - role: alfresco-ce
@@ -73,6 +67,10 @@
       tags: [core, zookeeper]
     - role: solr
       tags: [core, solr, marketplace]
+    - role: solr-replicas
+      tags: [solr-replicas]
+    - role: solr-replicas-current-node
+      tags: [solr-replicas-current-node]
     - role: pentaho-setup
       tags: [core, pentaho, pentaho-setup, marketplace]
     - role: pentaho-ce
@@ -85,16 +83,15 @@
       tags: [core, snowbound, marketplace]
       when: (ecm_viewer | default('snowbound')) == 'snowbound'
     - role: snowbound-app
-      tags: [core, snowbound, snowbound-app, upgrade, marketplace]
+      tags: [core, snowbound, snowbound-app, marketplace]
     - role: confluent-platform-install
-      when: enable_kafka is defined and enable_kafka == "yes" and enable_microservices | default(false)
+      when: enable_kafka is defined and enable_kafka == "yes"
       tags: [microservices, confluent]
     - role: elasticsearch-install
       when: enable_elasticsearch is defined and enable_elasticsearch == "yes"
       tags: [microservices, elasticsearch]
     - role: microservices
-      tags: [microservices]
-      when: enable_microservices | default(false)
+      tags: [microservices, microservice-install]
     - role: minio
       tags: [microservices, minio]
       when: enable_minio | default(false)
@@ -118,7 +115,7 @@
       tags: [core, upgrade, arkcase-audit, arkcase-microservices, marketplace]
       when: enable_microservices | default(false)
     - role: arkcase-ldap-authority
-      tags: [core, upgrade, arkcase-ldap-authority, arkcase-microservices, marketplace]
+      tags: [core, arkcase-ldap-authority, arkcase-microservices, marketplace]
       when: enable_microservices | default(false) and not (enable_saml_microservice | default(false))
     - role: arkcase-saml-authority
       tags: [arkcase-saml-authority]
@@ -145,8 +142,8 @@
       tags: [ core, upgrade, arkcase-cognito, arkcase-microservices ]
       when: enable_microservices | default(false)
     - role: arkcase-extra-microservices
-      tags: [ core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace ]
-      when: ((enable_microservices | default(false) | bool) or (enable_dockets | default(false) | bool)) and arkcase_extra_microservices is defined
+      tags: [core, upgrade, arkcase-extra-microservices, arkcase-microservices, marketplace]
+      when: enable_microservices | default(false) and arkcase_extra_microservices is defined
     - role: arkcase-portal-ui
       tags: [core, upgrade, arkcase-portal-ui, arkcase-microservices, marketplace]
       when: deploy_arkcase_portal | default(false)
@@ -161,7 +158,7 @@
     - role: saml-config
       tags: [upgrade-saml]
     - role: oidc-config
-      tags: [oidc-config]
+      tags: [oidc-config, upgrade]
     - role: arkcase-post-upgrade
       tags: [arkcase-post-upgrade, upgrade]
     - role: pentaho-pdi-client
@@ -171,19 +168,14 @@
       tags: [start-arkcase, core, arkcase, upgrade, marketplace]  
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
-      tags: [foia-analytical-reports, foia]
-    - role: foia-reports-deploy
-      tags: [foia-reports-deploy]
-    - role: raw-data-report
-      when: raw_data_etl_report_version is defined
-      tags: [raw-data-report]
+      tags: [foia-analytical-reports]
     - role: tesseract
       tags: [core, arkcase, tesseract, marketplace]
     - role: firewall
       when: enable_firewall is undefined or enable_firewall
       tags: [firewall, core, marketplace]
     - role: arkcase-interactive-reports
-      tags: [core, interactive-reports, upgrade]
+      tags: [core, interactive-reports]
     - role: disable-admin
       tags: [disable-admin, marketplace]
     - role: disable-solr-user
@@ -194,8 +186,9 @@
       tags: [foia-dev-reports, arkcase-developer]
     - role: arkcase-developer
       tags: [arkcase-developer]
+    - role: fapolicyd-config
+      tags: [fapolicyd-config]
+    - role: timeservice
+      tags: [timeservice]
     - role: java-corretto-11
       tags: [java-corretto]
-    - role: solr-custom-plugin
-      tags: [solr-custom-plugin]
-

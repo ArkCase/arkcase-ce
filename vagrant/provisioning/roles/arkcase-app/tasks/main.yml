@@ -76,12 +76,15 @@
     path: "{{ root_folder }}/common/symmetricKeyWithNewLine.decrypted"
     state: absent
 
-
 # might also need: curl https://bootstrap.pypa.io/pip/3.6/get-pip.py -o get-pip.py ; python3 get-pip.py --force-reinstall
+- name: install required pip modules for Python Excel module
+  become: yes
+  command: "{{ ansible_pip3 | default('pip3') }} install setuptools"
+
 - name: install Python Excel module
   become: yes
   become_user: arkcase
-  command: python3 -m pip install --user --upgrade openpyxl lxml
+  command: "{{ ansible_pip3 | default('pip3') }} install --user --upgrade openpyxl lxml"
 
 - name: download ArkCase war file and config server jar file (if using GitHub)
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -357,9 +360,9 @@
     db_service_name: "{{ (db_engine == 'postgresql') | ternary(postgresql_service_file_name, 'mariadb.service') if arkcase_host == database_host else '' }}"
     activemq_service_name: "{{ 'activemq.service' if activemq_host == arkcase_host else '' }}"
     samba_service_name: "{{ 'samba.service' if ldap_type == 'samba' and ldap_host == arkcase_host else '' }}"
+    alfresco7_service_name: "{{ 'alfresco7.service' if (file_repository_type | default('alfresco')) == 'alfresco' and alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
+    alfresco_service_name: "{{ 'alfresco.service' if (file_repository_type | default('alfresco')) == 'alfresco' and alfresco_host == arkcase_host and alfresco7_path.stat.exists == False else '' }}"
     solr_service_name: "{{ 'solr.service' if solr_host == arkcase_host and service_file_solr.stat.exists == True else '' }}"
-    alfresco7_service_name: "{{ 'alfresco7.service' if alfresco_host == arkcase_host and alfresco7_path.stat.exists == True else '' }}"
-    alfresco_service_name: "{{ 'alfresco.service' if alfresco_host == arkcase_host and alfresco_path.stat.exists == True else '' }}"
 
 - name: Ensure ArkCase required services are populated inside the arkcase.service
   set_fact:
@@ -376,23 +379,23 @@
     - src: config-server.service
       dest: /etc/systemd/system/config-server.service
 
-- name: copy config-server configuration file before version 2021.04 or after 2023.01
+- name: copy config-server configuration file (non-kafka)
   become: yes
   become_user: arkcase
   template:
     src: config-server.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version != "" and ( arkcase_version is version('2021.04', '<') or arkcase_version is version('2023.01', '>=') )
+  when: not (enable_kafka | default(false) | bool)
 
-- name: copy config-server configuration file after version 2021.04 and before 2023.01
+- name: copy config-server configuration file (kafka-enabled style)
   become: yes
   become_user: arkcase
   template:
     src: config-server-2021.04.conf
     dest: "{{ root_folder }}/app/config-server/config-server.conf"
     force: yes
-  when: arkcase_version == "" or ( arkcase_version is version('2021.04', '>=') and arkcase_version is version('2023.01', '<') )
+  when: enable_kafka | default(false) | bool
 
 ##### Mule TLS fixes #####
 - name: ensure custom/WEB-INF/classes exists
@@ -519,16 +522,16 @@
     src: application.yaml
     dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
-  when: arkcase_version == "" or (arkcase_version is version('2021.04', '<') or arkcase_version is version('2023.01', '>='))
+  when: not (enable_kafka | default(false) | bool)
 
-- name: application.yaml file after version 2021.04
+- name: application.yaml file (kafka-enabled style)
   become: yes
   become_user: arkcase
   template:
     src: application-2021.04.yaml
     dest: "{{ root_folder }}/app/config-server/application.yaml"
     backup: yes
-  when: arkcase_version != "" and (arkcase_version is version('2021.04', '>=') and arkcase_version is version('2023.01', '<'))
+  when: enable_kafka | default(false) | bool
 
 - name: run config-server with application.yaml file
   become: yes
@@ -1035,7 +1038,7 @@
     backup: yes
     src: arkcase-commons-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-commons-server.yaml
-  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
+  when: ((enable_microservices | default(false) | bool) or (enable_dockets | default(false) | bool)) and (arkcase_version == "" or (arkcase_version is version('2021.04', '>=')))
 
 - name: server-specific configuration for arkcase-portal-cognito.yaml for version 2021.04
   become: yes
@@ -1044,7 +1047,7 @@
     backup: yes
     src: arkcase-portal-cognito-server.yaml
     dest: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-portal-cognito-server.yaml
-  when: enable_microservices and (arkcase_version == "" or arkcase_version is version('2021.04', '>='))
+  when: ((enable_microservices | default(false) | bool) or (enable_dockets | default(false) | bool)) and (arkcase_version == "" or (arkcase_version is version('2021.04', '>=')))
 
 # the rolesToGroups format changed during the 3.3.3 release cycle, so we need
 # one format for pre-3.3.3 versions, and another format for 3.3.3+

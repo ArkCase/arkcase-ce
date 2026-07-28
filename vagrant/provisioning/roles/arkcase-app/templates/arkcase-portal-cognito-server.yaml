@@ -19,3 +19,8 @@ spring:
     admin:
       security:
         protocol: SSL
+
+dynamodb.region: {{ dynamodb_region }}
+dynamodb.accessKey: {{ dynamodb_access_key }}
+dynamodb.secretKey: {{ dynamodb_secret_key }}
+dynamodb.tableName: {{ dynamodb_table_name }}

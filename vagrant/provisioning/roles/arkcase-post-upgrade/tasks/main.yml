@@ -13,7 +13,7 @@
 
 - name: see if we have an older version with more configurations to restore
   set_fact:
-    older_config_in_use: "{{ arkcase_version is version('2021.04', '<') or ( arkcase_version is version('2023.02.03', '>') and arkcase_version is version('2024', '<') ) }}"
+    older_config_in_use: "{{ arkcase_version != '' and (arkcase_version is version('2021.04', '<') or ( arkcase_version is version('2023.02.03', '>') and arkcase_version is version('2024', '<'))) }}"
 
 - name: see if we need to restore the extra configurations from older versions
   set_fact:
@@ -22,7 +22,6 @@
 - name: log incoming versions
   debug:
     msg: "arkcase-version: {{ arkcase_version }}; latest_config_backup_folder: {{ latest_config_backup_folder }}; older_config_in_use: {{ older_config_in_use }}; restore_more_config_files: {{ restore_more_config_files }}"
-
 
 - name: restore config files (2021.03 and below)
   become: yes
@@ -86,7 +85,7 @@
     group: arkcase
     remote_src: yes
   with_items: "{{ files_to_copy.files }}"
-  when: restore_more_config_files and files_to_copy is defined and arkcase_version is version('2020.18', '>=')
+  when: restore_more_config_files and files_to_copy is defined and (arkcase_version != "" and arkcase_version is version('2020.18', '>='))
 
 - name: find files with 640 permissions (2021.03 and below)
   become: yes
@@ -107,7 +106,7 @@
     mode: '0640'
     remote_src: yes
   with_items: "{{ files.stdout_lines }}"
-  when: restore_more_config_files and arkcase_version is version('2020.18', '>=')
+  when: restore_more_config_files and (arkcase_version != "" and arkcase_version is version('2020.18', '>='))
 
 - name: read current setenv.sh
   become: yes
