@@ -6,7 +6,8 @@
 
 - name: create {{ s.schema }} database (empty schema)
   become: yes
-  mysql_db:
+  ansible.mysql.mysql_db:
+    login_user: "{{ database_root_user }}"
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
     check_hostname: true
@@ -16,7 +17,8 @@
 
 - name: create {{ s.user }} MySQL user with REQUIRESSL
   become: yes
-  mysql_user:
+  ansible.mysql.mysql_user:
+    login_user: "{{ database_root_user }}"
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
     check_hostname: true
@@ -29,7 +31,8 @@
 
 - name: create {{ s.user }} MySQL user (IP address) with REQUIRESSL
   become: yes
-  mysql_user:
+  ansible.mysql.mysql_user:
+    login_user: "{{ database_root_user }}"
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
     check_hostname: true
@@ -43,7 +46,8 @@
 
 - name: create {{ s.user }} MySQL user with tls_requires
   become: yes
-  mysql_user:
+  ansible.mysql.mysql_user:
+    login_user: "{{ database_root_user }}"
     login_host: "{{ database_host_name }}"
     login_password: "{{ database_root_password }}"
     check_hostname: true
@@ -58,7 +62,8 @@
 
 - name: create {{ s.user }} MySQL user with access to the schema {{ s.schema }} and tls_requires (local db)
   become: yes
-  mysql_user:
+  ansible.mysql.mysql_user:
+    login_user: "{{ database_root_user }}"
     login_unix_socket: "{{ mariadb_data_folder }}/mysql.sock"
     host: "%"
     name: "{{ s.user }}"
