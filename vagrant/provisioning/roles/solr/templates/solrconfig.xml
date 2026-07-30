@@ -935,16 +935,6 @@
   </requestHandler>
 
   <!--AFDP-2567 autosuggest handlers and components-->
-  <searchComponent class="solr.SpellCheckComponent" name="suggest">
-    <lst name="spellchecker">
-      <str name="name">suggestDictionary</str>
-      <str name="classname">org.apache.solr.spelling.suggest.Suggester</str>
-      <str name="lookupImpl">org.apache.solr.spelling.suggest.fst.FSTLookupFactory</str>
-      <str name="field">suggest</str>
-      <float name="threshold">0.</float>
-      <str name="buildOnCommit">true</str>
-    </lst>
-  </searchComponent>
   <requestHandler name="/suggest"
                     class="org.apache.solr.handler.component.SearchHandler"> <!-- Custom request handler for autosuggestion only -->
     <lst name="defaults">
@@ -957,9 +947,6 @@
       <str name="spellcheck.count">5</str>
       <str name="spellcheck.collate">false</str>
     </lst>
-        <arr name="components">  <!-- Override built-in component pipeline -->
-            <str>suggest</str>   <!-- Execute the suggest component-->
-        </arr>
   </requestHandler>
 
   <requestHandler name="/suggest_handler"
