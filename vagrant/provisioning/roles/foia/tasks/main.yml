@@ -316,6 +316,8 @@
   register: loginGov_site_key
 
 - name: Decode login.gov base64 key to DER
+  become: yes
+  become_user: arkcase
   ansible.builtin.shell: base64 -d "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/.loginGovPrivate.der.b64" > "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/loginGovPrivate.der"
   when: loginGov_site_key is changed
 
