@@ -1,0 +1,44 @@
+- name: Set some base variables
+  set_fact:
+   src_dir: "{{ root_folder }}"
+   tgt_dir: "{{ root_folder }}/backups-{{ ansible_date_time.iso8601 }}"
+
+- name: ensure ArkCase is stopped
+  become: yes
+  systemd:
+    name: arkcase
+    state: stopped
+
+- name: ensure Alfresco is stopped
+  become: yes
+  systemd:
+    name: alfresco
+    state: stopped
+    
+- name: backup db folders 
+  become: yes
+  file:
+    path: "{{ tgt_dir }}/db"
+    state: directory
+
+- name: ArkCase db backup
+  become: yes
+  mysql_db:
+    state: dump
+    name: arkcase
+    target: "{{ tgt_dir }}/db/arkcase.sql"
+    login_user: "{{ database_arkcase_user }}"
+    login_pass: "{{ default_database_password }}"
+    login_host: "{{ database_host }}"
+    ca_cert: "{{ ssl_ca }}"
+
+- name: Alfresco db backup
+  become: yes
+  mysql_db:
+    state: dump
+    name: alfresco
+    target: "{{ tgt_dir }}/db/alfresco.sql"
+    login_user: alfresco
+    login_pass: "{{ default_database_password }}"
+    login_host: "{{ database_host }}"
+    ca_cert: "{{ ssl_ca }}"
