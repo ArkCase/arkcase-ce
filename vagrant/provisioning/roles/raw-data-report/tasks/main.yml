@@ -62,6 +62,8 @@
     dest: "{{ root_folder }}/install/pentaho-pdi"
     keep_name: true
     checksum_alg: sha1
+    username: "{{ maven_repository_username }}"
+    password: "{{ maven_repository_password }}"
 
 - name: Copy Raw Data JAR to reports folder as ZIP
   become: yes

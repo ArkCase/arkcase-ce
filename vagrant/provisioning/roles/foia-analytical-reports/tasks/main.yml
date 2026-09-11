@@ -78,6 +78,8 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho"
     keep_name: true
+    username: "{{ maven_repository_username }}"
+    password: "{{ maven_repository_password }}"
 
 - name: Download FOIA analytical reports repository
   become: yes
@@ -91,6 +93,8 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho/{{ reports_download_path }}"
     keep_name: true
+    username: "{{ maven_repository_username }}"
+    password: "{{ maven_repository_password }}"
 
 - name: Unzip ETL repository
   become: true
