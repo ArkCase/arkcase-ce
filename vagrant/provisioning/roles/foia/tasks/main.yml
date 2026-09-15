@@ -146,6 +146,27 @@
     dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-portal-server.yaml"
   when: arkcase_version == "" or arkcase_version is version('2020.16', '>=')
 
+- name: see if arkcase-foia.yaml exists
+  become: yes
+  become_user: arkcase
+  stat:
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-foia.yaml
+  register: arkcase_foia_yaml
+
+- name: plaintext passwords (arkcase-foia.yaml)
+  become: yes
+  become_user: arkcase
+  replace:
+    backup: yes
+    path: /home/arkcase/.arkcase/acm/acm-config-server-repo/arkcase-foia.yaml
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+# note, using dot to match regexp special chars
+    - regexp: "ENC.U2FsdGVkX1.SMOIdK/h2Cy5ONteYLksBQnHZllFZcKs=."
+      replace: "ENC({{ encrypted_activemq_password }})"
+  when: arkcase_foia_yaml.stat.exists
+
 - name: encrypt passwords
   include_tasks: encrypt_password.yml
   loop:
@@ -208,7 +229,7 @@
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
   loop:
-    - src: "{{ java_p12_store_jdk8 }}"
+    - src: "{{ java_key_store }}"
       dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ks"
     - src: "{{ java_trust_store }}"
       dest: "{{ root_folder }}/data/arkcase-home/.external-portal-api/arkcase.ts"
@@ -281,6 +302,12 @@
     replace: "FOIA_server,server,runtime"
   when: "'FOIA_server,server,runtime' not in foia_conf_yml.stdout"
 
+- name: see whether import-export.sh is available 
+  become: yes
+  stat:
+    path: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh"
+  register: import_export_stat
+
 - name: deploy foia audit reports
   include_tasks: deploy_foia_report.yml
   loop: "{{ arkcase_foia_audit_reports }}"
@@ -288,6 +315,7 @@
     loop_var: r
   vars:
     report_path: "foia-audit"
+  when: import_export_stat.stat.exists
 
 - name: set fact if notifications_groups undefined
   set_fact:
@@ -303,3 +331,29 @@
     owner: arkcase
     group: arkcase
     mode: '0666'
+
+- name: Write login.gov base64 key to temp file
+  become: yes
+  ansible.builtin.copy:
+    content: "{{ loginGov_site_key_der_b64 }}"
+    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/.loginGovPrivate.der.b64"
+    owner: arkcase
+    group: arkcase
+    mode: '0600'
+  when: loginGov_site_key_der_b64 is defined and loginGov_site_key_der_b64 != ""
+  register: loginGov_site_key
+
+- name: Decode login.gov base64 key to DER
+  become: yes
+  ansible.builtin.shell: base64 -d "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/.loginGovPrivate.der.b64" > "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/loginGovPrivate.der"
+  when: loginGov_site_key is changed
+
+- name: Set permissions on login.gov DER
+  become: yes
+  ansible.builtin.file:
+    path: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/private/loginGovPrivate.der"
+    owner: arkcase
+    group: arkcase
+    mode: '0600'
+  when: loginGov_site_key is changed
+

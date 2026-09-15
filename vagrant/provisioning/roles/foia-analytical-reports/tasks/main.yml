@@ -70,24 +70,33 @@
 - name: Download FOIA reports ETL job repository
   become: yes
   become_user: pentaho
-  vars:
-    group_path: "{{ doj_reports_group_id | replace('.', '/') }}"
-    jar_name: "{{ doj_reports_artifact_id }}-{{ foia_analytical_reports_version }}.jar"
-  ansible.builtin.get_url:
-    url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/{{ group_path }}/{{ doj_reports_artifact_id }}/{{ foia_analytical_reports_version }}/{{ jar_name }}"
-    dest: "{{ root_folder }}/install/pentaho/{{ jar_name }}"
-    mode: '0644'
+  maven_artifact:
+    repository_url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/"
+    group_id: "{{ doj_reports_group_id }}"
+    artifact_id: "{{ doj_reports_artifact_id }}"
+    version: "{{ foia_analytical_reports_version }}"
+    extension: jar
+    dest: "{{ root_folder }}/install/pentaho"
+    keep_name: true
+    checksum_alg: sha1
+    username: "{{ maven_repository_username }}"
+    password: "{{ maven_repository_password }}"
 
 - name: Download FOIA analytical reports repository
   become: yes
   become_user: pentaho
-  vars:
-    group_path: "{{ doj_reports_group_id | replace('.', '/') }}"
-    jar_name: "{{ doj_reports_artifact_id }}-{{ foia_analytical_reports_version }}-reports.jar"
-  ansible.builtin.get_url:
-    url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/{{ group_path }}/{{ doj_reports_artifact_id }}/{{ foia_analytical_reports_version }}/{{ jar_name }}"
+  maven_artifact:
+    repository_url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/"
+    group_id: "{{ doj_reports_group_id }}"
+    artifact_id: "{{ doj_reports_artifact_id }}"
+    classifier: "reports"
+    version: "{{ foia_analytical_reports_version }}"
+    extension: jar
     dest: "{{ root_folder }}/install/pentaho/{{ reports_download_path }}"
-    mode: '0644'
+    keep_name: true
+    checksum_alg: sha1
+    username: "{{ maven_repository_username }}"
+    password: "{{ maven_repository_password }}"
 
 - name: Unzip ETL repository
   become: true

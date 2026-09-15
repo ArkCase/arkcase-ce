@@ -26,10 +26,15 @@
 - name: restore config files (2021.03 and below)
   become: yes
   become_user: arkcase
-  command: cp {{ latest_config_backup_folder.path }}/acm/{{ item }} {{ root_folder }}/data/arkcase-home/.arkcase/acm/{{ item }}
-  loop:
-    - "acmSequenceConfiguration.json"
   when: restore_more_config_files
+  block: 
+  - name: check for acmSequenceConfiguration
+    stat:
+      path: "{{ latest_config_backup_folder.path }}/acm/acmSequenceConfiguration.json"
+    register: acm_sequence_configuration_stat
+  - name: copy acmSequenceConfiguration if needed
+    command: cp {{ latest_config_backup_folder.path }}/acm/acmSequenceConfiguration.json {{ root_folder }}/data/arkcase-home/.arkcase/acm/acmSequenceConfiguration.json
+    when: acm_sequence_configuration_stat.stat.exists
 
 - name: Restore runtime files from previous backup
   become: yes
@@ -46,7 +51,7 @@
   register: template_file
   when: restore_more_config_files
 
-- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version
+- name: copy a new "templates-configuration.json" file into place, backing up the original if it differs from the copied version  (2021.03 and bellow)
   become: yes
   become_user: arkcase
   copy:
@@ -121,16 +126,7 @@
       export JAVA_OPTS="$JAVA_OPTS -Dspring.profiles.active=ldap"
   when: '"-Dspring.profiles.active" not in setenv_contents.stdout'
 
-- name: find "pdftron" folder
-  become: yes
-  become_user: arkcase
-  stat:
-    path="{{ latest_config_backup_folder.path }}/pdftron/"
-  register: pdftron_folder
-  when: latest_config_backup_folder is defined
-
-
-- name: copy pdftron annotation files if needed
+- name: copy pdftron annotation files
   become: yes
   become_user: arkcase
   copy:
@@ -139,5 +135,3 @@
     remote_src: yes
   with_fileglob:
     - "{{ latest_config_backup_folder.path }}/pdftron/annotations/*"
-  when: latest_config_backup_folder is defined and pdftron_folder.stat.exists
-

@@ -344,6 +344,11 @@
     path: "{{ root_folder }}/app/alfresco7"
   register: alfresco7_path
 
+- name: check for the old Alfresco folder
+  stat:
+    path: "{{ root_folder }}/app/alfresco"
+  register: alfresco_path
+
 - name: check for Solr service file
   stat:
     path: /etc/systemd/system/solr.service
