@@ -70,29 +70,24 @@
 - name: Download FOIA reports ETL job repository
   become: yes
   become_user: pentaho
-  maven_artifact:
-    repository_url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/"
-    group_id: "{{ doj_reports_group_id }}"
-    artifact_id: "{{ doj_reports_artifact_id }}"
-    version: "{{ foia_analytical_reports_version }}"
-    extension: jar
-    dest: "{{ root_folder }}/install/pentaho"
-    keep_name: true
-    checksum_alg: sha1
+  vars:
+    group_path: "{{ doj_reports_group_id | replace('.', '/') }}"
+    jar_name: "{{ doj_reports_artifact_id }}-{{ foia_analytical_reports_version }}.jar"
+  ansible.builtin.get_url:
+    url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/{{ group_path }}/{{ doj_reports_artifact_id }}/{{ foia_analytical_reports_version }}/{{ jar_name }}"
+    dest: "{{ root_folder }}/install/pentaho/{{ jar_name }}"
+    mode: '0644'
 
 - name: Download FOIA analytical reports repository
   become: yes
   become_user: pentaho
-  maven_artifact:
-    repository_url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/"
-    group_id: "{{ doj_reports_group_id }}"
-    artifact_id: "{{ doj_reports_artifact_id }}"
-    classifier: "reports"
-    version: "{{ foia_analytical_reports_version }}"
-    extension: jar
+  vars:
+    group_path: "{{ doj_reports_group_id | replace('.', '/') }}"
+    jar_name: "{{ doj_reports_artifact_id }}-{{ foia_analytical_reports_version }}-reports.jar"
+  ansible.builtin.get_url:
+    url: "{{ maven_repository_url }}/{{ doj_reports_repository_id }}/{{ group_path }}/{{ doj_reports_artifact_id }}/{{ foia_analytical_reports_version }}/{{ jar_name }}"
     dest: "{{ root_folder }}/install/pentaho/{{ reports_download_path }}"
-    keep_name: true
-    checksum_alg: sha1
+    mode: '0644'
 
 - name: Unzip ETL repository
   become: true
@@ -161,35 +156,37 @@
     src: kettle.properties
     dest: /home/pentaho-pdi/.kettle/kettle.properties
 
-- name: Set the cron environment so as to be able to run the job
-  become: true
-  become_user: pentaho-pdi
-  ansible.builtin.cron:
-    env: true
-    name: "{{ item.name }}"
-    job: "{{ item.value }}"
-  loop:
-    - name: PATH
-      value: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/pentaho-pdi/.local/bin:/home/pentaho-pdi/bin"
-    - name: SHELL
-      value: /bin/bash
-    - name: OPT
-      value: "-Dcom.redhat.fips=false"
-
-- name: Schedule the job to run every day at 2 AM
-  become: true
-  become_user: pentaho-pdi
-  ansible.builtin.cron:
-    backup: true
-    name: "populate FOIA data warehouse tables"
-    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb"
-    month: "*"
-    weekday: "*"
-    day: "*"
-    hour: "2"
-    minute: "0"
-    disabled: false
-    state: present
+    #### NOTE FedRAMP compliance broke setting crontab in FCC prod
+    #
+    #- name: Set the cron environment so as to be able to run the job
+    #  become: true
+    #  become_user: pentaho-pdi
+    #  ansible.builtin.cron:
+    #    env: true
+    #    name: "{{ item.name }}"
+    #    job: "{{ item.value }}"
+    #  loop:
+    #    - name: PATH
+    #      value: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/pentaho-pdi/.local/bin:/home/pentaho-pdi/bin"
+    #    - name: SHELL
+    #      value: /bin/bash
+    #    - name: OPT
+    #      value: "-Dcom.redhat.fips=false"
+    #
+    #- name: Schedule the job to run every day at 2 AM
+    #  become: true
+    #  become_user: pentaho-pdi
+    #  ansible.builtin.cron:
+    #    backup: true
+    #    name: "populate FOIA data warehouse tables"
+    #    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb"
+    #    month: "*"
+    #    weekday: "*"
+    #    day: "*"
+    #    hour: "2"
+    #    minute: "0"
+    #    disabled: false
+    #    state: present
 
 ###################################################
 # Create the JDBC and the Mondrian data sources
