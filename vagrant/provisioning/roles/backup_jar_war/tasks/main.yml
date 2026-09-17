@@ -1,0 +1,60 @@
+- name: Set some base variables
+  set_fact:
+   src_dir: "{{ root_folder }}"
+   tgt_dir: "{{ root_folder }}/backups-{{ ansible_date_time.iso8601 }}"
+
+- name: ensure Config-Server is stopped
+  become: yes
+  systemd:
+    name: config-server
+    state: stopped
+
+- name: ensure Snowbound is stopped
+  become: yes
+  systemd:
+    name: snowbound
+    state: stopped    
+
+- name: ensure External Portal is stopped
+  become: yes
+  systemd:
+    name: arkcase
+    state: stopped
+  when: foia_portal_context is defined
+
+- name: backup data folders 
+  become: yes
+  file:
+    path: "{{ tgt_dir }}/webapps"
+    state: present
+
+- name: Config-Server jar backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/app/config-server"
+    dest: "{{ tgt_dir }}/app/config-server"
+    directory_mode: yes
+    owner: arkcase
+    group: arkcase
+    backup: yes
+
+- name: Snowbound war backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/app/snowbound/webapps/VirtualViewerJavaHTML5.war"
+    dest: "{{ tgt_dir }}/app/snowbound/webapps"
+    directory_mode: yes
+    owner: snowbound
+    group: snowbound
+    backup: yes
+
+- name: External-portal-api war backup
+  become: yes
+  copy:
+    src:  "{{ src_dir }}/app/arkcase/webapps/arkcase#external-portal.war"
+    dest: "{{ tgt_dir }}/app/arkcase/webapps"
+    directory_mode: yes
+    owner: arkcase
+    group: arkcase
+    backup: yes
+  when: foia_portal_context is defined
