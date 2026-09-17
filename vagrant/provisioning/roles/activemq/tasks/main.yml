@@ -19,6 +19,7 @@
     state: directory
     group: activemq
     owner: activemq
+    mode: "u+rwx,g+rx,o+rx"
   loop:
     - "{{ root_folder }}/data/activemq"
     - "{{ root_folder }}/log/activemq"
@@ -48,7 +49,17 @@
     extra_opts:
       - --strip-components=1
     creates: "{{ root_folder }}/app/activemq/LICENSE"
+    owner: "activemq"
+    group: "activemq"
   register: activemq_unarchived
+
+- name: set proper ownership of all files
+  become: yes
+  command: chown -R activemq:activemq {{ item }}
+  loop:
+    - "{{ root_folder }}/app/activemq"
+    - "{{ root_folder }}/data/activemq"
+    - "{{ root_folder }}/log/activemq"
 
 - name: update startup script
   become: yes
@@ -57,11 +68,15 @@
     path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/activemq"
     regexp: "{{ item.regexp }}"
     line: "{{ item.line }}"
+    owner: "activemq"
+    group: "activemq"
   loop:
     - regexp: "^ACTIVEMQ_HOME="
       line: "ACTIVEMQ_HOME={{ root_folder }}/app/activemq"
     - regexp: "^#RUN_AS_USER=$"
       line: "RUN_AS_USER=activemq"
+    - regexp: "^LOCKDIR=\"/var/lock/subsys\""
+      line: "LOCKDIR={{ root_folder }}/data/activemq"
   when: activemq_unarchived is changed
 
 - name: set java version
@@ -79,6 +94,8 @@
     path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf"
     regexp: "{{ item.regexp }}"
     replace: "{{ item.line }}"
+    owner: "activemq"
+    group: "activemq"
   loop:
     - regexp: "^wrapper\\.logfile=%ACTIVEMQ_DATA%\\/wrapper\\.log"
       line: "wrapper.logfile={{ root_folder }}/log/activemq/wrapper.log"
@@ -103,8 +120,7 @@
     - regexp: "^wrapper\\.java\\.additional\\.12=-\\Djava\\.security\\.auth\\.login\\.config=%ACTIVEMQ_CONF%\\/login\\.config"
       line: "wrapper.java.additional.10=-Djava.security.auth.login.config=%ACTIVEMQ_CONF%/login.config"
     - regexp: "^wrapper\\.java\\.additional\\.13=\\-Djolokia\\.conf=file:%ACTIVEMQ_CONF%\\/jolokia-access\\.xml"
-      line: "wrapper.java.additional.11=-Djolokia.conf=file:%ACTIVEMQ_CONF%/jolokia-access.xml"
-      
+      line: "wrapper.java.additional.11=-Djolokia.conf=file:%ACTIVEMQ_CONF%/jolokia-access.xml" 
 
 - name: check for log4j.properties
   stat:
@@ -122,21 +138,13 @@
     path: "{{ root_folder }}/app/activemq/conf/{{ log4j_properties }}"
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
+    owner: "activemq"
+    group: "activemq"
   loop:
-    - { regexp: "^log4j\\.appender\\.logfile\\.file=\\$\\{activemq\\.data\\}\\/activemq\\.log", replace: "log4j.appender.logfile.file={{ root_folder }}/log/activemq/activemq.log" }
-    - { regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log", replace: "log4j.appender.audit.file={{ root_folder }}/log/activemq/audit.log" }
-  when: log4j_properties == 'log4j.properties'
-
-- name: set activemq.log location - log4j2
-  become: yes
-  become_user: activemq
-  replace:
-    path: "{{ root_folder }}/app/activemq/conf/{{ log4j_properties }}"
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  loop:
-    - regexp: "^appender\\.logfile\\.fileName=\\$\\{sys\\:activemq\\.data\\}\\/activemq\\.log"
-      replace: "appender.logfile.fileName={{ root_folder }}/log/activemq/activemq.log"
+    - regexp: "^log4j\\.appender\\.logfile\\.file=\\$\\{activemq\\.data\\}\\/activemq\\.log"
+      replace: "log4j.appender.logfile.file={{ root_folder }}/log/activemq/activemq.log"
+    - regexp: "^log4j\\.appender\\.audit\\.file=\\$\\{activemq\\.data\\}\\/audit\\.log"
+      replace: "log4j.appender.audit.file={{ root_folder }}/log/activemq/audit.log"
     - regexp: "^appender\\.logfile\\.filePattern=\\$\\{sys\\:activemq\\.data\\}\\/activemq\\.log\\.%i"
       replace: "appender.logfile.filePattern={{ root_folder }}/log/activemq/activemq.log.%i"
     - regexp: "^appender\\.auditlog\\.fileName=\\$\\{sys\\:activemq\\.data\\}/audit\\.log"
@@ -162,6 +170,8 @@
     path: "{{ root_folder }}/app/activemq/bin/linux-x86-64/wrapper.conf"
     insertafter: "{{ item.after }}"
     line: "{{ item.line }}"
+    owner: "activemq"
+    group: "activemq"
   loop:
     - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) }}.*"
       line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 1 }}=-Dcom.sun.management.jmxremote.port=1616"
@@ -176,7 +186,9 @@
     - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 5 }}.*"
       line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 6 }}=-Djava.compiler=NONE"
     - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 6 }}.*"
-      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 7 }}=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5006"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 7 }}=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005"
+    - after: "^wrapper\\.java\\.additional\\.{{ (highest_additional.stdout | int) + 7 }}.*"
+      line: "wrapper.java.additional.{{ (highest_additional.stdout | int) + 8 }}=-Dcom.redhat.fips=false"
   when: activemq_unarchived is changed
 
 - name: jdbc support and dead letter queue policy
@@ -189,6 +201,8 @@
       become: yes
       become_user: activemq
       blockinfile:
+        owner: "activemq"
+        group: "activemq"
         path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
         insertbefore: "</beans>"
         marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: DATASOURCE -->"
@@ -210,6 +224,8 @@
       become: yes
       become_user: activemq
       blockinfile:
+        owner: "activemq"
+        group: "activemq"
         path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
         insertbefore: "</policyEntries>"
         marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: DEAD LETTER QUEUE POLICY -->"
@@ -230,6 +246,8 @@
         path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
         regexp: '^.*kahaDB directory.*$'
         line: '<jdbcPersistenceAdapter dataDirectory="activemq-data" dataSource="#jdbc-ds" lockKeepAlivePeriod="5000" createTablesOnStartup="true"/>'
+        owner: "activemq"
+        group: "activemq"
       when: activemq_xml.stdout.find('jdbcPersistenceAdapter') == -1
     - name: link jdbc driver
       become: yes
@@ -243,6 +261,8 @@
   become: yes
   become_user: activemq
   blockinfile:
+    owner: "activemq"
+    group: "activemq"
     path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
     insertafter: "        </persistenceAdapter>"
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: Authentication -->"
@@ -261,6 +281,8 @@
   become: yes
   become_user: activemq
   blockinfile:
+    owner: "activemq"
+    group: "activemq"
     path: "{{ root_folder }}/app/activemq/conf/credentials.properties"
     insertafter: "# Defines credentials that will be used by components (like web console) to access the broker"
     marker: "# {mark} ANSIBLE MANAGED BLOCK: Authentication"
@@ -273,15 +295,41 @@
   become: yes
   become_user: activemq
   blockinfile:
+    owner: "activemq"
+    group: "activemq"
     path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
     insertbefore: "^.*\\<destinationPolicy\\>$"
     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK: SSLCONTEXT -->"
     block: |
       <sslContext>
-          <sslContext keyStore="file://{{ java_key_store }}" keyStorePassword="{{ java_key_store_pass }}" trustStore="file://{{ java_trust_store }}" trustStorePassword="{{ java_trust_store_pass }}"/>
+          <sslContext keyStore="file://{{ java_p12_store_jdk8 }}" keyStorePassword="{{ java_key_store_pass }}" keyStoreType="pkcs12" />
       </sslContext>
   when: activemq_xml.stdout.find('sslContext keyStore="file://' ~ java_key_store) == -1 
-      
+
+- name: ActiveMQ Log4J fixes - remove vulnerable log4j
+  become: yes
+  become_user: activemq
+  ansible.builtin.file:
+    path: "{{ root_folder }}/app/activemq/lib/optional/log4j-1.2.17.jar"
+    state: absent
+
+- name: ActiveMQ Log4J fixes - add acceptable log4j 
+  become: yes
+  become_user: activemq
+  ansible.builtin.copy:
+    remote_src: true
+    src: "{{ root_folder }}/common/log4j-{{ item }}-{{ log4j_version | default('2.19.0') }}.jar"
+    dest: "{{ root_folder }}/app/activemq/lib/optional/log4j-{{ item }}-{{ log4j_version | default('2.19.0') }}.jar"
+  loop:
+    - api
+    - core
+    - 1.2-api
+
+- include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: activemq
+      folder_path: "{{ root_folder }}/app/activemq"
+
 - name: first time start, to create the tables
   block:
     - name: check whether the ActiveMQ tables were already created
@@ -313,12 +361,12 @@
   block:
     - name: find current datatype for activemq_msgs.msg
       become: yes
-      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock activemq -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = '{{ database_activemq_schema | default('activemq') }}' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
+      command: mysql --ssl -uroot --host={{ database_host }} -uroot --password={{ database_root_password }} {{ database_activemq_schema | default('activemq') }} -Ns -e "select DATA_TYPE from information_schema.COLUMNS where TABLE_SCHEMA = '{{ database_activemq_schema | default('activemq') }}' AND TABLE_NAME = 'ACTIVEMQ_MSGS' AND COLUMN_NAME = 'MSG';"
       register: find_data_type
       changed_when: false
     - name: update data type, if necessary
       become: yes
-      command: mysql -uroot --socket={{ mariadb_data_folder }}/mysql.sock {{ database_activemq_schema | default('activemq') }} -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
+      command: mysql --ssl -uroot --host={{ database_host }} -uroot --password={{ database_root_password }} {{ database_activemq_schema | default('activemq') }} -Ns -e "alter table ACTIVEMQ_MSGS modify MSG longblob;"
       when: "'blob' == find_data_type.stdout"
   when: db_engine == 'mariadb'
 
@@ -329,6 +377,8 @@
     path: "{{ root_folder }}/app/activemq/conf/activemq.xml"
     regexp: "{{ item.regexp }}"
     replace: "{{ item.replace }}"
+    owner: activemq
+    group: activemq
   loop:
     - { regexp: 'createTablesOnStartup="true"', replace: 'createTablesOnStartup="false"' }
     - { regexp: 'createConnector="false"', replace: 'createConnector="true" connectorPort="50511"' }
@@ -342,6 +392,8 @@
       become: yes
       become_user: activemq
       blockinfile:
+        owner: activemq
+        group: activemq
         path: "{{ root_folder }}/app/activemq/conf/jmx.password"
         block: |
           monitorRole P@ssw0rd
@@ -350,6 +402,8 @@
       become: yes
       become_user: activemq
       blockinfile:
+        owner: activemq
+        group: activemq
         path: "{{ root_folder }}/app/activemq/conf/jmx.access"
         block: |
           monitorRole readonly

@@ -96,6 +96,13 @@
     dest: "{{ root_folder }}/app/zookeeper/conf/zookeeper-env.sh"
     backup: yes
 
+- name: see whether this version of Zookeeper uses log4j
+  become: yes
+  become_user: zookeeper
+  ansible.builtin.stat:
+    path: "{{ root_folder }}/app/zookeeper/conf/log4j.properties"
+  register: zk_log4j
+
 - name: Zookeeper logging
   become: yes
   become_user: zookeeper
@@ -109,6 +116,7 @@
       line: "zookeeper.log.dir={{ root_folder }}/log/zookeeper"
     - regexp: 'zookeeper\.tracelog\.dir=\.'
       line: "zookeeper.tracelog.dir={{ root_folder }}/log/zookeeper"
+  when: zk_log4j.stat.exists
 
 - name: ensure Zookeeper start script SELinux mode
   become: yes
@@ -156,6 +164,9 @@
     name: firewalld
     state: started
 
+# note: can't seem to get the 'firewalld' module 
+# to work with Rocky 8, so using firewall-cmd 
+# directly instead.
 - name: Expose Zookeeper app port
   become: yes
   command: firewall-cmd --permanent --add-port "{{ item }}"
@@ -170,3 +181,12 @@
   become: yes
   command: firewall-cmd --reload
   when: zookeeper_ports is changed
+
+- name: fapolicy settings for ZooKeeper, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: zookeeper
+      folder_path: "{{ root_folder }}/app/zookeeper"
+    - name: jre_security
+      folder_path: /usr/lib/jvm/java-1.8.0/jre/lib/ext
+

@@ -25,22 +25,45 @@
     state: present
     key: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/archive.key
 
-- name: download confluent repo
+- name: Install Confluent Platform repository
   become: yes
   get_url:
-    url: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/confluent.repo
-    dest: /etc/yum.repos.d
+    timeout: 1200 # default value is too short for Pentaho Server download
+    url: https://packages.confluent.io/rpm/{{ confluent_major_version | default(6.2) }}/confluent.repo 
+    dest: /etc/yum.repos.d/confluent.repo
 
 # The yum module does not support clearing yum cache in an idempotent way!
 - name: Clean the yum caches
   become: yes
   command: yum clean all
 
-- name: Install Confluent Platform
+- name: set Confluent Platform version
+  set_fact:
+    confluent_platform_version: "{{ confluent_scala_version | default(2.12) if confluent_major_version is version('6.0', '<') else confluent_major_version + '.' + confluent_minor_version }}"
+
+# YUM/DNF will not install the packages in FIPS mode, since the packages don't have proper digests
+# See https://access.redhat.com/solutions/4460971
+# We must download with yum and install with rpm
+
+- name: Confluent Platform install folder
+  become: yes
+  file:
+    path: "{{ root_folder }}/install/confluent-platform"
+    state: directory
+
+- name: Download Confluent Platform
   become: yes
   yum:
-    name: confluent-platform
+    name: confluent-platform-{{ confluent_platform_version }}
     state: present
+    download_only: yes
+    download_dir: "{{ root_folder }}/install/confluent-platform"
+  register: confluent_downloaded
+
+- name: Install Confluent Platform
+  become: yes
+  shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/confluent-platform/*.rpm
+  when: confluent_downloaded is changed
 
 - name: Kafka folders
   become: yes
@@ -52,6 +75,7 @@
   loop:
     - "{{ root_folder }}/data/kafka"
     - "{{ root_folder }}/log/kafka"
+    - "{{ root_folder }}/tmp/kafka"
 
 - name: KSQL folders
   become: yes
@@ -63,6 +87,7 @@
   loop:
     - "{{ root_folder }}/data/ksql"
     - "{{ root_folder }}/log/ksql"
+    - "{{ root_folder }}/tmp/ksql"
 
 - name: Schema-registry folders
   become: yes
@@ -74,6 +99,7 @@
   loop:
     - "{{ root_folder }}/data/schema-registry"
     - "{{ root_folder }}/log/schema-registry"
+    - "{{ root_folder }}/tmp/schema-registry"
 
 - name: Control-center folders
   become: yes
@@ -85,6 +111,7 @@
   loop:
     - "{{ root_folder }}/data/control-center"
     - "{{ root_folder }}/log/control-center"
+    - "{{ root_folder }}/tmp/control-center"
 
 - name: Kafka-rest folders
   become: yes
@@ -96,6 +123,20 @@
   loop:
     - "{{ root_folder }}/data/kafka-rest"
     - "{{ root_folder }}/log/kafka-rest"
+    - "{{ root_folder }}/tmp/kafka-rest"
+
+- name: Kafka-connect folders
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-kafka-connect
+  loop:
+    - "{{ root_folder }}/data/kafka-connect"
+    - "{{ root_folder }}/log/kafka-connect"
+    - "{{ root_folder }}/tmp/kafka-connect"
+    
 
 - name: Change Confluent Services config location
   become: yes
@@ -103,54 +144,300 @@
   with_items:
     - /etc/kafka/ {{ root_folder }}/app/kafka/
     - /etc/ksql/ {{ root_folder }}/app/ksql/
+    - /etc/ksqldb/ {{ root_folder }}/app/ksql/
     - /etc/schema-registry/ {{ root_folder }}/app/schema-registry/
     - /etc/confluent-control-center/ {{ root_folder }}/app/control-center/
     - /etc/kafka-rest/ {{ root_folder }}/app/kafka-rest/
   register: confluent_services_location_updated
   ignore_errors: yes
 
-- name: Change kafka data location
+- name: Change Confluent services config permissions
   become: yes
-  template:
-    src: server.properties
-    dest: "{{ root_folder }}/app/kafka/"
-    force: yes
-    backup: yes    
-    
-- name: Change ksql data location
-  become: yes
-  template:
-    src: ksql-server.properties
-    dest: "{{ root_folder }}/app/ksql/"
-    force: yes
-    backup: yes
-
-- name: read control-center-production.properties
-  become: yes
-  shell: cat {{ root_folder }}/app/control-center/control-center-production.properties
-  register: control_center_production_properties_contents
-  changed_when: false
-
-- name: Enable Control Center to work with 1 broker
-  become: yes
-  lineinfile:
-    path: "{{ root_folder }}/app/control-center/control-center-production.properties"
-    state: present
-    insertafter: EOF
-    line: "{{ item }}"
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    recurse: true
+    owner: "{{ item.owner }}"
+    group: "confluent"
   loop:
-    - "confluent.controlcenter.internal.topics.replication=1"
-    - "confluent.controlcenter.command.topic.replication=1"
-    - "confluent.monitoring.interceptor.topic.replication=1"
-    - "confluent.metrics.topic.replication=1"
-  when: not control_center_production_properties_contents.stdout is match('^' + item)
+    - path: "{{ root_folder }}/app/ksql"
+      owner: cp-ksql
+    - path: "{{ root_folder }}/app/kafka"
+      owner: cp-kafka
+    - path: "{{ root_folder }}/app/schema-registry"
+      owner: cp-schema-registry
+    - path: "{{ root_folder }}/app/control-center"
+      owner: cp-control-center
+    - path: "{{ root_folder }}/app/kafka-rest"
+      owner: cp-kafka-rest
+
+- name: Kafka plugins folder
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: confluent
+    owner: cp-kafka
+  loop:
+    - "{{ root_folder }}/app/kafka/plugins"
+
+- name: Kafka server.properties configuration
+  become: yes
+  ansible.builtin.replace:
+    path: "{{ root_folder }}/app/kafka/server.properties"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "log.dirs=/var/lib/kafka"
+      replace: "log.dirs={{ root_folder }}/data/kafka"
+    - regexp: "zookeeper.connect=localhost:2181"
+      replace: "zookeeper.connect={{ solr_node_1 + ':2281' if solr_node_2 | default('') == '' else solr_node_1 + ':2281,' + solr_node_2 + ':2281,' + solr_node_3 + ':2281' }}"
+
+
+- name: Kafka TLS configuration
+  become: yes
+  ansible.builtin.blockinfile:
+    path: "{{ root_folder }}/app/kafka/server.properties"
+    backup: yes
+    marker: "# {mark} Kafka TLS configuration"
+    block: |
+      security.inter.broker.protocol=SSL
+      ssl.enabled.protocols=TLSv1.2
+      listeners=SSL://{{ internal_host }}:{{ kafka_port | default(9092) }}
+      ssl.keystore.type=PKCS12
+      ssl.keystore.location={{ java_p12_store_jdk8 }}
+      ssl.keystore.password={{ java_key_store_pass }}
+      # Required to use TLS to ZooKeeper (default is false)
+      zookeeper.ssl.client.enable=true
+      # Required to use TLS to ZooKeeper
+      zookeeper.clientCnxnSocket=org.apache.zookeeper.ClientCnxnSocketNetty
+
+- name: Kafka systemd unit file
+  become: yes
+  ansible.builtin.template:
+    src: confluent-kafka.service
+    dest: /etc/systemd/system/confluent-kafka.service
+    backup: yes
+  register: systemd_kafka_updated
+
+- name: KSQL property update
+  become: yes
+  replace:
+    path: "{{ root_folder }}/app/ksql/ksql-server.properties"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "bootstrap.servers=localhost:9092"
+      replace: "bootstrap.servers={{ internal_host }}:{{ kafka_port | default(9092) }}"
+    - regexp: "listeners=http://0.0.0.0:8088"
+      replace: "listeners=https://0.0.0.0:8088"
+
+- name: KSQL configuration
+  become: yes
+  ansible.builtin.blockinfile:
+    path: "{{ root_folder }}/app/ksql/ksql-server.properties"
+    backup: yes
+    marker: "# {mark} KSQL ArkCase Configuration"
+    block: |
+      ssl.keystore.location={{ java_p12_store_jdk8 }}
+      ssl.keystore.password={{ java_key_store_pass }}
+      ssl.key.password={{ java_key_store_pass }}
+      ssl.enabled.protocols=TLSv1.2
+      security.protocol=SSL
+      ksql.streams.state.dir={{ root_folder }}/data/ksql
+
+- name: KSQL systemd unit file
+  become: yes
+  template:
+    src: confluent-ksql.service
+    dest: /etc/systemd/system/confluent-ksql.service
+    backup: yes
+  register: systemd_ksql_updated
+
+- name: Schema Registry property update
+  become: yes
+  replace:
+    path: "{{ root_folder }}/app/schema-registry/schema-registry.properties"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "kafkastore.bootstrap.servers=PLAINTEXT://localhost:9092"
+      replace: "kafkastore.bootstrap.servers=SSL://{{ internal_host }}:{{ kafka_port | default(9092) }}"
+    - regexp: "listeners=http://0.0.0.0:8081"
+      replace: "listeners=https://0.0.0.0:8081"
+
+- name: Schema Registry configuration
+  become: yes
+  ansible.builtin.blockinfile:
+    path: "{{ root_folder }}/app/schema-registry/schema-registry.properties"
+    backup: yes
+    marker: "# {mark} Schema Registry ArkCase Configuration"
+    block: |
+      kafkastore.security.protocol=SSL
+      kafkastore.ssl.enabled.protocols=TLSv1.2
+      ssl.keystore.location={{ java_p12_store_jdk8 }}
+      ssl.keystore.password={{ java_key_store_pass }}
+      ssl.key.password={{ java_key_store_pass }}
+      ssl.enabled.protocols=TLSv1.2
+      inter.instance.protocol=https
+
+- name: Schema-registry systemd unit file
+  become: yes
+  template:
+    src: confluent-schema-registry.service
+    dest: /etc/systemd/system/confluent-schema-registry.service
+    backup: yes
+  register: systemd_schema_registry_updated
+
+- name: Control Center Configuration
+  become: yes
+  ansible.builtin.blockinfile:
+    path: "{{ root_folder }}/app/control-center/control-center-production.properties"
+    block: | 
+      # use only one replica... TODO: introduce a configuration item so we can expand to a larger cluster
+      confluent.controlcenter.internal.topics.replication=1
+      confluent.controlcenter.command.topic.replication=1
+      confluent.monitoring.interceptor.topic.replication=1
+      # control-center TLS config
+      confluent.controlcenter.rest.listeners=https://{{ internal_host }}:9022
+      confluent.controlcenter.rest.ssl.keystore.location={{ java_p12_store_jdk8 }}
+      confluent.controlcenter.rest.ssl.keystore.password={{ java_key_store_pass }}
+      confluent.controlcenter.rest.ssl.key.password={{ java_key_store_pass }}
+      confluent.controlcenter.use.default.jvm.truststore=true
+      # configuration for talking to Kafka
+      bootstrap.servers={{ internal_host }}:{{ kafka_port | default(9092) }}
+      confluent.controlcenter.streams.security.protocol=SSL
 
 - name: change control center data directory
   become: yes
-  replace:
+  ansible.builtin.replace:
+    backup: yes
     path: "{{ root_folder }}/app/control-center/control-center-production.properties"
     regexp: "confluent.controlcenter.data.dir=/var/lib/confluent/control-center"
     replace: "confluent.controlcenter.data.dir={{ root_folder }}/data/control-center"
+
+- name: Control-center systemd unit file
+  become: yes
+  ansible.builtin.template:
+    src: confluent-control-center.service
+    dest: /etc/systemd/system/confluent-control-center.service
+    backup: yes
+  register: systemd_control_center_updated
+
+# somehow the uber-jar version of the Splunk Connect plugin doesn't work for us. 
+# we need the original, non-uber-jar version.  But this version is not published 
+# in their GitHub releases (https://github.com/splunk/kafka-connect-splunk/releases).  
+# I build the original, non-uber-jar by cloning this GitHub repository and building 
+# locally.  This jar file was then uploaded to our fileshare.armedia.com site.
+- name: download Splunk Kafka Connect plugin
+  become: yes
+  command: sshpass -e sftp -o StrictHostKeyChecking\=no -o UserKnownHostsFile\=/dev/null {{ sftp_arkcase_user }}@{{ sftp_service_base_url }}:{{ sftp_arkcase_folder }}/original-splunk-kafka-connect-v2.0.9.jar
+  args:
+    chdir: "{{ root_folder }}/install/confluent-platform"
+    creates: "{{ root_folder }}/install/confluent-platform/original-splunk-kafka-connect-v2.0.9.jar"
+  environment:
+    SSHPASS: "{{ sftp_arkcase_password }}"
+  register: splunk_kafka_plugin
+
+- name: copy Splunk Kafka connect plugin, if necessary
+  become: yes
+  become_user: cp-kafka
+  copy:
+    remote_src: yes
+    force: no
+    src: "{{ root_folder }}/install/confluent-platform/original-splunk-kafka-connect-v2.0.9.jar"
+    dest: "{{ root_folder }}/app/kafka/plugins/original-splunk-kafka-connect-v2.0.9.jar"
+  when: splunk_kafka_plugin is changed
+
+- name: Kafka Connect config file updates
+  become: yes
+  ansible.builtin.replace:
+    backup: yes
+    path: "{{ root_folder }}/app/kafka/connect-distributed.properties"
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "bootstrap.servers=localhost:9092"
+      replace: "bootstrap.servers={{ internal_host }}:{{ kafka_port | default(9092) }}"
+
+- name: Kafka Connect plugin and TLS configuration
+  become: yes
+  ansible.builtin.blockinfile:
+    path: "{{ root_folder }}/app/kafka/connect-distributed.properties"
+    backup: yes
+    block: |
+      plugin.path=/usr/share/java,{{ root_folder }}/app/kafka/plugins
+      security.protocol=SSL
+      consumer.security.protocol=SSL
+      producer.security.protocol=SSL
+      ssl.client.auth=none
+      listeners=https://{{ internal_host }}:8083
+      ssl.keystore.location={{ java_p12_store_jdk8 }}
+      ssl.keystore.password={{ java_key_store_pass }}
+      ssl.key.password={{ java_key_store_pass }}
+      ssl.truststore.location={{ java_trust_store }}
+      consumer.ssl.truststore.location={{ java_trust_store }}
+      producer.ssl.truststore.location={{ java_trust_store }}
+      ssl.truststore.password={{ java_trust_store_pass }}
+      consumer.ssl.truststore.password={{ java_trust_store_pass }}
+      producer.ssl.truststore.password={{ java_trust_store_pass }}
+
+      # Authentication settings for Connect producers used with source connectors
+      producer.ssl.keystore.location={{ java_p12_store_jdk8 }}
+      producer.ssl.keystore.password={{ java_key_store_pass }}
+      producer.ssl.key.password={{ java_key_store_pass }}
+
+      # Authentication settings for Connect consumers used with sink connectors
+      consumer.ssl.keystore.location={{ java_p12_store_jdk8 }}
+      consumer.ssl.keystore.password={{ java_key_store_pass }}
+      consumer.ssl.key.password={{ java_key_store_pass }}
+
+
+- name: Kafka-connect systemd unit file
+  become: yes
+  template:
+    src: confluent-kafka-connect.service
+    dest: /etc/systemd/system/confluent-kafka-connect.service
+    backup: yes
+  register: systemd_kafka_connect_updated
+
+- name: Kafka-REST configuration options
+  become: yes
+  ansible.builtin.blockinfile:
+    path: "{{ root_folder }}/app/kafka-rest/kafka-rest.properties"
+    backup: yes
+    block: |
+      listeners=https://0.0.0.0:8082
+      ssl.keystore.location={{ java_p12_store_jdk8 }}
+      ssl.keystore.password={{ java_key_store_pass }}
+      ssl.keystore.type=PKCS12
+      ssl.key.password={{ java_key_store_pass }}
+      ssl.enabled.protocols=TLSv1.2
+      schema.registry.url=https://{{ internal_host }}:8081
+      client.security.protocol=SSL
+      client.ssl.enabled.protocols=TLSv1.2
+
+- name: Kafka-REST bootstrap server
+  become: yes
+  ansible.builtin.replace:
+    path: "{{ root_folder }}/app/kafka-rest/kafka-rest.properties"
+    backup: yes
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  loop:
+    - regexp: "bootstrap.servers=PLAINTEXT://localhost:9092"
+      replace: "bootstrap.servers=SSL://{{ internal_host }}:{{ kafka_port | default(9092) }}"
+
+- name: Kafka-rest systemd unit file
+  become: yes
+  template:
+    src: confluent-kafka-rest.service
+    dest: /etc/systemd/system/confluent-kafka-rest.service
+    backup: yes
+  register: systemd_kafka_rest_updated
 
 - name: Change logrotation policy for Kafka app logs
   become: yes
@@ -168,83 +455,29 @@
     force: yes
     backup: yes
 
-- name: Kafka systemd unit file
-  become: yes
-  template:
-    src: confluent-kafka.service
-    dest: /etc/systemd/system/confluent-kafka.service
-    backup: yes
-  register: systemd_kafka_updated
-
-- name: Zookeeper systemd unit file
-  become: yes
-  template:
-    src: confluent-zookeeper.service
-    dest: /etc/systemd/system/confluent-zookeeper.service
-    backup: yes
-  register: systemd_zookeeper_updated
-
-- name: Control-center systemd unit file
-  become: yes
-  template:
-    src: confluent-control-center.service
-    dest: /etc/systemd/system/confluent-control-center.service
-    backup: yes
-  register: systemd_control_center_updated
-
-- name: Kafka-connect systemd unit file
-  become: yes
-  template:
-    src: confluent-kafka-connect.service
-    dest: /etc/systemd/system/confluent-kafka-connect.service
-    backup: yes
-  register: systemd_kafka_connect_updated
-
-- name: Kafka-rest systemd unit file
-  become: yes
-  template:
-    src: confluent-kafka-rest.service
-    dest: /etc/systemd/system/confluent-kafka-rest.service
-    backup: yes
-  register: systemd_kafka_rest_updated
-
-- name: KSQL systemd unit file
-  become: yes
-  template:
-    src: confluent-ksql.service
-    dest: /etc/systemd/system/confluent-ksql.service
-    backup: yes
-  register: systemd_ksql_updated
-
-- name: Schema-registry systemd unit file
-  become: yes
-  template:
-    src: confluent-schema-registry.service
-    dest: /etc/systemd/system/confluent-schema-registry.service
-    backup: yes
-  register: systemd_schema_registry_updated
+# NOTE: Kafka can and should use the Solr Zookeeper instance.
+# We don't need the Confluent zookeeper.
 
 - name: Reload daemon files if needed
   become: yes
   command: systemctl daemon-reload
-  when: systemd_kafka_updated is changed or systemd_zookeeper_updated is changed or systemd_control_center_updated is changed or systemd_kafka_connect_updated is changed or systemd_kafka_rest_updated is changed or systemd_ksql_updated is changed or systemd_schema_registry_updated is changed
+  when: systemd_kafka_updated is changed or systemd_control_center_updated is changed or systemd_kafka_connect_updated is changed or systemd_kafka_rest_updated is changed or systemd_ksql_updated is changed or systemd_schema_registry_updated is changed
 
-- name: Enable Zookeeper to start on boot
-  become: yes
-  systemd:
-    daemon_reload: true
-    name: confluent-zookeeper
-    enabled: yes
-    masked: no
-    state: restarted
-  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_zookeeper_updated is changed)
-
-- name: ensure Zookeeper is started
-  become: yes
-  systemd:
-    name: confluent-zookeeper
-    state: started
-  when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_zookeeper_updated is changed)
+- name: fapolicy settings for Confluent Platform, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: kafka
+      folder_path: "{{ root_folder }}/app/kafka"
+    - name: control-center
+      folder_path: "{{ root_folder }}/app/control-center"
+    - name: kafka-rest
+      folder_path: "{{ root_folder }}/app/kafka-rest"
+    - name: ksql
+      folder_path: "{{ root_folder }}/app/ksql"
+    - name: ksql-snappy
+      folder_path: "/usr/share/java/ksqldb"
+    - name: schema-registry
+      folder_path: "{{ root_folder }}/app/schema-registry"
 
 - name: Enable Kafka to start on boot
   become: yes
@@ -297,21 +530,21 @@
     state: started
   when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_ksql_updated is changed)
 
-- name: Enable Control Center to start on boot
+- name: Ensure Control Center does not start on boot
   become: yes
   systemd:
     daemon_reload: true
     name: confluent-control-center
-    enabled: yes
+    enabled: no
     masked: no
-    state: restarted
+    state: stopped
   when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_control_center_updated is changed)
 
-- name: ensure Control Center is started
+- name: ensure Control Center is disabled
   become: yes
   systemd:
     name: confluent-control-center
-    state: started
+    state: stopped
   when: enable_kafka is defined and enable_kafka == "yes" and (confluent_services_location_updated is changed or systemd_control_center_updated is changed)
 
 - name: Enable Kafka Rest to start on boot

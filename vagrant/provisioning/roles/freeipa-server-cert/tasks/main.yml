@@ -1,0 +1,177 @@
+--- 
+
+- name: ensure sssd-kcm is running
+  become: yes
+  systemd:
+    name: sssd-kcm
+    state: started
+
+- name: get current freeipa admin password 
+  shell: aws secretsmanager get-secret-value --secret-id fedramp/shared_services/freeipa_admin_password | jq -r .SecretString
+  register: adminpw_secret
+  changed_when: false
+
+- name: ensure freeipa admin password is correct
+  block:
+    - name: verify password
+      shell: echo {{ adminpw_secret.stdout }} | kinit admin 
+      changed_when: false
+  rescue:
+    - name: password verification failed
+      fail:
+        msg: Password is incorrect; please update the password and also the value of the AWS secret "fedramp/shared_services/freeipa_admin_password"
+
+- name: get base hostname
+  shell: hostname | awk -F. '{ print $1 }'
+  register: base_hostname
+  changed_when: false
+
+- name: get domain name
+  shell: realm list | grep domain-name | awk '{ print $2 }'
+  register: domain_name
+  changed_when: false
+
+- name: see if DNS A record already exists
+  shell: ipa dnsrecord-find "{{ domain_name.stdout }}" "{{ base_hostname.stdout }}" | grep "Record name"
+  register: dns_a_record
+  changed_when: false
+
+- name: set IP address
+  set_fact: 
+    ip_address: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+
+- name: add DNS A record if needed 
+  shell: ipa dnsrecord-add "{{ domain_name.stdout }}" "{{ base_hostname.stdout }}" --a-rec="{{ ip_address }}"
+  when: dns_a_record.stdout == ""
+
+- name: get base IP address
+  shell: echo "{{ ip_address }}" | awk -F. '{ OFS="."; print $3,$2,$1 }'
+  register: base_ip
+  changed_when: false
+
+- name: get leaf IP address
+  shell: echo "{{ ip_address }}" | awk -F. '{ print $4 }'
+  register: leaf_ip
+  changed_when: false
+
+- name: see if the dns zone already exists 
+  shell: ipa dnszone-find "{{ base_ip.stdout }}".in-addr.arpa. | grep "Zone name" | grep " {{ base_ip.stdout }}"
+  register: dns_zone
+  changed_when: false
+
+- name: create the dns zone if needed 
+  shell: ipa dnszone-add "{{ base_ip.stdout }}".in-addr.arpa. 
+  when: dns_zone.stdout == ""
+
+- name: see if the sub ca cert exists already 
+  shell: ipa ca-find {{ ipa_sub_ca_name }} | grep Name
+  register: sub_ca_exists
+  changed_when: false
+
+- name: if sub ca doesn't already exist, create it and save locally
+  shell: ipa ca-add "{{ ipa_sub_ca_name }}" --desc "{{ ipa_sub_ca_name }}" --subject "CN={{ ipa_sub_ca_name }},O={{ domain_name.stdout }}" --chain --certificate-out=ca-chain.pem
+  when: sub_ca_exists.stdout == ""
+
+- name: if sub ca already exists, save it locally 
+  shell: ipa ca-show "{{ ipa_sub_ca_name }}" --chain --certificate-out=ca-chain.pem
+  when: sub_ca_exists.stdout != "" 
+  changed_when: false
+
+- name: copy the cert chain to the cert store 
+  become: yes
+  copy: 
+    remote_src: true 
+    src: ca-chain.pem 
+    dest: /etc/pki/tls/certs/ca-chain.pem 
+
+- name: update ca trust
+  become: yes
+  command: update-ca-trust 
+
+- name: check existing DNS ptr record for this host 
+  shell: ipa dnsrecord-find "{{ base_ip.stdout }}".in-addr.arpa. --ptr-rec $(hostname) | grep "Record name" | awk '{ print $NF }'
+  register: dns_ptr_rec
+  changed_when: false
+
+- name: delete the existing DNS ptr record if it was for a different IP than we have at this moment 
+  shell: ipa dnsrecord-del "{{ base_ip.stdout }}".in-addr.arpa. "{{ leaf_ip.stdout }}" --ptr-rec=$(hostname)
+  when: dns_ptr_rec.stdout != "" and dns_ptr_rec.stdout != leaf_ip.stdout
+
+- name: create new DNS ptr record if needed 
+  shell: ipa dnsrecord-add "{{ base_ip.stdout }}".in-addr.arpa. "{{ leaf_ip.stdout }}" --ptr-rec=$(hostname)
+  register: dnsrecord_add
+  failed_when: dnsrecord_add.rc != 0
+  when: dns_ptr_rec.stdout == "" or dns_ptr_rec.stdout != leaf_ip.stdout
+
+- name: create service principal for extra SAN, if an extra SAN is defined 
+  shell: ipa service-add-principal HTTP/"$(hostname)" HTTP/"{{ ipa_extra_san }}"
+  when: (ipa_extra_san | default("")) != ""
+
+- name: set extra san entry when extra san is defined
+  set_fact: 
+    extra_san_entry: ",DNS:{{ ipa_extra_san }}"
+  when: (ipa_extra_san | default("")) != ""
+
+- name: set extra san entry when extra san is not defined
+  set_fact: 
+    extra_san_entry: ""
+  when: (ipa_extra_san | default("")) == ""
+
+- name: get system hostname
+  command: hostname
+  register: hostname
+  changed_when: false
+
+- name: check for existing CSR
+  stat: 
+    path: "{{ hostname.stdout }}.csr"
+  register: csr_path
+
+- name: generate CSR if needed 
+  become: yes
+  command: |
+    openssl req \
+    -new \
+    -nodes \
+    -out {{ hostname.stdout }}.csr \
+    -subj "/CN={{ hostname.stdout }}" \
+    -addext "subjectAltName = DNS:{{ hostname.stdout }},IP:{{ ip_address }}{{ extra_san_entry }}" \
+    -newkey rsa:4096 \
+    -keyout "{{ hostname.stdout }}".key 
+  when: csr_path.stat.exists == False
+
+- name: generate the server cert
+  command: |
+    ipa cert-request \
+    --ca="{{ ipa_sub_ca_name }}" \
+    --add \
+    --principal HTTP/"{{ hostname.stdout }}" \
+    --chain \
+    --certificate-out={{ hostname.stdout }}.pem \
+    {{ hostname.stdout }}.csr
+
+- name: copy the cert file to the system store 
+  become: yes
+  copy:
+    remote_src: true
+    src: "{{ hostname.stdout }}.pem"
+    dest: /etc/pki/tls/certs/{{ hostname.stdout }}.pem 
+
+- name: copy the CSR file to the system store 
+  become: yes
+  copy:
+    remote_src: true
+    src: "{{ hostname.stdout }}.csr"
+    dest: /etc/pki/tls/certs/{{ hostname.stdout }}.csr
+
+- name: copy the key file to the system store 
+  become: yes
+  copy:
+    remote_src: true
+    src: "{{ hostname.stdout }}.key"
+    dest: /etc/pki/tls/private/{{ hostname.stdout }}.key 
+
+- name: combine the cert and key into one file 
+  become: yes
+  shell: cat {{ hostname.stdout }}.pem {{ hostname.stdout }}.key | tee /etc/pki/tls/certs/{{ hostname.stdout }}.key.pem 
+

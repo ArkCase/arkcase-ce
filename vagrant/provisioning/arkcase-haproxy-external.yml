@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  roles:
+    - role: getssl
+      tags: [getssl]
+    - role: haproxy-external
+      tags: [haproxy-external]

@@ -6,13 +6,16 @@
   loop_control:
     loop_var: p
 
-- name:  arkcase-oidc-server.yaml file
+- name: arkcase-oidc.yaml file
   become: yes
   become_user: arkcase
   template:
     src: arkcase-oidc-server.yaml 
-    dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-oidc-server.yaml"
-    backup: no
+    dest: "{{ item.dest }}"
+    backup: yes
+  with_items:
+    - dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-oidc.yaml"
+    - dest: "{{ root_folder }}/data/arkcase-home/.arkcase/acm/acm-config-server-repo/arkcase-oidc-server.yaml"
 
 - name: read current setenv.sh
   become: yes
@@ -68,3 +71,4 @@
     keystore_path: "{{ java_key_store }}"
     keystore_pass: "{{ java_key_store_pass }}"
     state: present
+  when: oidc_federation_host is defined

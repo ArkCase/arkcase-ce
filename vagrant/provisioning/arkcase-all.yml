@@ -19,6 +19,8 @@
     - role: ldap-portal
       tags: [ldap-portal]
       when: ldap_portal_url is defined
+    - role: server-cert
+      tags: [server-cert]
     - role: mongodb
       tags: [microservices, mongodb]
       when: enable_mongo | default(false)
@@ -169,7 +171,9 @@
       tags: [start-arkcase, core, arkcase, upgrade, marketplace]  
     - role: foia-analytical-reports
       when: foia_analytical_reports_version is defined
-      tags: [foia-analytical-reports, foia]
+      tags: [foia-analytical-reports]
+    - role: foia-reports-deploy
+      tags: [foia-reports-deploy]
     - role: raw-data-report
       when: raw_data_etl_report_version is defined
       tags: [raw-data-report]

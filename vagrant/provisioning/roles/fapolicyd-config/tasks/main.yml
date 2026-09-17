@@ -1,0 +1,30 @@
+- name: set max size of fapolicyd database
+  become: yes
+  replace:
+    path: /etc/fapolicyd/fapolicyd.conf
+    backup: yes
+    regexp: "^db_max_size = 40$"
+    replace: "db_max_size = 400"
+  register: fapolicyd_update
+
+- name: ArkCase fapolicyd rules
+  become: yes
+  template:
+    src: 15-arkcase.rules
+    dest: /etc/fapolicyd/rules.d/15-arkcase.rules
+    backup: yes
+    owner: root
+    group: fapolicyd
+  register: arkcase_rules
+
+- name: reload ArkCase fapolicyd rules
+  become: yes
+  shell: fagenrules --load
+  when: arkcase_rules is changed
+
+- name: restart fapolicyd if needed
+  systemd:
+    service: fapolicyd
+    state: restarted
+  when: fapolicyd_update is changed or arkcase_rules is changed
+

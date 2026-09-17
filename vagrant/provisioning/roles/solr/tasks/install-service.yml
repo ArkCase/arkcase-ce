@@ -34,7 +34,7 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - JMX"
     block: |
-      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file={{ root_folder }}/app/solr/access.file -Dcom.sun.management.jmxremote.password.file={{ root_folder }}/app/solr/password.file -Djava.rmi.server.hostname={{ internal_host }} -Dlog4j.formatMsgNoLookups=true"
+      SOLR_OPTS="$SOLR_OPTS -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.ssl=true -Dcom.sun.management.jmxremote.authenticate=true -Dcom.sun.management.jmxremote.port=50502 -Dcom.sun.management.jmxremote.rmi.port=50503 -Dcom.sun.management.jmxremote.access.file={{ root_folder }}/app/solr/access.file -Dcom.sun.management.jmxremote.password.file={{ root_folder }}/app/solr/password.file -Djava.rmi.server.hostname={{ internal_host }} -Dlog4j.formatMsgNoLookups=true -Dcom.redhat.fips=false -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass }} -Djavax.net.ssl.trustStorePassword=changeit"
   when: solr_jmx_enabled|bool
 
 - name: update environment file - TLS
@@ -46,15 +46,19 @@
     marker: "# {mark} ANSIBLE MANAGED BLOCK - TLS"
     block: |
       SOLR_SSL_ENABLED=true
-      SOLR_SSL_KEY_STORE={{ java_key_store_jks }}
+      SOLR_SSL_KEY_STORE={{ java_p12_store }}
       SOLR_SSL_KEY_STORE_PASSWORD='{{ java_key_store_pass }}'
-      SOLR_SSL_TRUST_STORE='{{ java_trust_store }}'
-      SOLR_SSL_TRUST_STORE_PASSWORD='{{ java_trust_store_pass }}'
+      SOLR_SSL_TRUST_STORE={{ solr_java_home }}/lib/security/cacerts
+      SOLR_SSL_TRUST_STORE_PASSWORD=changeit
       SOLR_SSL_TRUST_STORE_TYPE=JKS
-      SOLR_SSL_KEY_STORE_TYPE=JKS
+      SOLR_SSL_KEY_STORE_TYPE=PKCS12
       SOLR_SSL_NEED_CLIENT_AUTH=false
       SOLR_SSL_WANT_CLIENT_AUTH=false
-      SOLR_OPTS="$SOLR_OPTS -Djavax.net.ssl.keyStorePassword={{ java_key_store_pass | replace('$', '\$') }} -Djavax.net.ssl.trustStorePassword={{ java_trust_store_pass | replace('$', '\$') }}"
+
+- name: set ZK_HOST value
+  set_fact:
+    zk_host: "{{ solr_node_1 + ':2182' if solr_node_2 | default('') == '' else solr_node_1 + ':2182,' + solr_node_2 + ':2182,' + solr_node_3 + ':2182' }}"
+
 # NOTE, per https://lucene.apache.org/solr/guide/7_7/taking-solr-to-production.html#taking-solr-to-production, 
 # setting ZK_HOST is sufficient to start Solr in Solr Cloud mode
 - name: Solr cloud, if configured
@@ -65,13 +69,23 @@
     insertbefore: EOF
     marker: "# {mark} ANSIBLE MANAGED BLOCK - SOLR CLOUD"
     block: |
-      ZK_HOST=localhost:2182
+      ZK_HOST={{ zk_host }} 
   when: enable_solr_cloud is defined and enable_solr_cloud
+
+- name: set Solr JAVA_HOME
+  become: yes
+  become_user: solr
+  blockinfile:
+    path: "{{ root_folder }}/app/solr/bin/solr.in.sh"
+    insertbefore: EOF
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - JAVA_HOME"
+    block: |
+      SOLR_JAVA_HOME={{ solr_java_home }}
 
 - name: configure Solr to use TLS with Zookeeper, if Solr Cloud is enabled
   become: yes
   become_user: solr
-  command: "{{ root_folder }}/app/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost localhost:2182 -cmd clusterprop -name urlScheme -val https"
+  command: "{{ root_folder }}/app/solr/server/scripts/cloud-scripts/zkcli.sh -zkhost {{ zk_host }} -cmd clusterprop -name urlScheme -val https"
   when: enable_solr_cloud is defined and enable_solr_cloud
 
 - name: upload configuration file

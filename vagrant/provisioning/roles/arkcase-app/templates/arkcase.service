@@ -5,6 +5,9 @@ BindsTo={{ arkcase_required_services }}
 
 [Service]
 Type=forking
+# on VM restart or ArkCase upgrade, we need to give time for 
+# config-server to start serving requests.
+ExecStartPre=/bin/sleep 15
 ExecStart={{ root_folder }}/app/arkcase/bin/startup.sh
 ExecStop={{ root_folder }}/app/arkcase/bin/shutdown.sh -force
 WorkingDirectory={{ root_folder }}/app/arkcase

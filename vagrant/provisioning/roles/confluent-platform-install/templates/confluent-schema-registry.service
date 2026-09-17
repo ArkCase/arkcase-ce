@@ -8,6 +8,8 @@ Type=simple
 User=cp-schema-registry
 Group=confluent
 Environment="LOG_DIR={{ root_folder }}/log/schema-registry"
+Environment="SCHEMA_REGISTRY_LOG4J_OPTS=-Dlog4j.configuration=file:{{ root_folder }}/app/schema-registry/log4j.properties"
+Environment="SCHEMA_REGISTRY_OPTS=-Dcom.redhat.fips=false -Djava.io.tmpdir={{ root_folder }}/tmp/schema-registry/"
 ExecStart=/usr/bin/schema-registry-start {{ root_folder }}/app/schema-registry/schema-registry.properties
 TimeoutStopSec=180
 Restart=always

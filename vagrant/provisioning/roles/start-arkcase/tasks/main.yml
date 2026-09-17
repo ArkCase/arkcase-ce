@@ -11,11 +11,15 @@
     name: "config-server"
     state: started
 
-- name: wait for config server
-  wait_for:
-    connect_timeout: 15
-    delay: 5
-    port: 9999
+- name: wait for config server URL to work
+  uri:
+    url: https://{{ internal_host }}:9999/arkcase/runtime.yml
+    validate_certs: false
+    follow_redirects: all
+  register: config_result
+  until: config_result.status == 200
+  retries: 100
+  delay: 5
 
 - name: start arkcase
   become: yes
@@ -24,6 +28,52 @@
     name: "arkcase"
     state: started
 
-- name: wait for arkcase to create the tables in the database
-  pause:
-    minutes: 3
+- name: wait for ArkCase URL to work
+  uri:
+    url: https://{{ internal_host }}:8843/arkcase/
+    validate_certs: false
+    follow_redirects: all
+  register: _result
+  until: _result.status == 200
+  retries: 100
+  delay: 5
+
+- name: fapolicy settings for ArkCase, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: arkcase_app
+      folder_path: "{{ root_folder }}/app/arkcase"
+    - name: arkcase_ui
+      folder_path: "{{ root_folder }}/data/arkcase-home/.arkcase/custom"
+    - name: arkcase_cache
+      folder_path: "{{ root_folder }}/data/arkcase-home/.cache"
+
+- name: Run CRON job every 15 minutes to make sure ArkCase is running
+  become: yes
+  become_method: sudo
+  cron:
+    name: "ensure arkcase started"
+    user: "root"
+    minute: "*/15"
+    job: 'systemctl status arkcase || systemctl start arkcase'
+    state: present
+
+- name: copy script to restart ArkCase if JDK was updated since ArkCase was started
+  become: yes
+  become_method: sudo
+  copy:
+    backup: yes
+    src: check-java-update-since-arkcase-start.sh
+    dest: "{{ root_folder }}/common/check-java-update-since-arkcase-start.sh"
+    mode: u=rwx,g=r,o=r
+
+- name: run CRON job hourly to see if ArkCase needs restarting due to JDK update
+  become: yes
+  become_method: sudo
+  cron:
+    name: "restart arkcase if OpenJDK was updated"
+    user: "root"
+    special_time: "hourly"
+    job: "/bin/sh {{ root_folder }}/common/check-java-update-since-arkcase-start.sh"
+    state: present
+

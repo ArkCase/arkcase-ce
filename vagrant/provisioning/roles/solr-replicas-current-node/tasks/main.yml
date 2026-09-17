@@ -1,0 +1,3 @@
+- name: create extra replicas on the current node
+  include_tasks: replicas.yml
+  loop: "{{ solr_cores }}"

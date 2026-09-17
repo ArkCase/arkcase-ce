@@ -78,6 +78,7 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho"
     keep_name: true
+    checksum_alg: sha1
     username: "{{ maven_repository_username }}"
     password: "{{ maven_repository_password }}"
 
@@ -93,6 +94,7 @@
     extension: jar
     dest: "{{ root_folder }}/install/pentaho/{{ reports_download_path }}"
     keep_name: true
+    checksum_alg: sha1
     username: "{{ maven_repository_username }}"
     password: "{{ maven_repository_password }}"
 
@@ -163,33 +165,37 @@
     src: kettle.properties
     dest: /home/pentaho-pdi/.kettle/kettle.properties
 
-- name: Set the cron environment so as to be able to run the job
-  become: true
-  become_user: pentaho-pdi
-  ansible.builtin.cron:
-    env: true
-    name: "{{ item.name }}"
-    job: "{{ item.value }}"
-  loop:
-    - name: PATH
-      value: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/pentaho-pdi/.local/bin:/home/pentaho-pdi/bin"
-    - name: SHELL
-      value: /bin/bash
-
-- name: Schedule the job to run every day at 2 AM
-  become: true
-  become_user: pentaho-pdi
-  ansible.builtin.cron:
-    backup: true
-    name: "populate FOIA data warehouse tables"
-    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb"
-    month: "*"
-    weekday: "*"
-    day: "*"
-    hour: "2"
-    minute: "0"
-    disabled: false
-    state: present
+    #### NOTE FedRAMP compliance broke setting crontab in FCC prod
+    #
+    #- name: Set the cron environment so as to be able to run the job
+    #  become: true
+    #  become_user: pentaho-pdi
+    #  ansible.builtin.cron:
+    #    env: true
+    #    name: "{{ item.name }}"
+    #    job: "{{ item.value }}"
+    #  loop:
+    #    - name: PATH
+    #      value: "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/pentaho-pdi/.local/bin:/home/pentaho-pdi/bin"
+    #    - name: SHELL
+    #      value: /bin/bash
+    #    - name: OPT
+    #      value: "-Dcom.redhat.fips=false"
+    #
+    #- name: Schedule the job to run every day at 2 AM
+    #  become: true
+    #  become_user: pentaho-pdi
+    #  ansible.builtin.cron:
+    #    backup: true
+    #    name: "populate FOIA data warehouse tables"
+    #    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb"
+    #    month: "*"
+    #    weekday: "*"
+    #    day: "*"
+    #    hour: "2"
+    #    minute: "0"
+    #    disabled: false
+    #    state: present
 
 ###################################################
 # Create the JDBC and the Mondrian data sources
@@ -235,10 +241,10 @@
 # Deploy the reports
 #########################################################
 
-- name: Import reports from the zip file archive
+- name: import reports from the zip file archive
   become: true
   become_user: pentaho
-  ansible.builtin.command: "{{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/{{ reports_download_path }}' --permission=true --overwrite=true --retainOwnership=true"
+  ansible.builtin.shell: "OPT=-Dcom.redhat.fips=false {{ root_folder }}/app/pentaho/pentaho-server/import-export.sh --import --url=https://{{ internal_host }}:2002/pentaho --username={{ arkcase_admin_user }} --password='{{ arkcase_admin_password }}' --charset=UTF-8 --path=/public --file-path='{{ root_folder }}/install/pentaho/{{ reports_download_path }}' --permission=true --overwrite=true --retainOwnership=true"
 
 - name: Run the job to create and populate the mondrian cubes
   become: true

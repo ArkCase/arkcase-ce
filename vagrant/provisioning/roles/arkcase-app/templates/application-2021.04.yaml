@@ -13,8 +13,6 @@ spring:
       retries: 1
       bootstrap-servers:
       - "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 properties.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo
 branding.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/branding
 avro.schema.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/schemas/avro    
@@ -23,7 +21,7 @@ process.files.folder.path: ${user.home}/.arkcase/acm/acm-config-server-repo/proc
 logging:
   file.max-history: 10
   file.max-size: 10MB
-  file: "{{ root_folder }}/log/config-server/acmConfigServer.log"
+  file.name: "{{ root_folder }}/log/config-server/acmConfigServer.log"
   level:
     com.armedia.acm.configserver: info
     org.springframework.cloud.config: info
@@ -34,6 +32,7 @@ arkcase:
   kafka:  
     messageBufferWindow: 1  
     bootstrapAddress: "{{ kafka_host }}:{{ kafka_port | default(9092) }}"
+    security-protocol: "{{ kafka_security_protocol | default('PLAINTEXT') }}"
     configuration-changed-topic: ark-config-event-configuration 
     configuration-changed-topic-replicas: 1 
     configuration-changed-topic-partitions: 1 
@@ -82,3 +81,18 @@ management:
     web:  
       exposure: 
         include: '*'
+acm.activemq:
+  broker-url: "ssl://{{ activemq_host }}:61616"
+  keystore: "{{ java_p12_store_jdk8 }}"
+  keystore-password: "{{ java_key_store_pass }}"
+  truststore: "{{ java_trust_store }}"
+  truststore-password: "{{ java_trust_store_pass }}"
+  user: "{{ activemq_user | default('guest', true) }}"
+  password: "{{ activemq_password | default('guest', true) }}"
+  default-destination: configuration.changed
+  labels-destination: labels.changed
+  ldap-destination: ldap.changed
+  lookups-destination: lookups.changed
+  rules-destination: rules.changed
+  timeout: 10 #seconds
+

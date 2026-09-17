@@ -29,6 +29,7 @@
     state: directory
     group: arkcase
     owner: arkcase
+    mode: 0755
   loop:
     - "{{ root_folder }}/data/arkcase"
     - "{{ root_folder }}/data/arkcase-home"
@@ -67,7 +68,7 @@
         item: arkcase
   when: db_engine | default('mariadb') == "mariadb"
   vars:
-    ansible_python_interpreter: "{{ ansible_python3 | default('/usr/bin/python2') }}"
+    ansible_python_interpreter: "{{ ansible_python3 }}"
 
 - name: get yarn repository definition
   include_tasks: "{{ role_path }}/../common/tasks/download.yml"
@@ -110,6 +111,18 @@
   command: dnf install -y nodejs
   when: node_version.stdout == ""
 
+# need to download the yarn package, then install with RPM,
+# due to it not being packaged right for FIPS mode
+- name: download required packages (yarn) to run ArkCase webapp
+  become: yes
+  command: dnf -y install --downloadonly --downloaddir {{ root_folder }}/install/arkcase yarn
+  when: yarn_version.stdout == ""
+
+- name: install required package (yarn)
+  become: yes
+  shell: rpm -Uvh --nodigest --nofiledigest {{ root_folder }}/install/arkcase/yarn*.rpm
+  when: yarn_version.stdout == ""
+
 - name: install python2 (needed on RHEL8)
   become: yes
   command: dnf install -y python2
@@ -140,7 +153,10 @@
           catalina_out: "{{ root_folder }}/log/arkcase/catalina.out"
           catalina_temp: "{{ root_folder }}/tmp/arkcase"
           log_folder: "{{ root_folder }}/log/arkcase"
-          java_home: "{{java_home_version}}"
+          java_home: "{{ java_home_version }}"
+          fips_mode: "{{ fips_mode_arkcase | default('') }}"
+          mem_min: "{{ arkcase_mem_min | default(4) }}g"
+          mem_max: "{{ arkcase_mem_max | default(12) }}g"
           extra_lib_path: "/home/arkcase/.arkcase/libraries"
   register: tomcat_unarchived
 

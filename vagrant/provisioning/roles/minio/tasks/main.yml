@@ -13,7 +13,7 @@
     shell: /sbin/nologin
     home: /home/minio
 
-- name: create minio bin directory
+- name: create minio folders
   become: yes
   file:
     path: "{{root_folder}}/{{ item }}/minio/"
@@ -61,17 +61,42 @@
 
 - name: create minio config file
   become: yes
+  become_user: minio
   copy:
     dest: "{{root_folder}}/app/minio/minio.conf"
     content: |
      MINIO_VOLUMES="{{root_folder}}/data/minio"
-     MINIO_OPTS="--console-address :{{ minio_console_port | default(8001) }}"
+     MINIO_OPTS="--console-address :{{ minio_console_port | default(8001) }} --certs-dir={{ root_folder }}/app/minio"
+
+- name: copy the private key
+  become: yes
+  ansible.builtin.copy:
+    src: "{{ ssl_key }}"
+    dest: "{{ root_folder }}/app/minio/private.key"
+    owner: minio
+    group: minio
+    mode: 0600
+
+- name: copy the certificate
+  become: yes
+  ansible.builtin.copy:
+    src: "{{ ssl_cert }}"
+    dest: "{{ root_folder }}/app/minio/public.crt"
+    owner: minio
+    group: minio
 
 - name: create systemd file
   become: yes
   template:
+    backup: yes
     src: "minio.service"
     dest: /etc/systemd/system/minio.service
+
+- name: fapolicy settings for MinIO, if fapolicyd is installed
+  include_tasks: "{{ role_path }}/../fapolicyd/tasks/main.yml"
+  loop:
+    - name: minio
+      folder_path: "{{ root_folder }}/app/minio"
 
 - name: enable minio service
   become: yes
