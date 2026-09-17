@@ -34,3 +34,8 @@
   loop:
     - alfresco7
 
+- name: create Alfresco upgrade schema, if needed
+  include_tasks: "{{ role_path }}/../mariadb/tasks/create_schema.yml"
+  loop:
+    - "{{ database_alfresco_user_update | default('alfresco') }}"
+  when: alfresco_upgrade == true
