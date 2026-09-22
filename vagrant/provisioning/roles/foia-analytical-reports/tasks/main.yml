@@ -176,17 +176,32 @@
     - name: SHELL
       value: /bin/bash
 
-- name: Schedule the job to run every day at 2 AM
+- name: Schedule the job to run every day at 2 PM, 6 PM, and 8 PM UTC
   become: true
   become_user: pentaho-pdi
   ansible.builtin.cron:
     backup: true
     name: "populate FOIA data warehouse tables"
-    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb"
+    job: "{{ root_folder }}/app/pentaho-pdi/data-integration/kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb -level=Debug -logfile=/home/pentaho-pdi/doj-etl-$(date +\\%Y-\\%m-\\%dT\\%H-\\%M-\\%S).log"
     month: "*"
     weekday: "*"
     day: "*"
-    hour: "2"
+    hour: "14,18,20"
+    minute: "0"
+    disabled: false
+    state: present
+
+- name: Schedule cleanup of DOJ ETL logs older than 3 days
+  become: true
+  become_user: pentaho-pdi
+  ansible.builtin.cron:
+    backup: true
+    name: "delete DOJ ETL logs older than 3 days"
+    job: "find /home/pentaho-pdi -maxdepth 1 -type f -name 'doj-etl-*.log' -mtime +3 -delete"
+    month: "*"
+    weekday: "*"
+    day: "*"
+    hour: "13"
     minute: "0"
     disabled: false
     state: present
@@ -244,5 +259,5 @@
   become: true
   become_user: pentaho-pdi
   ansible.builtin.command:
-    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb
+    cmd: ./kitchen.sh -file://{{ root_folder }}/install/pentaho/foia-reports-dw{{ foia_analytical_reports_version_formatted }}/j_foia_dw.kjb -level=Debug -logfile=/home/pentaho-pdi/doj-etl-{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}.log
     chdir: "{{ root_folder }}/app/pentaho-pdi/data-integration"
